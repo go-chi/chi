@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	emptyParams = map[string]string{}
+	emptyParams map[string]string
 )
 
 func TestTree(t *testing.T) {
@@ -128,6 +128,6 @@ func BenchmarkXTreeGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// tr.Find(mGET, "/ping/123/456")
-		tr.Find(mGET, "/ping")
+		tr.Find(mGET, "/ping/123/456")
 	}
 }

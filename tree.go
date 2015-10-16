@@ -190,7 +190,6 @@ func (n *node) findEdge(minTyp nodeTyp, label byte) *node { // rename to matchEd
 func (n *node) findStaticNode(path string) *node { // min/direct typ ........ for other typ searches..?
 	sn := n
 	search := path
-	// TODO: return params, or naw...?
 
 	for {
 		if len(search) == 0 {
@@ -358,15 +357,13 @@ func (t *tree) Insert(method methodTyp, pattern string, handler ctxhttp.Handler)
 	return nil
 }
 
-// TODO: this is like Get() ...........
-// TODO: 2nd return value is urlParams map[string]string ...
 func (t *tree) Find(method methodTyp, path string) (ctxhttp.Handler, map[string]string, error) {
-	n := t.root
-	search := path
-	params := map[string]string{} // alloc each find..?
 
 	var wn *node // wild node
-	_ = wn
+	var params map[string]string
+
+	n := t.root
+	search := path
 
 	for {
 		// Check for key exhaustion
@@ -376,8 +373,6 @@ func (t *tree) Find(method methodTyp, path string) (ctxhttp.Handler, map[string]
 			}
 			break
 		}
-
-		// log.Printf("=> find edge search[0] '%s' on node typ:%d", string(search[0]), n.typ)
 
 		// For some set of edges, we can have static and wild card nodes,
 		// that will have multiple matches, but we want to first traverse the static
@@ -389,87 +384,40 @@ func (t *tree) Find(method methodTyp, path string) (ctxhttp.Handler, map[string]
 		// Look for an edge
 		pn := n                                // parent node
 		wn = n.findEdge(ntStatic+1, search[0]) // wild node
-		n = n.findEdge(ntStatic, search[0])
-
-		// ^^^^^^^^^^^^^^^^^^^^^^^^^^^ wn and n should be diff for /ping/all .....
+		n = n.findEdge(ntStatic, search[0])    // static node
 
 		if n == nil && wn == nil {
-			// log.Println("!!!!!!!!!!!!!!!!!! FOUND NOTHING AT ALL")
-			break // nothing at all
-		}
+			// Found nothing at all
+			break
 
-		if n == nil && wn != nil {
-			// log.Println("!!!!!!!!!!!!!!!!!! 0 STATIC, 1 WILD")
-
+		} else if n == nil && wn != nil {
+			// Found only a wild node
 			n = wn
-			// if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ... duh.. ez.
-			// log.Printf("SOOOOOOOO....... n.prefix:%s search:%s\n", n.prefix, search)
-			// log.Println("handler:", n.handler)
 
-			p := strings.IndexByte(search, '/')
-			if p < 0 {
-				p = len(search)
-			}
-			params[n.prefix[1:]] = search[:p]
-			search = search[p:]
-			// log.Printf("search is now:%s on nodePrefix:%s", search, n.prefix)
-			continue
-			// }
-		}
+		} else if n != nil && wn != nil {
+			// Found both static and wild matching nodes
 
-		if n != nil && wn != nil {
-			// log.Println("!!!!!!!!!!!!!!!!!! 1 STATIC, 1 WILD")
-
-			// here we have both static and wild node paths
-
-			// first, we try the static node
-			// look ahead..? or... n2 := n.findNode(path)   <---<< will search a subset from a given node..
-
-			// WOOTrecursiveWalk(0, 0, n, 0)
-
+			// We first look for the final leaf node by traversing the static edges
 			sn := pn.findStaticNode(search)
-			// log.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!! searching for static node:'%s' found:%v", search, sn)
 
-			if sn != nil {
-				// found a static node
-				// log.Printf("!! sn.prefix=%s\n", sn.prefix)
-				// n = sn // do nothing..
-			} else {
-				// use wild node
+			// As static leaf couldn't be found, use the wild node
+			if sn == nil {
 				n = wn
 			}
-
 		}
 
-		//---------------------------------------------------------------------------
-
-		// TODO: hmm so, route /ping/:id should match /ping/123
-		// .. we can see from each node, if the typ is param, then..
-		if n == nil {
-			break
-		}
-
-		// log.Println("!! n:", n.prefix)
-
-		// TODO: .. hmm.. seems like I have to do this again...
-		if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ... duh.. ez.
-			// log.Printf("SOOOOOOOO....... n.prefix:%s search:%s\n", n.prefix, search)
-			// log.Println("handler:", n.handler)
-
+		if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ...
 			p := strings.IndexByte(search, '/')
 			if p < 0 {
 				p = len(search)
+			}
+			if params == nil {
+				params = make(map[string]string, 1)
 			}
 			params[n.prefix[1:]] = search[:p]
 			search = search[p:]
 			continue
 		}
-
-		// TODO: the getEdge need to give us the next index (idx)
-		// for the next path too.. or something..
-
-		// TODO: ... HMMM IDEA: maybe there is something to this consuming the search prefix
-		// that we can use with static, param, etc..................?
 
 		// Consume the search prefix
 		if strings.HasPrefix(search, n.prefix) {
@@ -484,74 +432,6 @@ func (t *tree) Find(method methodTyp, path string) (ctxhttp.Handler, map[string]
 // Walk is used to walk the tree
 func (t *tree) Walk(fn WalkFn) {
 	t.recursiveWalk(t.root, fn)
-}
-
-// TODO: remove?
-// WalkPrefix is used to walk the tree under a prefix
-func (t *tree) WalkPrefix(prefix string, fn WalkFn) {
-	n := t.root
-	search := prefix
-	for {
-		// Check for key exhaustion
-		if len(search) == 0 {
-			t.recursiveWalk(n, fn)
-			return
-		}
-
-		// Look for an edge
-		n = n.getEdge(search[0])
-		if n == nil {
-			break
-		}
-
-		// Consume the search prefix
-		if strings.HasPrefix(search, n.prefix) {
-			search = search[len(n.prefix):]
-
-		} else if strings.HasPrefix(n.prefix, search) {
-			// Child may be under our search prefix
-			t.recursiveWalk(n, fn)
-			return
-		} else {
-			break
-		}
-	}
-
-}
-
-// TODO: remove?
-// WalkPath is used to walk the tree, but only visiting nodes
-// from the root down to a given leaf. Where WalkPrefix walks
-// all the entries *under* the given prefix, this walks the
-// entries *above* the given prefix.
-// TODO: rename to WalkPrefixReverse ...? or Up ..?
-func (t *tree) WalkPath(path string, fn WalkFn) {
-	n := t.root
-	search := path
-	for {
-		// Visit the leaf values if any
-		if n.handler != nil && fn(path, n.handler) {
-			return
-		}
-
-		// Check for key exhaustion
-		if len(search) == 0 {
-			return
-		}
-
-		// Look for an edge
-		n = n.getEdge(search[0])
-		if n == nil {
-			return
-		}
-
-		// Consume the search prefix
-		if strings.HasPrefix(search, n.prefix) {
-			search = search[len(n.prefix):]
-		} else {
-			break
-		}
-	}
 }
 
 // recursiveWalk is used to do a pre-order walk of a node
