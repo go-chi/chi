@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"golang.org/x/net/context"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 var (
@@ -16,17 +15,17 @@ var (
 )
 
 func TestTree(t *testing.T) {
-	hIndex := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hFavicon := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleList := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleNear := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShow := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShowRelated := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShowOpts := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserList := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserShow := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminCatchall := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hStub := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hIndex := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hFavicon := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleNear := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleShowRelated := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleShowOpts := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hUserList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hUserShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hAdminCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	_ = hStub
 
 	tr := &tree{root: &node{}}
@@ -49,6 +48,7 @@ func TestTree(t *testing.T) {
 	tr.Insert(mGET, "/admin/user//:id", hUserShow)
 	// tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 	tr.Insert(mGET, "/admin/*", hAdminCatchall)
+	// tr.Insert(mGET, "/debug*", hStub) // TODO: should we support this..?
 
 	// TODO: test bad inserts ie.
 	// tr.Insert(mGET, "")
@@ -58,7 +58,7 @@ func TestTree(t *testing.T) {
 	tests := []struct {
 		m methodTyp         // input method
 		r string            // input request path
-		h ctxhttp.Handler   // output matched handler
+		h Handler           // output matched handler
 		p map[string]string // output params
 	}{
 		{m: mGET, r: "/", h: hIndex, p: emptyParams},
@@ -74,7 +74,8 @@ func TestTree(t *testing.T) {
 		{m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
 		// {m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm....
 		{m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
-		// {m: mGET, r: "/admin/*", h: hAdminCatchall, p: emptyParams}, // TODO
+		// {m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "/hi"}},
+		// {m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "/lots/of/:fun"}},
 	}
 
 	// TEST CASE - TODO: .. hmm, so, while inserting a string,
@@ -118,8 +119,8 @@ func debugPrintTree(parent int, i int, n *node, label byte) bool {
 }
 
 func BenchmarkXTreeGet(b *testing.B) {
-	h1 := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	h2 := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	h1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	h2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 
 	tr := &tree{root: &node{}}
 	tr.Insert(mGET, "/", h1)

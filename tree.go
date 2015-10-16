@@ -12,15 +12,13 @@ import (
 	"log"
 	"sort"
 	"strings"
-
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type nodeTyp uint8
 
 const (
 	ntStatic   nodeTyp = iota // /home
-	ntRegexp                  // /:id([0-9]+) or /#id([0-9]+)?
+	ntRegexp                  // /:id([0-9]+)
 	ntParam                   // /:user
 	ntCatchAll                // /api/v1/*
 )
@@ -30,7 +28,7 @@ const (
 // be terminated.
 // type WalkFn func(s string, v interface{}) bool
 // TODO: do we want to have method here..?
-type WalkFn func(path string, handler ctxhttp.Handler) bool
+type WalkFn func(path string, handler Handler) bool
 
 // edge is used to represent an edge node
 type edge struct {
@@ -45,7 +43,7 @@ type node struct {
 	prefix string
 
 	// HTTP handler on the leaf node
-	handler ctxhttp.Handler
+	handler Handler
 
 	// Edges should be stored in-order for iteration.
 	// We avoid a fully materialized slice to save memory,
@@ -66,6 +64,8 @@ func (n *node) addEdge(e edge) {
 	// Split the node on a param type
 	p := strings.IndexByte(search, ':') // TODO: or '*' ....... should we use Rune or IndexFunc ..?
 
+	// p := strings.IndexAny(search, ":*") // interesting...?
+
 	if p == 0 {
 
 		// split the end..
@@ -73,12 +73,12 @@ func (n *node) addEdge(e edge) {
 
 		handler := e.node.handler
 
-		e.node.typ = ntParam
+		e.node.typ = ntParam // TODO: or CatchAll or Regexp ...?
 		p = strings.IndexByte(search, '/')
 		if p < 0 {
 			p = len(search)
 		}
-		e.node.prefix = search[:p] // ':' or 'i' ?
+		e.node.prefix = search[:p]
 		// e.node.handler = nil //????????????
 
 		// log.Println("** end split, len(search) != p", len(search), p)
@@ -114,7 +114,7 @@ func (n *node) addEdge(e edge) {
 			p = len(search)
 		}
 		e2 := edge{
-			label: search[0], // should label be ':' or 'i' ?
+			label: search[0],
 			node: &node{
 				typ:     ntParam,
 				prefix:  search[:p],
@@ -246,7 +246,7 @@ type tree struct {
 var insertcnt int = -1
 
 // TODO: do we return an error or panic..? what does goji do..
-func (t *tree) Insert(method methodTyp, pattern string, handler ctxhttp.Handler) error {
+func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 
 	insertcnt += 1
 	// log.Println("")
@@ -347,7 +347,7 @@ func (t *tree) Insert(method methodTyp, pattern string, handler ctxhttp.Handler)
 	return nil
 }
 
-func (t *tree) Find(method methodTyp, path string) (ctxhttp.Handler, map[string]string, error) {
+func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, error) {
 
 	var wn *node // wild node
 	var params map[string]string

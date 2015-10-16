@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"golang.org/x/net/context"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 type Mux struct {
@@ -73,7 +72,7 @@ func (mx *Mux) Use(mw interface{}) {
 	default:
 		panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
 	case func(http.Handler) http.Handler:
-	case func(ctxhttp.Handler) ctxhttp.Handler:
+	case func(Handler) Handler:
 	}
 	mx.mwStack = append(mx.mwStack, mw)
 }
@@ -119,25 +118,25 @@ func (mx *Mux) Options(pattern string, handler interface{}) {
 }
 
 // ..?
-// func (m *Mux) XHandle(pattern string, handler ctxhttp.Handler) {}
+// func (m *Mux) XHandle(pattern string, handler Handler) {}
 // func (m *Mux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {}
 // func (m *Mux) XHandleFunc(pattern string, handler func(context.Context, http.ResponseWriter, *http.Request)) {}
 
 // handle(), handleAny()  ....?
 func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
-	var cxh ctxhttp.Handler
+	var cxh Handler
 
 	switch t := handler.(type) {
 	default:
 		panic(fmt.Sprintf("chi: unsupported handler signature: %T", t))
 		// case http.Handler:
 		// TODO: accept http.Handler too .. will have to get wrapped..
-	case ctxhttp.Handler:
+	case Handler:
 		cxh = t
 	case func(context.Context, http.ResponseWriter, *http.Request):
-		cxh = ctxhttp.HandlerFunc(t)
+		cxh = HandlerFunc(t)
 	case func(http.ResponseWriter, *http.Request):
-		cxh = ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		cxh = HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			t(w, r)
 		})
 	}
@@ -180,7 +179,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	var cxh ctxhttp.Handler
+	var cxh Handler
 	var err error
 	var params map[string]string
 

@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"golang.org/x/net/context"
-	"golang.org/x/net/context/ctxhttp"
 )
 
 func TestMux(t *testing.T) {
@@ -22,15 +21,15 @@ func TestMux(t *testing.T) {
 		})
 	}
 
-	usermw := func(next ctxhttp.Handler) ctxhttp.Handler {
-		return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	usermw := func(next Handler) Handler {
+		return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			ctx = context.WithValue(ctx, "user", "peter")
 			next.ServeHTTPC(ctx, w, r)
 		})
 	}
 
-	exmw := func(next ctxhttp.Handler) ctxhttp.Handler {
-		return ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	exmw := func(next Handler) Handler {
+		return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			ctx = context.WithValue(ctx, "ex", "a")
 			next.ServeHTTPC(ctx, w, r)
 		})
