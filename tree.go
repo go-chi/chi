@@ -39,12 +39,7 @@ type edge struct {
 }
 
 type node struct {
-	typ nodeTyp // static, param, regexp, catchall ... IDEA/TODO: DO WE MAKE THIS AN EDGETYPE  ........?
-
-	// TODO: .. hmm, so, while inserting a string,
-	// we need to check the prefix .. like /:x or /* or /:id(Y)
-	// if we do .. /ping/:id/hi and /ping/:sup/hi .. then :sup will overwrite..
-	// what if we have /ping/:id/hi and /ping/:sup/bye - the :id and :sup are considered like a single char?
+	typ nodeTyp
 
 	// prefix is the common prefix we ignore
 	prefix string
@@ -57,10 +52,8 @@ type node struct {
 	// since in most cases we expect to be sparse
 	edges edges
 
-	// TODO
+	// TODO: optimization, do we keep track of the number of wildEdges?
 	// nWildEdges int
-	// do we keep track of the number of wildEdges somewhere..?
-	// a count.. or something?
 }
 
 func (n *node) isLeaf() bool {
@@ -187,7 +180,7 @@ func (n *node) findEdge(minTyp nodeTyp, label byte) *node { // rename to matchEd
 	return nil
 }
 
-func (n *node) findStaticNode(path string) *node { // min/direct typ ........ for other typ searches..?
+func (n *node) findStaticNode(path string) *node {
 	sn := n
 	search := path
 
@@ -200,9 +193,6 @@ func (n *node) findStaticNode(path string) *node { // min/direct typ ........ fo
 		}
 
 		sn = sn.findEdge(ntStatic, search[0])
-
-		// log.Printf("FINDSTATICNODE -- findEdge search[0]:%s sn:%v\n", string(search[0]), sn)
-
 		if sn == nil {
 			break
 		}
@@ -398,6 +388,10 @@ func (t *tree) Find(method methodTyp, path string) (ctxhttp.Handler, map[string]
 			// Found both static and wild matching nodes
 
 			// We first look for the final leaf node by traversing the static edges
+			// TODO: perhaps we can make a faster function that continues until
+			// it doesnt match, instead of going all the way. It can also return
+			// just a bool.
+			// ie. if ok := pn.hasStaticLeaf(search); !ok { n = wn }
 			sn := pn.findStaticNode(search)
 
 			// As static leaf couldn't be found, use the wild node

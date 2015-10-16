@@ -26,6 +26,8 @@ func TestTree(t *testing.T) {
 	hUserList := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hUserShow := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hAdminCatchall := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hStub := ctxhttp.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	_ = hStub
 
 	tr := &tree{root: &node{}}
 
@@ -40,6 +42,7 @@ func TestTree(t *testing.T) {
 	tr.Insert(mGET, "/article/:id", hArticleShow) // should overwrite, TODO: test single one of these..
 	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
 	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
+	// tr.Insert(mGET, "/article/:aa", hStub) // TODO: what does goji do..?
 
 	tr.Insert(mGET, "/admin/user", hUserList)
 	tr.Insert(mGET, "/admin/user/", hUserList)
@@ -73,6 +76,11 @@ func TestTree(t *testing.T) {
 		{m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
 		// {m: mGET, r: "/admin/*", h: hAdminCatchall, p: emptyParams}, // TODO
 	}
+
+	// TEST CASE - TODO: .. hmm, so, while inserting a string,
+	// we need to check the prefix .. like /:x or /* or /:id(Y)
+	// if we do .. /ping/:id/hi and /ping/:sup/hi .. then :sup will overwrite..
+	// what if we have /ping/:id/hi and /ping/:sup/bye - the :id and :sup are considered like a single char?
 
 	log.Println("~~~~~~~~~")
 	log.Println("~~~~~~~~~")
