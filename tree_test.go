@@ -22,11 +22,12 @@ func TestTree(t *testing.T) {
 	hArticleShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hArticleShowRelated := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hArticleShowOpts := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleSlug := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hUserList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hUserShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hAdminCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	_ = hStub
+	// _ = hAdminCatchall
 
 	tr := &tree{root: &node{}}
 
@@ -37,17 +38,26 @@ func TestTree(t *testing.T) {
 	tr.Insert(mGET, "/article", hArticleList)
 	// tr.Insert(mGET, "/article/", hArticleList) // redirect..?
 	tr.Insert(mGET, "/article/near", hArticleNear)
+	// tr.Insert(mGET, "/article/:sup", hStub) // will get overwritten as :id param
 	tr.Insert(mGET, "/article/:id", hArticleShow)
 	tr.Insert(mGET, "/article/:id", hArticleShow) // should overwrite, TODO: test single one of these..
 	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
 	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
+	tr.Insert(mGET, "/article/slug/:month/-/:day/-/:year", hArticleSlug)
 	// tr.Insert(mGET, "/article/:aa", hStub) // TODO: what does goji do..?
 
 	tr.Insert(mGET, "/admin/user", hUserList)
+
+	tr.Insert(mGET, "/admin/user/", hStub) // will get replaced
 	tr.Insert(mGET, "/admin/user/", hUserList)
+
 	tr.Insert(mGET, "/admin/user//:id", hUserShow)
 	// tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+
+	// tr.Insert(mGET, "/admin/woot/*ff", hStub) // TODO: .. should work, but doesnt..
+	// tr.Insert(mGET, "/admin/*ff", hStub) // will get replaced...? like others..
 	tr.Insert(mGET, "/admin/*", hAdminCatchall)
+
 	// tr.Insert(mGET, "/debug*", hStub) // TODO: should we support this..?
 
 	// TODO: test bad inserts ie.
@@ -70,12 +80,13 @@ func TestTree(t *testing.T) {
 		{m: mGET, r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}},
 		{m: mGET, r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
 		{m: mGET, r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
+		{m: mGET, r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO: ...
 		{m: mGET, r: "/admin/user", h: hUserList, p: emptyParams},
 		{m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
 		// {m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm....
 		{m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
-		// {m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "/hi"}},
-		// {m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "/lots/of/:fun"}},
+		{m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
+		{m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
 	}
 
 	// TEST CASE - TODO: .. hmm, so, while inserting a string,

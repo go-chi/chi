@@ -61,30 +61,49 @@ func (n *node) isLeaf() bool {
 func (n *node) addEdge(e edge) {
 	search := e.node.prefix
 
-	// Split the node on a param type
-	p := strings.IndexByte(search, ':') // TODO: or '*' ....... should we use Rune or IndexFunc ..?
+	// Split the node on a wild type
+	p := strings.IndexAny(search, ":*")
 
-	// p := strings.IndexAny(search, ":*") // interesting...?
+	ntyp := ntStatic
+	if p >= 0 {
+		switch search[p] {
+		case ':':
+			ntyp = ntParam
+		case '*':
+			ntyp = ntCatchAll
+		}
+	}
+
+	// TODO: ...
+	// for CatchAll... set the node prefix to just * ..
+
+	// TODO: on find.. and catchall, set param to *
 
 	if p == 0 {
-
-		// split the end..
-		// log.Println("*** split the end!!")
+		// split the end prefix of the current node
 
 		handler := e.node.handler
+		e.node.typ = ntyp
 
-		e.node.typ = ntParam // TODO: or CatchAll or Regexp ...?
-		p = strings.IndexByte(search, '/')
+		if ntyp == ntCatchAll {
+			// this would be the node is "*fadfasfd"
+			// we can just set it to * and be done with it..
+			// no adding any other nodes..
+			// hmm.. this wouldn't be an add tho.. it would be
+			// a replace if something exists.....
+			p = -1
+			e.node.prefix = "**"
+			goto woot
+		} else {
+			p = strings.IndexByte(search, '/')
+		}
 		if p < 0 {
 			p = len(search)
 		}
 		e.node.prefix = search[:p]
-		// e.node.handler = nil //????????????
-
-		// log.Println("** end split, len(search) != p", len(search), p)
 
 		if len(search) != p {
-			// add trailing child node.., split the end
+			// add trailing child node.. split the end
 			search = search[p:]
 			e2 := edge{
 				label: search[0], // this will always start with /
@@ -98,31 +117,38 @@ func (n *node) addEdge(e edge) {
 		}
 
 	} else if p > 0 {
-
-		// split the beginning..
-		// log.Println("*** split the beginning!!")
+		// split the beginning prefix of the current node
 
 		handler := e.node.handler
 		e.node.typ = ntStatic
 		e.node.prefix = search[:p]
 		e.node.handler = nil
 
-		// now add the param edge node..
+		// now add the wild edge node
 		search = search[p:]
-		p = strings.IndexByte(search, '/')
+
+		if ntyp == ntCatchAll {
+			p = -1
+			e.node.prefix = "**"
+			goto woot
+		} else {
+			p = strings.IndexByte(search, '/')
+		}
 		if p < 0 {
 			p = len(search)
 		}
 		e2 := edge{
 			label: search[0],
 			node: &node{
-				typ:     ntParam,
+				typ:     ntyp,
 				prefix:  search[:p],
 				handler: handler,
 			},
 		}
 		e.node.addEdge(e2)
 	}
+
+woot:
 
 	n.edges = append(n.edges, e)
 	n.edges.Sort()
@@ -150,7 +176,7 @@ func (n *node) getEdge(label byte) *node {
 	return nil
 }
 
-func (n *node) findEdge(minTyp nodeTyp, label byte) *node { // rename to matchEdge() ...?
+func (n *node) findEdge(minTyp nodeTyp, label byte) *node {
 	num := len(n.edges)
 	idx := sort.Search(num, func(i int) bool {
 		if n.edges[i].node.typ < minTyp {
@@ -159,13 +185,13 @@ func (n *node) findEdge(minTyp nodeTyp, label byte) *node { // rename to matchEd
 		switch n.edges[i].node.typ {
 		case ntStatic:
 			return n.edges[i].label >= label
-		default: // other types...
-			return true // TODO: right now we match them all..
+		default: // wild nodes
+			// TODO: right now we match them all.. but regexp should
+			// run through regexp matcher
+			return true
 		}
 		return false
 	})
-
-	// log.Printf("!!!!! FIND EDGE num:%d minTyp:%d label:%s idx:%d", num, minTyp, string(label), idx)
 
 	if idx >= num {
 		return nil
@@ -175,12 +201,87 @@ func (n *node) findEdge(minTyp nodeTyp, label byte) *node { // rename to matchEd
 	if n.edges[idx].node.typ == ntStatic && n.edges[idx].label == label {
 		return n.edges[idx].node
 	} else if n.edges[idx].node.typ > ntStatic { // more match logic here...?
-		return n.edges[idx].node // good..?
+		return n.edges[idx].node // good..? regexp..?
 	}
 	return nil
 }
 
-func (n *node) findStaticNode(path string) *node {
+// TODO: this is a huge duplicate effort.. no good..
+func (n *node) findNode(minTyp nodeTyp, path string) *node {
+	nn := n
+	search := path
+
+	for {
+		if len(search) == 0 {
+			if nn.isLeaf() {
+				return nn
+			}
+			break
+		}
+
+		wn := nn.findEdge(ntStatic+1, search[0]) // wild node
+		nn = nn.findEdge(ntStatic, search[0])    // any node
+
+		if nn == nil && wn == nil {
+			// Found nothing at all
+			break
+
+		} else if nn == nil && wn != nil {
+			// Found only a wild node
+			n = wn
+
+		} else if nn == wn {
+			// Same, do nothing.
+
+		} else if nn != nil && wn != nil {
+			// Found both static and wild matching nodes
+
+			// ..attempts to get to the final node..
+			sn := nn.findNode(ntStatic, search[len(nn.prefix):])
+
+			// As static leaf couldn't be found, use the wild node
+			if sn == nil {
+				log.Println("sn == nil.. dont go static route")
+				nn = wn
+			}
+		}
+
+		// nn = nn.findEdge(ntStatic, search[0])
+		// if nn == nil {
+		// 	break
+		// }
+
+		if nn.typ > ntStatic {
+			// if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ...
+
+			// log.Printf("!!!!!!!!!!!!!!!!!!!! typ:%d", n.typ)
+
+			p := -1
+			if n.typ != ntCatchAll {
+				p = strings.IndexByte(search, '/')
+			}
+			if p < 0 {
+				p = len(search)
+			}
+			// if params == nil {
+			// 	params = make(map[string]string, 1)
+			// }
+			// params[n.prefix[1:]] = search[:p]
+			search = search[p:]
+			continue
+		}
+
+		// Consume the search prefix
+		if strings.HasPrefix(search, nn.prefix) {
+			search = search[len(nn.prefix):]
+		} else {
+			break
+		}
+	}
+	return nil
+}
+
+/*func (n *node) findStaticNode(path string) *node {
 	sn := n
 	search := path
 
@@ -205,7 +306,7 @@ func (n *node) findStaticNode(path string) *node {
 		}
 	}
 	return nil
-}
+}*/
 
 type edges []edge
 
@@ -250,7 +351,7 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 
 	insertcnt += 1
 	// log.Println("")
-	// log.Printf("=> INSERT #%d %s\n", insertcnt, pattern)
+	log.Printf("=> INSERT #%d %s\n", insertcnt, pattern)
 
 	var parent *node
 	n := t.root
@@ -283,7 +384,7 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 			e := edge{
 				label: search[0],
 				node: &node{
-					typ:     ntStatic,
+					// typ:     ntStatic, // TODO: no need to specify this ..
 					prefix:  search,
 					handler: handler,
 				},
@@ -297,19 +398,44 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 
 		// Determine longest prefix of the search key on match
 		commonPrefix := t.longestPrefix(search, n.prefix)
-		// log.Printf("insert (%d): commonPrefix '%s' + '%s'\n", iter, search[:commonPrefix], search[commonPrefix:])
+		log.Printf("insert (%d): commonPrefix '%s' + '%s'\n", iter, search[:commonPrefix], search[commonPrefix:])
 		if commonPrefix == len(n.prefix) {
 			search = search[commonPrefix:]
-			// log.Printf("insert (%d): commonPrefix == len('%s'), continue\n", iter, n.prefix)
+			log.Printf("insert (%d): commonPrefix == len('%s'), continue\n", iter, n.prefix)
 			continue
 		}
 
-		// log.Println("=========> SPLIT NODE..........")
-		// TODO ********
+		log.Printf("=========> SPLIT NODE.......... child.prefix:%s parent.prefix:%s\n", search[:commonPrefix], parent.prefix)
+
+		// ** TODO ** so what we gotta do is check for : or * and change the behaviour of this node splitting..
+
+		log.Printf("****************** search[0]:%s\n", string(search[0]))
+
+		/*switch search[0] {
+		case ':': // ntParam
+			// n.prefix =  ///... what..?
+			// n.handler
+			// parent.replaceEdge(edge{
+			// 	label: search[0],
+			// 	node: &node{
+			// 		typ: ntParam,
+			// 		prefix: search[:commonPrefix]
+			// 	}
+			// })
+
+		case '*': // ntCatchAll
+			log.Println("catchall.. done..")
+			// parent.typ = ntCatchAll // already a catchall....?
+			n.handler = handler
+			return nil
+
+		default: // ntStatic
+
+		}*/
 
 		// Split the node
 		child := &node{
-			typ:    ntStatic, // TODO: HMM.. will this always be static...?
+			// typ:    ntStatic, // TODO: HMM.. will this always be static...?
 			prefix: search[:commonPrefix],
 		}
 		// log.Printf("insert (%d): split node, parentPrefix:%s, nodePrefix:%s, childPrefix:%s\n", iter, parent.prefix, n.prefix, child.prefix)
@@ -325,10 +451,12 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 		})
 		n.prefix = n.prefix[commonPrefix:]
 
+		log.Printf("=========> RESTORE NODE... child appends edge with prefix:%s\n", n.prefix)
+
 		// If the new key is a subset, add to to this node
 		search = search[commonPrefix:]
 		if len(search) == 0 {
-			// log.Println("*** new key is a subset, add to this node and return...")
+			log.Println("*** new key is a subset.. set handler, move on..")
 			child.handler = handler
 			return nil
 		}
@@ -349,16 +477,18 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 
 func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, error) {
 
-	var wn *node // wild node
 	var params map[string]string
 
 	n := t.root
 	search := path
 
+	log.Printf("\n\n======> SEARCH PATH %s\n", path)
+
 	for {
 		// Check for key exhaustion
 		if len(search) == 0 {
 			if n.isLeaf() {
+				log.Printf("** FOUND NODE for path:%s - prefix:%s typ:%d\n", path, n.prefix, n.typ)
 				return n.handler, params, nil
 			}
 			break
@@ -369,46 +499,81 @@ func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, 
 		// path as it takes precedence over the wild
 
 		// TODO: we can have a numWildEdges flag on a node to avoid searching
-		// for wild paths unless we have to
+		// for wild paths unless we have to ... or just a bool..
+
+		log.Printf("==> SEARCH %s\n", search)
 
 		// Look for an edge
-		pn := n                                // parent node
-		wn = n.findEdge(ntStatic+1, search[0]) // wild node
-		n = n.findEdge(ntStatic, search[0])    // static node
+		wn := n.findEdge(ntStatic+1, search[0]) // wild node -- will find any matching wild nodes..
+		n = n.findEdge(ntStatic, search[0])     // any node
 
 		if n == nil && wn == nil {
 			// Found nothing at all
+			log.Println("~~ nothing, 0 0")
 			break
 
 		} else if n == nil && wn != nil {
+			log.Println("~~ 0 static, 1 wild")
 			// Found only a wild node
 			n = wn
 
+		} else if n == wn {
+			// same node found, likely both wild cards.
+			// do nothing.
+			// TODO: add more test cases...
+
 		} else if n != nil && wn != nil {
 			// Found both static and wild matching nodes
+			log.Println("~~ 1 static, 1 wild")
+
+			log.Printf("~~~~~> search:%s n.prefix:%s wn.prefix:%s\n", search, n.prefix, wn.prefix)
+
+			// ************ TODO TODO TODO TODO TODO TODO
+			// the problem is the findStaticNode ..
+			// or that we have 2 wild nodes.. something is up..
+			// for /admin/user//1 we should get the :id node
+			// and for /admin/xxxfsdfsfd we should get the * node
 
 			// We first look for the final leaf node by traversing the static edges
 			// TODO: perhaps we can make a faster function that continues until
 			// it doesnt match, instead of going all the way. It can also return
 			// just a bool.
-			// ie. if ok := pn.hasStaticLeaf(search); !ok { n = wn }
-			sn := pn.findStaticNode(search)
+			// ie. if ok := n.hasStaticLeaf(search); !ok { n = wn }
+			// sn := n.findStaticNode(search[len(n.prefix):])
+
+			log.Printf("???? nprefix:%s search:%s search-:%s\n", n.prefix, search, search[len(n.prefix):])
+
+			sn := n.findNode(ntStatic, search[len(n.prefix):]) // attempts to get to the final node..
+			// we go down static route..
+
+			// .. so sn will tell us if we match a static node..
+			// technically, i think we're just looking for the decision
+			// where the next node is static..
 
 			// As static leaf couldn't be found, use the wild node
 			if sn == nil {
+				log.Println("sn == nil.. go wild")
 				n = wn
 			}
 		}
 
-		if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ...
-			p := strings.IndexByte(search, '/')
-			if p < 0 {
-				p = len(search)
-			}
+		if n.typ > ntStatic {
 			if params == nil {
 				params = make(map[string]string, 1)
 			}
-			params[n.prefix[1:]] = search[:p]
+
+			// if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ...
+
+			log.Printf("!!!!!!!!!!!!!!!!!!!! typ:%d", n.typ)
+
+			p := -1
+			if n.typ != ntCatchAll {
+				p = strings.IndexByte(search, '/')
+			}
+			if p < 0 {
+				p = len(search)
+			}
+			params[n.prefix[1:]] = search[:p] // TODO: catchAll, param is *
 			search = search[p:]
 			continue
 		}
