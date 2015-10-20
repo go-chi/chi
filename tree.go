@@ -1,7 +1,7 @@
 package chi
 
-// Radix tree implementation is a based on the work by Armon Dadgar
-// in https://github.com/armon/go-radix/blob/master/radix.go
+// Radix tree implementation below is a based on the original work by
+// Armon Dadgar in https://github.com/armon/go-radix/blob/master/radix.go
 // (MIT licensed)
 
 // TODO: case insensitive ..
@@ -9,6 +9,7 @@ package chi
 // TODO: trailing slash stuff...? perhaps in the Mux{} ..?
 
 import (
+	"errors"
 	"log"
 	"sort"
 	"strings"
@@ -18,7 +19,7 @@ type nodeTyp uint8
 
 const (
 	ntStatic   nodeTyp = iota // /home
-	ntRegexp                  // /:id([0-9]+)
+	ntRegexp                  // /:id([0-9]+) or #id^[0-9]+$
 	ntParam                   // /:user
 	ntCatchAll                // /api/v1/*
 )
@@ -92,8 +93,8 @@ func (n *node) addEdge(e edge) {
 			// hmm.. this wouldn't be an add tho.. it would be
 			// a replace if something exists.....
 			p = -1
-			e.node.prefix = "**"
-			goto woot
+			// e.node.prefix = "*"
+			// goto woot
 		} else {
 			p = strings.IndexByte(search, '/')
 		}
@@ -129,8 +130,8 @@ func (n *node) addEdge(e edge) {
 
 		if ntyp == ntCatchAll {
 			p = -1
-			e.node.prefix = "**"
-			goto woot
+			// e.node.prefix = "*"
+			// goto woot
 		} else {
 			p = strings.IndexByte(search, '/')
 		}
@@ -148,12 +149,13 @@ func (n *node) addEdge(e edge) {
 		e.node.addEdge(e2)
 	}
 
-woot:
+	// woot:
 
 	n.edges = append(n.edges, e)
 	n.edges.Sort()
 }
 
+// TODO: wildcard aware..?
 func (n *node) replaceEdge(e edge) {
 	num := len(n.edges)
 	for i := 0; i < num; i++ {
@@ -206,67 +208,82 @@ func (n *node) findEdge(minTyp nodeTyp, label byte) *node {
 	return nil
 }
 
-// TODO: this is a huge duplicate effort.. no good..
-func (n *node) findNode(minTyp nodeTyp, path string) *node {
+// TODO: we can find a few optimizations here..
+// TODO: rename to findPath ..? or findChildNode..?
+func (n *node) findNode(minTyp nodeTyp, path string, params map[string]string) *node {
 	nn := n
 	search := path
+
+	// log.Printf("\n\n======> SEARCH PATH %s\n", path)
 
 	for {
 		if len(search) == 0 {
 			if nn.isLeaf() {
+				// log.Printf("** FOUND NODE for path:%s - prefix:%s typ:%d\n", path, nn.prefix, nn.typ)
 				return nn
 			}
 			break
 		}
+
+		// log.Printf("==> SEARCH %s\n", search)
 
 		wn := nn.findEdge(ntStatic+1, search[0]) // wild node
 		nn = nn.findEdge(ntStatic, search[0])    // any node
 
 		if nn == nil && wn == nil {
 			// Found nothing at all
+			// log.Println("~~ nothing, 0 0")
 			break
 
 		} else if nn == nil && wn != nil {
 			// Found only a wild node
-			n = wn
+			// log.Println("~~ 0 static, 1 wild")
+			nn = wn
 
 		} else if nn == wn {
 			// Same, do nothing.
+			// log.Println("~~ nn == wn")
 
 		} else if nn != nil && wn != nil {
 			// Found both static and wild matching nodes
+			// log.Println("~~ 1 static, 1 wild")
+
+			// log.Printf("~~~~~> search:%s nn.prefix:%s wn.prefix:%s\n", search, nn.prefix, wn.prefix)
+
+			// TODO: needs optimization...
 
 			// ..attempts to get to the final node..
-			sn := nn.findNode(ntStatic, search[len(nn.prefix):])
 
-			// As static leaf couldn't be found, use the wild node
-			if sn == nil {
-				log.Println("sn == nil.. dont go static route")
-				nn = wn
+			// hmm, we wont need to do this if we know to not search nodes where static edges == 0
+			stsearch := search[len(nn.prefix):]
+			if stsearch != "" {
+				sn := nn.findNode(ntStatic, stsearch, params)
+
+				// As static leaf couldn't be found, use the wild node
+				if sn == nil {
+					// log.Println("sn == nil.. go wild")
+					nn = wn
+				}
 			}
 		}
 
-		// nn = nn.findEdge(ntStatic, search[0])
-		// if nn == nil {
-		// 	break
-		// }
-
 		if nn.typ > ntStatic {
-			// if n.prefix[0] == ':' { // .. or just check the n.typ > ntStatic ...
-
-			// log.Printf("!!!!!!!!!!!!!!!!!!!! typ:%d", n.typ)
+			// log.Printf("!!!!!!!!!!!!!!!!!!!! typ:%d", nn.typ)
 
 			p := -1
-			if n.typ != ntCatchAll {
+			if nn.typ != ntCatchAll {
 				p = strings.IndexByte(search, '/')
 			}
 			if p < 0 {
 				p = len(search)
 			}
-			// if params == nil {
-			// 	params = make(map[string]string, 1)
-			// }
-			// params[n.prefix[1:]] = search[:p]
+
+			if nn.typ == ntCatchAll {
+				params["*"] = search[:p]
+			} else {
+				params[nn.prefix[1:]] = search[:p]
+			}
+
 			search = search[p:]
 			continue
 		}
@@ -280,33 +297,6 @@ func (n *node) findNode(minTyp nodeTyp, path string) *node {
 	}
 	return nil
 }
-
-/*func (n *node) findStaticNode(path string) *node {
-	sn := n
-	search := path
-
-	for {
-		if len(search) == 0 {
-			if sn.isLeaf() {
-				return sn
-			}
-			break
-		}
-
-		sn = sn.findEdge(ntStatic, search[0])
-		if sn == nil {
-			break
-		}
-
-		// Consume the search prefix
-		if strings.HasPrefix(search, sn.prefix) {
-			search = search[len(sn.prefix):]
-		} else {
-			break
-		}
-	}
-	return nil
-}*/
 
 type edges []edge
 
@@ -350,7 +340,7 @@ var insertcnt int = -1
 func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 
 	insertcnt += 1
-	// log.Println("")
+	log.Println("")
 	log.Printf("=> INSERT #%d %s\n", insertcnt, pattern)
 
 	var parent *node
@@ -374,10 +364,6 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 		// log.Printf("insert (%d): search[0] %s\n", iter, string(search[0]))
 		n = n.getEdge(search[0])
 
-		// if len(search) > 1 {
-		// 	log.Printf("cont'd insert, search[1] %s\n", string(search[1]))
-		// }
-
 		// No edge, create one
 		if n == nil {
 			// log.Printf("insert (%d): new edge, prefix %s\n", iter, search)
@@ -396,8 +382,11 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 
 		// log.Printf("insert (%d): prefix:%s\n", iter, n.prefix)
 
+		// TODO: perhaps we do something here about longest prefix..
+		// cuz, we just match up to until wildcard.. ya kno..?
+
 		// Determine longest prefix of the search key on match
-		commonPrefix := t.longestPrefix(search, n.prefix)
+		commonPrefix := t.longestPrefix2(search, n.prefix)
 		log.Printf("insert (%d): commonPrefix '%s' + '%s'\n", iter, search[:commonPrefix], search[commonPrefix:])
 		if commonPrefix == len(n.prefix) {
 			search = search[commonPrefix:]
@@ -475,7 +464,25 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 	return nil
 }
 
+// TODO: do we need to return error...?
 func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, error) {
+	// var params map[string]string
+	params := make(map[string]string, 0) // TODO: allocation?
+
+	// log.Println("tree Find", path)
+
+	node := t.root.findNode(ntStatic, path, params)
+
+	if node == nil || node.handler == nil { // TODO: || handler..?
+		log.Println("..not found.")
+		return nil, nil, errors.New("not found..")
+	}
+
+	// log.Println("found", path)
+	return node.handler, params, nil
+}
+
+/*func (t *tree) Find2(method methodTyp, path string) (Handler, map[string]string, error) {
 
 	var params map[string]string
 
@@ -528,13 +535,9 @@ func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, 
 
 			log.Printf("~~~~~> search:%s n.prefix:%s wn.prefix:%s\n", search, n.prefix, wn.prefix)
 
-			// ************ TODO TODO TODO TODO TODO TODO
-			// the problem is the findStaticNode ..
-			// or that we have 2 wild nodes.. something is up..
-			// for /admin/user//1 we should get the :id node
-			// and for /admin/xxxfsdfsfd we should get the * node
+			// We first look for the final leaf node by traversing the static edge
+			// of the current node.
 
-			// We first look for the final leaf node by traversing the static edges
 			// TODO: perhaps we can make a faster function that continues until
 			// it doesnt match, instead of going all the way. It can also return
 			// just a bool.
@@ -586,7 +589,7 @@ func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, 
 		}
 	}
 	return nil, params, nil
-}
+}*/
 
 // Walk is used to walk the tree
 func (t *tree) Walk(fn WalkFn) {
@@ -613,6 +616,20 @@ func (t *tree) recursiveWalk(n *node, fn WalkFn) bool {
 // longestPrefix finds the length of the shared prefix
 // of two strings
 func (t *tree) longestPrefix(k1, k2 string) int {
+	max := len(k1)
+	if l := len(k2); l < max {
+		max = l
+	}
+	var i int
+	for i = 0; i < max; i++ {
+		if k1[i] != k2[i] {
+			break
+		}
+	}
+	return i
+}
+
+func (t *tree) longestPrefix2(k1, k2 string) int {
 	max := len(k1)
 	if l := len(k2); l < max {
 		max = l

@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	emptyParams map[string]string
+	emptyParams = map[string]string{}
 )
 
 func TestTree(t *testing.T) {
@@ -23,11 +23,21 @@ func TestTree(t *testing.T) {
 	hArticleShowRelated := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hArticleShowOpts := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hArticleSlug := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hArticleByUser := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hUserList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hUserShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hAdminCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hAdminAppShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hAdminAppShowCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	// _ = hAdminCatchall
+	_ = hStub
+	_ = hAdminAppShow
+	_ = hAdminAppShowCatchall
+	_ = hUserList
+	_ = hUserShow
+	_ = hAdminCatchall
+	_ = hArticleShowRelated
+	_ = hArticleShowOpts
 
 	tr := &tree{root: &node{}}
 
@@ -37,26 +47,29 @@ func TestTree(t *testing.T) {
 	tr.Insert(mGET, "/favicon.ico", hFavicon)
 	tr.Insert(mGET, "/article", hArticleList)
 	// tr.Insert(mGET, "/article/", hArticleList) // redirect..?
+
 	tr.Insert(mGET, "/article/near", hArticleNear)
-	// tr.Insert(mGET, "/article/:sup", hStub) // will get overwritten as :id param
-	tr.Insert(mGET, "/article/:id", hArticleShow)
-	tr.Insert(mGET, "/article/:id", hArticleShow) // should overwrite, TODO: test single one of these..
-	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
-	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
-	tr.Insert(mGET, "/article/slug/:month/-/:day/-/:year", hArticleSlug)
-	// tr.Insert(mGET, "/article/:aa", hStub) // TODO: what does goji do..?
+	// tr.Insert(mGET, "/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
+	// tr.Insert(mGET, "/article/:id", hStub)
+	// tr.Insert(mGET, "/article/:id", hArticleShow)
+	tr.Insert(mGET, "/article/:id", hArticleShow)      // duplicate will have no effect
+	tr.Insert(mGET, "/article/@:user", hArticleByUser) // duplicate will have no effect
+	// tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
+	// tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
+	tr.Insert(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	tr.Insert(mGET, "/admin/user", hUserList)
+	// tr.Insert(mGET, "/admin/user", hUserList)
+	// tr.Insert(mGET, "/admin/user/", hStub) // will get replaced by next route
+	// tr.Insert(mGET, "/admin/user/", hUserList)
 
-	tr.Insert(mGET, "/admin/user/", hStub) // will get replaced
-	tr.Insert(mGET, "/admin/user/", hUserList)
-
-	tr.Insert(mGET, "/admin/user//:id", hUserShow)
+	// tr.Insert(mGET, "/admin/user//:id", hUserShow)
 	// tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 
-	// tr.Insert(mGET, "/admin/woot/*ff", hStub) // TODO: .. should work, but doesnt..
-	// tr.Insert(mGET, "/admin/*ff", hStub) // will get replaced...? like others..
-	tr.Insert(mGET, "/admin/*", hAdminCatchall)
+	// tr.Insert(mGET, "/admin/apps/:id", hAdminAppShow)             // TODO
+	// tr.Insert(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall) // TODO
+
+	// tr.Insert(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	// tr.Insert(mGET, "/admin/*", hAdminCatchall)
 
 	// tr.Insert(mGET, "/debug*", hStub) // TODO: should we support this..?
 
@@ -78,21 +91,22 @@ func TestTree(t *testing.T) {
 		{m: mGET, r: "/article/near", h: hArticleNear, p: emptyParams},
 		{m: mGET, r: "/article/neard", h: hArticleShow, p: map[string]string{"id": "neard"}},
 		{m: mGET, r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}},
-		{m: mGET, r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
-		{m: mGET, r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
-		{m: mGET, r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO: ...
-		{m: mGET, r: "/admin/user", h: hUserList, p: emptyParams},
-		{m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
-		// {m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm....
-		{m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
-		{m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
-		{m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
-	}
+		// {m: mGET, r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
+		{m: mGET, r: "/article/@peter", h: hArticleByUser, p: map[string]string{"user": "peter"}},
+		// {m: mGET, r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
 
-	// TEST CASE - TODO: .. hmm, so, while inserting a string,
-	// we need to check the prefix .. like /:x or /* or /:id(Y)
-	// if we do .. /ping/:id/hi and /ping/:sup/hi .. then :sup will overwrite..
-	// what if we have /ping/:id/hi and /ping/:sup/bye - the :id and :sup are considered like a single char?
+		// TODO ..
+		{m: mGET, r: "/article/slug/sept/-/4/2015", h: hArticleSlug, p: map[string]string{"month": "sept", "day": "4", "year": "2015"}},
+
+		// {m: mGET, r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO review goji?
+		// {m: mGET, r: "/admin/user", h: hUserList, p: emptyParams},
+		// {m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
+		// {m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm.... TODO, review
+		// {m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
+		// {m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
+		// {m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
+		// {m: mGET, r: "/admin/woot/joe/asdf", h: hStub, p: map[string]string{"*": "joe/asdf"}},
+	}
 
 	log.Println("~~~~~~~~~")
 	log.Println("~~~~~~~~~")
@@ -148,6 +162,6 @@ func BenchmarkXTreeGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// tr.Find(mGET, "/ping/123/456")
-		tr.Find(mGET, "/ping/123/456")
+		tr.Find(mGET, "/ping")
 	}
 }
