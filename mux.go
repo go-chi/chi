@@ -9,7 +9,7 @@ import (
 )
 
 type Mux struct {
-	mwStack []interface{}
+	mwstack []interface{}
 	routes  map[methodTyp]*tree
 
 	// can add rules here for how the mux should work..
@@ -18,11 +18,8 @@ type Mux struct {
 
 type methodTyp int
 
-// is there anything to this order.......?
 const (
-	// just make mALL as 1 ..? and 0 as mUNKNOWN
-
-	mCONNECT methodTyp = 1 << iota // flag?? ..
+	mCONNECT methodTyp = 1 << iota
 	mDELETE
 	mGET
 	mHEAD
@@ -31,15 +28,15 @@ const (
 	mPOST
 	mPUT
 	mTRACE
+
 	// We only natively support the methods above, but we pass through other
 	// methods. This constant pretty much only exists for the sake of mALL.
-	mIDK
+	mIDK // TODO: necessary?
 
 	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS | mPATCH |
 		mPOST | mPUT | mTRACE | mIDK
 )
 
-// [...]string{ ... } ? with .String() on `method` type..
 var methodMap = map[string]methodTyp{
 	"CONNECT": mCONNECT,
 	"DELETE":  mDELETE,
@@ -74,7 +71,7 @@ func (mx *Mux) Use(mw interface{}) {
 	case func(http.Handler) http.Handler:
 	case func(Handler) Handler:
 	}
-	mx.mwStack = append(mx.mwStack, mw)
+	mx.mwstack = append(mx.mwstack, mw)
 }
 
 func (mx *Mux) Handle(pattern string, handler interface{}) {
@@ -126,6 +123,7 @@ func (mx *Mux) Options(pattern string, handler interface{}) {
 func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
 	var cxh Handler
 
+	// TODO: move this to chainedHandler ...?
 	switch t := handler.(type) {
 	default:
 		panic(fmt.Sprintf("chi: unsupported handler signature: %T", t))
@@ -141,15 +139,8 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
 		})
 	}
 
-	// TODO: where does this middleware stack chain belong..?
-	// not here..
-	// Build handler with middleware chain
-	mws := mx.mwStack
-	h := mwrap(mws[len(mws)-1])(cxh)
-	for i := len(mws) - 2; i >= 0; i-- {
-		f := mwrap(mws[i])
-		h = f(h)
-	}
+	// Build handler from middleware chain
+	h := chainedHandler(mx.mwstack, cxh)
 
 	// ^^TODO^^ - write it for a single handler, and wrap the handlers
 	// at a higher level on the Router level.. the Mux is low-level..

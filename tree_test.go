@@ -165,7 +165,7 @@ func BenchmarkXTreeGet(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// tr.Find("/ping/123/456")
-		tr.Find("/ping")
+		tr.Find("/ping/123/456")
+		// tr.Find("/ping")
 	}
 }
