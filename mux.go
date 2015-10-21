@@ -10,7 +10,7 @@ import (
 
 type Mux struct {
 	mwStack []interface{}
-	routes  *tree
+	routes  map[methodTyp]*tree
 
 	// can add rules here for how the mux should work..
 	// ie. slashes, notfound handler etc.. like httprouter
@@ -161,14 +161,24 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
 		panic("pattern must begin with a /") // TODO: is goji like this too?
 	}
 
+	// where can we put this...?
 	if mx.routes == nil {
-		mx.routes = &tree{root: &node{}}
+		mx.routes = make(map[methodTyp]*tree, len(methodMap))
+		for _, v := range methodMap {
+			mx.routes[v] = &tree{root: &node{}}
+		}
 	}
 
-	// Add route
-	// log.Println("INSERT:", method, pattern)
-	err := mx.routes.Insert(method, pattern, h)
-	_ = err // ...?
+	// TODO: what does gin, httprouter, goji etc. do for supporting Handle() ..?
+	for _, mt := range methodMap {
+		m := method & mt
+		if m > 0 {
+			routes := mx.routes[m]
+
+			err := routes.Insert(pattern, h)
+			_ = err // ...?
+		}
+	}
 
 	// log.Println("insert, tree:")
 	// log.Println(mx.routes)
@@ -183,7 +193,8 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 	var err error
 	var params map[string]string
 
-	cxh, params, err = mx.routes.Find(methodMap[r.Method], r.URL.Path)
+	routes := mx.routes[methodMap[r.Method]]
+	cxh, params, err = routes.Find(r.URL.Path)
 
 	_ = err // ..
 

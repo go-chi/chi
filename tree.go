@@ -27,8 +27,6 @@ const (
 // WalkFn is used when walking the tree. Takes a
 // key and value, returning if iteration should
 // be terminated.
-// type WalkFn func(s string, v interface{}) bool
-// TODO: do we want to have method here..?
 type WalkFn func(path string, handler Handler) bool
 
 // edge is used to represent an edge node
@@ -332,7 +330,7 @@ type tree struct {
 var insertcnt int = -1
 
 // TODO: do we return an error or panic..? what does goji do..
-func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
+func (t *tree) Insert(pattern string, handler Handler) error {
 
 	insertcnt += 1
 	// log.Println("")
@@ -448,7 +446,7 @@ func (t *tree) Insert(method methodTyp, pattern string, handler Handler) error {
 }
 
 // TODO: do we need to return error...?
-func (t *tree) Find(method methodTyp, path string) (Handler, map[string]string, error) {
+func (t *tree) Find(path string) (Handler, map[string]string, error) {
 	// var params map[string]string
 	params := make(map[string]string, 0) // TODO: allocation?
 

@@ -44,37 +44,37 @@ func TestTree(t *testing.T) {
 
 	// TODO: add regexp
 
-	tr.Insert(mGET, "/", hIndex)
-	tr.Insert(mGET, "/favicon.ico", hFavicon)
-	tr.Insert(mGET, "/article", hArticleList)
-	tr.Insert(mGET, "/article/", hArticleList) // redirect..?
+	tr.Insert("/", hIndex)
+	tr.Insert("/favicon.ico", hFavicon)
+	tr.Insert("/article", hArticleList)
+	tr.Insert("/article/", hArticleList) // redirect..?
 
-	tr.Insert(mGET, "/article/near", hArticleNear)
-	// tr.Insert(mGET, "/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
-	tr.Insert(mGET, "/article/:id", hStub)
-	tr.Insert(mGET, "/article/:id", hArticleShow)
-	tr.Insert(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
-	tr.Insert(mGET, "/article/@:user", hArticleByUser)
+	tr.Insert("/article/near", hArticleNear)
+	// tr.Insert("/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
+	tr.Insert("/article/:id", hStub)
+	tr.Insert("/article/:id", hArticleShow)
+	tr.Insert("/article/:id", hArticleShow) // duplicate will have no effect
+	tr.Insert("/article/@:user", hArticleByUser)
 
-	tr.Insert(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
-	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
+	tr.Insert("/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
+	tr.Insert("/article/:id/:opts", hArticleShowOpts)
 
-	tr.Insert(mGET, "/article/:iffd/edit", hStub)
-	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
-	tr.Insert(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
+	tr.Insert("/article/:iffd/edit", hStub)
+	tr.Insert("/article/:id//related", hArticleShowRelated)
+	tr.Insert("/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	tr.Insert(mGET, "/admin/user", hUserList)
-	tr.Insert(mGET, "/admin/user/", hStub) // will get replaced by next route
-	tr.Insert(mGET, "/admin/user/", hUserList)
+	tr.Insert("/admin/user", hUserList)
+	tr.Insert("/admin/user/", hStub) // will get replaced by next route
+	tr.Insert("/admin/user/", hUserList)
 
-	tr.Insert(mGET, "/admin/user//:id", hUserShow)
-	tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+	tr.Insert("/admin/user//:id", hUserShow)
+	tr.Insert("/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 
-	tr.Insert(mGET, "/admin/apps/:id", hAdminAppShow)             // TODO
-	tr.Insert(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall) // TODO
+	tr.Insert("/admin/apps/:id", hAdminAppShow)             // TODO
+	tr.Insert("/admin/apps/:id/*ff", hAdminAppShowCatchall) // TODO
 
-	tr.Insert(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
-	tr.Insert(mGET, "/admin/*", hAdminCatchall)
+	tr.Insert("/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.Insert("/admin/*", hAdminCatchall)
 
 	// tr.Insert(mGET, "/debug*", hStub) // TODO: should we support this..?
 
@@ -119,7 +119,7 @@ func TestTree(t *testing.T) {
 	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
-		handler, params, _ := tr.Find(tt.m, tt.r)
+		handler, params, _ := tr.Find(tt.r)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: '%s %s' expecting handler:%v , got:%v", i, tt.m.String(), tt.r, tt.h, handler)
 		}
@@ -152,20 +152,20 @@ func BenchmarkXTreeGet(b *testing.B) {
 	h2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 
 	tr := &tree{root: &node{}}
-	tr.Insert(mGET, "/", h1)
-	tr.Insert(mGET, "/ping", h2)
-	tr.Insert(mGET, "/pingall", h2)
-	tr.Insert(mGET, "/ping/:id", h2)
-	tr.Insert(mGET, "/ping/:id/woop", h2)
-	tr.Insert(mGET, "/ping/:id/:opt", h2)
-	tr.Insert(mGET, "/pinggggg", h2)
-	tr.Insert(mGET, "/hello", h1)
+	tr.Insert("/", h1)
+	tr.Insert("/ping", h2)
+	tr.Insert("/pingall", h2)
+	tr.Insert("/ping/:id", h2)
+	tr.Insert("/ping/:id/woop", h2)
+	tr.Insert("/ping/:id/:opt", h2)
+	tr.Insert("/pinggggg", h2)
+	tr.Insert("/hello", h1)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		// tr.Find(mGET, "/ping/123/456")
-		tr.Find(mGET, "/ping")
+		// tr.Find("/ping/123/456")
+		tr.Find("/ping")
 	}
 }

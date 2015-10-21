@@ -52,13 +52,18 @@ func TestMux(t *testing.T) {
 	}
 
 	ping := func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "HEAD" {
-			w.Header().Set("X-Ping", "1")
-			w.WriteHeader(200)
-		} else {
-			w.WriteHeader(200)
-			w.Write([]byte("."))
-		}
+		w.WriteHeader(200)
+		w.Write([]byte("."))
+	}
+
+	headPing := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Ping", "1")
+		w.WriteHeader(200)
+	}
+
+	createPing := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		// create ....
+		w.WriteHeader(201)
 	}
 
 	pingAll := func(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +92,12 @@ func TestMux(t *testing.T) {
 	}
 	_ = pingWoop
 
+	catchAll := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte("catchall"))
+	}
+	_ = catchAll
+
 	m := New()
 	m.Use(countermw)
 	m.Use(usermw)
@@ -97,10 +108,14 @@ func TestMux(t *testing.T) {
 	m.Get("/pingall", pingAll) // .. TODO: pingAll, case-sensitivity .. etc....?
 	m.Get("/ping/all", pingAll)
 	m.Get("/ping/all2", pingAll2)
+
+	m.Head("/ping", headPing)
+	m.Post("/ping", createPing)
 	m.Get("/ping/:id", pingOne)
 	m.Get("/ping/:id", pingOne) // should overwrite.. and just be 1
 	m.Get("/ping/:id/woop", pingWoop)
-	// m.Head("/ping", ping)
+	m.Handle("/admin/*", catchAll)
+	// m.Post("/admin/*", catchAll)
 
 	//--
 
@@ -113,6 +128,8 @@ func TestMux(t *testing.T) {
 	//--
 
 	// return
+
+	// TODO: table-test a lot of this.........
 
 	ts := httptest.NewServer(m)
 	defer ts.Close()
@@ -321,17 +338,59 @@ func TestMux(t *testing.T) {
 	// log.Println("")
 
 	// HEAD /ping
-	// resp, err = http.Head(ts.URL + "/ping")
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	//
-	// if resp.StatusCode != 200 {
-	// 	t.Error("head failed, should be 200")
-	// }
-	//
-	// if resp.Header.Get("X-Ping") == "" {
-	// 	t.Error("expecting X-Ping header")
-	// }
+	resp, err = http.Head(ts.URL + "/ping")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode != 200 {
+		t.Error("head failed, should be 200")
+	}
+
+	if resp.Header.Get("X-Ping") == "" {
+		t.Error("expecting X-Ping header")
+	}
+
+	//---
+
+	// GET /admin/catch-this
+	resp, err = http.Get(ts.URL + "/admin/catch-thasdfsadfsfasfasfis")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Error("get failed, should be 200")
+	}
+
+	if string(body) != "catchall" {
+		t.Error("expecting response body: 'catchall'")
+	}
+
+	// POST /admin/catch-this
+	resp, err = http.Post(ts.URL+"/admin/casdfsadfs", "text/plain", bytes.NewReader([]byte{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Error("POST failed, should be 200")
+	}
+
+	if string(body) != "catchall" {
+		t.Error("expecting response body: 'catchall'")
+	}
 
 }
