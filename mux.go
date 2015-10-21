@@ -166,12 +166,12 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
 	}
 
 	// Add route
-	log.Println("INSERT:", method, pattern)
+	// log.Println("INSERT:", method, pattern)
 	err := mx.routes.Insert(method, pattern, h)
 	_ = err // ...?
 
-	log.Println("insert, tree:")
-	log.Println(mx.routes)
+	// log.Println("insert, tree:")
+	// log.Println(mx.routes)
 }
 
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {

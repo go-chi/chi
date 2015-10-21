@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -105,11 +104,11 @@ func TestMux(t *testing.T) {
 
 	//--
 
-	log.Println("~~~~~~~~~")
-	log.Println("~~~~~~~~~")
-	debugPrintTree(0, 0, m.routes.root, 0)
-	log.Println("~~~~~~~~~")
-	log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
+	// debugPrintTree(0, 0, m.routes.root, 0)
+	// log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
 
 	//--
 
@@ -118,10 +117,10 @@ func TestMux(t *testing.T) {
 	ts := httptest.NewServer(m)
 	defer ts.Close()
 
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /")
 
 	// GET /
 	resp, err := http.Get(ts.URL)
@@ -145,13 +144,13 @@ func TestMux(t *testing.T) {
 		t.Error("expecting log message from middlware:", logmsg)
 	}
 
-	log.Println("=> response:", string(body))
-	log.Println("")
-
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /ping")
+	// log.Println("=> response:", string(body))
+	// log.Println("")
+	//
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /ping")
 
 	// GET /ping
 	resp, err = http.Get(ts.URL + "/ping")
@@ -169,8 +168,8 @@ func TestMux(t *testing.T) {
 		t.Error("expecting response body: .")
 	}
 
-	log.Println("=> response:", string(body))
-	log.Println("")
+	// log.Println("=> response:", string(body))
+	// log.Println("")
 
 	// GET / pingall
 	resp, err = http.Get(ts.URL + "/pingall")
@@ -188,12 +187,12 @@ func TestMux(t *testing.T) {
 		t.Error("expecting response body: .")
 	}
 
-	log.Println("=> response:", string(body))
+	// log.Println("=> response:", string(body))
 
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /ping/all")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /ping/all")
 
 	// GET / ping/all
 	// TODO: this should be possible, as /all would be a known, set route and take precedence..
@@ -218,12 +217,12 @@ func TestMux(t *testing.T) {
 		t.Error("expecting response body: 'ping all'")
 	}
 
-	log.Println("=> response:", string(body))
-
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /ping/all2")
+	// log.Println("=> response:", string(body))
+	//
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /ping/all2")
 
 	// GET /ping/all2
 	resp, err = http.Get(ts.URL + "/ping/all2")
@@ -243,13 +242,13 @@ func TestMux(t *testing.T) {
 		t.Errorf("expecting response body: '%s'", expectedBody)
 	}
 
-	log.Printf("=> response: '%s'\n", string(body))
-	log.Println("")
-
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /ping/123")
+	// log.Printf("=> response: '%s'\n", string(body))
+	// log.Println("")
+	//
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /ping/123")
 
 	// GET /ping/123
 	resp, err = http.Get(ts.URL + "/ping/123")
@@ -269,13 +268,13 @@ func TestMux(t *testing.T) {
 		t.Errorf("expecting response body: '%s'", expectedBody)
 	}
 
-	log.Printf("=> response: '%s'\n", string(body))
-	log.Println("")
-
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /ping/allan")
+	// log.Printf("=> response: '%s'\n", string(body))
+	// log.Println("")
+	//
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /ping/allan")
 
 	// GET /ping/allan
 	resp, err = http.Get(ts.URL + "/ping/allan")
@@ -294,13 +293,13 @@ func TestMux(t *testing.T) {
 		t.Errorf("expecting response body: '%s'", expectedBody)
 	}
 
-	log.Printf("=> response: '%s'\n", string(body))
-	log.Println("")
-
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~")
-	log.Println("~~~~~~~~~~~ GET /ping/1/woop")
+	// log.Printf("=> response: '%s'\n", string(body))
+	// log.Println("")
+	//
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~")
+	// log.Println("~~~~~~~~~~~ GET /ping/1/woop")
 
 	// GET /ping/1/woop
 	resp, err = http.Get(ts.URL + "/ping/1/woop")
@@ -318,8 +317,8 @@ func TestMux(t *testing.T) {
 		t.Error("expecting response body: 'woop.'")
 	}
 
-	log.Println("=> response:", string(body))
-	log.Println("")
+	// log.Println("=> response:", string(body))
+	// log.Println("")
 
 	// HEAD /ping
 	// resp, err = http.Head(ts.URL + "/ping")

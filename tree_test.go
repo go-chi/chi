@@ -38,6 +38,7 @@ func TestTree(t *testing.T) {
 	_ = hAdminCatchall
 	_ = hArticleShowRelated
 	_ = hArticleShowOpts
+	_ = hArticleSlug
 
 	tr := &tree{root: &node{}}
 
@@ -46,30 +47,34 @@ func TestTree(t *testing.T) {
 	tr.Insert(mGET, "/", hIndex)
 	tr.Insert(mGET, "/favicon.ico", hFavicon)
 	tr.Insert(mGET, "/article", hArticleList)
-	// tr.Insert(mGET, "/article/", hArticleList) // redirect..?
+	tr.Insert(mGET, "/article/", hArticleList) // redirect..?
 
 	tr.Insert(mGET, "/article/near", hArticleNear)
 	// tr.Insert(mGET, "/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
-	// tr.Insert(mGET, "/article/:id", hStub)
-	// tr.Insert(mGET, "/article/:id", hArticleShow)
-	tr.Insert(mGET, "/article/:id", hArticleShow)      // duplicate will have no effect
-	tr.Insert(mGET, "/article/@:user", hArticleByUser) // duplicate will have no effect
-	// tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
-	// tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
+	tr.Insert(mGET, "/article/:id", hStub)
+	tr.Insert(mGET, "/article/:id", hArticleShow)
+	tr.Insert(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
+	tr.Insert(mGET, "/article/@:user", hArticleByUser)
+
+	tr.Insert(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
+	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
+
+	tr.Insert(mGET, "/article/:iffd/edit", hStub)
+	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
 	tr.Insert(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	// tr.Insert(mGET, "/admin/user", hUserList)
-	// tr.Insert(mGET, "/admin/user/", hStub) // will get replaced by next route
-	// tr.Insert(mGET, "/admin/user/", hUserList)
+	tr.Insert(mGET, "/admin/user", hUserList)
+	tr.Insert(mGET, "/admin/user/", hStub) // will get replaced by next route
+	tr.Insert(mGET, "/admin/user/", hUserList)
 
-	// tr.Insert(mGET, "/admin/user//:id", hUserShow)
-	// tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+	tr.Insert(mGET, "/admin/user//:id", hUserShow)
+	tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 
-	// tr.Insert(mGET, "/admin/apps/:id", hAdminAppShow)             // TODO
-	// tr.Insert(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall) // TODO
+	tr.Insert(mGET, "/admin/apps/:id", hAdminAppShow)             // TODO
+	tr.Insert(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall) // TODO
 
-	// tr.Insert(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
-	// tr.Insert(mGET, "/admin/*", hAdminCatchall)
+	tr.Insert(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.Insert(mGET, "/admin/*", hAdminCatchall)
 
 	// tr.Insert(mGET, "/debug*", hStub) // TODO: should we support this..?
 
@@ -87,32 +92,31 @@ func TestTree(t *testing.T) {
 		{m: mGET, r: "/", h: hIndex, p: emptyParams},
 		{m: mGET, r: "/favicon.ico", h: hFavicon, p: emptyParams},
 		{m: mGET, r: "/article", h: hArticleList, p: emptyParams},
-		// {m: mGET, r: "/article/", h: hArticleList, p: emptyParams},
+		{m: mGET, r: "/article/", h: hArticleList, p: emptyParams},
 		{m: mGET, r: "/article/near", h: hArticleNear, p: emptyParams},
 		{m: mGET, r: "/article/neard", h: hArticleShow, p: map[string]string{"id": "neard"}},
 		{m: mGET, r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}},
-		// {m: mGET, r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
+		{m: mGET, r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
 		{m: mGET, r: "/article/@peter", h: hArticleByUser, p: map[string]string{"user": "peter"}},
-		// {m: mGET, r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
-
-		// TODO ..
+		{m: mGET, r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
+		{m: mGET, r: "/article/111/edit", h: hStub, p: map[string]string{"id": "111"}},
 		{m: mGET, r: "/article/slug/sept/-/4/2015", h: hArticleSlug, p: map[string]string{"month": "sept", "day": "4", "year": "2015"}},
-
-		// {m: mGET, r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO review goji?
-		// {m: mGET, r: "/admin/user", h: hUserList, p: emptyParams},
-		// {m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
-		// {m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm.... TODO, review
-		// {m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
-		// {m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
-		// {m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
-		// {m: mGET, r: "/admin/woot/joe/asdf", h: hStub, p: map[string]string{"*": "joe/asdf"}},
+		{m: mGET, r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO review goji?
+		{m: mGET, r: "/admin/user", h: hUserList, p: emptyParams},
+		{m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
+		{m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm.... TODO, review
+		{m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
+		{m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
+		{m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
+		{m: mGET, r: "/admin/apps/333", h: hAdminAppShow, p: map[string]string{"id": "333"}},
+		{m: mGET, r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, p: map[string]string{"id": "333", "*": "woot"}},
 	}
 
-	log.Println("~~~~~~~~~")
-	log.Println("~~~~~~~~~")
-	debugPrintTree(0, 0, tr.root, 0)
-	log.Println("~~~~~~~~~")
-	log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
+	// debugPrintTree(0, 0, tr.root, 0)
+	// log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
 		handler, params, _ := tr.Find(tt.m, tt.r)
