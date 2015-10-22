@@ -9,8 +9,8 @@ import (
 )
 
 type Mux struct {
-	mwstack []interface{}
-	routes  map[methodTyp]*tree
+	middlewares []interface{}
+	routes      map[methodTyp]*tree
 
 	// can add rules here for how the mux should work..
 	// ie. slashes, notfound handler etc.. like httprouter
@@ -61,98 +61,78 @@ func (m methodTyp) String() string {
 type ctxKey int
 
 const (
-	urlParamsCtxKey ctxKey = 0
+	urlParamsCtxKey ctxKey = iota
+	subRouterCtxKey
 )
 
-func (mx *Mux) Use(mw interface{}) {
-	switch t := mw.(type) {
-	default:
-		panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
-	case func(http.Handler) http.Handler:
-	case func(Handler) Handler:
-	}
-	mx.mwstack = append(mx.mwstack, mw)
-}
-
-func (mx *Mux) Handle(pattern string, handler interface{}) {
-	mx.handle(mALL, pattern, handler)
-}
-
-func (mx *Mux) Connect(pattern string, handler interface{}) {
-	mx.handle(mCONNECT, pattern, handler)
-}
-
-func (mx *Mux) Head(pattern string, handler interface{}) {
-	mx.handle(mHEAD, pattern, handler)
-}
-
-func (mx *Mux) Get(pattern string, handler interface{}) {
-	mx.handle(mGET, pattern, handler)
-}
-
-func (mx *Mux) Post(pattern string, handler interface{}) {
-	mx.handle(mPOST, pattern, handler)
-}
-
-func (mx *Mux) Put(pattern string, handler interface{}) {
-	mx.handle(mPUT, pattern, handler)
-}
-
-func (mx *Mux) Patch(pattern string, handler interface{}) {
-	mx.handle(mPATCH, pattern, handler)
-}
-
-func (mx *Mux) Delete(pattern string, handler interface{}) {
-	mx.handle(mDELETE, pattern, handler)
-}
-
-func (mx *Mux) Trace(pattern string, handler interface{}) {
-	mx.handle(mTRACE, pattern, handler)
-}
-
-func (mx *Mux) Options(pattern string, handler interface{}) {
-	mx.handle(mOPTIONS, pattern, handler)
-}
-
-// ..?
-// func (m *Mux) XHandle(pattern string, handler Handler) {}
-// func (m *Mux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {}
-// func (m *Mux) XHandleFunc(pattern string, handler func(context.Context, http.ResponseWriter, *http.Request)) {}
-
-// handle(), handleAny()  ....?
-func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
-	var cxh Handler
-
-	// TODO: move this to chainedHandler ...?
-	switch t := handler.(type) {
-	default:
-		panic(fmt.Sprintf("chi: unsupported handler signature: %T", t))
-		// case http.Handler:
-		// TODO: accept http.Handler too .. will have to get wrapped..
-	case Handler:
-		cxh = t
-	case func(context.Context, http.ResponseWriter, *http.Request):
-		cxh = HandlerFunc(t)
-	case func(http.ResponseWriter, *http.Request):
-		cxh = HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			t(w, r)
-		})
+func (mx *Mux) Use(mws ...interface{}) {
+	for _, mw := range mws {
+		switch t := mw.(type) {
+		default:
+			panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
+		case func(http.Handler) http.Handler:
+		case func(Handler) Handler:
+		}
+		mx.middlewares = append(mx.middlewares, mw)
 	}
 
-	// Build handler from middleware chain
-	h := chainedHandler(mx.mwstack, cxh)
+	// switch t := mw.(type) {
+	// default:
+	// 	panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
+	// case func(http.Handler) http.Handler:
+	// case func(Handler) Handler:
+	// }
+	// mx.middlewares = append(mx.middlewares, mw)
+}
 
-	// ^^TODO^^ - write it for a single handler, and wrap the handlers
-	// at a higher level on the Router level.. the Mux is low-level..
-	// we can make CMux{} if we want.. for static typed Ctx based mux.. etc.
+func (mx *Mux) Handle(pattern string, handlers ...interface{}) {
+	mx.handle(mALL, pattern, handlers...)
+}
 
-	//----------------
+func (mx *Mux) Connect(pattern string, handlers ...interface{}) {
+	mx.handle(mCONNECT, pattern, handlers...)
+}
+
+func (mx *Mux) Head(pattern string, handlers ...interface{}) {
+	mx.handle(mHEAD, pattern, handlers...)
+}
+
+func (mx *Mux) Get(pattern string, handlers ...interface{}) {
+	mx.handle(mGET, pattern, handlers...)
+}
+
+func (mx *Mux) Post(pattern string, handlers ...interface{}) {
+	mx.handle(mPOST, pattern, handlers...)
+}
+
+func (mx *Mux) Put(pattern string, handlers ...interface{}) {
+	mx.handle(mPUT, pattern, handlers...)
+}
+
+func (mx *Mux) Patch(pattern string, handlers ...interface{}) {
+	mx.handle(mPATCH, pattern, handlers...)
+}
+
+func (mx *Mux) Delete(pattern string, handlers ...interface{}) {
+	mx.handle(mDELETE, pattern, handlers...)
+}
+
+func (mx *Mux) Trace(pattern string, handlers ...interface{}) {
+	mx.handle(mTRACE, pattern, handlers...)
+}
+
+func (mx *Mux) Options(pattern string, handlers ...interface{}) {
+	mx.handle(mOPTIONS, pattern, handlers...)
+}
+
+func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
+	// Build handler from middleware stack, inline middlewares and handler
+	h := chain(mx.middlewares, handlers...)
 
 	if pattern[0] != '/' {
 		panic("pattern must begin with a /") // TODO: is goji like this too?
 	}
 
-	// where can we put this...?
 	if mx.routes == nil {
 		mx.routes = make(map[methodTyp]*tree, len(methodMap))
 		for _, v := range methodMap {
@@ -160,7 +140,6 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
 		}
 	}
 
-	// TODO: what does gin, httprouter, goji etc. do for supporting Handle() ..?
 	for _, mt := range methodMap {
 		m := method & mt
 		if m > 0 {
@@ -170,9 +149,61 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler interface{}) {
 			_ = err // ...?
 		}
 	}
+}
 
-	// log.Println("insert, tree:")
-	// log.Println(mx.routes)
+func (mx *Mux) Group(fn func(r Router)) Router {
+	mw := make([]interface{}, len(mx.middlewares))
+	copy(mw, mx.middlewares)
+
+	g := &Mux{middlewares: mw, routes: mx.routes}
+	if fn != nil {
+		fn(g)
+	}
+	return g
+}
+
+func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
+	subRouter := NewRouter()
+	mx.Mount(pattern, subRouter)
+	if fn != nil {
+		fn(subRouter)
+	}
+	return subRouter
+}
+
+func (mx *Mux) Mount(path string, handlers ...interface{}) {
+	h := chain([]interface{}{}, handlers...)
+
+	// subRouterIndex := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// 	params := URLParams(ctx)
+	// 	params["*"] = ""
+	// 	ctx = context.WithValue(ctx, urlParamsCtxKey, params)
+	// 	h.ServeHTTPC(ctx, w, r)
+	// })
+	// _ = subRouterIndex
+
+	subRouter := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		path := URLParams(ctx)["*"]
+
+		xx := URLParams(ctx)["accountID"]
+		log.Printf("====> subRouter path:'%s' xx:'%s' params:%v\n", path, xx, URLParams(ctx))
+
+		ctx = context.WithValue(ctx, subRouterCtxKey, "/"+path)
+		h.ServeHTTPC(ctx, w, r)
+	})
+
+	if path == "/" {
+		path = ""
+	}
+
+	log.Printf("path is '%s'\n", path)
+
+	// mx.Get(path, subRouter) // subRouterIndex ...? wrap .. set * to "" ....?
+	mx.Handle(path, subRouter)
+	if path != "" {
+		mx.Handle(path+"/", http.NotFound) // TODO: which not-found handler..?
+	}
+	mx.Handle(path+"/*", subRouter)
 }
 
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -182,29 +213,38 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	var cxh Handler
 	var err error
-	var params map[string]string
+
+	params, ok := ctx.Value(urlParamsCtxKey).(map[string]string) // ..?
+	if !ok || params == nil {
+		params = make(map[string]string, 0)
+		ctx = context.WithValue(ctx, urlParamsCtxKey, params)
+	}
+
+	log.Println("")
+	log.Println("")
 
 	routes := mx.routes[methodMap[r.Method]]
-	cxh, params, err = routes.Find(r.URL.Path)
 
+	path := r.URL.Path
+	if routePath, ok := ctx.Value(subRouterCtxKey).(string); ok {
+		path = routePath
+		ctx = context.WithValue(ctx, subRouterCtxKey, nil) // unset the routePath
+		delete(params, "*")
+	}
+
+	log.Println("routePath:", path)
+	cxh, err = routes.Find(path, params)
 	_ = err // ..
 
-	// we give you the path.. and you give us
-	// the route, urlparams?, and handler.
-	// -> the returned handler will come wrapped
-	// with the necessary middleware to call it.
+	log.Println("********* CXH:", cxh)
 
 	if cxh == nil {
 		// not found..
 		log.Println("** 404 **")
 		w.WriteHeader(404)
-		w.Write([]byte("not found"))
+		w.Write([]byte("~~ not found ~~"))
 		return
-		// panic("not found..")
 	}
-
-	// set if we have some params...? or always set...?
-	ctx = context.WithValue(ctx, urlParamsCtxKey, params)
 
 	// Serve it
 	cxh.ServeHTTPC(ctx, w, r)

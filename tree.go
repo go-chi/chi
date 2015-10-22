@@ -446,21 +446,17 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 }
 
 // TODO: do we need to return error...?
-func (t *tree) Find(path string) (Handler, map[string]string, error) {
-	// var params map[string]string
-	params := make(map[string]string, 0) // TODO: allocation?
-
+func (t *tree) Find(path string, params map[string]string) (Handler, error) {
 	// log.Println("tree Find", path)
-
 	node := t.root.findNode(ntStatic, path, params)
 
 	if node == nil || node.handler == nil { // TODO: || handler..?
 		// log.Println("..not found.")
-		return nil, nil, errors.New("not found..")
+		return nil, errors.New("not found..")
 	}
 
 	// log.Println("found", path)
-	return node.handler, params, nil
+	return node.handler, nil
 }
 
 // Walk is used to walk the tree

@@ -119,7 +119,8 @@ func TestTree(t *testing.T) {
 	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
-		handler, params, _ := tr.Find(tt.r)
+		params := make(map[string]string, 0)
+		handler, _ := tr.Find(tt.r, params)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: '%s %s' expecting handler:%v , got:%v", i, tt.m.String(), tt.r, tt.h, handler)
 		}
@@ -165,7 +166,8 @@ func BenchmarkXTreeGet(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		tr.Find("/ping/123/456")
-		// tr.Find("/ping")
+		var params map[string]string
+		// tr.Find("/ping/123/456", params)
+		tr.Find("/ping", params)
 	}
 }

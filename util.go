@@ -7,17 +7,53 @@ import (
 	"golang.org/x/net/context"
 )
 
-// TODO: return error too?
-// TODO: make handler accept interface{} and check type here..?
-func chainedHandler(middlewares []interface{}, handler Handler) Handler {
-	if len(middlewares) == 0 {
-		return handler
+// TODO: move the middleware and handler type checking to separate functions
+func chain(middlewares []interface{}, handlers ...interface{}) Handler {
+	// join a middleware stack with inline middlewares
+	mws := append(middlewares, handlers[:len(handlers)-1]...)
+
+	// request handler
+	handler := handlers[len(handlers)-1]
+
+	// Verify the types of the middleware chain
+	for _, mw := range mws {
+		switch t := mw.(type) {
+		default:
+			panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
+		case func(http.Handler) http.Handler:
+		case func(Handler) Handler:
+		}
 	}
-	h := mwrap(middlewares[len(middlewares)-1])(handler)
-	for i := len(middlewares) - 2; i >= 0; i-- {
-		f := mwrap(middlewares[i])
+
+	// Set the request handler to a context handler type
+	var cxh Handler
+	switch t := handler.(type) {
+	default:
+		panic(fmt.Sprintf("chi: unsupported handler signature: %T", t))
+		// case http.Handler:
+		// TODO: accept http.Handler too .. will have to get wrapped..
+	case Handler:
+		cxh = t
+	case func(context.Context, http.ResponseWriter, *http.Request):
+		cxh = HandlerFunc(t)
+	case func(http.ResponseWriter, *http.Request):
+		cxh = HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+			t(w, r)
+		})
+	}
+
+	// Return ahead of time if there aren't any middlewares for the chain
+	if len(mws) == 0 {
+		return cxh
+	}
+
+	// Wrap the end handler with the middleware chain
+	h := mwrap(mws[len(mws)-1])(cxh)
+	for i := len(mws) - 2; i >= 0; i-- {
+		f := mwrap(mws[i])
 		h = f(h)
 	}
+
 	return h
 }
 
