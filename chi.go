@@ -6,37 +6,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-/*
-m := chi.New()
-chi.Router ......
-*/
-
-// TODO: add Router interface here......
-
-// indeed... we accept multiple routers.. cji style :) whoop.
-type Router interface {
-	http.Handler
-	Handler
-
-	Use(middlewares ...interface{})
-	Group(fn func(r Router)) Router
-	Route(pattern string, fn func(r Router)) Router
-	Mount(path string, handlers ...interface{})
-
-	Handle(pattern string, handlers ...interface{})
-	Connect(pattern string, handlers ...interface{}) // ??...
-	Head(pattern string, handlers ...interface{})
-	Get(pattern string, handlers ...interface{})
-	Post(pattern string, handlers ...interface{})
-	Put(pattern string, handlers ...interface{})
-	Patch(pattern string, handlers ...interface{})
-	Delete(pattern string, handlers ...interface{})
-	Trace(pattern string, handlers ...interface{})
-	Options(pattern string, handlers ...interface{})
-}
-
-var _ Router = &Mux{}
-
 // TODO: New() can create a new router with defaults.. ie slashes etc. logger mw, etc.
 // TODO: NewRouter() will create a barebones router..
 
@@ -52,10 +21,32 @@ func URLParams(ctx context.Context) map[string]string {
 	if urlParams, ok := ctx.Value(urlParamsCtxKey).(map[string]string); ok {
 		return urlParams
 	}
-	return map[string]string{} // TODO: or return emptyURLParams ...?
+	return map[string]string{}
 }
 
-// NOTE: .......
+type Router interface {
+	http.Handler
+	Handler
+
+	Use(middlewares ...interface{})
+	Group(fn func(r Router)) Router
+	Route(pattern string, fn func(r Router)) Router
+	Mount(path string, handlers ...interface{})
+
+	Handle(pattern string, handlers ...interface{})
+	Connect(pattern string, handlers ...interface{})
+	Head(pattern string, handlers ...interface{})
+	Get(pattern string, handlers ...interface{})
+	Post(pattern string, handlers ...interface{})
+	Put(pattern string, handlers ...interface{})
+	Patch(pattern string, handlers ...interface{})
+	Delete(pattern string, handlers ...interface{})
+	Trace(pattern string, handlers ...interface{})
+	Options(pattern string, handlers ...interface{})
+}
+
+// NOTE: ....... will be switching to stdlib net/context signature
+// as soon as its available (sometime in 2016 in Go 1.7)
 
 // Handler is like net/http's http.Handler, but also includes a
 // mechanism for serving requests with a context.

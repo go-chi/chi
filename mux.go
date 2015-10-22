@@ -8,6 +8,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+var _ Router = &Mux{}
+
 type Mux struct {
 	middlewares []interface{}
 	routes      map[methodTyp]*tree
@@ -29,12 +31,8 @@ const (
 	mPUT
 	mTRACE
 
-	// We only natively support the methods above, but we pass through other
-	// methods. This constant pretty much only exists for the sake of mALL.
-	mIDK // TODO: necessary?
-
-	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS | mPATCH |
-		mPOST | mPUT | mTRACE | mIDK
+	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
+		mPATCH | mPOST | mPUT | mTRACE
 )
 
 var methodMap = map[string]methodTyp{
@@ -66,6 +64,7 @@ const (
 )
 
 func (mx *Mux) Use(mws ...interface{}) {
+	// TODO: dupe..
 	for _, mw := range mws {
 		switch t := mw.(type) {
 		default:
@@ -75,14 +74,6 @@ func (mx *Mux) Use(mws ...interface{}) {
 		}
 		mx.middlewares = append(mx.middlewares, mw)
 	}
-
-	// switch t := mw.(type) {
-	// default:
-	// 	panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
-	// case func(http.Handler) http.Handler:
-	// case func(Handler) Handler:
-	// }
-	// mx.middlewares = append(mx.middlewares, mw)
 }
 
 func (mx *Mux) Handle(pattern string, handlers ...interface{}) {
@@ -174,20 +165,8 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 func (mx *Mux) Mount(path string, handlers ...interface{}) {
 	h := chain([]interface{}{}, handlers...)
 
-	// subRouterIndex := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	// 	params := URLParams(ctx)
-	// 	params["*"] = ""
-	// 	ctx = context.WithValue(ctx, urlParamsCtxKey, params)
-	// 	h.ServeHTTPC(ctx, w, r)
-	// })
-	// _ = subRouterIndex
-
 	subRouter := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		path := URLParams(ctx)["*"]
-
-		xx := URLParams(ctx)["accountID"]
-		log.Printf("====> subRouter path:'%s' xx:'%s' params:%v\n", path, xx, URLParams(ctx))
-
 		ctx = context.WithValue(ctx, subRouterCtxKey, "/"+path)
 		h.ServeHTTPC(ctx, w, r)
 	})
@@ -196,9 +175,6 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 		path = ""
 	}
 
-	log.Printf("path is '%s'\n", path)
-
-	// mx.Get(path, subRouter) // subRouterIndex ...? wrap .. set * to "" ....?
 	mx.Handle(path, subRouter)
 	if path != "" {
 		mx.Handle(path+"/", http.NotFound) // TODO: which not-found handler..?
@@ -214,16 +190,11 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 	var cxh Handler
 	var err error
 
-	params, ok := ctx.Value(urlParamsCtxKey).(map[string]string) // ..?
+	params, ok := ctx.Value(urlParamsCtxKey).(map[string]string)
 	if !ok || params == nil {
 		params = make(map[string]string, 0)
 		ctx = context.WithValue(ctx, urlParamsCtxKey, params)
 	}
-
-	log.Println("")
-	log.Println("")
-
-	routes := mx.routes[methodMap[r.Method]]
 
 	path := r.URL.Path
 	if routePath, ok := ctx.Value(subRouterCtxKey).(string); ok {
@@ -232,17 +203,13 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 		delete(params, "*")
 	}
 
-	log.Println("routePath:", path)
+	routes := mx.routes[methodMap[r.Method]]
 	cxh, err = routes.Find(path, params)
 	_ = err // ..
 
-	log.Println("********* CXH:", cxh)
-
 	if cxh == nil {
-		// not found..
 		log.Println("** 404 **")
-		w.WriteHeader(404)
-		w.Write([]byte("~~ not found ~~"))
+		http.NotFound(w, r)
 		return
 	}
 

@@ -7,11 +7,9 @@ chi
 
 * Path cleanup
 * Trailing slash
-* Subrouter
 * NotFound handler -- for 404's
 * ErrorHandler -- for 500's, ie. hook up a diff error page..
 * RequestTimeout stuff..?
-* Params.. chi.URLParams(ctx) ...? or chi.Params(ctx) ..?
 * Use GetForHead ...? (body?)
 
 

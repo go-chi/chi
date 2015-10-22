@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/pressly/chi"
@@ -17,7 +16,7 @@ func main() {
 
 	r.Use(func(h chi.Handler) chi.Handler {
 		return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			log.Println("~~ root middleware..")
+			// log.Println("~~ root middleware..")
 			h.ServeHTTPC(ctx, w, r)
 		})
 	})
@@ -47,7 +46,7 @@ func accountsRouter() chi.Router {
 		r.Use(sup2)
 
 		r.Get("/hi2", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			log.Println("hi2..", ctx.Value("sup2"))
+			// log.Println("hi2..", ctx.Value("sup2"))
 			w.Write([]byte("woot"))
 		})
 	})
@@ -57,7 +56,7 @@ func accountsRouter() chi.Router {
 		r.Use(accountCtx)
 		r.Get("/", getAccount)
 		r.Post("/", updateAccount)
-		r.Get("/*", other)
+		// r.Get("/*", other)
 	})
 
 	return r
@@ -65,7 +64,7 @@ func accountsRouter() chi.Router {
 
 func sup1(h chi.Handler) chi.Handler {
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		log.Println("sup1..")
+		// log.Println("sup1..")
 		// c.Env["sup1"] = "sup1"
 		ctx = context.WithValue(ctx, "sup1", "sup1")
 		h.ServeHTTPC(ctx, w, r)
@@ -75,7 +74,7 @@ func sup1(h chi.Handler) chi.Handler {
 
 func sup2(h chi.Handler) chi.Handler {
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		log.Println("sup2..")
+		// log.Println("sup2..")
 		// c.Env["sup2"] = "sup2"
 		ctx = context.WithValue(ctx, "sup2", "sup2")
 		h.ServeHTTPC(ctx, w, r)
@@ -85,7 +84,7 @@ func sup2(h chi.Handler) chi.Handler {
 
 func sup(h http.Handler) http.Handler {
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		log.Println("sup here..")
+		// log.Println("sup here..")
 		h.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(handler)
@@ -93,7 +92,7 @@ func sup(h http.Handler) http.Handler {
 
 func accountCtx(h chi.Handler) chi.Handler {
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		log.Println("accountCtx......", ctx)
+		// log.Println("accountCtx......", ctx)
 		// c.Env["account"] = "account 123"
 		ctx = context.WithValue(ctx, "account", "account 123")
 		h.ServeHTTPC(ctx, w, r)
@@ -102,12 +101,12 @@ func accountCtx(h chi.Handler) chi.Handler {
 }
 
 func listAccounts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	log.Println("list accounts")
+	// log.Println("list accounts")
 	w.Write([]byte("list accounts"))
 }
 
 func hiAccounts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	log.Println("hi accounts", ctx.Value("sup1"))
+	// log.Println("hi accounts", ctx.Value("sup1"))
 	w.Write([]byte("hi accounts"))
 }
 
@@ -116,16 +115,16 @@ func createAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAccount(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	log.Println("getAccount..")
+	// log.Println("getAccount..")
 	w.Write([]byte(fmt.Sprintf("get account --> %v %v", ctx.Value("account"), chi.URLParams(ctx)["accountID"])))
 }
 
 func updateAccount(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	log.Println("updateAccount..")
+	// log.Println("updateAccount..")
 	w.Write([]byte(fmt.Sprintf("update account --> %v %v", ctx.Value("account"), chi.URLParams(ctx)["accountID"])))
 }
 
 func other(w http.ResponseWriter, r *http.Request) {
-	log.Println("other..")
+	// log.Println("other..")
 	w.Write([]byte("."))
 }

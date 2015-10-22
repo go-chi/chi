@@ -324,10 +324,7 @@ type tree struct {
 	root *node
 }
 
-// TODO: I suppose we can have different trees depending on the method...?
-// For now, just assume method is always GET
-
-var insertcnt int = -1
+var insertcnt int = -1 // TODO: remove this..
 
 // TODO: do we return an error or panic..? what does goji do..
 func (t *tree) Insert(pattern string, handler Handler) error {
@@ -397,17 +394,11 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 			continue
 		}
 
-		// TODO: .......... ************ fix splitting node logic separately..
-		// right now, these are all new nodes..
-		// log.Printf("=========> SPLIT NODE.......... child.prefix:%s parent.prefix:%s\n", search[:commonPrefix], parent.prefix)
-		// log.Printf("=========> current node, n.prefix:%s n.typ:%d\n", n.prefix, n.typ)
-
 		// Split the node
 		child := &node{
 			typ:    ntStatic, // TODO: HMM.. will this always be static...?
 			prefix: search[:commonPrefix],
 		}
-		// log.Printf("insert (%d): split node, parentPrefix:%s, nodePrefix:%s, childPrefix:%s\n", iter, parent.prefix, n.prefix, child.prefix)
 		parent.replaceEdge(edge{
 			label: search[0],
 			node:  child,
@@ -420,18 +411,14 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 		})
 		n.prefix = n.prefix[commonPrefix:]
 
-		// log.Printf("=========> RESTORE NODE... child appends edge with prefix:%s\n", n.prefix)
-
 		// If the new key is a subset, add to to this node
 		search = search[commonPrefix:]
 		if len(search) == 0 {
-			// log.Println("*** new key is a subset.. set handler, move on..")
 			child.handler = handler
 			return nil
 		}
 
 		// Create a new edge for the node
-		// log.Printf("insert (%d): add new edge, label:%s nodePrefix:%s\n", iter, string(search[0]), search)
 		child.addEdge(edge{
 			label: search[0],
 			node: &node{
