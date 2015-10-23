@@ -1,7 +1,6 @@
 package chi
 
 import (
-	"fmt"
 	"net/http"
 
 	"golang.org/x/net/context"
@@ -63,15 +62,8 @@ const (
 )
 
 func (mx *Mux) Use(mws ...interface{}) {
-	// TODO: dupe..
 	for _, mw := range mws {
-		switch t := mw.(type) {
-		default:
-			panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
-		case func(http.Handler) http.Handler:
-		case func(Handler) Handler:
-		}
-		mx.middlewares = append(mx.middlewares, mw)
+		mx.middlewares = append(mx.middlewares, assertMiddleware(mw))
 	}
 }
 

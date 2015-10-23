@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-// TODO: move the middleware and handler type checking to separate functions
+// Build a chained chi.Handler from a list of middlewares
 func chain(middlewares []interface{}, handlers ...interface{}) Handler {
 	// join a middleware stack with inline middlewares
 	mws := append(middlewares, handlers[:len(handlers)-1]...)
@@ -15,14 +15,9 @@ func chain(middlewares []interface{}, handlers ...interface{}) Handler {
 	// request handler
 	handler := handlers[len(handlers)-1]
 
-	// Verify the types of the middleware chain
+	// Assert the types in the middleware chain
 	for _, mw := range mws {
-		switch t := mw.(type) {
-		default:
-			panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
-		case func(http.Handler) http.Handler:
-		case func(Handler) Handler:
-		}
+		assertMiddleware(mw)
 	}
 
 	// Set the request handler to a context handler type
@@ -81,4 +76,15 @@ func mwrap(middleware interface{}) func(Handler) Handler {
 		})
 	}
 	return mw
+}
+
+// Runtime type checking of the middleware signature
+func assertMiddleware(middleware interface{}) interface{} {
+	switch t := middleware.(type) {
+	default:
+		panic(fmt.Sprintf("chi: unsupported middleware signature: %T", t))
+	case func(http.Handler) http.Handler:
+	case func(Handler) Handler:
+	}
+	return middleware
 }

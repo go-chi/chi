@@ -430,21 +430,3 @@ func (t *tree) longestPrefix(k1, k2 string) int {
 	}
 	return i
 }
-
-// func WOOTrecursiveWalk(parent int, i int, n *node, label byte) bool {
-// 	if n.handler != nil {
-// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf(), n.handler)
-// 		// return true
-// 	} else {
-// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf())
-// 	}
-//
-// 	parent = i
-// 	for _, e := range n.edges {
-// 		i++
-// 		if WOOTrecursiveWalk(parent, i, e.node, e.label) {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }

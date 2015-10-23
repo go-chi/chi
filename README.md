@@ -17,7 +17,7 @@ scaled very well.
 
 ## Features
 
-* Lightweight - cloc`d in 598 LOC for the chi router
+* Lightweight - cloc`d in 573 LOC for the chi router
 * Fast - yes, benchmarks coming
 * Expressive routing - middleware stacks, inline middleware, groups, mount routers
 * Request context control (value chaining, deadlines and timeouts) - built on `net/context`
@@ -76,7 +76,7 @@ embrace the future stdlib. And... then, we have infinitely more middlewares to c
 * HTTP2 example
   * both http 1.1 and http2 automatically.. just turn it on :)
 * Websocket example
-* Regexp support in router ":num^[0-9]+$"
+* Regexp support in router "/:id([0-9]+)" or "#id^[0-9]+$" or ..
 * Middlewares: logger, recoverer, reqtimeout
 
 
