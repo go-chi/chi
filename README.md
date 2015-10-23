@@ -19,7 +19,7 @@ scaled very well.
 
 * Lightweight - cloc`d in 598 LOC for the chi router
 * Fast - yes, benchmarks coming
-* Expressive routing - middleware stacks, inline middleware, groups, sub router mounts
+* Expressive routing - middleware stacks, inline middleware, groups, mount routers
 * Request context control (value chaining, deadlines and timeouts) - built on `net/context`
 * Robust (tested, used in production)
 
@@ -47,6 +47,12 @@ embrace the future stdlib. And... then, we have infinitely more middlewares to c
 .. chi.Handler
 
 
+
+## Middlewares
+
+...
+
+
 ## Credits
 
 * Carl Jackson for https://github.com/zenazn/goji
@@ -70,6 +76,7 @@ embrace the future stdlib. And... then, we have infinitely more middlewares to c
 * HTTP2 example
   * both http 1.1 and http2 automatically.. just turn it on :)
 * Websocket example
+* Regexp support in router ":num^[0-9]+$"
 * Middlewares: logger, recoverer, reqtimeout
 
 

@@ -2,7 +2,6 @@ package chi
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"golang.org/x/net/context"
@@ -15,7 +14,7 @@ type Mux struct {
 	routes      map[methodTyp]*tree
 
 	// can add rules here for how the mux should work..
-	// ie. slashes, notfound handler etc.. like httprouter
+	// ie. slashes, case insensitive, notfound handler etc.. like httprouter
 }
 
 type methodTyp int
@@ -208,7 +207,6 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 	_ = err // ..
 
 	if cxh == nil {
-		log.Println("** 404 **")
 		http.NotFound(w, r)
 		return
 	}

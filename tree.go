@@ -4,13 +4,8 @@ package chi
 // Armon Dadgar in https://github.com/armon/go-radix/blob/master/radix.go
 // (MIT licensed)
 
-// TODO: case insensitive ..
-
-// TODO: trailing slash stuff...? perhaps in the Mux{} ..?
-
 import (
 	"errors"
-	"log"
 	"sort"
 	"strings"
 )
@@ -50,19 +45,15 @@ type node struct {
 	edges edges
 
 	// TODO: optimization, do we keep track of the number of wildEdges?
-	// nWildEdges int
+	// nWildEdges int // or nWildEdges bool
 }
 
 func (n *node) isLeaf() bool {
 	return n.handler != nil
 }
 
-// TODO: .. this method needs to recursively add nodes until its
-// done.. break apart on the wildcards ...
 func (n *node) addEdge(e edge) {
 	search := e.node.prefix
-
-	// log.Printf("addEdge(), search:%s\n", search)
 
 	// Find any wildcard segments
 	p := strings.IndexAny(search, ":*")
@@ -80,7 +71,6 @@ func (n *node) addEdge(e edge) {
 
 	if p == 0 {
 		// Path starts with a wildcard
-		// log.Printf("addEdge() p == 0, starts with wildcard\n")
 
 		handler := e.node.handler
 		e.node.typ = ntyp
@@ -97,9 +87,6 @@ func (n *node) addEdge(e edge) {
 
 		if p != len(search) {
 			// add edge for the remaining part, split the end.
-
-			// TODO: confirm.
-			// ie. e.node.prefix = ":hi/there", something else should define /:hi handler
 			e.node.handler = nil
 
 			search = search[p:]
@@ -116,7 +103,6 @@ func (n *node) addEdge(e edge) {
 
 	} else if p > 0 {
 		// Path has some wildcard
-		// log.Printf("addEdge() p > 0, path has some wildcard\n")
 
 		// starts with a static segment
 		handler := e.node.handler
@@ -139,7 +125,6 @@ func (n *node) addEdge(e edge) {
 
 	} else {
 		// Path is all static
-		// log.Printf("addEdge() p < 0, static\n")
 		e.node.typ = ntyp
 
 	}
@@ -148,7 +133,6 @@ func (n *node) addEdge(e edge) {
 	n.edges.Sort()
 }
 
-// TODO: wildcard aware..?
 func (n *node) replaceEdge(e edge) {
 	num := len(n.edges)
 	for i := 0; i < num; i++ {
@@ -192,77 +176,59 @@ func (n *node) findEdge(minTyp nodeTyp, label byte) *node {
 		return nil
 	}
 
-	// TODO: ... review..
 	if n.edges[idx].node.typ == ntStatic && n.edges[idx].label == label {
 		return n.edges[idx].node
-	} else if n.edges[idx].node.typ > ntStatic { // more match logic here...?
-		return n.edges[idx].node // good..? regexp..?
+	} else if n.edges[idx].node.typ > ntStatic {
+		return n.edges[idx].node
 	}
 	return nil
 }
 
-// TODO: we can find a few optimizations here..
-// TODO: rename to findPath ..? or findChildNode..?
 func (n *node) findNode(minTyp nodeTyp, path string, params map[string]string) *node {
 	nn := n
 	search := path
 
-	// log.Printf("\n\n======> SEARCH PATH %s\n", path)
-
 	for {
 		if len(search) == 0 {
 			if nn.isLeaf() {
-				// log.Printf("** FOUND NODE for path:%s - prefix:%s typ:%d\n", path, nn.prefix, nn.typ)
 				return nn
 			}
 			break
 		}
 
-		// log.Printf("==> SEARCH %s\n", search)
-
+		// TODO: optimization opportunity to not traverse wild path if there are no
+		// wild edges
 		wn := nn.findEdge(ntStatic+1, search[0]) // wild node
 		nn = nn.findEdge(ntStatic, search[0])    // any node
 
 		if nn == nil && wn == nil {
 			// Found nothing at all
-			// log.Println("~~ nothing, 0 0")
 			break
 
 		} else if nn == nil && wn != nil {
 			// Found only a wild node
-			// log.Println("~~ 0 static, 1 wild")
 			nn = wn
 
 		} else if nn == wn {
 			// Same, do nothing.
-			// log.Println("~~ nn == wn")
 
 		} else if nn != nil && wn != nil {
 			// Found both static and wild matching nodes
-			// log.Println("~~ 1 static, 1 wild")
 
-			// log.Printf("~~~~~> search:%s nn.prefix:%s wn.prefix:%s\n", search, nn.prefix, wn.prefix)
-
-			// TODO: needs optimization...
-
-			// ..attempts to get to the final node..
-
-			// hmm, we wont need to do this if we know to not search nodes where static edges == 0
+			// TODO: optimization opportunity
+			// Attempts to find the final node by going down the static path first
 			stsearch := search[len(nn.prefix):]
 			if stsearch != "" {
 				sn := nn.findNode(ntStatic, stsearch, params)
 
 				// As static leaf couldn't be found, use the wild node
 				if sn == nil {
-					// log.Println("sn == nil.. go wild")
 					nn = wn
 				}
 			}
 		}
 
 		if nn.typ > ntStatic {
-			// log.Printf("!!!!!!!!!!!!!!!!!!!! typ:%d", nn.typ)
-
 			p := -1
 			if nn.typ != ntCatchAll {
 				p = strings.IndexByte(search, '/')
@@ -324,24 +290,14 @@ type tree struct {
 	root *node
 }
 
-var insertcnt int = -1 // TODO: remove this..
-
 // TODO: do we return an error or panic..? what does goji do..
 func (t *tree) Insert(pattern string, handler Handler) error {
-
-	insertcnt += 1
-	// log.Println("")
-	// log.Printf("=> INSERT #%d %s\n", insertcnt, pattern)
 
 	var parent *node
 	n := t.root
 	search := pattern
 
-	iter := -1
-
 	for {
-		iter += 1
-
 		// Handle key exhaustion
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
@@ -351,12 +307,10 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 
 		// Look for the edge
 		parent = n
-		// log.Printf("insert (%d): search[0] %s\n", iter, string(search[0]))
 		n = n.getEdge(search[0])
 
 		// No edge, create one
 		if n == nil {
-			// log.Printf("insert (%d): new edge, prefix %s\n", iter, search)
 			e := edge{
 				label: search[0],
 				node: &node{
@@ -368,8 +322,6 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 
 			return nil
 		}
-
-		// log.Printf("insert (%d): ~~ search:%s n.prefix:%s n.typ:%d\n", iter, search, n.prefix, n.typ)
 
 		if n.typ > ntStatic {
 			// We found a wildcard node, meaning search path starts with
@@ -385,18 +337,16 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 		// Static node fall below here.
 		// Determine longest prefix of the search key on match.
 		commonPrefix := t.longestPrefix(search, n.prefix)
-		// log.Printf("insert (%d): commonPrefix %d '%s' + '%s'\n", iter, commonPrefix, search[:commonPrefix], search[commonPrefix:])
 		if commonPrefix == len(n.prefix) {
 			// the common prefix is as long as the current node's prefix we're attempting to insert.
 			// keep the search going.
 			search = search[commonPrefix:]
-			// log.Printf("insert (%d): commonPrefix == len('%s'), continue\n", iter, n.prefix)
 			continue
 		}
 
 		// Split the node
 		child := &node{
-			typ:    ntStatic, // TODO: HMM.. will this always be static...?
+			typ:    ntStatic,
 			prefix: search[:commonPrefix],
 		}
 		parent.replaceEdge(edge{
@@ -432,17 +382,14 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 	return nil
 }
 
-// TODO: do we need to return error...?
+// TODO: do we need to return error... or just return nil handler?
 func (t *tree) Find(path string, params map[string]string) (Handler, error) {
-	// log.Println("tree Find", path)
 	node := t.root.findNode(ntStatic, path, params)
 
-	if node == nil || node.handler == nil { // TODO: || handler..?
-		// log.Println("..not found.")
+	if node == nil || node.handler == nil {
 		return nil, errors.New("not found..")
 	}
 
-	// log.Println("found", path)
 	return node.handler, nil
 }
 
@@ -455,7 +402,7 @@ func (t *tree) Walk(fn WalkFn) {
 // recursively. Returns true if the walk should be aborted
 func (t *tree) recursiveWalk(n *node, fn WalkFn) bool {
 	// Visit the leaf values if any
-	if n.handler != nil && fn(n.prefix, n.handler) { // TODO ..... walkFn() ..?
+	if n.handler != nil && fn(n.prefix, n.handler) {
 		return true
 	}
 
@@ -484,20 +431,20 @@ func (t *tree) longestPrefix(k1, k2 string) int {
 	return i
 }
 
-func WOOTrecursiveWalk(parent int, i int, n *node, label byte) bool {
-	if n.handler != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf(), n.handler)
-		// return true
-	} else {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf())
-	}
-
-	parent = i
-	for _, e := range n.edges {
-		i++
-		if WOOTrecursiveWalk(parent, i, e.node, e.label) {
-			return true
-		}
-	}
-	return false
-}
+// func WOOTrecursiveWalk(parent int, i int, n *node, label byte) bool {
+// 	if n.handler != nil {
+// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf(), n.handler)
+// 		// return true
+// 	} else {
+// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf())
+// 	}
+//
+// 	parent = i
+// 	for _, e := range n.edges {
+// 		i++
+// 		if WOOTrecursiveWalk(parent, i, e.node, e.label) {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
