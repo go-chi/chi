@@ -1,16 +1,25 @@
 chi
 ===
 
-`chi` is an expressive, lightweight and fast HTTP mux/router for Go web services built on net/context.
-Chi is everything you need to build services from composable http handlers.
+`chi` is an expressive, small and fast HTTP mux/router for Go web services built on net/context.
+
+Chi encourages writing services by composing small handlers and middlewares with many or few routes.
+Each middleware is like a layer of an onion connected through a consistent interface (http.Handler or
+chi.Handler) and a context.Context argument that flows down the layers during a request's lifecycle.
+
+In order to get the most out of this pattern, chi's routing methods (Get, Post, Handle, Mount, etc.)
+support inline middlewares, middleware groups, and mounting (/composing) any chi router to another
+(a bushel of onions). We've designed the Pressly API (150+ routes/handlers) exactly like this and its
+scaled very well.
 
 ![alt tag](https://imgry.pressly.com/x/fetch?url=deeporigins-deeporiginsllc.netdna-ssl.com/wp-content/uploads/sites/4/2015/09/Tai_Chi2.jpg&size=800x)
 
+
 ## Features
 
-* Lightweight
-* Fast (yes, benchmarks coming)
-* Expressive routing: middleware stacks, inline middleware, groups, sub routes,
+* Lightweight - cloc`d in 598 LOC for the chi router
+* Fast - yes, benchmarks coming
+* Expressive routing - middleware stacks, inline middleware, groups, sub router mounts
 * Request context control (value chaining, deadlines and timeouts) - built on `net/context`
 * Robust (tested, used in production)
 
@@ -19,6 +28,33 @@ Chi is everything you need to build services from composable http handlers.
 --todo--
 
 see: _examples/simple
+
+
+## net/context?
+
+...
+
+
+## Router design
+
+.. radix, url params.. param, wildcard, regexp todo
+
+
+Designed for the future. We're hopefully that by Go 1.7 (in 2016), `net/context` will be in the Go stdlib
+and net/http will support context.Context natively, at which point we'll be updating the signatures to
+embrace the future stdlib. And... then, we have infinitely more middlewares to compose from the community!!
+
+.. chi.Handler
+
+
+## Credits
+
+* Carl Jackson for https://github.com/zenazn/goji
+  * Parts of chi's thinking comes from goji, and Chi's middleware package
+    sources from goji.
+* Armon Dadgar for https://github.com/armon/go-radix
+* Pressly team for inspiration
+
 
 ## TODO
 
@@ -31,9 +67,10 @@ see: _examples/simple
 * Register error handler (500's)
 * Request timeout middleware
 * Make note about separate responder
-* HTTP2 example..? -- single router/server, support
-   both http 1.1 and http2 automatically.. just turn it on :)
+* HTTP2 example
+  * both http 1.1 and http2 automatically.. just turn it on :)
 * Websocket example
+* Middlewares: logger, recoverer, reqtimeout
 
 
 ## License
