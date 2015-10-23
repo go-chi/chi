@@ -80,7 +80,6 @@ natively in net/http.
   * both http 1.1 and http2 automatically.. just turn it on :)
 * Websocket example
 * Regexp support in router "/:id([0-9]+)" or "#id^[0-9]+$" or ..
-* Middlewares: logger, recoverer, reqtimeout
 
 
 ## License

@@ -70,8 +70,8 @@ func TestTree(t *testing.T) {
 	tr.Insert("/admin/user//:id", hUserShow)
 	tr.Insert("/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 
-	tr.Insert("/admin/apps/:id", hAdminAppShow)             // TODO
-	tr.Insert("/admin/apps/:id/*ff", hAdminAppShowCatchall) // TODO
+	tr.Insert("/admin/apps/:id", hAdminAppShow)
+	tr.Insert("/admin/apps/:id/*ff", hAdminAppShowCatchall)
 
 	tr.Insert("/admin/*ff", hStub) // catchall segment will get replaced by next route
 	tr.Insert("/admin/*", hAdminCatchall)

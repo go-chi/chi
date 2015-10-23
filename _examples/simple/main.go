@@ -5,14 +5,16 @@ import (
 	"net/http"
 
 	"github.com/pressly/chi"
+	"github.com/pressly/chi/middleware"
 	"golang.org/x/net/context"
 )
 
 func main() {
 	r := chi.NewRouter()
 
-	// r.Use(middleware.RequestID)
-	// r.Use(middleware.RealIP)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
 
 	r.Use(func(h chi.Handler) chi.Handler {
 		return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -28,26 +30,21 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
-func apiIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("root"))
-}
-
-//--
-
 func accountsRouter() chi.Router {
 	r := chi.NewRouter()
-	r.Use(sup1)
-	r.Get("/", listAccounts)
-	r.Get("/hi", hiAccounts)
 
+	r.Use(sup1)
+
+	r.Get("/", listAccounts)
 	r.Post("/", createAccount)
+	r.Get("/hi", hiAccounts)
 
 	r.Group(func(r chi.Router) {
 		r.Use(sup2)
 
 		r.Get("/hi2", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			// log.Println("hi2..", ctx.Value("sup2"))
-			w.Write([]byte("woot"))
+			v := ctx.Value("sup2").(string)
+			w.Write([]byte(fmt.Sprintf("hi2 - '%s'", v)))
 		})
 	})
 
@@ -98,6 +95,10 @@ func accountCtx(h chi.Handler) chi.Handler {
 		h.ServeHTTPC(ctx, w, r)
 	}
 	return chi.HandlerFunc(handler)
+}
+
+func apiIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("root"))
 }
 
 func listAccounts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
