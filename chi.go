@@ -18,13 +18,6 @@ func NewRouter() *Mux {
 	return &Mux{}
 }
 
-func URLParams(ctx context.Context) map[string]string {
-	if urlParams, ok := ctx.Value(urlParamsCtxKey).(map[string]string); ok {
-		return urlParams
-	}
-	return map[string]string{}
-}
-
 type Router interface {
 	http.Handler
 	Handler
@@ -67,4 +60,11 @@ func (h HandlerFunc) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 // ServeHTTP provides compatibility with http.Handler.
 func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h(context.Background(), w, r)
+}
+
+func URLParams(ctx context.Context) map[string]string {
+	if urlParams, ok := ctx.Value(urlParamsCtxKey).(map[string]string); ok {
+		return urlParams
+	}
+	return map[string]string{}
 }

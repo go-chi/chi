@@ -46,6 +46,9 @@ embrace the future stdlib. And... then, we have infinitely more middlewares to c
 
 .. chi.Handler
 
+.. comment about interface{} types for the router methods, and lack of static type checking,
+however this will be resolved sometime in the future when/if Go supports context.Context
+natively in net/http.
 
 
 ## Middlewares
