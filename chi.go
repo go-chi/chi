@@ -10,7 +10,8 @@ import (
 // TODO: NewRouter() will create a barebones router..
 
 func New() *Mux {
-	return &Mux{}
+	m := &Mux{}
+	return m
 }
 
 func NewRouter() *Mux {

@@ -25,16 +25,18 @@ func chain(middlewares []interface{}, handlers ...interface{}) Handler {
 	switch t := handler.(type) {
 	default:
 		panic(fmt.Sprintf("chi: unsupported handler signature: %T", t))
-		// case http.Handler:
-		// TODO: accept http.Handler too .. will have to get wrapped..
+	case http.Handler:
+		cxh = HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+			t.ServeHTTP(w, r)
+		})
 	case Handler:
 		cxh = t
-	case func(context.Context, http.ResponseWriter, *http.Request):
-		cxh = HandlerFunc(t)
 	case func(http.ResponseWriter, *http.Request):
 		cxh = HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			t(w, r)
 		})
+	case func(context.Context, http.ResponseWriter, *http.Request):
+		cxh = HandlerFunc(t)
 	}
 
 	// Return ahead of time if there aren't any middlewares for the chain
