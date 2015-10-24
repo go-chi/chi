@@ -74,7 +74,7 @@ func printEnd(reqID string, w writerProxy, dt time.Duration) {
 	}
 
 	status := w.Status()
-	if status == StatusClientDisconnected {
+	if status == StatusClientClosedRequest {
 		buf.WriteString("Client disconnected")
 	} else {
 		buf.WriteString("Returning ")

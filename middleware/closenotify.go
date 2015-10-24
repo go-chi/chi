@@ -7,7 +7,9 @@ import (
 	"golang.org/x/net/context"
 )
 
-const StatusClientDisconnected = -1
+// 499 Client Closed Request (Nginx)
+// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+const StatusClientClosedRequest = 499
 
 // CloseNotify cancels the ctx when the underlying connection has gone away.
 // This middleware can be used to cancel long operations on the server
@@ -27,7 +29,7 @@ func CloseNotify(next chi.Handler) chi.Handler {
 			case <-ctx.Done():
 				return
 			case <-cn.CloseNotify():
-				w.WriteHeader(StatusClientDisconnected)
+				w.WriteHeader(StatusClientClosedRequest)
 				cancel()
 				return
 			}
