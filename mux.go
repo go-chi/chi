@@ -57,7 +57,7 @@ func (m methodTyp) String() string {
 type ctxKey int
 
 const (
-	urlParamsCtxKey ctxKey = iota
+	URLParamsCtxKey ctxKey = iota
 	subRouterCtxKey
 )
 
@@ -181,10 +181,10 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 	var cxh Handler
 	var err error
 
-	params, ok := ctx.Value(urlParamsCtxKey).(map[string]string)
+	params, ok := ctx.Value(URLParamsCtxKey).(map[string]string)
 	if !ok || params == nil {
 		params = make(map[string]string, 0)
-		ctx = context.WithValue(ctx, urlParamsCtxKey, params)
+		ctx = context.WithValue(ctx, URLParamsCtxKey, params)
 	}
 
 	path := r.URL.Path

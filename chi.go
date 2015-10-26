@@ -63,8 +63,8 @@ func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func URLParams(ctx context.Context) map[string]string {
-	if urlParams, ok := ctx.Value(urlParamsCtxKey).(map[string]string); ok {
+	if urlParams, ok := ctx.Value(URLParamsCtxKey).(map[string]string); ok {
 		return urlParams
 	}
-	return map[string]string{}
+	return nil
 }

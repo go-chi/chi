@@ -29,6 +29,7 @@ scaled very well.
 
 see: _examples/simple
 
+.. show request timeout with context.Context
 
 ## net/context?
 
