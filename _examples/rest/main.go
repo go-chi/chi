@@ -25,7 +25,7 @@ func main() {
 		w.Write([]byte("pong"))
 	})
 
-	// Slow handlers.
+	// Slow handlers/operations.
 	r.Group(func(r chi.Router) {
 		// Stop processing when client disconnects.
 		r.Use(middleware.CloseNotify)
@@ -48,6 +48,33 @@ func main() {
 			}
 
 			w.Write([]byte(fmt.Sprintf("Processed in %v seconds\n", processTime)))
+		})
+	})
+
+	// Throttle very expensive handlers/operations.
+	r.Group(func(r chi.Router) {
+		// Stop processing after 30 seconds.
+		r.Use(middleware.Timeout(30 * time.Second))
+
+		// Only one request will be processed at a time.
+		r.Use(middleware.Throttle(1))
+
+		r.Get("/throttled", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+			select {
+			case <-ctx.Done():
+				switch ctx.Err() {
+				case context.DeadlineExceeded:
+					w.Write([]byte("Processing too slow\n"))
+				default:
+					w.Write([]byte("Canceled\n"))
+				}
+				return
+
+			case <-time.After(5 * time.Second):
+				// The above channel simulates some hard work.
+			}
+
+			w.Write([]byte("Processed\n"))
 		})
 	})
 
