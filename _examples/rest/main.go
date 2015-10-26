@@ -64,6 +64,7 @@ func main() {
 			case <-ctx.Done():
 				switch ctx.Err() {
 				case context.DeadlineExceeded:
+					w.WriteHeader(504)
 					w.Write([]byte("Processing too slow\n"))
 				default:
 					w.Write([]byte("Canceled\n"))

@@ -11,9 +11,9 @@ import (
 // https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 const StatusClientClosedRequest = 499
 
-// CloseNotify cancels the ctx when the underlying connection has gone away.
-// This middleware can be used to cancel long operations on the server
-// if the client has disconnected before the response is ready.
+// CloseNotify is a middleware that cancels ctx when the underlying
+// connection has gone away. It can be used to cancel long operations
+// on the server when the client disconnects before the response is ready.
 func CloseNotify(next chi.Handler) chi.Handler {
 	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		cn, ok := w.(http.CloseNotifier)
