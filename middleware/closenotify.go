@@ -22,7 +22,6 @@ func CloseNotify(next chi.Handler) chi.Handler {
 		}
 
 		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
 
 		go func() {
 			select {
