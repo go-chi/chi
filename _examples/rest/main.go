@@ -41,12 +41,6 @@ func main() {
 
 			select {
 			case <-ctx.Done():
-				switch ctx.Err() {
-				case context.DeadlineExceeded:
-					w.Write([]byte("Processing too slow\n"))
-				default:
-					w.Write([]byte("Context canceled\n"))
-				}
 				return
 
 			case <-time.After(processTime):
