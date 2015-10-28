@@ -40,7 +40,7 @@ func printPanic(reqID string, err interface{}) {
 	var buf bytes.Buffer
 
 	if reqID != "" {
-		cW(&buf, bBlack, "[%s] ", reqID)
+		cW(&buf, bYellow, "[%s] ", reqID)
 	}
 	cW(&buf, bRed, "panic: %+v", err)
 
