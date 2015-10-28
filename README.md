@@ -180,20 +180,12 @@ Chi comes equipped with an optional `middleware` package, providing:
 | Middleware  | Description                                                                     |
 |:------------|:---------------------------------------------------------------------------------
 | RequestID   | Injects a request ID into the context of each request.                          |
-|-------------|---------------------------------------------------------------------------------|
-| RealIP      | Sets a http.Request's RemoteAddr to the results of parsing either the           |
-|             | X-Forwarded-For header or the X-Real-IP header.                                 |
-|-------------|---------------------------------------------------------------------------------|
+| RealIP      | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
 | Logger      | Log the start and end of each request with the elapsed processing time.         |
-|-------------|---------------------------------------------------------------------------------|
 | Recoverer   | Gracefully absorb panics and print the stack trace.                             |
-|-------------|---------------------------------------------------------------------------------|
 | NoCache     | Set response headers to prevent clients from caching.                           |
-|-------------|---------------------------------------------------------------------------------|
 | CloseNotify | Signals to the request context when a client has closed their connection.       |
-|-------------|---------------------------------------------------------------------------------|
 | Timeout     | Signals to the request context when the timeout deadline is reached.            |
-|-------------|---------------------------------------------------------------------------------|
 | Throttle    | Put a ceiling on the number of concurrent requests.                             |
 -------------------------------------------------------------------------------------------------
 
