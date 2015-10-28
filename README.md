@@ -174,7 +174,7 @@ Preview:
 import (
   //...
   "github.com/pressly/chi"
-	"github.com/pressly/chi/middleware"
+  "github.com/pressly/chi/middleware"
   "golang.org/x/net/context"
 )
 
@@ -305,7 +305,7 @@ See discussions:
   * Parts of Chi's thinking comes from goji, and Chi's middleware package
     sources from goji.
 * Armon Dadgar for https://github.com/armon/go-radix
-* Contributions: @VojtechVitek
+* Contributions: [@VojtechVitek](VojtechVitek)
 
 
 ## TODO
