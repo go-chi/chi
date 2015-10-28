@@ -20,10 +20,9 @@ import (
 // Recoverer prints a request ID if one is provided.
 func Recoverer(next chi.Handler) chi.Handler {
 	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		reqID := GetReqID(ctx)
-
 		defer func() {
 			if err := recover(); err != nil {
+				reqID := GetReqID(ctx)
 				printPanic(reqID, err)
 				debug.PrintStack()
 				http.Error(w, http.StatusText(500), 500)
@@ -40,7 +39,7 @@ func printPanic(reqID string, err interface{}) {
 	var buf bytes.Buffer
 
 	if reqID != "" {
-		cW(&buf, bYellow, "[%s] ", reqID)
+		cW(&buf, nYellow, "[%s] ", reqID)
 	}
 	cW(&buf, bRed, "panic: %+v", err)
 
