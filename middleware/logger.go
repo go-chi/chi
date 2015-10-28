@@ -22,13 +22,6 @@ import (
 // print in color, otherwise it will print in black and white.
 //
 // Logger prints a request ID if one is provided.
-//
-// Logger has been designed explicitly to be Good Enough for use in small
-// applications and for people just getting started with Goji. It is expected
-// that applications will eventually outgrow this middleware and replace it with
-// a custom request logger, such as one that produces machine-parseable output,
-// outputs logs to a different service (e.g., syslog), or formats lines like
-// those printed elsewhere in the application.
 func Logger(next chi.Handler) chi.Handler {
 	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		reqID := GetReqID(ctx)

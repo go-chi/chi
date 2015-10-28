@@ -25,7 +25,7 @@ type Router interface {
 	Use(middlewares ...interface{})
 	Group(fn func(r Router)) Router
 	Route(pattern string, fn func(r Router)) Router
-	Mount(path string, handlers ...interface{})
+	Mount(pattern string, handlers ...interface{})
 
 	Handle(pattern string, handlers ...interface{})
 	Connect(pattern string, handlers ...interface{})
