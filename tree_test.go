@@ -30,15 +30,6 @@ func TestTree(t *testing.T) {
 	hAdminAppShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hAdminAppShowCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	_ = hStub
-	_ = hAdminAppShow
-	_ = hAdminAppShowCatchall
-	_ = hUserList
-	_ = hUserShow
-	_ = hAdminCatchall
-	_ = hArticleShowRelated
-	_ = hArticleShowOpts
-	_ = hArticleSlug
 
 	tr := &tree{root: &node{}}
 

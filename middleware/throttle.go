@@ -14,7 +14,7 @@ func Throttle(limit int) func(chi.Handler) chi.Handler {
 		panic("middleware.Throttle expects limit > 0")
 	}
 
-	t := throttler{
+	t := throttle{
 		tokens: make(chan token, limit),
 	}
 	for i := 0; i < limit; i++ {
@@ -33,13 +33,15 @@ func Throttle(limit int) func(chi.Handler) chi.Handler {
 type token struct{}
 
 // throttler limits number of currently processed requests at a time.
-type throttler struct {
+type throttle struct {
 	h      chi.Handler
 	tokens chan token
 }
 
+// TODO: add support for a backlog
+
 // ServeHTTPC implements chi.Handler interface.
-func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (t *throttle) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	select {
 	case <-ctx.Done():
 		return
