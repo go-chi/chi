@@ -25,20 +25,19 @@ import (
 func Logger(next chi.Handler) chi.Handler {
 	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		reqID := GetReqID(ctx)
-
 		printStart(reqID, r)
 
 		lw := wrapWriter(w)
 
 		t1 := time.Now()
+
+		defer func() {
+			t2 := time.Now()
+
+			printEnd(reqID, lw, t2.Sub(t1))
+		}()
+
 		next.ServeHTTPC(ctx, lw, r)
-
-		if lw.Status() == 0 {
-			lw.WriteHeader(http.StatusOK)
-		}
-		t2 := time.Now()
-
-		printEnd(reqID, lw, t2.Sub(t1))
 	}
 
 	return chi.HandlerFunc(fn)
@@ -68,18 +67,22 @@ func printEnd(reqID string, w writerProxy, dt time.Duration) {
 
 	status := w.Status()
 	if status == StatusClientClosedRequest {
-		buf.WriteString("Client disconnected")
+		buf.WriteString("Client ")
+		cW(&buf, bRed, "disconnected")
 	} else {
 		buf.WriteString("Returning ")
-		if status < 200 {
+		switch {
+		case status == basicWriterUnknownStatus:
+			cW(&buf, bBlue, "200") // Implicit code sent by net pkg.
+		case status < 200:
 			cW(&buf, bBlue, "%03d", status)
-		} else if status < 300 {
+		case status < 300:
 			cW(&buf, bGreen, "%03d", status)
-		} else if status < 400 {
+		case status < 400:
 			cW(&buf, bCyan, "%03d", status)
-		} else if status < 500 {
+		case status < 500:
 			cW(&buf, bYellow, "%03d", status)
-		} else {
+		default:
 			cW(&buf, bRed, "%03d", status)
 		}
 	}
@@ -166,7 +169,13 @@ func (b *basicWriter) maybeWriteHeader() {
 		b.WriteHeader(http.StatusOK)
 	}
 }
+
+const basicWriterUnknownStatus = -1
+
 func (b *basicWriter) Status() int {
+	if !b.wroteHeader {
+		return basicWriterUnknownStatus
+	}
 	return b.code
 }
 func (b *basicWriter) BytesWritten() int {

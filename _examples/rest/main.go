@@ -16,13 +16,18 @@ func main() {
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
-	r.Get("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("..."))
-	}))
+	})
 
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("pong"))
+	})
+
+	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("test")
 	})
 
 	// Slow handlers/operations.
