@@ -1,7 +1,7 @@
 chi
 ===
 
-`chi` is an expressive, small and fast HTTP mux/router for Go web services built on net/context.
+`chi` is a small, fast and expressive router / mux for Go HTTP services built with net/context.
 
 Chi encourages writing services by composing small handlers and middlewares with many or few routes.
 Each middleware is like a layer of an onion connected through a consistent interface (http.Handler or
