@@ -305,7 +305,7 @@ See discussions:
   * Parts of Chi's thinking comes from goji, and Chi's middleware package
     sources from goji.
 * Armon Dadgar for https://github.com/armon/go-radix
-* Contributions: [@VojtechVitek](VojtechVitek)
+* Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
 
 
 ## TODO
