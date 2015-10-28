@@ -217,13 +217,18 @@ func (n *node) findNode(minTyp nodeTyp, path string, params map[string]string) *
 
 			// TODO: optimization opportunity
 			// Attempts to find the final node by going down the static path first
-			stsearch := search[len(nn.prefix):]
-			if stsearch != "" {
-				sn := nn.findNode(ntStatic, stsearch, params)
 
-				// As static leaf couldn't be found, use the wild node
-				if sn == nil {
-					nn = wn
+			if len(search) < len(nn.prefix) {
+				nn = wn
+			} else {
+				stsearch := search[len(nn.prefix):]
+				if stsearch != "" {
+					sn := nn.findNode(ntStatic, stsearch, params)
+
+					// As static leaf couldn't be found, use the wild node
+					if sn == nil {
+						nn = wn
+					}
 				}
 			}
 		}
