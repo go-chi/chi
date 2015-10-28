@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	r := chi.New()
+	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)

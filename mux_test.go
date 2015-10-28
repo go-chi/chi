@@ -98,7 +98,7 @@ func TestMux(t *testing.T) {
 	}
 	_ = catchAll
 
-	m := New()
+	m := NewRouter()
 	m.Use(countermw)
 	m.Use(usermw)
 	m.Use(exmw)

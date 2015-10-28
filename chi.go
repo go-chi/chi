@@ -6,14 +6,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// TODO: New() can create a new router with defaults.. ie slashes etc. logger mw, etc.
-// TODO: NewRouter() will create a barebones router..
-
-func New() *Mux {
-	m := &Mux{}
-	return m
-}
-
 func NewRouter() *Mux {
 	return &Mux{}
 }
@@ -39,8 +31,8 @@ type Router interface {
 	Options(pattern string, handlers ...interface{})
 }
 
-// NOTE: ....... will be switching to stdlib net/context signature
-// as soon as its available (sometime in 2016 in Go 1.7)
+// NOTE: hopefully, once net/context makes it into the stdlib and
+// net/http supports a request context, we will remove these signatures.
 
 // Handler is like net/http's http.Handler, but also includes a
 // mechanism for serving requests with a context.

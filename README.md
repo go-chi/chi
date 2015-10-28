@@ -104,7 +104,7 @@ func LoginHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 ```
 
 We lose type checking during compilation of the `handlers`, but that'll be resolved
-sometime in the [future](http://...), we hope, when Go's stdlib supports net/context
+sometime in the [future](#future), we hope, when Go's stdlib supports net/context
 in net/http. Instead, chi checks the types at runtime and panics in case of a mismatch.
 
 The supported handlers are as follows..
@@ -165,11 +165,102 @@ and..
 
 ## Examples
 
---todo--
+Examples: [simple](https://github.com/pressly/chi/blob/master/_examples/simple/main.go) &
+[rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go)
 
-see: _examples/simple
+Preview:
 
-.. show request timeout with context.Context
+```go
+import (
+  //...
+  "github.com/pressly/chi"
+	"github.com/pressly/chi/middleware"
+  "golang.org/x/net/context"
+)
+
+func main() {
+  r := chi.NewRouter()
+
+  // A good base middleware stack
+  r.Use(middleware.RequestID)
+  r.Use(middleware.RealIP)
+  r.Use(middleware.Logger)
+  r.Use(middleware.Recoverer)
+
+  // When a client closes their connection midway through a request, the
+  // http.CloseNotifier will cancel the request context (ctx).
+  r.Use(middleware.CloseNotify)
+
+  // Set a timeout value on the request context (ctx), that will signal
+  // through ctx.Done() that the request has timed out, is cancelled and
+  // further processing should be stopped.
+  r.Use(middleware.Timeout(60 * time.Second))
+
+  r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("hi"))
+  })
+
+  // REST routes for "articles" resource
+  r.Route("/articles", func(r cji.Router) {
+    r.Get("/", listArticles)        // GET /articles
+    r.Post("/", createArticle)      // POST /articles
+
+    r.Route("/:articleID", func(r chi.Router) {
+      r.Use(ArticleCtx)
+      r.Get("/", getArticle)        // GET /articles/123
+      r.Put("/", updateArticle)     // PUT /articles/123
+      r.Delete("/", deleteArticle)  // DELETE /article/123
+    })
+  })
+
+  // Mount the admin sub-router
+  r.Mount("/admin", adminRouter())
+
+  http.ListenAndServe(":3333", r)
+}
+
+func ArticleCtx(next chi.Handler) chi.Handler {
+  return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+    articleID := chi.URLParams(ctx)["articleID"].(string)
+    article, err := dbGetArticle(articleID)
+    if err != nil {
+      w.WriteHeader(404)
+      return
+    }
+    ctx = ctx.WithValue(ctx, "article", article)
+    next.ServeHTTPC(ctx, w, r)
+  })
+}
+
+func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+  article, ok := ctx.Value("article").(*Article)
+  if !ok {
+    w.WriteHeader(422)
+    return
+  }
+  w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
+}
+
+// A completely separate router for administrator routes
+func adminRouter() chi.Router {
+  r := chi.NewRouter()
+  r.Use(AdminOnly)
+  r.Get("/", adminIndex)
+  r.Get("/accounts", adminListAccounts)
+  return r
+}
+
+func AdminOnly(next chi.Handler) chi.Handler {
+  return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+    perm := ctx.Value("acl.permission").(PermissionThing)
+    if !perm.IsAdmin() {
+      w.WriteHeader(403)
+      return
+    }
+    next.ServeHTTPC(ctx, w, r)
+  })
+}
+```
 
 
 ## Middlewares
@@ -214,7 +305,7 @@ See discussions:
   * Parts of Chi's thinking comes from goji, and Chi's middleware package
     sources from goji.
 * Armon Dadgar for https://github.com/armon/go-radix
-* Pressly team for inspiration
+* Contributions: @VojtechVitek
 
 
 ## TODO
