@@ -17,7 +17,7 @@ scaled very well.
 
 ## Features
 
-* Lightweight - cloc`d in 573 LOC for the chi router
+* Lightweight - cloc`d in 578 LOC for the chi router
 * Fast - yes, benchmarks coming
 * Expressive routing - middleware stacks, inline middleware, groups, mount routers
 * Request context control (value chaining, deadlines and timeouts) - built on `net/context`
