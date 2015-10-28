@@ -89,8 +89,8 @@ r.Post("/login", EnforceSSL, LoginHandler) // inline middleware on the routing d
 // A dummy middleware to ensure the request URI scheme is HTTPS
 func EnforceSSL(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    if r.URL.Scheme != "HTTPS" {
-      w.WriteHeader(405)
+    if r.TLS == nil {
+      http.Error(w, "naw", 405)
       return
     }
     next.ServeHTTP(w, r)
@@ -202,14 +202,14 @@ func main() {
 
   // REST routes for "articles" resource
   r.Route("/articles", func(r cji.Router) {
-    r.Get("/", listArticles)        // GET /articles
-    r.Post("/", createArticle)      // POST /articles
+    r.Get("/", paginate, listArticles)  // GET /articles
+    r.Post("/", createArticle)          // POST /articles
 
     r.Route("/:articleID", func(r chi.Router) {
       r.Use(ArticleCtx)
-      r.Get("/", getArticle)        // GET /articles/123
-      r.Put("/", updateArticle)     // PUT /articles/123
-      r.Delete("/", deleteArticle)  // DELETE /article/123
+      r.Get("/", getArticle)            // GET /articles/123
+      r.Put("/", updateArticle)         // PUT /articles/123
+      r.Delete("/", deleteArticle)      // DELETE /article/123
     })
   })
 
