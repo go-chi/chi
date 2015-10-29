@@ -79,30 +79,6 @@ The `handlers` argument can be a single request handler, or a chain of middlewar
 handlers, followed by a request handler. The request handler is required, and must
 be the last argument.
 
-```go
-// Mini-example
-// ...
-r := chi.NewRouter()
-r.Post("/login", EnforceSSL, LoginHandler) // inline middleware on the routing definition
-// ...
-
-// A dummy middleware to ensure the request URI scheme is HTTPS
-func EnforceSSL(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    if r.TLS == nil {
-      http.Error(w, http.StatusText(405), 405)
-      return
-    }
-    next.ServeHTTP(w, r)
-  })
-}
-
-func LoginHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-  // read POST body from the request and authenticate, and respond accordingly
-  // ...
-}
-```
-
 We lose type checking of the `handlers`, but that'll be resolved sometime in the
 [future](#future), we hope, when Go's stdlib supports net/context in net/http.
 Instead, chi checks the types at runtime and panics in case of a mismatch.
