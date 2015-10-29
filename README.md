@@ -79,9 +79,9 @@ The `handlers` argument can be a single request handler, or a chain of middlewar
 handlers, followed by a request handler. The request handler is required, and must
 be the last argument.
 
-We lose type checking of the `handlers`, but that'll be resolved sometime in the
-[future](#future), we hope, when Go's stdlib supports net/context in net/http.
-Instead, chi checks the types at runtime and panics in case of a mismatch.
+We lose type checking of the handlers, but that'll be resolved sometime in the [future](#future),
+we hope, when Go's stdlib supports net/context in net/http. For now, chi checks the types
+at runtime and panics in case of a mismatch.
 
 The supported handlers are as follows..
 
@@ -129,7 +129,7 @@ func CtxHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 ## net/context?
 
 `net/context` is a tiny library written by [Sameer Ajmani](https://github.com/Sajmani) that provides
-a simple interface to signal context across goroutines.
+a simple interface to signal context across call stacks and goroutines.
 
 Learn more at https://blog.golang.org/context
 
@@ -249,7 +249,7 @@ Chi comes equipped with an optional `middleware` package, providing:
 | RequestID   | Injects a request ID into the context of each request.                          |
 | RealIP      | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
 | Logger      | Logs the start and end of each request with the elapsed processing time.        |
-| Recoverer   | Gracefully absorb panics and print the stack trace.                             |
+| Recoverer   | Gracefully absorb panics and prints the stack trace.                            |
 | NoCache     | Sets response headers to prevent clients from caching.                          |
 | CloseNotify | Signals to the request context when a client has closed their connection.       |
 | Timeout     | Signals to the request context when the timeout deadline is reached.            |
@@ -267,8 +267,10 @@ please submit a PR if you'd like to include a link to a chi middleware
 ## Future
 
 We're hoping that by Go 1.7 (in 2016), `net/context` will be in the Go stdlib and `net/http` will
-support `context.Context` natively, at which point we'll be updating the signatures to embrace the
-future stdlib. And... then, we have infinitely more middlewares to compose from the community!!
+support `context.Context`. You'll notice that chi.Handler and http.Handler are very similar
+and the middleware signatures follow the same structure. One day chi.Handler will be deprecated
+and the router will live on just as it is without any dependencies beyond stdlib. And... then, we
+have infinitely more middlewares to compose from the community!!
 
 See discussions:
 * https://github.com/golang/go/issues/13021
