@@ -1,4 +1,4 @@
-chi
+chi [![GoDoc](https://godoc.org/github.com/pressly/chi?status.svg)](https://godoc.org/github.com/pressly/chi)
 ===
 
 `chi` is a small, fast and expressive router / mux for Go HTTP services built with net/context.
