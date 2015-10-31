@@ -1,12 +1,12 @@
 ## Prerequests
 
 1. Installed and working Go environment
-2. Download the sources:
+2. Download the sources and switch the working directory:
 
-```bash
-go get -d github.com/pressly/chi
-cd $GOPATH/src/github.com/pressly/chi
-```
+    ```bash
+    go get -d github.com/pressly/chi
+    cd $GOPATH/src/github.com/pressly/chi
+    ```
 
 3. Now you should be able to run `make`, `make fmt`.
 
@@ -14,13 +14,13 @@ cd $GOPATH/src/github.com/pressly/chi
 
 Your typical workflow will be:
 
-1. [Fork the repository.][fork]. [This tip maybe also helpful][go-fork-tip]
+1. [Fork the repository.][fork] [This tip maybe also helpful.][go-fork-tip]
 2. [Create a topic branch.][branch]
 3. Add tests for your change.
 4. Run `make`. If you tests pass, return to the step 3.
 5. Implement the change and ensure the steps from the previous step pass.
 6. Run `make fmt`, to ensure the new code conforms to Go formatting guidline.
-7. [Add, commit and push your changes][git-help]. 
+7. [Add, commit and push your changes.][git-help] 
 8. [Submit a pull request.][pull-req]
 
 
