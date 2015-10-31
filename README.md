@@ -292,7 +292,7 @@ See discussions:
   * Trailing slash?
   * Case insensitive paths?
   * GET for HEAD requests (auto fallback)?
-* Register not found handler
+* Register not found handler for mounted routers?
 * Register error handler (500's)
 * HTTP2 example
   * both http 1.1 and http2 automatically.. just turn it on :)

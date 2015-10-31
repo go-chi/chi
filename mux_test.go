@@ -393,4 +393,31 @@ func TestMux(t *testing.T) {
 		t.Error("expecting response body: 'catchall'")
 	}
 
+	// Default NotFound error
+	resp, err = http.Get(ts.URL + "/NotFound")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 404 {
+		t.Error("expecting default NotFound error when custom NotFound handler is not set")
+	}
+
+	// Custom NotFound handler
+	m.NotFoundHandler(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.WriteHeader(200)
+	}))
+
+	resp, err = http.Get(ts.URL + "/NotFound")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		t.Error("expecting custom NotFound handler when it is set")
+	}
+
+	
 }
