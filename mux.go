@@ -111,6 +111,9 @@ func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{})
 	// Build handler from middleware stack, inline middlewares and handler
 	h := chain(mx.middlewares, handlers...)
 
+	if len(pattern) == 0 {
+		pattern = "/"
+	}
 	if pattern[0] != '/' {
 		panic("pattern must begin with a /") // TODO: is goji like this too?
 	}
