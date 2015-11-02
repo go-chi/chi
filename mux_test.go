@@ -103,7 +103,7 @@ func TestMux(t *testing.T) {
 	m.Use(usermw)
 	m.Use(exmw)
 	m.Use(logmw)
-	m.Get("/", cxindex)
+	m.Get("", cxindex)
 	m.Get("/ping", ping)
 	m.Get("/pingall", pingAll) // .. TODO: pingAll, case-sensitivity .. etc....?
 	m.Get("/ping/all", pingAll)
