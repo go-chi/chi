@@ -8,8 +8,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-const StatusServerTimeout = 504
-
 // Timeout is a middleware that cancels ctx after a given timeout.
 func Timeout(timeout time.Duration) func(next chi.Handler) chi.Handler {
 	return func(next chi.Handler) chi.Handler {
@@ -18,7 +16,7 @@ func Timeout(timeout time.Duration) func(next chi.Handler) chi.Handler {
 			defer func() {
 				cancel()
 				if ctx.Err() == context.DeadlineExceeded {
-					w.WriteHeader(StatusServerTimeout)
+					w.WriteHeader(http.StatusGatewayTimeout)
 				}
 			}()
 
