@@ -86,7 +86,7 @@ func main() {
 		})
 	})
 
-	// RESTy routes for "articles" resource
+	// REST routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
 		r.Get("/", paginate, listArticles) // GET /articles
 		r.Post("/", createArticle)         // POST /articles
@@ -95,7 +95,7 @@ func main() {
 			r.Use(ArticleCtx)
 			r.Get("/", getArticle)       // GET /articles/123
 			r.Put("/", updateArticle)    // PUT /articles/123
-			r.Delete("/", deleteArticle) // DELETE /article/123
+			r.Delete("/", deleteArticle) // DELETE /articles/123
 		})
 	})
 
