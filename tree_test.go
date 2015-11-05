@@ -15,6 +15,7 @@ var (
 )
 
 func TestTree(t *testing.T) {
+	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hIndex := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hFavicon := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hArticleList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
@@ -29,11 +30,14 @@ func TestTree(t *testing.T) {
 	hAdminCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hAdminAppShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 	hAdminAppShowCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hUserProfile := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hUserSuper := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hUserAll := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hHubView1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hHubView2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hHubView3 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
 
 	tr := &tree{root: &node{}}
-
-	// TODO: add regexp
 
 	tr.Insert("/", hIndex)
 	tr.Insert("/favicon.ico", hFavicon)
@@ -67,40 +71,60 @@ func TestTree(t *testing.T) {
 	tr.Insert("/admin/*ff", hStub) // catchall segment will get replaced by next route
 	tr.Insert("/admin/*", hAdminCatchall)
 
-	// tr.Insert(mGET, "/debug*", hStub) // TODO: should we support this..?
+	tr.Insert("/users/:userID/profile", hUserProfile)
+	tr.Insert("/users/super/*", hUserSuper)
+	tr.Insert("/users/*", hUserAll)
+
+	tr.Insert("/hubs/:hubID/view", hHubView1)
+	tr.Insert("/hubs/:hubID/view/*", hHubView2)
+	sr := NewRouter()
+	sr.Get("/users", hHubView3)
+	tr.Insert("/hubs/:hubID/*", sr)
+	tr.Insert("/hubs/:hubID/users", hHubView3)
+
+	// tr.Insert("/debug*", hStub) // TODO: should we support this..?
 
 	// TODO: test bad inserts ie.
-	// tr.Insert(mGET, "")
-	// tr.Insert(mGET, "/admin/:/joe/:/*") //...?
-	// tr.Insert(mGET, "------------")
+	// tr.Insert("")
+	// tr.Insert("/admin/:/joe/:/*") //...?
+	// tr.Insert("------------")
 
 	tests := []struct {
-		m methodTyp         // input method
 		r string            // input request path
 		h Handler           // output matched handler
 		p map[string]string // output params
 	}{
-		{m: mGET, r: "/", h: hIndex, p: emptyParams},
-		{m: mGET, r: "/favicon.ico", h: hFavicon, p: emptyParams},
-		{m: mGET, r: "/article", h: hArticleList, p: emptyParams},
-		{m: mGET, r: "/article/", h: hArticleList, p: emptyParams},
-		{m: mGET, r: "/article/near", h: hArticleNear, p: emptyParams},
-		{m: mGET, r: "/article/neard", h: hArticleShow, p: map[string]string{"id": "neard"}},
-		{m: mGET, r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}},
-		{m: mGET, r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
-		{m: mGET, r: "/article/@peter", h: hArticleByUser, p: map[string]string{"user": "peter"}},
-		{m: mGET, r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
-		{m: mGET, r: "/article/111/edit", h: hStub, p: map[string]string{"id": "111"}},
-		{m: mGET, r: "/article/slug/sept/-/4/2015", h: hArticleSlug, p: map[string]string{"month": "sept", "day": "4", "year": "2015"}},
-		{m: mGET, r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO review goji?
-		{m: mGET, r: "/admin/user", h: hUserList, p: emptyParams},
-		{m: mGET, r: "/admin/user/", h: hUserList, p: emptyParams},
-		{m: mGET, r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm.... TODO, review
-		{m: mGET, r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
-		{m: mGET, r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
-		{m: mGET, r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
-		{m: mGET, r: "/admin/apps/333", h: hAdminAppShow, p: map[string]string{"id": "333"}},
-		{m: mGET, r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, p: map[string]string{"id": "333", "*": "woot"}},
+		{r: "/", h: hIndex, p: emptyParams},
+		{r: "/favicon.ico", h: hFavicon, p: emptyParams},
+
+		{r: "/article", h: hArticleList, p: emptyParams},
+		{r: "/article/", h: hArticleList, p: emptyParams},
+		{r: "/article/near", h: hArticleNear, p: emptyParams},
+		{r: "/article/neard", h: hArticleShow, p: map[string]string{"id": "neard"}},
+		{r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}},
+		{r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
+		{r: "/article/@peter", h: hArticleByUser, p: map[string]string{"user": "peter"}},
+		{r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
+		{r: "/article/111/edit", h: hStub, p: map[string]string{"id": "111"}},
+		{r: "/article/slug/sept/-/4/2015", h: hArticleSlug, p: map[string]string{"month": "sept", "day": "4", "year": "2015"}},
+		{r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO review goji?
+
+		{r: "/admin/user", h: hUserList, p: emptyParams},
+		{r: "/admin/user/", h: hUserList, p: emptyParams},
+		{r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm.... TODO, review
+		{r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
+		{r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
+		{r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
+		{r: "/admin/apps/333", h: hAdminAppShow, p: map[string]string{"id": "333"}},
+		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, p: map[string]string{"id": "333", "*": "woot"}},
+
+		{r: "/hubs/123/view", h: hHubView1, p: map[string]string{"hubID": "123"}},
+		{r: "/hubs/123/view/index.html", h: hHubView2, p: map[string]string{"hubID": "123", "*": "index.html"}},
+		{r: "/hubs/123/users", h: hHubView3, p: map[string]string{"hubID": "123"}},
+
+		{r: "/users/123/profile", h: hUserProfile, p: map[string]string{"userID": "123"}},
+		{r: "/users/super/123/okay/yes", h: hUserSuper, p: map[string]string{"*": "123/okay/yes"}},
+		{r: "/users/123/okay/yes", h: hUserAll, p: map[string]string{"*": "123/okay/yes"}},
 	}
 
 	// log.Println("~~~~~~~~~")
@@ -111,29 +135,35 @@ func TestTree(t *testing.T) {
 
 	for i, tt := range tests {
 		params := make(map[string]string, 0)
-		handler, _ := tr.Find(tt.r, params)
+		handler := tr.Find(tt.r, params)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
-			t.Errorf("input [%d]: '%s %s' expecting handler:%v , got:%v", i, tt.m.String(), tt.r, tt.h, handler)
+			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
 		}
 		if !reflect.DeepEqual(tt.p, params) {
-			t.Errorf("input [%d]: '%s %s' expecting params:%v , got:%v", i, tt.m.String(), tt.r, tt.p, params)
+			t.Errorf("input [%d]: find '%s' expecting params:%v , got:%v", i, tt.r, tt.p, params)
 		}
 	}
 }
 
 func debugPrintTree(parent int, i int, n *node, label byte) bool {
+	numEdges := 0
+	for _, edges := range n.edges {
+		numEdges += len(edges)
+	}
+
 	if n.handler != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf(), n.handler)
-		// return true
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handler)
 	} else {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), len(n.edges), n.isLeaf())
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf())
 	}
 
 	parent = i
-	for _, e := range n.edges {
-		i++
-		if debugPrintTree(parent, i, e.node, e.label) {
-			return true
+	for _, edges := range n.edges {
+		for _, e := range edges {
+			i++
+			if debugPrintTree(parent, i, e.node, e.label) {
+				return true
+			}
 		}
 	}
 	return false

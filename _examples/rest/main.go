@@ -95,7 +95,7 @@ func main() {
 			r.Use(ArticleCtx)
 			r.Get("/", getArticle)       // GET /articles/123
 			r.Put("/", updateArticle)    // PUT /articles/123
-			r.Delete("/", deleteArticle) // DELETE /article/123
+			r.Delete("/", deleteArticle) // DELETE /articles/123
 		})
 	})
 
@@ -211,7 +211,7 @@ func paginate(next chi.Handler) chi.Handler {
 }
 
 // A completely separate router for administrator routes
-func adminRouter() chi.Router {
+func adminRouter() http.Handler { // or chi.Router {
 	r := chi.NewRouter()
 	r.Use(AdminOnly)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -219,6 +219,9 @@ func adminRouter() chi.Router {
 	})
 	r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("admin: list accounts.."))
+	})
+	r.Get("/users/:userId", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParams(ctx)["userId"])))
 	})
 	return r
 }

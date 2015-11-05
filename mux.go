@@ -9,8 +9,19 @@ import (
 var _ Router = &Mux{}
 
 type Mux struct {
+	// The middleware stack, supporting..
+	// func(http.Handler) http.Handler and func(chi.Handler) chi.Handler
 	middlewares []interface{}
-	routes      map[methodTyp]*tree
+
+	// The radix trie router with URL parameter matching
+	router treeRouter
+
+	// The mux handler, chained middleware stack and tree router
+	handler Handler
+
+	// Controls the behaviour of middleware chain generation when a mux
+	// is registered as an inline group inside another mux.
+	inline bool
 
 	// can add rules here for how the mux should work..
 	// ie. slashes, case insensitive, notfound handler etc.. like httprouter
@@ -45,22 +56,18 @@ var methodMap = map[string]methodTyp{
 	"TRACE":   mTRACE,
 }
 
-func (m methodTyp) String() string {
-	for k, v := range methodMap {
-		if v == m {
-			return k
-		}
-	}
-	return ""
-}
-
 type ctxKey int
 
 const (
 	URLParamsCtxKey ctxKey = iota
-	subRouterCtxKey
+	SubRouterCtxKey
 )
 
+func NewMux() *Mux {
+	return &Mux{router: newTreeRouter(), handler: nil}
+}
+
+// Append to the middleware stack
 func (mx *Mux) Use(mws ...interface{}) {
 	for _, mw := range mws {
 		mx.middlewares = append(mx.middlewares, assertMiddleware(mw))
@@ -108,36 +115,46 @@ func (mx *Mux) Options(pattern string, handlers ...interface{}) {
 }
 
 func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
-	// Build handler from middleware stack, inline middlewares and handler
-	h := chain(mx.middlewares, handlers...)
-
-	if pattern[0] != '/' {
-		panic("pattern must begin with a /") // TODO: is goji like this too?
+	if len(pattern) == 0 || pattern[0] != '/' {
+		panic("pattern must begin with a /")
 	}
 
-	if mx.routes == nil {
-		mx.routes = make(map[methodTyp]*tree, len(methodMap))
-		for _, v := range methodMap {
-			mx.routes[v] = &tree{root: &node{}}
-		}
+	// Build the single mux handler that is a chain of the middleware stack, as
+	// defined by calls to Use(), and the tree router (mux) itself. After this point,
+	// no other middlewares can be registered on this mux's stack. But you can still
+	// use inline middlewares via Group()'s and other routes that only execute after
+	// a matched pattern on the treeRouter.
+	if !mx.inline && mx.handler == nil {
+		mx.handler = chain(mx.middlewares, mx.router)
 	}
 
+	// Build endpoint handler with inline middlewares for the route
+	var endpoint Handler
+	if mx.inline {
+		mx.handler = mx.router
+		endpoint = chain(mx.middlewares, handlers...)
+	} else {
+		endpoint = chain([]interface{}{}, handlers...)
+	}
+
+	// Set the route for the respective HTTP methods
 	for _, mt := range methodMap {
 		m := method & mt
 		if m > 0 {
-			routes := mx.routes[m]
-
-			err := routes.Insert(pattern, h)
-			_ = err // ...?
+			mx.router[m].Insert(pattern, endpoint)
 		}
 	}
 }
 
 func (mx *Mux) Group(fn func(r Router)) Router {
-	mw := make([]interface{}, len(mx.middlewares))
-	copy(mw, mx.middlewares)
+	// Similarly as in handle(), we must build the mux handler once further
+	// middleware registration isn't allowed for this stack, like now.
+	if !mx.inline && mx.handler == nil {
+		mx.handler = chain(mx.middlewares, mx.router)
+	}
 
-	g := &Mux{middlewares: mw, routes: mx.routes}
+	// Make a new inline mux and run the router functions over it.
+	g := &Mux{inline: true, router: mx.router, handler: nil}
 	if fn != nil {
 		fn(g)
 	}
@@ -154,20 +171,21 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 }
 
 func (mx *Mux) Mount(path string, handlers ...interface{}) {
+	// Build chain with any inline middlewares and endpoint handler for the subrouter
 	h := chain([]interface{}{}, handlers...)
 
+	// Route the subroutes through a wildcard url param
 	subRouter := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		path := URLParams(ctx)["*"]
-		ctx = context.WithValue(ctx, subRouterCtxKey, "/"+path)
+		ctx = context.WithValue(ctx, SubRouterCtxKey, "/"+path)
 		h.ServeHTTPC(ctx, w, r)
 	})
 
 	if path == "/" {
 		path = ""
 	}
-
-	mx.Handle(path, subRouter)
 	if path != "" {
+		mx.Handle(path, subRouter)
 		mx.Handle(path+"/", http.NotFound) // TODO: which not-found handler..?
 	}
 	mx.Handle(path+"/*", subRouter)
@@ -178,26 +196,36 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	var cxh Handler
-	var err error
+	mx.handler.ServeHTTPC(ctx, w, r)
+}
 
+type treeRouter map[methodTyp]*tree
+
+func newTreeRouter() treeRouter {
+	tr := make(map[methodTyp]*tree, len(methodMap))
+	for _, v := range methodMap {
+		tr[v] = &tree{root: &node{}}
+	}
+	return treeRouter(tr)
+}
+
+func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// URL params
 	params, ok := ctx.Value(URLParamsCtxKey).(map[string]string)
 	if !ok || params == nil {
 		params = make(map[string]string, 0)
 		ctx = context.WithValue(ctx, URLParamsCtxKey, params)
 	}
 
+	// The request path
 	path := r.URL.Path
-	if routePath, ok := ctx.Value(subRouterCtxKey).(string); ok {
+	if routePath, ok := ctx.Value(SubRouterCtxKey).(string); ok {
 		path = routePath
-		ctx = context.WithValue(ctx, subRouterCtxKey, nil) // unset the routePath
 		delete(params, "*")
 	}
 
-	routes := mx.routes[methodMap[r.Method]]
-	cxh, err = routes.Find(path, params)
-	_ = err // ..
-
+	// Find the handler in the router
+	cxh := tr[methodMap[r.Method]].Find(path, params)
 	if cxh == nil {
 		http.NotFound(w, r)
 		return

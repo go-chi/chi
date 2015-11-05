@@ -7,7 +7,7 @@ import (
 )
 
 func NewRouter() *Mux {
-	return &Mux{}
+	return NewMux()
 }
 
 type Router interface {
@@ -31,8 +31,10 @@ type Router interface {
 	Options(pattern string, handlers ...interface{})
 }
 
-// NOTE: hopefully, once net/context makes it into the stdlib and
-// net/http supports a request context, we will remove these signatures.
+// NOTE, the plan: hopefully once net/context makes it into the stdlib and
+// net/http supports a request context, we will remove the chi.Handler
+// interface, and the Router argument types will be http.Handler instead
+// of interface{}.
 
 // Handler is like net/http's http.Handler, but also includes a
 // mechanism for serving requests with a context.

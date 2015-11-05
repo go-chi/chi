@@ -5,7 +5,6 @@ package chi
 // (MIT licensed)
 
 import (
-	"errors"
 	"sort"
 	"strings"
 )
@@ -39,13 +38,9 @@ type node struct {
 	// HTTP handler on the leaf node
 	handler Handler
 
-	// Edges should be stored in-order for iteration.
-	// We avoid a fully materialized slice to save memory,
-	// since in most cases we expect to be sparse
-	edges edges
-
-	// TODO: optimization, do we keep track of the number of wildEdges?
-	// nWildEdges int // or nWildEdges bool
+	// Edges should be stored in-order for iteration,
+	// in groups of the node type.
+	edges [ntCatchAll + 1]edges
 }
 
 func (n *node) isLeaf() bool {
@@ -129,15 +124,15 @@ func (n *node) addEdge(e edge) {
 
 	}
 
-	n.edges = append(n.edges, e)
-	n.edges.Sort()
+	n.edges[e.node.typ] = append(n.edges[e.node.typ], e)
+	n.edges[e.node.typ].Sort()
 }
 
 func (n *node) replaceEdge(e edge) {
-	num := len(n.edges)
+	num := len(n.edges[e.node.typ])
 	for i := 0; i < num; i++ {
-		if n.edges[i].label == e.label {
-			n.edges[i].node = e.node
+		if n.edges[e.node.typ][i].label == e.label {
+			n.edges[e.node.typ][i].node = e.node
 			return
 		}
 	}
@@ -145,120 +140,117 @@ func (n *node) replaceEdge(e edge) {
 }
 
 func (n *node) getEdge(label byte) *node {
-	// We do a linear search as we're sorted by a compound key
-	num := len(n.edges)
-	for i := 0; i < num; i++ {
-		if n.edges[i].label == label {
-			return n.edges[i].node
+	for _, edges := range n.edges {
+		num := len(edges)
+		for i := 0; i < num; i++ {
+			if edges[i].label == label {
+				return edges[i].node
+			}
 		}
 	}
 	return nil
 }
 
-func (n *node) findEdge(minTyp nodeTyp, label byte) *node {
-	num := len(n.edges)
+func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
+	subedges := n.edges[ntyp]
+	num := len(subedges)
 	idx := sort.Search(num, func(i int) bool {
-		if n.edges[i].node.typ < minTyp {
-			return false
-		}
-		switch n.edges[i].node.typ {
+		switch ntyp {
 		case ntStatic:
-			return n.edges[i].label >= label
+			return subedges[i].label >= label
 		default: // wild nodes
 			// TODO: right now we match them all.. but regexp should
 			// run through regexp matcher
 			return true
 		}
-		return false
 	})
 
 	if idx >= num {
 		return nil
 	}
 
-	if n.edges[idx].node.typ == ntStatic && n.edges[idx].label == label {
-		return n.edges[idx].node
-	} else if n.edges[idx].node.typ > ntStatic {
-		return n.edges[idx].node
+	if subedges[idx].node.typ == ntStatic && subedges[idx].label == label {
+		return subedges[idx].node
+	} else if subedges[idx].node.typ > ntStatic {
+		return subedges[idx].node
 	}
+
 	return nil
 }
 
-func (n *node) findNode(minTyp nodeTyp, path string, params map[string]string) *node {
+// Recursive edge traversal by checking all nodeTyp groups along the way.
+// It's like searching through a three-dimensional radix trie.
+func (n *node) findNode(path string, params map[string]string) *node {
 	nn := n
 	search := path
 
-	for {
-		if len(search) == 0 {
-			if nn.isLeaf() {
-				return nn
-			}
-			break
-		}
-
-		// TODO: optimization opportunity to not traverse wild path if there are no
-		// wild edges
-		wn := nn.findEdge(ntStatic+1, search[0]) // wild node
-		nn = nn.findEdge(ntStatic, search[0])    // any node
-
-		if nn == nil && wn == nil {
-			// Found nothing at all
-			break
-
-		} else if nn == nil && wn != nil {
-			// Found only a wild node
-			nn = wn
-
-		} else if nn == wn {
-			// Same, do nothing.
-
-		} else if nn != nil && wn != nil {
-			// Found both static and wild matching nodes
-
-			// TODO: optimization opportunity
-			// Attempts to find the final node by going down the static path first
-
-			if len(search) < len(nn.prefix) {
-				nn = wn
-			} else {
-				stsearch := search[len(nn.prefix):]
-				if stsearch != "" {
-					sn := nn.findNode(ntStatic, stsearch, params)
-
-					// As static leaf couldn't be found, use the wild node
-					if sn == nil {
-						nn = wn
-					}
-				}
-			}
-		}
-
-		if nn.typ > ntStatic {
-			p := -1
-			if nn.typ != ntCatchAll {
-				p = strings.IndexByte(search, '/')
-			}
-			if p < 0 {
-				p = len(search)
-			}
-
-			if nn.typ == ntCatchAll {
-				params["*"] = search[:p]
-			} else {
-				params[nn.prefix[1:]] = search[:p]
-			}
-
-			search = search[p:]
+	for t, edges := range nn.edges {
+		ntyp := nodeTyp(t)
+		if len(edges) == 0 {
 			continue
 		}
 
-		// Consume the search prefix
-		if strings.HasPrefix(search, nn.prefix) {
-			search = search[len(nn.prefix):]
+		// search subset of edges of the index for a matching node
+		xn := nn.findEdge(ntyp, search[0]) // next node
+		if xn == nil {
+			continue
+		}
+
+		// Prepare next search path by trimming prefix from requested path
+		xsearch := search
+		if xn.typ > ntStatic {
+			p := -1
+			if xn.typ < ntCatchAll {
+				p = strings.IndexByte(xsearch, '/')
+			}
+			if p < 0 {
+				p = len(xsearch)
+			}
+
+			if xn.typ == ntCatchAll {
+				params["*"] = xsearch
+			} else {
+				params[xn.prefix[1:]] = xsearch[:p]
+			}
+
+			xsearch = xsearch[p:]
+		} else if strings.HasPrefix(xsearch, xn.prefix) {
+			xsearch = xsearch[len(xn.prefix):]
 		} else {
-			break
+			continue // no match
+		}
+
+		// did we find it yet?
+		if len(xsearch) == 0 {
+			if xn.isLeaf() {
+				return xn
+			}
+
+			// TODO: opportunity to improve a case:
+			// it's possible search path is empty, but xn
+			// holds an edge with a handler. triggered by,
+			// r.Route("/x", func(r Router) { r.Mount("/", another )})
+
+			continue
+		}
+
+		// recursively find the next node..
+		fin := xn.findNode(xsearch, params)
+		if fin != nil {
+			// found a node, return it
+			return fin
+		} else {
+			// let's remove the param here if it was set
+			if xn.typ > ntStatic {
+				if xn.typ == ntCatchAll {
+					delete(params, "*")
+				} else {
+					delete(params, xn.prefix[1:])
+				}
+			}
 		}
 	}
+
 	return nil
 }
 
@@ -268,14 +260,8 @@ func (e edges) Len() int {
 	return len(e)
 }
 
-// Sort the list of edges by tuple, <edge.node.typ, edge.label>
+// Sort the list of edges by label
 func (e edges) Less(i, j int) bool {
-	if e[i].node.typ < e[j].node.typ {
-		return true
-	}
-	if e[i].node.typ > e[j].node.typ {
-		return false
-	}
 	return e[i].label < e[j].label
 }
 
@@ -295,9 +281,7 @@ type tree struct {
 	root *node
 }
 
-// TODO: do we return an error or panic..? what does goji do..
-func (t *tree) Insert(pattern string, handler Handler) error {
-
+func (t *tree) Insert(pattern string, handler Handler) {
 	var parent *node
 	n := t.root
 	search := pattern
@@ -307,7 +291,7 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
 			n.handler = handler
-			return nil
+			return
 		}
 
 		// Look for the edge
@@ -324,8 +308,7 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 				},
 			}
 			parent.addEdge(e)
-
-			return nil
+			return
 		}
 
 		if n.typ > ntStatic {
@@ -370,7 +353,7 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 		search = search[commonPrefix:]
 		if len(search) == 0 {
 			child.handler = handler
-			return nil
+			return
 		}
 
 		// Create a new edge for the node
@@ -382,20 +365,17 @@ func (t *tree) Insert(pattern string, handler Handler) error {
 				handler: handler,
 			},
 		})
-		return nil
+		return
 	}
-	return nil
+	return
 }
 
-// TODO: do we need to return error... or just return nil handler?
-func (t *tree) Find(path string, params map[string]string) (Handler, error) {
-	node := t.root.findNode(ntStatic, path, params)
-
-	if node == nil || node.handler == nil {
-		return nil, errors.New("not found..")
+func (t *tree) Find(path string, params map[string]string) Handler {
+	node := t.root.findNode(path, params)
+	if node == nil {
+		return nil
 	}
-
-	return node.handler, nil
+	return node.handler
 }
 
 // Walk is used to walk the tree
@@ -412,9 +392,11 @@ func (t *tree) recursiveWalk(n *node, fn WalkFn) bool {
 	}
 
 	// Recurse on the children
-	for _, e := range n.edges {
-		if t.recursiveWalk(e.node, fn) {
-			return true
+	for _, edges := range n.edges {
+		for _, e := range edges {
+			if t.recursiveWalk(e.node, fn) {
+				return true
+			}
 		}
 	}
 	return false

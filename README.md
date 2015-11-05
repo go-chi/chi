@@ -17,9 +17,9 @@ scaled very well.
 
 ## Features
 
-* Lightweight - cloc`d in 578 LOC for the chi router
+* Lightweight - cloc`d in ~600 LOC for the chi router
 * Fast - yes, benchmarks coming
-* Expressive routing - middleware stacks, inline middleware, groups, mount routers
+* Expressive routing - middlewares, inline middleware groups/chains, and subrouter mounting
 * Request context control (value chaining, deadlines and timeouts) - built on `net/context`
 * Robust (tested, used in production)
 
@@ -185,7 +185,7 @@ func main() {
       r.Use(ArticleCtx)
       r.Get("/", getArticle)            // GET /articles/123
       r.Put("/", updateArticle)         // PUT /articles/123
-      r.Delete("/", deleteArticle)      // DELETE /article/123
+      r.Delete("/", deleteArticle)      // DELETE /articles/123
     })
   })
 
@@ -302,7 +302,7 @@ See discussions:
 
 ## License
 
-Copyright (c) 2015 Peter Kieltyka (https://twitter.com/peterk)
+Copyright (c) 2015 Peter Kieltyka - [github.com/pkieltyka](https://github.com/pkieltyka)
 
 MIT License
 

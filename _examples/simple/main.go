@@ -30,7 +30,7 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
-func accountsRouter() chi.Router {
+func accountsRouter() chi.Router { // or http.Handler
 	r := chi.NewRouter()
 
 	r.Use(sup1)
@@ -45,6 +45,10 @@ func accountsRouter() chi.Router {
 		r.Get("/hi2", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			v := ctx.Value("sup2").(string)
 			w.Write([]byte(fmt.Sprintf("hi2 - '%s'", v)))
+		})
+		r.Get("/ahh", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+			v := ctx.Value("sup2").(string)
+			w.Write([]byte(fmt.Sprintf("ahh - '%s'", v)))
 		})
 	})
 
