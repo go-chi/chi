@@ -405,8 +405,8 @@ func TestMux(t *testing.T) {
 	}
 
 	// Custom NotFound handler
-	m.NotFoundHandler(func(rw http.ResponseWriter, r *http.Request) {
-		rw.WriteHeader(200)
+	m.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
 	})
 
 	resp, err = http.Get(ts.URL + "/NotFound")
@@ -419,5 +419,4 @@ func TestMux(t *testing.T) {
 		t.Error("expecting custom NotFound handler when it is set")
 	}
 
-	
 }

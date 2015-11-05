@@ -13,7 +13,7 @@ type Mux struct {
 	routes      map[methodTyp]*tree
 
 	notFound http.HandlerFunc
-	
+
 	// can add rules here for how the mux should work..
 	// ie. slashes, case insensitive, 500 error handler etc.. like httprouter
 }
@@ -109,9 +109,9 @@ func (mx *Mux) Options(pattern string, handlers ...interface{}) {
 	mx.handle(mOPTIONS, pattern, handlers...)
 }
 
-// NotFoundHandler sets a custom handler for the case when no routes matched
+// NotFound sets a custom handler for the case when no routes matched
 // the given URL
-func (mx *Mux) NotFoundHandler(handler http.HandlerFunc) {
+func (mx *Mux) NotFound(handler http.HandlerFunc) {
 	mx.notFound = handler
 }
 
