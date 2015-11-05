@@ -65,17 +65,11 @@ func mwrap(middleware interface{}) func(Handler) Handler {
 
 	case func(http.Handler) http.Handler:
 		return func(next Handler) Handler {
-			var ww http.ResponseWriter
-			var rr *http.Request
-
-			hfn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				ww, rr = w, r
-			})
-			wfn := mw(hfn).ServeHTTP
-
 			return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-				wfn(w, r)
-				next.ServeHTTPC(ctx, ww, rr)
+				wfn := func(w http.ResponseWriter, r *http.Request) {
+					next.ServeHTTPC(ctx, w, r)
+				}
+				mw(http.HandlerFunc(wfn)).ServeHTTP(w, r)
 			})
 		}
 	}
