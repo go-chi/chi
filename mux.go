@@ -12,8 +12,10 @@ type Mux struct {
 	middlewares []interface{}
 	routes      map[methodTyp]*tree
 
+	notFound http.HandlerFunc
+
 	// can add rules here for how the mux should work..
-	// ie. slashes, case insensitive, notfound handler etc.. like httprouter
+	// ie. slashes, case insensitive, 500 error handler etc.. like httprouter
 }
 
 type methodTyp int
@@ -107,6 +109,12 @@ func (mx *Mux) Options(pattern string, handlers ...interface{}) {
 	mx.handle(mOPTIONS, pattern, handlers...)
 }
 
+// NotFound sets a custom handler for the case when no routes matched
+// the given URL
+func (mx *Mux) NotFound(handler http.HandlerFunc) {
+	mx.notFound = handler
+}
+
 func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
 	// Build handler from middleware stack, inline middlewares and handler
 	h := chain(mx.middlewares, handlers...)
@@ -198,8 +206,9 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 	cxh, err = routes.Find(path, params)
 	_ = err // ..
 
+	// No route found
 	if cxh == nil {
-		http.NotFound(w, r)
+		mx.notFound(w, r)
 		return
 	}
 

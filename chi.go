@@ -7,7 +7,7 @@ import (
 )
 
 func NewRouter() *Mux {
-	return &Mux{}
+	return &Mux{notFound: http.NotFound}
 }
 
 type Router interface {
