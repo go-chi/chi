@@ -1,6 +1,7 @@
 package chi
 
 import (
+	"fmt"
 	"net/http"
 
 	"golang.org/x/net/context"
@@ -116,7 +117,7 @@ func (mx *Mux) Options(pattern string, handlers ...interface{}) {
 
 func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
 	if len(pattern) == 0 || pattern[0] != '/' {
-		panic("pattern must begin with a /")
+		panic(fmt.Sprintf("pattern must begin with '/' in '%s'", pattern))
 	}
 
 	// Build the single mux handler that is a chain of the middleware stack, as
@@ -210,7 +211,7 @@ func newTreeRouter() treeRouter {
 }
 
 func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	// URL params
+	// Allocate a new url params map at the start of each request.
 	params, ok := ctx.Value(URLParamsCtxKey).(map[string]string)
 	if !ok || params == nil {
 		params = make(map[string]string, 0)
@@ -218,16 +219,18 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	}
 
 	// The request path
-	path := r.URL.Path
-	if routePath, ok := ctx.Value(SubRouterCtxKey).(string); ok {
-		path = routePath
+	routePath, ok := ctx.Value(SubRouterCtxKey).(string)
+	if ok {
 		delete(params, "*")
+	} else {
+		routePath = r.URL.Path
 	}
 
 	// Find the handler in the router
-	cxh := tr[methodMap[r.Method]].Find(path, params)
+	cxh := tr[methodMap[r.Method]].Find(routePath, params)
 	if cxh == nil {
-		http.NotFound(w, r)
+		w.WriteHeader(404)
+		w.Write([]byte(http.StatusText(404)))
 		return
 	}
 
