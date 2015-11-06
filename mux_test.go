@@ -217,7 +217,7 @@ func TestMuxPlain(t *testing.T) {
 	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
 		t.Fatalf(resp)
 	}
-	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "404 page not found\n" {
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "Not Found" {
 		t.Fatalf(resp)
 	}
 }

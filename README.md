@@ -18,7 +18,7 @@ scaled very well.
 ## Features
 
 * Lightweight - cloc`d in ~600 LOC for the chi router
-* Fast - yes, benchmarks coming
+* Fast - yes, see [benchmarks](#benchmarks)
 * Expressive routing - middlewares, inline middleware groups/chains, and subrouter mounting
 * Request context control (value chaining, deadlines and timeouts) - built on `net/context`
 * Robust (tested, used in production)
@@ -275,6 +275,16 @@ have infinitely more middlewares to compose from the community!!
 See discussions:
 * https://github.com/golang/go/issues/13021
 * https://groups.google.com/forum/#!topic/golang-dev/cQs1z9LrJDU
+
+
+## Benchmarks
+
+The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
+
+The results as of Nov. 6, 2015 - https://gist.github.com/pkieltyka/505b07b09f5c63e36ef5
+
+Note: by design, chi allocates new routing URLParams map for each request, as opposed
+to reusing URLParams from a pool.
 
 
 ## Credits
