@@ -8,8 +8,6 @@
     cd $GOPATH/src/github.com/pressly/chi
     ```
 
-3. Now you should be able to run `make`, `make fmt`.
-
 ## Submitting a Pull request
 
 Your typical workflow will be:
