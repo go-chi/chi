@@ -41,6 +41,9 @@ func TestTree(t *testing.T) {
 
 	tr.Insert("/", hIndex)
 	tr.Insert("/favicon.ico", hFavicon)
+
+	tr.Insert("/pages/*", hStub)
+
 	tr.Insert("/article", hArticleList)
 	tr.Insert("/article/", hArticleList) // redirect..?
 
@@ -96,6 +99,10 @@ func TestTree(t *testing.T) {
 	}{
 		{r: "/", h: hIndex, p: emptyParams},
 		{r: "/favicon.ico", h: hFavicon, p: emptyParams},
+
+		{r: "/pages", h: nil, p: emptyParams},
+		{r: "/pages/", h: hStub, p: map[string]string{"*": ""}},
+		{r: "/pages/yes", h: hStub, p: map[string]string{"*": "yes"}},
 
 		{r: "/article", h: hArticleList, p: emptyParams},
 		{r: "/article/", h: hArticleList, p: emptyParams},

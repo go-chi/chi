@@ -182,14 +182,12 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 		h.ServeHTTPC(ctx, w, r)
 	})
 
-	if path == "/" {
-		path = ""
-	}
-	if path != "" {
+	if path == "" || path[len(path)-1] != '/' {
 		mx.Handle(path, subRouter)
 		mx.Handle(path+"/", http.NotFound) // TODO: which not-found handler..?
+		path += "/"
 	}
-	mx.Handle(path+"/*", subRouter)
+	mx.Handle(path+"*", subRouter)
 }
 
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {

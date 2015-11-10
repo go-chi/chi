@@ -191,7 +191,12 @@ func (n *node) findNode(path string, params map[string]string) *node {
 		}
 
 		// search subset of edges of the index for a matching node
-		xn := nn.findEdge(ntyp, search[0]) // next node
+		var label byte
+		if search != "" {
+			label = search[0]
+		}
+		xn := nn.findEdge(ntyp, label) // next node
+
 		if xn == nil {
 			continue
 		}
@@ -225,13 +230,6 @@ func (n *node) findNode(path string, params map[string]string) *node {
 			if xn.isLeaf() {
 				return xn
 			}
-
-			// TODO: opportunity to improve a case:
-			// it's possible search path is empty, but xn
-			// holds an edge with a handler. triggered by,
-			// r.Route("/x", func(r Router) { r.Mount("/", another )})
-
-			continue
 		}
 
 		// recursively find the next node..

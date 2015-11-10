@@ -80,7 +80,6 @@ func TestMux(t *testing.T) {
 	_ = pingAll2
 
 	pingOne := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		// TODO: params...
 		idParam := URLParams(ctx)["id"] // from outside: chi.URLParams(ctx)
 
 		w.WriteHeader(200)
@@ -117,8 +116,6 @@ func TestMux(t *testing.T) {
 	m.Get("/ping/:id/woop", pingWoop)
 	m.Handle("/admin/*", catchAll)
 	// m.Post("/admin/*", catchAll)
-
-	// TODO: table-test a lot of this.........
 
 	ts := httptest.NewServer(m)
 	defer ts.Close()
@@ -353,7 +350,7 @@ func TestMuxRootGroup(t *testing.T) {
 }
 
 func TestMuxBig(t *testing.T) {
-	var r, sr1, sr2, sr3, sr4, sr5 *Mux
+	var r, sr1, sr2, sr3, sr4, sr5, sr6 *Mux
 	r = NewRouter()
 	r.Use(func(next Handler) Handler {
 		return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -448,6 +445,20 @@ func TestMuxBig(t *testing.T) {
 				})
 			})
 		})
+
+		r.Route("/folders/", func(r Router) {
+			sr6 = r.(*Mux)
+			r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+				s := fmt.Sprintf("/folders/ reqid:%s session:%s",
+					ctx.Value("requestID"), ctx.Value("session.user"))
+				w.Write([]byte(s))
+			})
+			r.Get("/public", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+				s := fmt.Sprintf("/folders/public reqid:%s session:%s",
+					ctx.Value("requestID"), ctx.Value("session.user"))
+				w.Write([]byte(s))
+			})
+		})
 	})
 
 	// log.Println("")
@@ -474,6 +485,10 @@ func TestMuxBig(t *testing.T) {
 	//
 	// log.Println("~~subrouter5")
 	// debugPrintTree(0, 0, sr5.router[mGET].root, 0)
+	// log.Println("")
+	//
+	// log.Println("~~subrouter6")
+	// debugPrintTree(0, 0, sr6.router[mGET].root, 0)
 	// log.Println("")
 
 	ts := httptest.NewServer(r)
@@ -519,6 +534,22 @@ func TestMuxBig(t *testing.T) {
 	}
 	resp = testRequest(t, ts, "GET", "/hubs/123/posts", nil)
 	if resp != "/hubs/123/posts reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", resp)
+	}
+	resp = testRequest(t, ts, "GET", "/folders", nil)
+	if resp != "Not Found" {
+		t.Fatalf("got '%s'", resp)
+	}
+	resp = testRequest(t, ts, "GET", "/folders/", nil)
+	if resp != "/folders/ reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", resp)
+	}
+	resp = testRequest(t, ts, "GET", "/folders/public", nil)
+	if resp != "/folders/public reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", resp)
+	}
+	resp = testRequest(t, ts, "GET", "/folders/nothing", nil)
+	if resp != "Not Found" {
 		t.Fatalf("got '%s'", resp)
 	}
 }
@@ -602,11 +633,10 @@ func TestMuxSubroutes(t *testing.T) {
 	if resp != "hub3" {
 		t.Fatalf("got '%s'", resp)
 	}
-	// TODO: mounting subrouter as "/" causes issue to finding this route
-	// resp = testRequest(t, ts, "GET", "/accounts/44", nil)
-	// if resp != "account1" {
-	// 	t.Fatalf("got '%s'", resp)
-	// }
+	resp = testRequest(t, ts, "GET", "/accounts/44", nil)
+	if resp != "account1" {
+		t.Fatalf("got '%s'", resp)
+	}
 	resp = testRequest(t, ts, "GET", "/accounts/44/hi", nil)
 	if resp != "account2" {
 		t.Fatalf("got '%s'", resp)
