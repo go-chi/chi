@@ -5,6 +5,11 @@ go:
   - 1.5
   - tip
 
+install:
+  - go get -u golang.org/x/tools/cmd/goimports
+  - go get -u -d golang.org/x/net/context
+
 script:
   - go test ./...
-  - goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :
+  - >
+    goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :
