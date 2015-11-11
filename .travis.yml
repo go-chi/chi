@@ -1,0 +1,10 @@
+language: go
+
+go:
+  - 1.4
+  - 1.5
+  - tip
+
+script:
+  - go test ./...
+  - goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :
