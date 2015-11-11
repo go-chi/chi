@@ -7,6 +7,7 @@ go:
 
 install:
   - go get -u golang.org/x/tools/cmd/goimports
+  - go get -u -d golang.org/x/net/context
 
 script:
   - go test ./...
