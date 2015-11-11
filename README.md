@@ -256,6 +256,8 @@ Chi comes equipped with an optional `middleware` package, providing:
 | Throttle    | Puts a ceiling on the number of concurrent requests.                            |
 -------------------------------------------------------------------------------------------------
 
+**NOTE:** if you are using Logger and Recoverer middlewares, Logger should precede Recoverer in order to have all panic responses logged as well.
+
 Other middlewares:
 
 * [httpcoala](https://github.com/goware/httpcoala) - request coalescer
