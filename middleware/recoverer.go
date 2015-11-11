@@ -23,7 +23,8 @@ func Recoverer(next chi.Handler) chi.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				reqID := GetReqID(ctx)
-				printPanic(reqID, err)
+				prefix := requestPrefix(reqID, r)
+				printPanic(prefix, reqID, err)
 				debug.PrintStack()
 				http.Error(w, http.StatusText(500), 500)
 			}
@@ -35,13 +36,10 @@ func Recoverer(next chi.Handler) chi.Handler {
 	return chi.HandlerFunc(fn)
 }
 
-func printPanic(reqID string, err interface{}) {
+func printPanic(prefix, reqID string, err interface{}) {
 	var buf bytes.Buffer
 
-	if reqID != "" {
-		cW(&buf, nYellow, "[%s] ", reqID)
-	}
 	cW(&buf, bRed, "panic: %+v", err)
 
-	log.Print(buf.String())
+	log.Print(prefix + buf.String())
 }
