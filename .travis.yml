@@ -7,3 +7,4 @@ go:
 
 script:
   - go test ./...
+  - goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :
