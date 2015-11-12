@@ -6,7 +6,6 @@ package middleware
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -47,10 +46,12 @@ func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
 	if reqID != "" {
 		cW(buf, nYellow, "[%s] ", reqID)
 	}
-	buf.WriteString(r.RemoteAddr)
-	cW(buf, nBlue, " \"")
+	cW(buf, nCyan, "\"")
 	cW(buf, bMagenta, "%s ", r.Method)
-	cW(buf, nBlue, fmt.Sprintf("%q ", r.URL.String()+" "+r.Proto)[1:])
+	cW(buf, nCyan, "%s %s\" ", r.URL.String(), r.Proto)
+	buf.WriteString("from ")
+	buf.WriteString(r.RemoteAddr)
+	buf.WriteString(" - ")
 
 	return buf
 }
