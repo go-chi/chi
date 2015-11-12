@@ -6,6 +6,7 @@ package middleware
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -25,8 +26,7 @@ import (
 func Logger(next chi.Handler) chi.Handler {
 	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		reqID := GetReqID(ctx)
-		printStart(reqID, r)
-
+		prefix := requestPrefix(reqID, r)
 		lw := wrapWriter(w)
 
 		t1 := time.Now()
@@ -34,7 +34,7 @@ func Logger(next chi.Handler) chi.Handler {
 		defer func() {
 			t2 := time.Now()
 
-			printEnd(reqID, lw, t2.Sub(t1))
+			printEnd(prefix, reqID, lw, t2.Sub(t1))
 		}()
 
 		next.ServeHTTPC(ctx, lw, r)
@@ -43,34 +43,27 @@ func Logger(next chi.Handler) chi.Handler {
 	return chi.HandlerFunc(fn)
 }
 
-func printStart(reqID string, r *http.Request) {
+func requestPrefix(reqID string, r *http.Request) string {
 	var buf bytes.Buffer
 
+	cW(&buf, bMagenta, "%s ", r.RemoteAddr)
 	if reqID != "" {
 		cW(&buf, nYellow, "[%s] ", reqID)
 	}
-	buf.WriteString("Started ")
+	cW(&buf, nBlue, "\"")
 	cW(&buf, bMagenta, "%s ", r.Method)
-	cW(&buf, nBlue, "%q ", r.URL.String())
-	buf.WriteString("from ")
-	buf.WriteString(r.RemoteAddr)
+	cW(&buf, nBlue, fmt.Sprintf("%q ", r.URL.String()+" "+r.Proto)[1:])
 
-	log.Print(buf.String())
+	return buf.String()
 }
 
-func printEnd(reqID string, w writerProxy, dt time.Duration) {
+func printEnd(prefix, reqID string, w writerProxy, dt time.Duration) {
 	var buf bytes.Buffer
-
-	if reqID != "" {
-		cW(&buf, nYellow, "[%s] ", reqID)
-	}
 
 	status := w.Status()
 	if status == StatusClientClosedRequest {
-		buf.WriteString("Client ")
-		cW(&buf, bRed, "disconnected")
+		cW(&buf, bRed, "[disconnected]")
 	} else {
-		buf.WriteString("Returning ")
 		switch {
 		case status == basicWriterUnknownStatus:
 			cW(&buf, bBlue, "200") // Implicit code sent by net pkg.
@@ -87,6 +80,8 @@ func printEnd(reqID string, w writerProxy, dt time.Duration) {
 		}
 	}
 
+	cW(&buf, bBlue, " %dB", w.BytesWritten())
+
 	buf.WriteString(" in ")
 	if dt < 500*time.Millisecond {
 		cW(&buf, nGreen, "%s", dt)
@@ -96,7 +91,7 @@ func printEnd(reqID string, w writerProxy, dt time.Duration) {
 		cW(&buf, nRed, "%s", dt)
 	}
 
-	log.Print(buf.String())
+	log.Print(prefix + buf.String())
 }
 
 // writerProxy is a proxy around an http.ResponseWriter that allows you to hook
