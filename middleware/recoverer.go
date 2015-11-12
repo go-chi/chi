@@ -36,10 +36,7 @@ func Recoverer(next chi.Handler) chi.Handler {
 	return chi.HandlerFunc(fn)
 }
 
-func printPanic(prefix, reqID string, err interface{}) {
-	var buf bytes.Buffer
-
-	cW(&buf, bRed, "panic: %+v", err)
-
-	log.Print(prefix + buf.String())
+func printPanic(buf *bytes.Buffer, reqID string, err interface{}) {
+	cW(buf, bRed, "panic: %+v", err)
+	log.Print(buf.String())
 }

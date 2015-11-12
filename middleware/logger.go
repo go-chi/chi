@@ -30,11 +30,9 @@ func Logger(next chi.Handler) chi.Handler {
 		lw := wrapWriter(w)
 
 		t1 := time.Now()
-
 		defer func() {
 			t2 := time.Now()
-
-			printEnd(prefix, reqID, lw, t2.Sub(t1))
+			printRequest(prefix, reqID, lw, t2.Sub(t1))
 		}()
 
 		next.ServeHTTPC(ctx, lw, r)
@@ -43,55 +41,53 @@ func Logger(next chi.Handler) chi.Handler {
 	return chi.HandlerFunc(fn)
 }
 
-func requestPrefix(reqID string, r *http.Request) string {
-	var buf bytes.Buffer
+func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
+	buf := &bytes.Buffer{}
 
-	cW(&buf, bMagenta, "%s ", r.RemoteAddr)
+	cW(buf, bMagenta, "%s ", r.RemoteAddr)
 	if reqID != "" {
-		cW(&buf, nYellow, "[%s] ", reqID)
+		cW(buf, nYellow, "[%s] ", reqID)
 	}
-	cW(&buf, nBlue, "\"")
-	cW(&buf, bMagenta, "%s ", r.Method)
-	cW(&buf, nBlue, fmt.Sprintf("%q ", r.URL.String()+" "+r.Proto)[1:])
+	cW(buf, nBlue, "\"")
+	cW(buf, bMagenta, "%s ", r.Method)
+	cW(buf, nBlue, fmt.Sprintf("%q ", r.URL.String()+" "+r.Proto)[1:])
 
-	return buf.String()
+	return buf
 }
 
-func printEnd(prefix, reqID string, w writerProxy, dt time.Duration) {
-	var buf bytes.Buffer
-
+func printRequest(buf *bytes.Buffer, reqID string, w writerProxy, dt time.Duration) {
 	status := w.Status()
 	if status == StatusClientClosedRequest {
-		cW(&buf, bRed, "[disconnected]")
+		cW(buf, bRed, "[disconnected]")
 	} else {
 		switch {
 		case status == basicWriterUnknownStatus:
-			cW(&buf, bBlue, "200") // Implicit code sent by net pkg.
+			cW(buf, bBlue, "200") // Implicit code sent by net pkg.
 		case status < 200:
-			cW(&buf, bBlue, "%03d", status)
+			cW(buf, bBlue, "%03d", status)
 		case status < 300:
-			cW(&buf, bGreen, "%03d", status)
+			cW(buf, bGreen, "%03d", status)
 		case status < 400:
-			cW(&buf, bCyan, "%03d", status)
+			cW(buf, bCyan, "%03d", status)
 		case status < 500:
-			cW(&buf, bYellow, "%03d", status)
+			cW(buf, bYellow, "%03d", status)
 		default:
-			cW(&buf, bRed, "%03d", status)
+			cW(buf, bRed, "%03d", status)
 		}
 	}
 
-	cW(&buf, bBlue, " %dB", w.BytesWritten())
+	cW(buf, bBlue, " %dB", w.BytesWritten())
 
 	buf.WriteString(" in ")
 	if dt < 500*time.Millisecond {
-		cW(&buf, nGreen, "%s", dt)
+		cW(buf, nGreen, "%s", dt)
 	} else if dt < 5*time.Second {
-		cW(&buf, nYellow, "%s", dt)
+		cW(buf, nYellow, "%s", dt)
 	} else {
-		cW(&buf, nRed, "%s", dt)
+		cW(buf, nRed, "%s", dt)
 	}
 
-	log.Print(prefix + buf.String())
+	log.Print(buf.String())
 }
 
 // writerProxy is a proxy around an http.ResponseWriter that allows you to hook

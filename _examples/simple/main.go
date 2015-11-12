@@ -15,6 +15,7 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	r.Use(func(h chi.Handler) chi.Handler {
 		return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -49,6 +50,9 @@ func accountsRouter() chi.Router { // or http.Handler
 		r.Get("/ahh", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			v := ctx.Value("sup2").(string)
 			w.Write([]byte(fmt.Sprintf("ahh - '%s'", v)))
+		})
+		r.Get("/fail", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+			panic("no..")
 		})
 	})
 
