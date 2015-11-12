@@ -44,11 +44,11 @@ func Logger(next chi.Handler) chi.Handler {
 func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 
-	cW(buf, bMagenta, "%s ", r.RemoteAddr)
 	if reqID != "" {
 		cW(buf, nYellow, "[%s] ", reqID)
 	}
-	cW(buf, nBlue, "\"")
+	buf.WriteString(r.RemoteAddr)
+	cW(buf, nBlue, " \"")
 	cW(buf, bMagenta, "%s ", r.Method)
 	cW(buf, nBlue, fmt.Sprintf("%q ", r.URL.String()+" "+r.Proto)[1:])
 
