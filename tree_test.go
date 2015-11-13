@@ -96,42 +96,43 @@ func TestTree(t *testing.T) {
 		r string            // input request path
 		h Handler           // output matched handler
 		p map[string]string // output params
+		m string            // matched node's path
 	}{
-		{r: "/", h: hIndex, p: emptyParams},
-		{r: "/favicon.ico", h: hFavicon, p: emptyParams},
+		{r: "/", h: hIndex, p: emptyParams, m: "/"},
+		{r: "/favicon.ico", h: hFavicon, p: emptyParams, m: "/favicon.ico"},
 
 		{r: "/pages", h: nil, p: emptyParams},
-		{r: "/pages/", h: hStub, p: map[string]string{"*": ""}},
-		{r: "/pages/yes", h: hStub, p: map[string]string{"*": "yes"}},
+		{r: "/pages/", h: hStub, p: map[string]string{"*": ""}, m: "/pages/*"},
+		{r: "/pages/yes", h: hStub, p: map[string]string{"*": "yes"}, m: "/pages/*"},
 
-		{r: "/article", h: hArticleList, p: emptyParams},
-		{r: "/article/", h: hArticleList, p: emptyParams},
-		{r: "/article/near", h: hArticleNear, p: emptyParams},
-		{r: "/article/neard", h: hArticleShow, p: map[string]string{"id": "neard"}},
-		{r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}},
-		{r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}},
-		{r: "/article/@peter", h: hArticleByUser, p: map[string]string{"user": "peter"}},
-		{r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}},
-		{r: "/article/111/edit", h: hStub, p: map[string]string{"id": "111"}},
-		{r: "/article/slug/sept/-/4/2015", h: hArticleSlug, p: map[string]string{"month": "sept", "day": "4", "year": "2015"}},
-		{r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}}, // TODO review goji?
+		{r: "/article", h: hArticleList, p: emptyParams, m: "/article"},
+		{r: "/article/", h: hArticleList, p: emptyParams, m: "/article/"},
+		{r: "/article/near", h: hArticleNear, p: emptyParams, m: "/article/near"},
+		{r: "/article/neard", h: hArticleShow, p: map[string]string{"id": "neard"}, m: "/article/:id"},
+		{r: "/article/123", h: hArticleShow, p: map[string]string{"id": "123"}, m: "/article/:id"},
+		{r: "/article/123/456", h: hArticleShowOpts, p: map[string]string{"id": "123", "opts": "456"}, m: "/article/:id/:opts"},
+		{r: "/article/@peter", h: hArticleByUser, p: map[string]string{"user": "peter"}, m: "/article/@:user"},
+		{r: "/article/22//related", h: hArticleShowRelated, p: map[string]string{"id": "22"}, m: "/article/:id//related"},
+		{r: "/article/111/edit", h: hStub, p: map[string]string{"id": "111"}, m: "/article/:iffd/edit"},
+		{r: "/article/slug/sept/-/4/2015", h: hArticleSlug, p: map[string]string{"month": "sept", "day": "4", "year": "2015"}, m: "/article/slug/:month/-/:day/:year"},
+		{r: "/article/:id", h: hArticleShow, p: map[string]string{"id": ":id"}, m: "/article/:id"}, // TODO review goji?
 
-		{r: "/admin/user", h: hUserList, p: emptyParams},
-		{r: "/admin/user/", h: hUserList, p: emptyParams},
-		{r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}}, // hmmm.... TODO, review
-		{r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}},
-		{r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}},
-		{r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}},
-		{r: "/admin/apps/333", h: hAdminAppShow, p: map[string]string{"id": "333"}},
-		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, p: map[string]string{"id": "333", "*": "woot"}},
+		{r: "/admin/user", h: hUserList, p: emptyParams, m: "/admin/user"},
+		{r: "/admin/user/", h: hUserList, p: emptyParams, m: "/admin/user/"},
+		{r: "/admin/user/1", h: hUserShow, p: map[string]string{"id": "1"}, m: "/admin/user/:id"}, // hmmm.... TODO, review
+		{r: "/admin/user//1", h: hUserShow, p: map[string]string{"id": "1"}, m: "/admin/user//:id"},
+		{r: "/admin/hi", h: hAdminCatchall, p: map[string]string{"*": "hi"}, m: "/admin/*"},
+		{r: "/admin/lots/of/:fun", h: hAdminCatchall, p: map[string]string{"*": "lots/of/:fun"}, m: "/admin/*"},
+		{r: "/admin/apps/333", h: hAdminAppShow, p: map[string]string{"id": "333"}, m: "/admin/apps/:id"},
+		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, p: map[string]string{"id": "333", "*": "woot"}, m: "/admin/apps/:id/*ff"},
 
-		{r: "/hubs/123/view", h: hHubView1, p: map[string]string{"hubID": "123"}},
-		{r: "/hubs/123/view/index.html", h: hHubView2, p: map[string]string{"hubID": "123", "*": "index.html"}},
-		{r: "/hubs/123/users", h: hHubView3, p: map[string]string{"hubID": "123"}},
+		{r: "/hubs/123/view", h: hHubView1, p: map[string]string{"hubID": "123"}, m: "/hubs/:hubID/view"},
+		{r: "/hubs/123/view/index.html", h: hHubView2, p: map[string]string{"hubID": "123", "*": "index.html"}, m: "/hubs/:hubID/view/*"},
+		{r: "/hubs/123/users", h: hHubView3, p: map[string]string{"hubID": "123"}, m: "/hubs/:hubID/users"},
 
-		{r: "/users/123/profile", h: hUserProfile, p: map[string]string{"userID": "123"}},
-		{r: "/users/super/123/okay/yes", h: hUserSuper, p: map[string]string{"*": "123/okay/yes"}},
-		{r: "/users/123/okay/yes", h: hUserAll, p: map[string]string{"*": "123/okay/yes"}},
+		{r: "/users/123/profile", h: hUserProfile, p: map[string]string{"userID": "123"}, m: "/users/:userID/profile"},
+		{r: "/users/super/123/okay/yes", h: hUserSuper, p: map[string]string{"*": "123/okay/yes"}, m: "/users/super/*"},
+		{r: "/users/123/okay/yes", h: hUserAll, p: map[string]string{"*": "123/okay/yes"}, m: "/users/*"},
 	}
 
 	// log.Println("~~~~~~~~~")
@@ -142,12 +143,15 @@ func TestTree(t *testing.T) {
 
 	for i, tt := range tests {
 		params := make(map[string]string, 0)
-		handler := tr.Find(tt.r, params)
+		handler, path := tr.Find(tt.r, params)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
 		}
 		if !reflect.DeepEqual(tt.p, params) {
 			t.Errorf("input [%d]: find '%s' expecting params:%v , got:%v", i, tt.r, tt.p, params)
+		}
+		if fmt.Sprintf("%v", tt.m) != fmt.Sprintf("%v", path) {
+			t.Errorf("input [%d]: find '%s' expecting fullpath:%v , got:%v", i, tt.r, tt.m, path)
 		}
 	}
 }

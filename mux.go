@@ -62,6 +62,7 @@ type ctxKey int
 const (
 	URLParamsCtxKey ctxKey = iota
 	SubRouterCtxKey
+	MatchedPathCtxKey
 )
 
 func NewMux() *Mux {
@@ -225,12 +226,14 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	}
 
 	// Find the handler in the router
-	cxh := tr[methodMap[r.Method]].Find(routePath, params)
+	cxh, path := tr[methodMap[r.Method]].Find(routePath, params)
 	if cxh == nil {
 		w.WriteHeader(404)
 		w.Write([]byte(http.StatusText(404)))
 		return
 	}
+
+	ctx = context.WithValue(ctx, MatchedPathCtxKey, path)
 
 	// Serve it
 	cxh.ServeHTTPC(ctx, w, r)
