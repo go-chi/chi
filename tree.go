@@ -41,6 +41,9 @@ type node struct {
 	// Edges should be stored in-order for iteration,
 	// in groups of the node type.
 	edges [ntCatchAll + 1]edges
+
+	// full path to the node
+	fullPath string
 }
 
 func (n *node) isLeaf() bool {
@@ -88,9 +91,10 @@ func (n *node) addEdge(e edge) {
 			e2 := edge{
 				label: search[0], // this will always start with /
 				node: &node{
-					typ:     ntStatic,
-					prefix:  search,
-					handler: handler,
+					typ:      ntStatic,
+					prefix:   search,
+					handler:  handler,
+					fullPath: e.node.fullPath,
 				},
 			}
 			e.node.addEdge(e2)
@@ -111,9 +115,10 @@ func (n *node) addEdge(e edge) {
 		e2 := edge{
 			label: search[0],
 			node: &node{
-				typ:     ntyp,
-				prefix:  search,
-				handler: handler,
+				typ:      ntyp,
+				prefix:   search,
+				handler:  handler,
+				fullPath: e.node.fullPath,
 			},
 		}
 		e.node.addEdge(e2)
@@ -289,6 +294,7 @@ func (t *tree) Insert(pattern string, handler Handler) {
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
 			n.handler = handler
+			n.fullPath = pattern
 			return
 		}
 
@@ -301,8 +307,9 @@ func (t *tree) Insert(pattern string, handler Handler) {
 			e := edge{
 				label: search[0],
 				node: &node{
-					prefix:  search,
-					handler: handler,
+					prefix:   search,
+					handler:  handler,
+					fullPath: pattern,
 				},
 			}
 			parent.addEdge(e)
@@ -351,6 +358,7 @@ func (t *tree) Insert(pattern string, handler Handler) {
 		search = search[commonPrefix:]
 		if len(search) == 0 {
 			child.handler = handler
+			child.fullPath = pattern
 			return
 		}
 
@@ -358,9 +366,10 @@ func (t *tree) Insert(pattern string, handler Handler) {
 		child.addEdge(edge{
 			label: search[0],
 			node: &node{
-				typ:     ntStatic,
-				prefix:  search,
-				handler: handler,
+				typ:      ntStatic,
+				prefix:   search,
+				handler:  handler,
+				fullPath: pattern,
 			},
 		})
 		return
@@ -368,12 +377,12 @@ func (t *tree) Insert(pattern string, handler Handler) {
 	return
 }
 
-func (t *tree) Find(path string, params map[string]string) Handler {
+func (t *tree) Find(path string, params map[string]string) (Handler, string) {
 	node := t.root.findNode(path, params)
 	if node == nil {
-		return nil
+		return nil, ""
 	}
-	return node.handler
+	return node.handler, node.fullPath
 }
 
 // Walk is used to walk the tree
