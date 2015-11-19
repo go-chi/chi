@@ -6,6 +6,7 @@ package middleware
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -43,12 +44,18 @@ func Logger(next chi.Handler) chi.Handler {
 func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 
+	rScheme := "http://"
+	if r.TLS != nil {
+		rScheme = "https://"
+	}
+	rURL := fmt.Sprintf("%s%s%s", rScheme, r.Host, r.RequestURI)
+
 	if reqID != "" {
 		cW(buf, nYellow, "[%s] ", reqID)
 	}
 	cW(buf, nCyan, "\"")
 	cW(buf, bMagenta, "%s ", r.Method)
-	cW(buf, nCyan, "%s %s\" ", r.URL.String(), r.Proto)
+	cW(buf, nCyan, "%s %s\" ", rURL, r.Proto)
 	buf.WriteString("from ")
 	buf.WriteString(r.RemoteAddr)
 	buf.WriteString(" - ")
