@@ -228,19 +228,10 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Check if method is supported by chi
 	method, ok := methodMap[r.Method]
 	if !ok {
-		// Return allowed methods, as required by RFC2616 for 405 Method not allowed
-		methods := make([]string, len(methodMap))
-		i := 0
-		for m := range methodMap {
-			methods[i] = m // still faster than append to array with capacity
-			i++
-		}
-		w.Header().Add("Allow", strings.Join(methods, ","))
-		w.WriteHeader(405)
-
-		w.Write([]byte(http.StatusText(405)))
+		writeMethodNotAllowed(w)
 		return
 	}
+
 	// Find the handler in the router
 	cxh := tr[method].Find(routePath, params)
 	if cxh == nil {
@@ -251,4 +242,20 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 
 	// Serve it
 	cxh.ServeHTTPC(ctx, w, r)
+}
+
+// Respond with just the allowed methods, as required by RFC2616 for
+// 405 Method not allowed.
+func writeMethodNotAllowed(w http.ResponseWriter) {
+	methods := make([]string, len(methodMap))
+	i := 0
+	for m := range methodMap {
+		methods[i] = m // still faster than append to array with capacity
+		i++
+	}
+
+	w.Header().Add("Allow", strings.Join(methods, ","))
+	w.WriteHeader(405)
+
+	w.Write([]byte(http.StatusText(405)))
 }
