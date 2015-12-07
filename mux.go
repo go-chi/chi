@@ -3,6 +3,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"golang.org/x/net/context"
 )
@@ -224,8 +225,15 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 		routePath = r.URL.Path
 	}
 
+	// Check if method is supported by chi
+	method, ok := methodMap[r.Method]
+	if !ok {
+		writeMethodNotAllowed(w)
+		return
+	}
+
 	// Find the handler in the router
-	cxh := tr[methodMap[r.Method]].Find(routePath, params)
+	cxh := tr[method].Find(routePath, params)
 	if cxh == nil {
 		w.WriteHeader(404)
 		w.Write([]byte(http.StatusText(404)))
@@ -234,4 +242,20 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 
 	// Serve it
 	cxh.ServeHTTPC(ctx, w, r)
+}
+
+// Respond with just the allowed methods, as required by RFC2616 for
+// 405 Method not allowed.
+func writeMethodNotAllowed(w http.ResponseWriter) {
+	methods := make([]string, len(methodMap))
+	i := 0
+	for m := range methodMap {
+		methods[i] = m // still faster than append to array with capacity
+		i++
+	}
+
+	w.Header().Add("Allow", strings.Join(methods, ","))
+	w.WriteHeader(405)
+
+	w.Write([]byte(http.StatusText(405)))
 }
