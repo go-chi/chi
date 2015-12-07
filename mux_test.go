@@ -201,7 +201,7 @@ func TestMux(t *testing.T) {
 		t.Error("expecting response body: 'catchall'")
 	}
 
-	// Custom http method DIE /admin/catch-this
+	// Custom http method DIE /ping/1/woop
 	if resp := testRequest(t, ts, "DIE", "/ping/1/woop", nil); resp != "Method Not Allowed" {
 		t.Fatalf(resp)
 	}
