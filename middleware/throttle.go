@@ -94,6 +94,5 @@ func (t *throttle) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *htt
 }
 
 func httpStatus(w http.ResponseWriter, statusCode int) {
-	w.WriteHeader(statusCode)
-	w.Write([]byte(http.StatusText(statusCode)))
+	http.Error(w, http.StatusText(statusCode), statusCode)
 }
