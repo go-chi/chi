@@ -1,14 +1,15 @@
 package middleware
 
 import (
-	"github.com/pressly/chi"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/pressly/chi"
+	"github.com/stretchr/testify/assert"
 )
 
 var testContent = []byte("Hello world!")
