@@ -9,32 +9,35 @@ import (
 )
 
 var (
-	defaultTimeout = time.Second * 60
+	defaultThrottleTimeout = time.Second * 60
 )
 
 // Throttle is a middleware that limits number of currently processed requests
 // at a time.
-func Throttle(limit int, backloglimit int, timeout time.Duration) func(chi.Handler) chi.Handler {
+func Throttle(limit int) func(chi.Handler) chi.Handler {
+	return ThrottleBacklog(limit, 0, defaultThrottleTimeout)
+}
+
+// ThrottleBacklog is a middleware that limits number of currently processed
+// requests at a time and provides a backlog for holding a finite number of
+// pending requests.
+func ThrottleBacklog(limit int, backloglimit int, timeout time.Duration) func(chi.Handler) chi.Handler {
 	if limit < 1 {
 		panic("middleware.Throttle expects limit > 0")
 	}
 
-	if backloglimit < limit {
-		panic("middleware.Throttle expects backloglimit > limit")
+	if backloglimit < 0 {
+		panic("middleware.Throttle expects backloglimit to be positive")
 	}
 
-	if timeout == 0 {
-		timeout = defaultTimeout
-	}
-
-	t := throttle{
+	t := throttler{
 		tokens:        make(chan token, limit),
-		backlogtokens: make(chan token, backloglimit),
+		backlogtokens: make(chan token, limit+backloglimit),
 		timeout:       timeout,
 	}
 
 	// Filling tokens.
-	for i := 0; i < backloglimit; i++ {
+	for i := 0; i < limit+backloglimit; i++ {
 		if i < limit {
 			t.tokens <- token{}
 		}
@@ -53,7 +56,7 @@ func Throttle(limit int, backloglimit int, timeout time.Duration) func(chi.Handl
 type token struct{}
 
 // throttler limits number of currently processed requests at a time.
-type throttle struct {
+type throttler struct {
 	h             chi.Handler
 	tokens        chan token
 	backlogtokens chan token
@@ -63,20 +66,19 @@ type throttle struct {
 // TODO: add support for a backlog
 
 // ServeHTTPC implements chi.Handler interface.
-func (t *throttle) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	timer := time.NewTimer(t.timeout)
+func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
 	select {
-	case <-timer.C:
-		httpStatus(w, http.StatusServiceUnavailable)
-		return
 	case <-ctx.Done():
 		httpStatus(w, http.StatusServiceUnavailable)
 		return
 	case btok := <-t.backlogtokens:
+		timer := time.NewTimer(t.timeout)
+
 		defer func() {
 			t.backlogtokens <- btok
 		}()
+
 		select {
 		case <-timer.C:
 			httpStatus(w, http.StatusGatewayTimeout)
@@ -90,9 +92,8 @@ func (t *throttle) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *htt
 			}()
 			t.h.ServeHTTPC(ctx, w, r)
 		}
+	default:
+		httpStatus(w, http.StatusServiceUnavailable)
+		return
 	}
-}
-
-func httpStatus(w http.ResponseWriter, statusCode int) {
-	http.Error(w, http.StatusText(statusCode), statusCode)
 }

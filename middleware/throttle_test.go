@@ -14,10 +14,10 @@ import (
 
 var testContent = []byte("Hello world!")
 
-func TestThrottle(t *testing.T) {
+func TestThrottleBacklog(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.Use(Throttle(10, 50, time.Second*10))
+	r.Use(ThrottleBacklog(10, 50, time.Second*10))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -42,9 +42,8 @@ func TestThrottle(t *testing.T) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err)
+
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 			buf, err := ioutil.ReadAll(res.Body)
 			assert.NoError(t, err)
@@ -60,7 +59,7 @@ func TestThrottle(t *testing.T) {
 func TestThrottleClientTimeout(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.Use(Throttle(10, 50, time.Second*10))
+	r.Use(ThrottleBacklog(10, 50, time.Second*10))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -93,7 +92,7 @@ func TestThrottleClientTimeout(t *testing.T) {
 func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.Use(Throttle(50, 100, time.Second*5))
+	r.Use(ThrottleBacklog(50, 100, time.Second*5))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -146,11 +145,11 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 func TestThrottleMaximum(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.Use(Throttle(50, 100, time.Second*5))
+	r.Use(ThrottleBacklog(50, 50, time.Second*5))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		time.Sleep(time.Second * 1) // Expensive operation.
+		time.Sleep(time.Second * 2) // Expensive operation.
 		w.Write(testContent)
 	})
 
@@ -162,19 +161,35 @@ func TestThrottleMaximum(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			if err != nil {
-				t.Fatal(err)
-			}
+			assert.NoError(t, err)
 			assert.Equal(t, http.StatusOK, res.StatusCode)
+
 			buf, err := ioutil.ReadAll(res.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, testContent, buf)
+
+		}(i)
+	}
+
+	// Wait less time than what the server takes to reply.
+	time.Sleep(time.Second * 1)
+
+	// The server is still processing, to all those request will be beyond the
+	// server capacity.
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+
+			res, err := client.Get(server.URL)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusServiceUnavailable, res.StatusCode)
 
 		}(i)
 	}
