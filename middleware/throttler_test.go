@@ -109,7 +109,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	// These requests will be processed normally until the end.
+	// These requests will be processed normally until they finish.
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -124,8 +124,8 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 	time.Sleep(time.Second * 1)
 
-	// These requests will wait for the first batch to complete. They will
-	// eventually receive a timeout error.
+	// These requests will wait for the first batch to complete but it will take
+	// too much time, so they will eventually receive a timeout error.
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -184,8 +184,8 @@ func TestThrottleMaximum(t *testing.T) {
 	// Wait less time than what the server takes to reply.
 	time.Sleep(time.Second * 1)
 
-	// The server is still processing, to all those request will be beyond the
-	// server capacity.
+	// At this point the server is still processing, all the following request
+	// will be beyond the server capacity.
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func(i int) {
