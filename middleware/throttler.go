@@ -15,39 +15,39 @@ const (
 )
 
 var (
-	defaultThrottleTimeout = time.Second * 60
+	defaultBacklogTimeout = time.Second * 60
 )
 
 // Throttle is a middleware that limits number of currently processed requests
 // at a time.
 func Throttle(limit int) func(chi.Handler) chi.Handler {
-	return ThrottleBacklog(limit, 0, defaultThrottleTimeout)
+	return ThrottleBacklog(limit, 0, defaultBacklogTimeout)
 }
 
 // ThrottleBacklog is a middleware that limits number of currently processed
 // requests at a time and provides a backlog for holding a finite number of
 // pending requests.
-func ThrottleBacklog(limit int, backloglimit int, timeout time.Duration) func(chi.Handler) chi.Handler {
+func ThrottleBacklog(limit int, backlogLimit int, backlogTimeout time.Duration) func(chi.Handler) chi.Handler {
 	if limit < 1 {
 		panic("middleware.Throttle expects limit > 0")
 	}
 
-	if backloglimit < 0 {
-		panic("middleware.Throttle expects backloglimit to be positive")
+	if backlogLimit < 0 {
+		panic("middleware.Throttle expects backlogLimit to be positive")
 	}
 
 	t := throttler{
-		tokens:        make(chan token, limit),
-		backlogtokens: make(chan token, limit+backloglimit),
-		timeout:       timeout,
+		tokens:         make(chan token, limit),
+		backlogTokens:  make(chan token, limit+backlogLimit),
+		backlogTimeout: backlogTimeout,
 	}
 
 	// Filling tokens.
-	for i := 0; i < limit+backloglimit; i++ {
+	for i := 0; i < limit+backlogLimit; i++ {
 		if i < limit {
 			t.tokens <- token{}
 		}
-		t.backlogtokens <- token{}
+		t.backlogTokens <- token{}
 	}
 
 	fn := func(h chi.Handler) chi.Handler {
@@ -63,13 +63,11 @@ type token struct{}
 
 // throttler limits number of currently processed requests at a time.
 type throttler struct {
-	h             chi.Handler
-	tokens        chan token
-	backlogtokens chan token
-	timeout       time.Duration
+	h              chi.Handler
+	tokens         chan token
+	backlogTokens  chan token
+	backlogTimeout time.Duration
 }
-
-// TODO: add support for a backlog
 
 // ServeHTTPC implements chi.Handler interface.
 func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -77,11 +75,11 @@ func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *ht
 	case <-ctx.Done():
 		http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
 		return
-	case btok := <-t.backlogtokens:
-		timer := time.NewTimer(t.timeout)
+	case btok := <-t.backlogTokens:
+		timer := time.NewTimer(t.backlogTimeout)
 
 		defer func() {
-			t.backlogtokens <- btok
+			t.backlogTokens <- btok
 		}()
 
 		select {
