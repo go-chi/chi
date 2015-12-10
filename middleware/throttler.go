@@ -8,6 +8,12 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	errCapacityExceeded = "Server capacity exceeded."
+	errTimedOut         = "Timed out while waiting for a pending request to complete."
+	errContextCanceled  = "Context was canceled."
+)
+
 var (
 	defaultThrottleTimeout = time.Second * 60
 )
@@ -67,10 +73,9 @@ type throttler struct {
 
 // ServeHTTPC implements chi.Handler interface.
 func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-
 	select {
 	case <-ctx.Done():
-		httpStatus(w, http.StatusServiceUnavailable)
+		http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
 		return
 	case btok := <-t.backlogtokens:
 		timer := time.NewTimer(t.timeout)
@@ -81,10 +86,10 @@ func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *ht
 
 		select {
 		case <-timer.C:
-			httpStatus(w, http.StatusGatewayTimeout)
+			http.Error(w, errTimedOut, http.StatusServiceUnavailable)
 			return
 		case <-ctx.Done():
-			httpStatus(w, http.StatusServiceUnavailable)
+			http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
 			return
 		case tok := <-t.tokens:
 			defer func() {
@@ -92,8 +97,9 @@ func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *ht
 			}()
 			t.h.ServeHTTPC(ctx, w, r)
 		}
+		return
 	default:
-		httpStatus(w, http.StatusServiceUnavailable)
+		http.Error(w, errCapacityExceeded, http.StatusServiceUnavailable)
 		return
 	}
 }

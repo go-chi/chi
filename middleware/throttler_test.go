@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -124,7 +125,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	time.Sleep(time.Second * 1)
 
 	// These requests will wait for the first batch to complete. They will
-	// eventually receive a gateway timeout error.
+	// eventually receive a timeout error.
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
 		go func(i int) {
@@ -132,7 +133,10 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 			res, err := client.Get(server.URL)
 			assert.NoError(t, err)
-			assert.Equal(t, http.StatusGatewayTimeout, res.StatusCode)
+
+			buf, err := ioutil.ReadAll(res.Body)
+			assert.Equal(t, http.StatusServiceUnavailable, res.StatusCode)
+			assert.Equal(t, errTimedOut, strings.TrimSpace(string(buf)))
 
 		}(i)
 	}
@@ -189,7 +193,10 @@ func TestThrottleMaximum(t *testing.T) {
 
 			res, err := client.Get(server.URL)
 			assert.NoError(t, err)
+
+			buf, err := ioutil.ReadAll(res.Body)
 			assert.Equal(t, http.StatusServiceUnavailable, res.StatusCode)
+			assert.Equal(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
 
 		}(i)
 	}
