@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pressly/chi"
+	"github.com/pressly/chi/_examples/rest/render"
 	"github.com/pressly/chi/middleware"
 	"golang.org/x/net/context"
 )
@@ -125,6 +126,7 @@ func ArticleCtx(next chi.Handler) chi.Handler {
 
 func listArticles(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("list of articles.."))
+	// or render.Data(w, 200, []byte("list of articles.."))
 }
 
 func createArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -154,7 +156,13 @@ func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(422), 422)
 		return
 	}
-	w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
+
+	// Build your own responder, see the "./render" pacakge as a starting
+	// point for your own.
+	render.JSON(w, 200, article)
+
+	// or..
+	// w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
 }
 
 func updateArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -182,9 +190,9 @@ func updateArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// should really send back the json marshalled updated article.
-	// build your own responder :)
-	w.Write([]byte(fmt.Sprintf("updated article, title:%s", uArticle.Title)))
+	render.JSON(w, 200, uArticle)
+
+	// w.Write([]byte(fmt.Sprintf("updated article, title:%s", uArticle.Title)))
 }
 
 func deleteArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
