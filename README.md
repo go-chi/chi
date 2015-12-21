@@ -144,8 +144,8 @@ and..
 ## Examples
 
 Examples:
-* [simple](https://github.com/pressly/chi/blob/master/_examples/simple/main.go)
-* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - Includes a simple JSON responder
+* [simple](https://github.com/pressly/chi/blob/master/_examples/simple/main.go) - The power of handler composability
+* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST apis made easy; includes a simple JSON responder
 
 Preview:
 
