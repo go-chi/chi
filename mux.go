@@ -3,7 +3,6 @@ package chi
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"golang.org/x/net/context"
 )
@@ -16,7 +15,7 @@ type Mux struct {
 	middlewares []interface{}
 
 	// The radix trie router with URL parameter matching
-	router treeRouter
+	router *treeRouter
 
 	// The mux handler, chained middleware stack and tree router
 	handler Handler
@@ -24,9 +23,6 @@ type Mux struct {
 	// Controls the behaviour of middleware chain generation when a mux
 	// is registered as an inline group inside another mux.
 	inline bool
-
-	// can add rules here for how the mux should work..
-	// ie. slashes, case insensitive, notfound handler etc.. like httprouter
 }
 
 type methodTyp int
@@ -116,6 +112,11 @@ func (mx *Mux) Options(pattern string, handlers ...interface{}) {
 	mx.handle(mOPTIONS, pattern, handlers...)
 }
 
+// NotFound sets a custom handler for the case when no routes match
+func (mx *Mux) NotFound(h HandlerFunc) {
+	mx.router.notFoundHandler = h
+}
+
 func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		panic(fmt.Sprintf("pattern must begin with '/' in '%s'", pattern))
@@ -143,7 +144,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{})
 	for _, mt := range methodMap {
 		m := method & mt
 		if m > 0 {
-			mx.router[m].Insert(pattern, endpoint)
+			mx.router.routes[m].Insert(pattern, endpoint)
 		}
 	}
 }
@@ -185,7 +186,7 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 
 	if path == "" || path[len(path)-1] != '/' {
 		mx.Handle(path, subRouter)
-		mx.Handle(path+"/", http.NotFound) // TODO: which not-found handler..?
+		mx.Handle(path+"/", mx.router.notFoundHandler)
 		path += "/"
 	}
 	mx.Handle(path+"*", subRouter)
@@ -199,14 +200,23 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 	mx.handler.ServeHTTPC(ctx, w, r)
 }
 
-type treeRouter map[methodTyp]*tree
+type treeRouter struct {
+	// Routing tree by method type
+	routes map[methodTyp]*tree
 
-func newTreeRouter() treeRouter {
-	tr := make(map[methodTyp]*tree, len(methodMap))
-	for _, v := range methodMap {
-		tr[v] = &tree{root: &node{}}
+	// Custom route not found handler
+	notFoundHandler HandlerFunc
+}
+
+func newTreeRouter() *treeRouter {
+	tr := &treeRouter{
+		routes:          make(map[methodTyp]*tree, len(methodMap)),
+		notFoundHandler: notFoundHandler,
 	}
-	return treeRouter(tr)
+	for _, v := range methodMap {
+		tr.routes[v] = &tree{root: &node{}}
+	}
+	return tr
 }
 
 func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -228,34 +238,17 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Check if method is supported by chi
 	method, ok := methodMap[r.Method]
 	if !ok {
-		writeMethodNotAllowed(w)
+		methodNotAllowedHandler(ctx, w, r)
 		return
 	}
 
 	// Find the handler in the router
-	cxh := tr[method].Find(routePath, params)
+	cxh := tr.routes[method].Find(routePath, params)
 	if cxh == nil {
-		w.WriteHeader(404)
-		w.Write([]byte(http.StatusText(404)))
+		tr.notFoundHandler.ServeHTTPC(ctx, w, r)
 		return
 	}
 
 	// Serve it
 	cxh.ServeHTTPC(ctx, w, r)
-}
-
-// Respond with just the allowed methods, as required by RFC2616 for
-// 405 Method not allowed.
-func writeMethodNotAllowed(w http.ResponseWriter) {
-	methods := make([]string, len(methodMap))
-	i := 0
-	for m := range methodMap {
-		methods[i] = m // still faster than append to array with capacity
-		i++
-	}
-
-	w.Header().Add("Allow", strings.Join(methods, ","))
-	w.WriteHeader(405)
-
-	w.Write([]byte(http.StatusText(405)))
 }

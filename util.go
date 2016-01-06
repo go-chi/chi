@@ -3,6 +3,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"golang.org/x/net/context"
 )
@@ -84,4 +85,23 @@ func assertMiddleware(middleware interface{}) interface{} {
 	case func(Handler) Handler:
 	}
 	return middleware
+}
+
+// Respond with just the allowed methods, as required by RFC2616 for
+// 405 Method not allowed.
+func methodNotAllowedHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	methods := make([]string, len(methodMap))
+	i := 0
+	for m := range methodMap {
+		methods[i] = m // still faster than append to array with capacity
+		i++
+	}
+
+	w.Header().Add("Allow", strings.Join(methods, ","))
+	w.WriteHeader(405)
+	w.Write([]byte(http.StatusText(405)))
+}
+
+func notFoundHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	http.NotFound(w, r)
 }

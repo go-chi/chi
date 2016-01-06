@@ -212,6 +212,10 @@ func TestMuxPlain(t *testing.T) {
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("bye"))
 	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -219,7 +223,7 @@ func TestMuxPlain(t *testing.T) {
 	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
 		t.Fatalf(resp)
 	}
-	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "Not Found" {
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
 		t.Fatalf(resp)
 	}
 }
@@ -542,7 +546,7 @@ func TestMuxBig(t *testing.T) {
 		t.Fatalf("got '%s'", resp)
 	}
 	resp = testRequest(t, ts, "GET", "/folders", nil)
-	if resp != "Not Found" {
+	if resp != "404 page not found\n" {
 		t.Fatalf("got '%s'", resp)
 	}
 	resp = testRequest(t, ts, "GET", "/folders/", nil)
@@ -554,7 +558,7 @@ func TestMuxBig(t *testing.T) {
 		t.Fatalf("got '%s'", resp)
 	}
 	resp = testRequest(t, ts, "GET", "/folders/nothing", nil)
-	if resp != "Not Found" {
+	if resp != "404 page not found\n" {
 		t.Fatalf("got '%s'", resp)
 	}
 }

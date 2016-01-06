@@ -20,6 +20,8 @@ type Router interface {
 	Mount(pattern string, handlers ...interface{})
 
 	Handle(pattern string, handlers ...interface{})
+	NotFound(h HandlerFunc)
+
 	Connect(pattern string, handlers ...interface{})
 	Head(pattern string, handlers ...interface{})
 	Get(pattern string, handlers ...interface{})
