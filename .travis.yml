@@ -3,7 +3,7 @@ language: go
 go:
   - 1.4
   - 1.5
-  - tip
+  - 1.6
 
 install:
   - go get -u golang.org/x/tools/cmd/goimports

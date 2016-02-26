@@ -305,18 +305,16 @@ to reusing URLParams from a pool.
   * Trailing slash?
   * Case insensitive paths?
   * GET for HEAD requests (auto fallback)?
-* Register not found handler
-* Register error handler (500's)
+* Register error handler (500's), ServerError() handler?
 * HTTP2 example
   * both http 1.1 and http2 automatically.. just turn it on :)
-* Websocket example
 * Regexp support in router "/:id([0-9]+)" or "#id^[0-9]+$" or ..
 
 We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 ## License
 
-Copyright (c) 2015 [Peter Kieltyka](https://github.com/pkieltyka)
+Copyright (c) 2015-2016 [Peter Kieltyka](https://github.com/pkieltyka)
 
 Licensed under [MIT License](./LICENSE)
 
