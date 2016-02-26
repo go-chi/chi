@@ -195,7 +195,7 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 
 	if path == "" || path[len(path)-1] != '/' {
 		mx.Handle(path, subHandler)
-		mx.Handle(path+"/", mx.router.notFoundHandler)
+		mx.Handle(path+"/", mx.router.NotFoundHandlerFn())
 		path += "/"
 	}
 	mx.Handle(path+"*", subHandler)
@@ -228,6 +228,15 @@ func newTreeRouter() *treeRouter {
 	return tr
 }
 
+func (tr treeRouter) NotFoundHandlerFn() HandlerFunc {
+	if tr.notFoundHandler != nil {
+		return *tr.notFoundHandler
+	}
+	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		http.NotFound(w, r)
+	})
+}
+
 func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// Allocate a new url params map at the start of each request.
 	params, ok := ctx.Value(URLParamsCtxKey).(map[string]string)
@@ -254,11 +263,7 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Find the handler in the router
 	cxh := tr.routes[method].Find(routePath, params)
 	if cxh == nil {
-		if tr.notFoundHandler == nil {
-			http.NotFound(w, r)
-		} else {
-			tr.notFoundHandler.ServeHTTPC(ctx, w, r)
-		}
+		tr.NotFoundHandlerFn().ServeHTTPC(ctx, w, r)
 		return
 	}
 
