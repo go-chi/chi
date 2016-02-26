@@ -114,7 +114,7 @@ func (mx *Mux) Options(pattern string, handlers ...interface{}) {
 
 // NotFound sets a custom handler for the case when no routes match
 func (mx *Mux) NotFound(h HandlerFunc) {
-	mx.router.notFoundHandler = h
+	mx.router.notFoundHandler = &h
 }
 
 func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
@@ -177,19 +177,28 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 	// Build chain with any inline middlewares and endpoint handler for the subrouter
 	h := chain([]interface{}{}, handlers...)
 
-	// Route the subroutes through a wildcard url param
-	subRouter := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// Assign sub-Router's with the parent not found handler if not specified.
+	for _, hh := range handlers {
+		if sr, ok := hh.(*Mux); ok {
+			if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
+				sr.NotFound(*mx.router.notFoundHandler)
+			}
+		}
+	}
+
+	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
+	subHandler := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		path := URLParams(ctx)["*"]
 		ctx = context.WithValue(ctx, SubRouterCtxKey, "/"+path)
 		h.ServeHTTPC(ctx, w, r)
 	})
 
 	if path == "" || path[len(path)-1] != '/' {
-		mx.Handle(path, subRouter)
+		mx.Handle(path, subHandler)
 		mx.Handle(path+"/", mx.router.notFoundHandler)
 		path += "/"
 	}
-	mx.Handle(path+"*", subRouter)
+	mx.Handle(path+"*", subHandler)
 }
 
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -205,13 +214,13 @@ type treeRouter struct {
 	routes map[methodTyp]*tree
 
 	// Custom route not found handler
-	notFoundHandler HandlerFunc
+	notFoundHandler *HandlerFunc
 }
 
 func newTreeRouter() *treeRouter {
 	tr := &treeRouter{
 		routes:          make(map[methodTyp]*tree, len(methodMap)),
-		notFoundHandler: notFoundHandler,
+		notFoundHandler: nil,
 	}
 	for _, v := range methodMap {
 		tr.routes[v] = &tree{root: &node{}}
@@ -245,7 +254,11 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Find the handler in the router
 	cxh := tr.routes[method].Find(routePath, params)
 	if cxh == nil {
-		tr.notFoundHandler.ServeHTTPC(ctx, w, r)
+		if tr.notFoundHandler == nil {
+			http.NotFound(w, r)
+		} else {
+			tr.notFoundHandler.ServeHTTPC(ctx, w, r)
+		}
 		return
 	}
 

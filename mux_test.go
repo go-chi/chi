@@ -228,6 +228,59 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+func TestMuxNestedNotFound(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bye"))
+	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("root 404"))
+	})
+
+	sr1 := NewRouter()
+	sr1.Get("/sub", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub"))
+	})
+	sr1.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("sub 404"))
+	})
+
+	sr2 := NewRouter()
+	sr2.Get("/sub", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub2"))
+	})
+
+	r.Mount("/admin1", sr1)
+	r.Mount("/admin2", sr2)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "root 404" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/admin1/sub", nil); resp != "sub" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/admin1/nope", nil); resp != "sub 404" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/admin2/sub", nil); resp != "sub2" {
+		t.Fatalf(resp)
+	}
+
+	// Not found pages should bubble up to the root.
+	if resp := testRequest(t, ts, "GET", "/admin2/nope", nil); resp != "root 404" {
+		t.Fatalf(resp)
+	}
+
+}
+
 func TestMuxMiddlewareStack(t *testing.T) {
 	var stdmwInit, stdmwHandler uint64
 	stdmw := func(next http.Handler) http.Handler {

@@ -101,7 +101,3 @@ func methodNotAllowedHandler(ctx context.Context, w http.ResponseWriter, r *http
 	w.WriteHeader(405)
 	w.Write([]byte(http.StatusText(405)))
 }
-
-func notFoundHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	http.NotFound(w, r)
-}

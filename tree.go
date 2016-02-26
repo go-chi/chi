@@ -277,9 +277,6 @@ func (e edges) Sort() {
 // ordered iteration.
 type tree struct {
 	root *node
-
-	// Optional handler to return in case nothing was found
-	notFoundHandler Handler
 }
 
 func (t *tree) Insert(pattern string, handler Handler) {
