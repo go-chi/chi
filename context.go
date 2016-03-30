@@ -8,7 +8,6 @@ type ctxKey int
 
 const (
 	rootCtxKey ctxKey = iota
-	SubRouterCtxKey
 )
 
 type Context struct {
