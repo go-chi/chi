@@ -180,7 +180,7 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
 // It's like searching through a three-dimensional radix trie.
-func (n *node) findNode(path string, params map[string]string) *node {
+func (n *node) findNode(ctx *Context, path string) *node {
 	nn := n
 	search := path
 
@@ -213,9 +213,9 @@ func (n *node) findNode(path string, params map[string]string) *node {
 			}
 
 			if xn.typ == ntCatchAll {
-				params["*"] = xsearch
+				ctx.addParam("*", xsearch)
 			} else {
-				params[xn.prefix[1:]] = xsearch[:p]
+				ctx.addParam(xn.prefix[1:], xsearch[:p])
 			}
 
 			xsearch = xsearch[p:]
@@ -233,7 +233,7 @@ func (n *node) findNode(path string, params map[string]string) *node {
 		}
 
 		// recursively find the next node..
-		fin := xn.findNode(xsearch, params)
+		fin := xn.findNode(ctx, xsearch)
 		if fin != nil {
 			// found a node, return it
 			return fin
@@ -241,9 +241,9 @@ func (n *node) findNode(path string, params map[string]string) *node {
 			// let's remove the param here if it was set
 			if xn.typ > ntStatic {
 				if xn.typ == ntCatchAll {
-					delete(params, "*")
+					ctx.delParam("*")
 				} else {
-					delete(params, xn.prefix[1:])
+					ctx.delParam(xn.prefix[1:])
 				}
 			}
 		}
@@ -368,8 +368,8 @@ func (t *tree) Insert(pattern string, handler Handler) {
 	return
 }
 
-func (t *tree) Find(path string, params map[string]string) Handler {
-	node := t.root.findNode(path, params)
+func (t *tree) Find(ctx *Context, path string) Handler {
+	node := t.root.findNode(ctx, path)
 	if node == nil {
 		return nil
 	}

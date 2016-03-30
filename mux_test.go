@@ -80,7 +80,7 @@ func TestMux(t *testing.T) {
 	_ = pingAll2
 
 	pingOne := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		idParam := URLParams(ctx)["id"] // from outside: chi.URLParams(ctx)
+		idParam := URLParam(ctx, "id") // from outside: chi.URLParams(ctx)
 
 		w.WriteHeader(200)
 		w.Write([]byte(fmt.Sprintf("ping one id: %s", idParam)))
@@ -436,11 +436,11 @@ func TestMuxBig(t *testing.T) {
 			w.Write([]byte("fav"))
 		})
 		r.Get("/hubs/:hubID/view", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			s := fmt.Sprintf("/hubs/%s/view reqid:%s", URLParams(ctx)["hubID"], ctx.Value("requestID"))
+			s := fmt.Sprintf("/hubs/%s/view reqid:%s", URLParam(ctx, "hubID"), ctx.Value("requestID"))
 			w.Write([]byte(s))
 		})
 		r.Get("/hubs/:hubID/view/*", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s", URLParams(ctx)["hubID"], URLParams(ctx)["*"],
+			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s", URLParam(ctx, "hubID"), URLParam(ctx, "*"),
 				ctx.Value("requestID"))
 			w.Write([]byte(s))
 		})
@@ -462,7 +462,7 @@ func TestMuxBig(t *testing.T) {
 		})
 
 		r.Get("/woot/:wootID/*", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			s := fmt.Sprintf("/woot/%s/%s", URLParams(ctx)["wootID"], URLParams(ctx)["*"])
+			s := fmt.Sprintf("/woot/%s/%s", URLParam(ctx, "wootID"), URLParam(ctx, "*"))
 			w.Write([]byte(s))
 		})
 
@@ -472,26 +472,26 @@ func TestMuxBig(t *testing.T) {
 				sr2 = r.(*Mux)
 				r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 					s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
-						URLParams(ctx)["hubID"], ctx.Value("requestID"), ctx.Value("session.user"))
+						URLParam(ctx, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
 				r.Get("/touch", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-					s := fmt.Sprintf("/hubs/%s/touch reqid:%s session:%s", URLParams(ctx)["hubID"],
+					s := fmt.Sprintf("/hubs/%s/touch reqid:%s session:%s", URLParam(ctx, "hubID"),
 						ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
 
 				sr3 = NewRouter()
 				sr3.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-					s := fmt.Sprintf("/hubs/%s/webhooks reqid:%s session:%s", URLParams(ctx)["hubID"],
+					s := fmt.Sprintf("/hubs/%s/webhooks reqid:%s session:%s", URLParam(ctx, "hubID"),
 						ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
 				sr3.Route("/:webhookID", func(r Router) {
 					sr4 = r.(*Mux)
 					r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-						s := fmt.Sprintf("/hubs/%s/webhooks/%s reqid:%s session:%s", URLParams(ctx)["hubID"],
-							URLParams(ctx)["webhookID"], ctx.Value("requestID"), ctx.Value("session.user"))
+						s := fmt.Sprintf("/hubs/%s/webhooks/%s reqid:%s session:%s", URLParam(ctx, "hubID"),
+							URLParam(ctx, "webhookID"), ctx.Value("requestID"), ctx.Value("session.user"))
 						w.Write([]byte(s))
 					})
 				})
@@ -500,7 +500,7 @@ func TestMuxBig(t *testing.T) {
 				r.Route("/posts", func(r Router) {
 					sr5 = r.(*Mux)
 					r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-						s := fmt.Sprintf("/hubs/%s/posts reqid:%s session:%s", URLParams(ctx)["hubID"],
+						s := fmt.Sprintf("/hubs/%s/posts reqid:%s session:%s", URLParam(ctx, "hubID"),
 							ctx.Value("requestID"), ctx.Value("session.user"))
 						w.Write([]byte(s))
 					})
@@ -556,7 +556,7 @@ func TestMuxBig(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	var resp string
+	var resp, expected string
 
 	resp = testRequest(t, ts, "GET", "/favicon.ico", nil)
 	if resp != "fav" {
@@ -583,8 +583,9 @@ func TestMuxBig(t *testing.T) {
 		t.Fatalf("got '%s'", resp)
 	}
 	resp = testRequest(t, ts, "GET", "/hubs/123", nil)
-	if resp != "/hubs/123 reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	expected = "/hubs/123 reqid:1 session:elvis"
+	if resp != expected {
+		t.Fatalf("expected:%s got:%s", expected, resp)
 	}
 	resp = testRequest(t, ts, "GET", "/hubs/123/touch", nil)
 	if resp != "/hubs/123/touch reqid:1 session:elvis" {
@@ -681,28 +682,44 @@ func TestMuxSubroutes(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	var resp string
+	var resp, expected string
 
 	resp = testRequest(t, ts, "GET", "/hubs/123/view", nil)
-	if resp != "hub1" {
-		t.Fatalf("got '%s'", resp)
+	expected = "hub1"
+	if resp != expected {
+		t.Fatalf("expected:%s got:%s", expected, resp)
 	}
 	resp = testRequest(t, ts, "GET", "/hubs/123/view/index.html", nil)
-	if resp != "hub2" {
-		t.Fatalf("got '%s'", resp)
+	expected = "hub2"
+	if resp != expected {
+		t.Fatalf("expected:%s got:%s", expected, resp)
 	}
 	resp = testRequest(t, ts, "GET", "/hubs/123/users", nil)
-	if resp != "hub3" {
-		t.Fatalf("got '%s'", resp)
+	expected = "hub3"
+	if resp != expected {
+		t.Fatalf("expected:%s got:%s", expected, resp)
 	}
 	resp = testRequest(t, ts, "GET", "/accounts/44", nil)
-	if resp != "account1" {
-		t.Fatalf("got '%s'", resp)
+	expected = "account1"
+	if resp != expected {
+		t.Fatalf("request:%s expected:%s got:%s", "GET /accounts/44", expected, resp)
 	}
 	resp = testRequest(t, ts, "GET", "/accounts/44/hi", nil)
-	if resp != "account2" {
-		t.Fatalf("got '%s'", resp)
+	expected = "account2"
+	if resp != expected {
+		t.Fatalf("expected:%s got:%s", expected, resp)
 	}
+}
+
+func urlParams(ctx context.Context) map[string]string {
+	if rctx := RootContext(ctx); rctx != nil {
+		m := make(map[string]string, 0)
+		for i, k := range rctx.pkeys {
+			m[k] = rctx.pvalues[i]
+		}
+		return m
+	}
+	return nil
 }
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) string {

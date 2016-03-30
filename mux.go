@@ -3,6 +3,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"sync"
 
 	"golang.org/x/net/context"
 )
@@ -23,6 +24,9 @@ type Mux struct {
 	// Controls the behaviour of middleware chain generation when a mux
 	// is registered as an inline group inside another mux.
 	inline bool
+
+	// Routing context pool
+	pool sync.Pool
 }
 
 type methodTyp int
@@ -54,15 +58,12 @@ var methodMap = map[string]methodTyp{
 	"TRACE":   mTRACE,
 }
 
-type ctxKey int
-
-const (
-	URLParamsCtxKey ctxKey = iota
-	SubRouterCtxKey
-)
-
 func NewMux() *Mux {
-	return &Mux{router: newTreeRouter(), handler: nil}
+	mux := &Mux{router: newTreeRouter(), handler: nil}
+	mux.pool.New = func() interface{} {
+		return newContext()
+	}
+	return mux
 }
 
 // Append to the middleware stack
@@ -188,8 +189,8 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		path := URLParams(ctx)["*"]
-		ctx = context.WithValue(ctx, SubRouterCtxKey, "/"+path)
+		rctx := RootContext(ctx)
+		rctx.routePath = "/" + rctx.delParam("*")
 		h.ServeHTTPC(ctx, w, r)
 	})
 
@@ -202,7 +203,10 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 }
 
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mx.ServeHTTPC(context.Background(), w, r)
+	ctx := mx.pool.Get().(*Context)
+	mx.ServeHTTPC(ctx, w, r)
+	ctx.reset()
+	mx.pool.Put(ctx)
 }
 
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -238,18 +242,15 @@ func (tr treeRouter) NotFoundHandlerFn() HandlerFunc {
 }
 
 func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	// Allocate a new url params map at the start of each request.
-	params, ok := ctx.Value(URLParamsCtxKey).(map[string]string)
-	if !ok || params == nil {
-		params = make(map[string]string, 0)
-		ctx = context.WithValue(ctx, URLParamsCtxKey, params)
+	// Grab the root context object
+	rctx, _ := ctx.(*Context)
+	if rctx == nil {
+		rctx = ctx.Value(rootCtxKey).(*Context)
 	}
 
 	// The request path
-	routePath, ok := ctx.Value(SubRouterCtxKey).(string)
-	if ok {
-		delete(params, "*")
-	} else {
+	routePath := rctx.routePath
+	if routePath == "" {
 		routePath = r.URL.Path
 	}
 
@@ -261,7 +262,8 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	}
 
 	// Find the handler in the router
-	cxh := tr.routes[method].Find(routePath, params)
+	cxh := tr.routes[method].Find(rctx, routePath)
+
 	if cxh == nil {
 		tr.NotFoundHandlerFn().ServeHTTPC(ctx, w, r)
 		return
