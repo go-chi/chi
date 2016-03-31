@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/pressly/chi"
-	"github.com/pressly/chi/_examples/rest/render"
 	"github.com/pressly/chi/middleware"
+	"github.com/pressly/chi/render"
 	"golang.org/x/net/context"
 )
 
@@ -113,7 +113,7 @@ type Article struct {
 
 func ArticleCtx(next chi.Handler) chi.Handler {
 	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		articleID := chi.URLParams(ctx)["articleID"]
+		articleID := chi.URLParam(ctx, "articleID")
 		article, err := dbGetArticle(articleID)
 		if err != nil {
 			http.Error(w, http.StatusText(404), 404)
@@ -229,7 +229,7 @@ func adminRouter() http.Handler { // or chi.Router {
 		w.Write([]byte("admin: list accounts.."))
 	})
 	r.Get("/users/:userId", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParams(ctx)["userId"])))
+		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(ctx, "userId"))))
 	})
 	return r
 }

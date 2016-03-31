@@ -58,9 +58,18 @@ func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h(context.Background(), w, r)
 }
 
-func URLParams(ctx context.Context) map[string]string {
-	if urlParams, ok := ctx.Value(URLParamsCtxKey).(map[string]string); ok {
-		return urlParams
+// Returns the root level chi Context object
+func RootContext(ctx context.Context) *Context {
+	rctx, _ := ctx.(*Context)
+	if rctx == nil {
+		rctx = ctx.Value(rootCtxKey).(*Context)
 	}
-	return nil
+	return rctx
+}
+
+func URLParam(ctx context.Context, key string) string {
+	if rctx := RootContext(ctx); rctx != nil {
+		return rctx.Param(key)
+	}
+	return ""
 }

@@ -141,8 +141,10 @@ func TestTree(t *testing.T) {
 	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
-		params := make(map[string]string, 0)
-		handler := tr.Find(tt.r, params)
+		// params := make(map[string]string, 0)
+		rctx := newContext()
+		handler := tr.Find(rctx, tt.r) //, params)
+		params := urlParams(rctx)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
 		}
@@ -194,8 +196,9 @@ func BenchmarkTreeGet(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		params := map[string]string{}
-		tr.Find("/ping/123/456", params)
+		// params := map[string]string{}
+		mctx := newContext()
+		tr.Find(mctx, "/ping/123/456")
 		// tr.Find("/pingggg", params)
 	}
 }
