@@ -39,7 +39,7 @@ func JSON(w http.ResponseWriter, status int, v interface{}) {
 }
 
 func Noop(w http.ResponseWriter) {
-	String(w, 200, ".")
+	String(w, http.StatusOK, "")
 }
 
 func XML(w http.ResponseWriter, status int, v interface{}) {
