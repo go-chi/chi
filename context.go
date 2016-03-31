@@ -16,7 +16,7 @@ type Context struct {
 	// URL parameter key and values
 	pkeys, pvalues []string
 
-	// Routing path override
+	// Routing path override used by subrouters
 	routePath string
 }
 

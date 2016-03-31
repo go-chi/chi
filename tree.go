@@ -154,28 +154,31 @@ func (n *node) getEdge(label byte) *node {
 func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 	subedges := n.edges[ntyp]
 	num := len(subedges)
-	idx := sort.Search(num, func(i int) bool {
-		switch ntyp {
-		case ntStatic:
-			return subedges[i].label >= label
-		default: // wild nodes
-			// TODO: right now we match them all.. but regexp should
-			// run through regexp matcher
-			return true
+	idx := 0
+
+	switch ntyp {
+	case ntStatic:
+		i, j := 0, num-1
+		for i <= j {
+			idx = i + (j-i)/2
+			if label > subedges[idx].label {
+				i = idx + 1
+			} else if label < subedges[idx].label {
+				j = idx - 1
+			} else {
+				i = num // breaks cond
+			}
 		}
-	})
-
-	if idx >= num {
-		return nil
-	}
-
-	if subedges[idx].node.typ == ntStatic && subedges[idx].label == label {
+		if subedges[idx].label != label {
+			return nil
+		}
 		return subedges[idx].node
-	} else if subedges[idx].node.typ > ntStatic {
+
+	default: // wild nodes
+		// TODO: right now we match them all.. but regexp should
+		// run through regexp matcher
 		return subedges[idx].node
 	}
-
-	return nil
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
@@ -254,22 +257,11 @@ func (n *node) findNode(ctx *Context, path string) *node {
 
 type edges []edge
 
-func (e edges) Len() int {
-	return len(e)
-}
-
 // Sort the list of edges by label
-func (e edges) Less(i, j int) bool {
-	return e[i].label < e[j].label
-}
-
-func (e edges) Swap(i, j int) {
-	e[i], e[j] = e[j], e[i]
-}
-
-func (e edges) Sort() {
-	sort.Sort(e)
-}
+func (e edges) Len() int           { return len(e) }
+func (e edges) Less(i, j int) bool { return e[i].label < e[j].label }
+func (e edges) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
+func (e edges) Sort()              { sort.Sort(e) }
 
 // Tree implements a radix tree. This can be treated as a
 // Dictionary abstract data type. The main advantage over
