@@ -286,22 +286,22 @@ See discussions:
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 
 ```shell
-BenchmarkChi_Param       	10000000	       181 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_Param5      	 3000000	       570 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_Param20     	 1000000	      2057 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_ParamWrite  	 5000000	       245 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GithubStatic	 5000000	       250 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GithubParam 	 2000000	       589 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GithubAll   	   10000	    102664 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GPlusStatic 	10000000	       161 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GPlusParam  	 5000000	       291 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GPlus2Params	 5000000	       393 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_GPlusAll    	  300000	      4335 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_ParseStatic 	10000000	       162 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_ParseParam  	10000000	       227 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_Parse2Params	 5000000	       327 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_ParseAll    	  200000	      7368 ns/op	       0 B/op	       0 allocs/op
-BenchmarkChi_StaticAll   	   30000	     57990 ns/op	       0 B/op	       0 allocs/op
+BenchmarkChi_Param            10000000         128 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_Param5            5000000         303 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_Param20           1000000        1064 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_ParamWrite       10000000         181 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GithubStatic     10000000         193 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GithubParam       5000000         344 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GithubAll           20000       63100 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GPlusStatic      20000000         124 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GPlusParam       10000000         172 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GPlus2Params      5000000         232 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_GPlusAll           500000        2684 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_ParseStatic      10000000         135 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_ParseParam       10000000         154 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_Parse2Params     10000000         192 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_ParseAll           300000        4637 ns/op         0 B/op        0 allocs/op
+BenchmarkChi_StaticAll           50000       37583 ns/op         0 B/op        0 allocs/op
 ```
 
 ## Credits
