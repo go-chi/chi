@@ -80,7 +80,7 @@ func TestMux(t *testing.T) {
 	_ = pingAll2
 
 	pingOne := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		idParam := URLParam(ctx, "id") // from outside: chi.URLParams(ctx)
+		idParam := URLParam(ctx, "id")
 
 		w.WriteHeader(200)
 		w.Write([]byte(fmt.Sprintf("ping one id: %s", idParam)))
