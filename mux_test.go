@@ -207,7 +207,7 @@ func TestMux(t *testing.T) {
 	}
 }
 
-func TestMuxPlain(t *testing.T) {
+func TestMuxFileServer(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("bye"))
@@ -224,6 +224,63 @@ func TestMuxPlain(t *testing.T) {
 		t.Fatalf(resp)
 	}
 	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
+		t.Fatalf(resp)
+	}
+}
+
+func TestMuxStatic(t *testing.T) {
+	r := NewRouter()
+	r.FileServer("/mounted", http.Dir("./_static"))
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bye"))
+	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+	r.FileServer("/", http.Dir("./_static"))
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// HEADS UP: net/http notfoundhandler will kick-in for static assets
+	if resp := testRequest(t, ts, "GET", "/mounted/nothing-here", nil); resp == "nothing here" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp == "nothing here" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/mounted-nothing-here", nil); resp == "nothing here" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/ok", nil); resp != "ok\n" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/mounted/ok", nil); resp != "ok\n" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/index.html", nil); resp != "index\n" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/", nil); resp != "index\n" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/mounted", nil); resp != "index\n" {
+		t.Fatalf(resp)
+	}
+
+	if resp := testRequest(t, ts, "GET", "/mounted/", nil); resp != "index\n" {
 		t.Fatalf(resp)
 	}
 }
