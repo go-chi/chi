@@ -202,6 +202,13 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 	mx.Handle(path+"*", subHandler)
 }
 
+func (mx *Mux) Static(path string, root http.FileSystem) {
+	fs := http.StripPrefix(path, http.FileServer(root))
+	mx.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	})
+}
+
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := mx.pool.Get().(*Context)
 	mx.ServeHTTPC(ctx, w, r)
