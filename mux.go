@@ -203,7 +203,7 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 }
 
 // Serve static files under a path
-func (mx *Mux) Static(path string, root http.FileSystem) {
+func (mx *Mux) FileServer(path string, root http.FileSystem) {
 	fs := http.StripPrefix(path, http.FileServer(root))
 	mx.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)

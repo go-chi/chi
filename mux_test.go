@@ -207,7 +207,7 @@ func TestMux(t *testing.T) {
 	}
 }
 
-func TestMuxPlain(t *testing.T) {
+func TestMuxFileServer(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("bye"))
@@ -230,7 +230,7 @@ func TestMuxPlain(t *testing.T) {
 
 func TestMuxStatic(t *testing.T) {
 	r := NewRouter()
-	r.Static("/mounted", http.Dir("./_static"))
+	r.FileServer("/mounted", http.Dir("./_static"))
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("bye"))
 	})
@@ -238,7 +238,7 @@ func TestMuxStatic(t *testing.T) {
 		w.WriteHeader(404)
 		w.Write([]byte("nothing here"))
 	})
-	r.Static("/", http.Dir("./_static"))
+	r.FileServer("/", http.Dir("./_static"))
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
