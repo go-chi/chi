@@ -118,6 +118,14 @@ func (mx *Mux) NotFound(h HandlerFunc) {
 	mx.router.notFoundHandler = &h
 }
 
+// Serve static files under a path
+func (mx *Mux) FileServer(path string, root http.FileSystem) {
+	fs := http.StripPrefix(path, http.FileServer(root))
+	mx.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(w, r)
+	})
+}
+
 func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		panic(fmt.Sprintf("pattern must begin with '/' in '%s'", pattern))
@@ -200,14 +208,6 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 		path += "/"
 	}
 	mx.Handle(path+"*", subHandler)
-}
-
-// Serve static files under a path
-func (mx *Mux) FileServer(path string, root http.FileSystem) {
-	fs := http.StripPrefix(path, http.FileServer(root))
-	mx.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
-		fs.ServeHTTP(w, r)
-	})
 }
 
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
