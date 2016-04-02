@@ -11,6 +11,9 @@ import (
 var _ Router = &Mux{}
 
 type Mux struct {
+	// Parent context for the server
+	parentCtx context.Context
+
 	// The middleware stack, supporting..
 	// func(http.Handler) http.Handler and func(chi.Handler) chi.Handler
 	middlewares []interface{}
@@ -58,11 +61,17 @@ var methodMap = map[string]methodTyp{
 	"TRACE":   mTRACE,
 }
 
-func NewMux() *Mux {
-	mux := &Mux{router: newTreeRouter(), handler: nil}
-	mux.pool.New = func() interface{} {
-		return newContext()
+func NewMux(parent ...context.Context) *Mux {
+	pctx := context.Background()
+	if len(parent) > 0 {
+		pctx = parent[0]
 	}
+
+	mux := &Mux{parentCtx: pctx, router: newTreeRouter(), handler: nil}
+	mux.pool.New = func() interface{} {
+		return newContext(pctx)
+	}
+
 	return mux
 }
 
@@ -197,8 +206,8 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		rctx := RootContext(ctx)
-		rctx.routePath = "/" + rctx.delParam("*")
+		rctx := RouteContext(ctx)
+		rctx.RoutePath = "/" + rctx.Params.Del("*")
 		h.ServeHTTPC(ctx, w, r)
 	})
 
@@ -253,11 +262,11 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Grab the root context object
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
-		rctx = ctx.Value(rootCtxKey).(*Context)
+		rctx = ctx.Value(routeCtxKey).(*Context)
 	}
 
 	// The request path
-	routePath := rctx.routePath
+	routePath := rctx.RoutePath
 	if routePath == "" {
 		routePath = r.URL.Path
 	}

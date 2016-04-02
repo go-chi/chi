@@ -17,7 +17,9 @@ import (
 )
 
 // Key to use when setting the request ID.
-const RequestIDKey = "chi.reqID"
+type ctxKeyRequestID int
+
+const RequestIDKey ctxKeyRequestID = 0
 
 var prefix string
 var reqid uint64

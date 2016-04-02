@@ -216,9 +216,9 @@ func (n *node) findNode(ctx *Context, path string) *node {
 			}
 
 			if xn.typ == ntCatchAll {
-				ctx.addParam("*", xsearch)
+				ctx.Params.Add("*", xsearch)
 			} else {
-				ctx.addParam(xn.prefix[1:], xsearch[:p])
+				ctx.Params.Add(xn.prefix[1:], xsearch[:p])
 			}
 
 			xsearch = xsearch[p:]
@@ -244,9 +244,9 @@ func (n *node) findNode(ctx *Context, path string) *node {
 			// let's remove the param here if it was set
 			if xn.typ > ntStatic {
 				if xn.typ == ntCatchAll {
-					ctx.delParam("*")
+					ctx.Params.Del("*")
 				} else {
-					ctx.delParam(xn.prefix[1:])
+					ctx.Params.Del(xn.prefix[1:])
 				}
 			}
 		}
@@ -406,4 +406,48 @@ func (t *tree) longestPrefix(k1, k2 string) int {
 		}
 	}
 	return i
+}
+
+type param struct {
+	Key, Value string
+}
+
+type params []param
+
+func (ps *params) Add(key string, value string) {
+	*ps = append(*ps, param{key, value})
+}
+
+func (ps params) Get(key string) string {
+	for _, p := range ps {
+		if p.Key == key {
+			return p.Value
+		}
+	}
+	return ""
+}
+
+func (ps *params) Set(key string, value string) {
+	idx := -1
+	for i, p := range *ps {
+		if p.Key == key {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		(*ps).Add(key, value)
+	} else {
+		(*ps)[idx] = param{key, value}
+	}
+}
+
+func (ps *params) Del(key string) string {
+	for i, p := range *ps {
+		if p.Key == key {
+			*ps = append((*ps)[:i], (*ps)[i+1:]...)
+			return p.Value
+		}
+	}
+	return ""
 }

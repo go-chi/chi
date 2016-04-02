@@ -794,10 +794,10 @@ func TestMuxFileServer(t *testing.T) {
 }
 
 func urlParams(ctx context.Context) map[string]string {
-	if rctx := RootContext(ctx); rctx != nil {
+	if rctx := RouteContext(ctx); rctx != nil {
 		m := make(map[string]string, 0)
-		for i, k := range rctx.pkeys {
-			m[k] = rctx.pvalues[i]
+		for _, p := range rctx.Params {
+			m[p.Key] = p.Value
 		}
 		return m
 	}
