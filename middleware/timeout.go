@@ -12,9 +12,8 @@ import (
 func Timeout(timeout time.Duration) func(next chi.Handler) chi.Handler {
 	return func(next chi.Handler) chi.Handler {
 		fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(ctx, timeout)
+			ctx, _ = context.WithTimeout(ctx, timeout)
 			defer func() {
-				cancel()
 				if ctx.Err() == context.DeadlineExceeded {
 					w.WriteHeader(http.StatusGatewayTimeout)
 				}

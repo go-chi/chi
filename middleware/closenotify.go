@@ -22,11 +22,17 @@ func CloseNotify(next chi.Handler) chi.Handler {
 		}
 
 		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
+
+		done := make(chan struct{}, 0)
+		defer func() {
+			close(done)
+		}()
 
 		go func() {
 			select {
 			case <-ctx.Done():
+				return
+			case <-done:
 				return
 			case <-cn.CloseNotify():
 				w.WriteHeader(StatusClientClosedRequest)
