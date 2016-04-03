@@ -6,12 +6,19 @@ import (
 	"golang.org/x/net/context"
 )
 
-// Create a new mux that adheres to Router interface, with an optional
-// parent context to signal server context to all requests.
+// NewRouter returns a new Mux object that implements the Router interface.
+// It accepts an optional parent context.Context argument used by all
+// request contexts useful for signaling a server shutdown.
 func NewRouter(parent ...context.Context) *Mux {
 	return NewMux(parent...)
 }
 
+// A Router consisting of the core routing methods used by chi's Mux.
+//
+// NOTE, the plan: hopefully once net/context makes it into the stdlib and
+// net/http supports a request context, we will remove the chi.Handler
+// interface, and the Router argument types will be http.Handler instead
+// of interface{}.
 type Router interface {
 	http.Handler
 	Handler
@@ -34,11 +41,6 @@ type Router interface {
 	Trace(pattern string, handlers ...interface{})
 	Options(pattern string, handlers ...interface{})
 }
-
-// NOTE, the plan: hopefully once net/context makes it into the stdlib and
-// net/http supports a request context, we will remove the chi.Handler
-// interface, and the Router argument types will be http.Handler instead
-// of interface{}.
 
 // Handler is like net/http's http.Handler, but also includes a
 // mechanism for serving requests with a context.

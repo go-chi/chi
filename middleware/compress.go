@@ -36,7 +36,7 @@ func DefaultCompress(next http.Handler) http.Handler {
 	return Compress(flate.DefaultCompression)(next)
 }
 
-// CompressLevel is a middleware that compresses response
+// Compress is a middleware that compresses response
 // body of a given content types to a data format based
 // on Accept-Encoding request header. It uses a given
 // compression level.

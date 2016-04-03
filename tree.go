@@ -240,14 +240,14 @@ func (n *node) findNode(ctx *Context, path string) *node {
 		if fin != nil {
 			// found a node, return it
 			return fin
-		} else {
-			// let's remove the param here if it was set
-			if xn.typ > ntStatic {
-				if xn.typ == ntCatchAll {
-					ctx.Params.Del("*")
-				} else {
-					ctx.Params.Del(xn.prefix[1:])
-				}
+		}
+
+		// Did not found final handler, let's remove the param here if it was set
+		if xn.typ > ntStatic {
+			if xn.typ == ntCatchAll {
+				ctx.Params.Del("*")
+			} else {
+				ctx.Params.Del(xn.prefix[1:])
 			}
 		}
 	}
@@ -357,7 +357,6 @@ func (t *tree) Insert(pattern string, handler Handler) {
 		})
 		return
 	}
-	return
 }
 
 func (t *tree) Find(ctx *Context, path string) Handler {

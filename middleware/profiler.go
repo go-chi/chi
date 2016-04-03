@@ -10,6 +10,15 @@ import (
 	"golang.org/x/net/context"
 )
 
+// Profiler is a convenient subrouter used for mounting net/http/pprof. ie.
+//
+// func MyService() http.Handler {
+//   r := chi.NewRouter()
+//   // ..middlewares
+//   r.Mount("/debug", profiler.Router())
+//   // ..routes
+//   return r
+// }
 func Profiler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(NoCache)

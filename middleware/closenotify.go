@@ -7,8 +7,8 @@ import (
 	"golang.org/x/net/context"
 )
 
-// 499 Client Closed Request (Nginx)
-// https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+// StatusClientClosedRequest represents a 499 Client Closed Request (Nginx) HTTP status.
+// See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 const StatusClientClosedRequest = 499
 
 // CloseNotify is a middleware that cancels ctx when the underlying

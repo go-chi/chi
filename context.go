@@ -10,6 +10,8 @@ const (
 	routeCtxKey ctxKey = iota
 )
 
+// A Context is the default routing context set on the root node of a
+// request context to track URL parameters and an optional routing path.
 type Context struct {
 	context.Context
 
@@ -20,6 +22,7 @@ type Context struct {
 	RoutePath string
 }
 
+// neContext returns a new routing context object.
 func newContext(parent context.Context) *Context {
 	rctx := &Context{}
 	ctx := context.WithValue(parent, routeCtxKey, rctx)
@@ -27,6 +30,7 @@ func newContext(parent context.Context) *Context {
 	return rctx
 }
 
+// reset a routing context to its initial state.
 func (x *Context) reset() {
 	x.Params = x.Params[:0]
 	x.RoutePath = ""

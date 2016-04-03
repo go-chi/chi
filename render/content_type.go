@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 )
 
+// A ContentType is an enumeration of HTTP content types.
 type ContentType int
 
 const (

@@ -16,10 +16,10 @@ import (
 )
 
 func TestMux(t *testing.T) {
-	var count uint64 = 0
+	var count uint64
 	countermw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			count += 1
+			count++
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -287,9 +287,9 @@ func TestMuxNestedNotFound(t *testing.T) {
 func TestMuxMiddlewareStack(t *testing.T) {
 	var stdmwInit, stdmwHandler uint64
 	stdmw := func(next http.Handler) http.Handler {
-		stdmwInit += 1
+		stdmwInit++
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			stdmwHandler += 1
+			stdmwHandler++
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -297,10 +297,10 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	var ctxmwInit, ctxmwHandler uint64
 	ctxmw := func(next Handler) Handler {
-		ctxmwInit += 1
+		ctxmwInit++
 		// log.Println("INIT")
 		return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			ctxmwHandler += 1
+			ctxmwHandler++
 			ctx = context.WithValue(ctx, "count.ctxmwHandler", ctxmwHandler)
 			next.ServeHTTPC(ctx, w, r)
 		})
@@ -308,9 +308,9 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	var inCtxmwInit, inCtxmwHandler uint64
 	inCtxmw := func(next Handler) Handler {
-		inCtxmwInit += 1
+		inCtxmwInit++
 		return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			inCtxmwHandler += 1
+			inCtxmwHandler++
 			next.ServeHTTPC(ctx, w, r)
 		})
 	}
@@ -339,9 +339,9 @@ func TestMuxMiddlewareStack(t *testing.T) {
 		})
 	})
 
-	var handlerCount uint64 = 0
+	var handlerCount uint64
 	r.Get("/", inCtxmw, func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		handlerCount += 1
+		handlerCount++
 		ctxmwHandlerCount := ctx.Value("count.ctxmwHandler").(uint64)
 		w.Write([]byte(fmt.Sprintf("inits:%d reqs:%d ctxValue:%d", ctxmwInit, handlerCount, ctxmwHandlerCount)))
 	})
@@ -372,18 +372,18 @@ func TestMuxMiddlewareStack(t *testing.T) {
 func TestMuxRootGroup(t *testing.T) {
 	var stdmwInit, stdmwHandler uint64
 	stdmw := func(next http.Handler) http.Handler {
-		stdmwInit += 1
+		stdmwInit++
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// log.Println("$$$$$ stdmw handlerfunc here!")
-			stdmwHandler += 1
+			stdmwHandler++
 			next.ServeHTTP(w, r)
 		})
 	}
 	// stdmw := func(next Handler) Handler {
-	// 	stdmwInit += 1
+	// 	stdmwInit++
 	// 	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// 		log.Println("$$$$$ stdmw handlerfunc here!")
-	// 		stdmwHandler += 1
+	// 		stdmwHandler++
 	// 		next.ServeHTTPC(ctx, w, r)
 	// 	})
 	// }
@@ -728,7 +728,7 @@ func TestMuxFileServer(t *testing.T) {
 		if f, ok := fixtures[name]; ok {
 			return f, nil
 		}
-		return nil, errors.New("file not found.")
+		return nil, errors.New("file not found")
 	}}
 
 	r := NewRouter()
