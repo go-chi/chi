@@ -6,7 +6,6 @@ package middleware
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -44,18 +43,18 @@ func Logger(next chi.Handler) chi.Handler {
 func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 
-	rScheme := "http://"
-	if r.TLS != nil {
-		rScheme = "https://"
-	}
-	rURL := fmt.Sprintf("%s%s%s", rScheme, r.Host, r.RequestURI)
-
 	if reqID != "" {
 		cW(buf, nYellow, "[%s] ", reqID)
 	}
 	cW(buf, nCyan, "\"")
 	cW(buf, bMagenta, "%s ", r.Method)
-	cW(buf, nCyan, "%s %s\" ", rURL, r.Proto)
+
+	if r.TLS == nil {
+		cW(buf, nCyan, "http://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
+	} else {
+		cW(buf, nCyan, "https://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
+	}
+
 	buf.WriteString("from ")
 	buf.WriteString(r.RemoteAddr)
 	buf.WriteString(" - ")
@@ -69,8 +68,6 @@ func printRequest(buf *bytes.Buffer, reqID string, w writerProxy, dt time.Durati
 		cW(buf, bRed, "[disconnected]")
 	} else {
 		switch {
-		case status == basicWriterUnknownStatus:
-			cW(buf, bBlue, "200") // Implicit code sent by net pkg.
 		case status < 200:
 			cW(buf, bBlue, "%03d", status)
 		case status < 300:
@@ -130,6 +127,9 @@ func wrapWriter(w http.ResponseWriter) writerProxy {
 	if cn && fl && hj && rf {
 		return &fancyWriter{bw}
 	}
+	if fl {
+		return &flushWriter{bw}
+	}
 	return &bw
 }
 
@@ -168,13 +168,7 @@ func (b *basicWriter) maybeWriteHeader() {
 		b.WriteHeader(http.StatusOK)
 	}
 }
-
-const basicWriterUnknownStatus = -1
-
 func (b *basicWriter) Status() int {
-	if !b.wroteHeader {
-		return basicWriterUnknownStatus
-	}
 	return b.code
 }
 func (b *basicWriter) BytesWritten() int {
@@ -220,3 +214,14 @@ var _ http.CloseNotifier = &fancyWriter{}
 var _ http.Flusher = &fancyWriter{}
 var _ http.Hijacker = &fancyWriter{}
 var _ io.ReaderFrom = &fancyWriter{}
+
+type flushWriter struct {
+	basicWriter
+}
+
+func (f *flushWriter) Flush() {
+	fl := f.basicWriter.ResponseWriter.(http.Flusher)
+	fl.Flush()
+}
+
+var _ http.Flusher = &flushWriter{}

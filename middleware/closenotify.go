@@ -20,6 +20,7 @@ func CloseNotify(next chi.Handler) chi.Handler {
 		if !ok {
 			panic("middleware.CloseNotify expects http.ResponseWriter to implement http.CloseNotifier interface")
 		}
+		closeNotifyCh := cn.CloseNotify()
 
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -28,9 +29,9 @@ func CloseNotify(next chi.Handler) chi.Handler {
 			select {
 			case <-ctx.Done():
 				return
-			case <-cn.CloseNotify():
-				w.WriteHeader(StatusClientClosedRequest)
+			case <-closeNotifyCh:
 				cancel()
+				w.WriteHeader(StatusClientClosedRequest)
 				return
 			}
 		}()
