@@ -5,7 +5,6 @@ import (
 	"strings"
 )
 
-// Build a chained chi.Handler from a list of middlewares
 func chain(middlewares []func(http.Handler) http.Handler, handler http.Handler) http.Handler {
 	// Return ahead of time if there aren't any middlewares for the chain
 	if middlewares == nil || len(middlewares) == 0 {

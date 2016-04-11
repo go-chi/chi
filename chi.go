@@ -20,20 +20,21 @@ type Router interface {
 	Use(middlewares ...func(http.Handler) http.Handler)
 	Group(fn func(r Router)) Router // TODO: rename to XXX?
 	Route(pattern string, fn func(r Router)) Router // TODO: rename to Group()..?
-	Mount(pattern string, handler http.Handler) // TODO: mount a Router instead of http.Handler?
+	Mount(pattern string, h http.Handler) // TODO: mount a Router instead of http.Handler?
 
-	Handle(pattern string, handler http.Handler)
-	NotFound(handler http.Handler)
+	Handle(pattern string, h http.Handler)
+	HandleFunc(pattern string, h http.HandlerFunc)
+	NotFound(h http.HandlerFunc)
 
-	Connect(pattern string, handler http.Handler)
-	Head(pattern string, handler http.Handler)
-	Get(pattern string, handler http.Handler)
-	Post(pattern string, handler http.Handler)
-	Put(pattern string, handler http.Handler)
-	Patch(pattern string, handler http.Handler)
-	Delete(pattern string, handler http.Handler)
-	Trace(pattern string, handler http.Handler)
-	Options(pattern string, handler http.Handler)
+	Connect(pattern string, h http.HandlerFunc)
+	Head(pattern string, h http.HandlerFunc)
+	Get(pattern string, h http.HandlerFunc)
+	Post(pattern string, h http.HandlerFunc)
+	Put(pattern string, h http.HandlerFunc)
+	Patch(pattern string, h http.HandlerFunc)
+	Delete(pattern string, h http.HandlerFunc)
+	Trace(pattern string, h http.HandlerFunc)
+	Options(pattern string, h http.HandlerFunc)
 }
 
 type Middlewares []func(http.Handler) http.Handler
@@ -43,14 +44,11 @@ func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middl
 	return *ms
 }
 
-func (ms Middlewares) Then(endpoint http.Handler) http.Handler {
-	return chain(ms, endpoint)
+func (ms Middlewares) Then(endpoint http.HandlerFunc) http.HandlerFunc {
+	return chain(ms, endpoint).ServeHTTP
 }
 
 func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
 	return Middlewares(middlewares)
 }
 
-func HFn(hfn func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
-	return http.HandlerFunc(hfn)
-}

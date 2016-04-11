@@ -1,13 +1,10 @@
 language: go
 
 go:
-  - 1.4
-  - 1.5
-  - 1.6
+  - tip
 
 install:
   - go get -u golang.org/x/tools/cmd/goimports
-  - go get -u -d golang.org/x/net/context
 
 script:
   - go get -d -t ./...

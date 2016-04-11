@@ -93,63 +93,67 @@ func (mx *Mux) Handle(pattern string, handler http.Handler) {
 	mx.handle(mALL, pattern, handler)
 }
 
+func (mx *Mux) HandleFunc(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mALL, pattern, handlerFn)
+}
+
 // Connect adds a route that matches a CONNECT http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Connect(pattern string, handler http.Handler) {
-	mx.handle(mCONNECT, pattern, handler)
+func (mx *Mux) Connect(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mCONNECT, pattern, handlerFn)
 }
 
 // Head adds a route that matches a HEAD http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Head(pattern string, handler http.Handler) {
-	mx.handle(mHEAD, pattern, handler)
+func (mx *Mux) Head(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mHEAD, pattern, handlerFn)
 }
 
 // Get adds a route that matches a GET http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Get(pattern string, handler http.Handler) {
-	mx.handle(mGET, pattern, handler)
+func (mx *Mux) Get(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mGET, pattern, handlerFn)
 }
 
 // Post adds a route that matches a POST http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Post(pattern string, handler http.Handler) {
-	mx.handle(mPOST, pattern, handler)
+func (mx *Mux) Post(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mPOST, pattern, handlerFn)
 }
 
 // Put adds a route that matches a PUT http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Put(pattern string, handler http.Handler) {
-	mx.handle(mPUT, pattern, handler)
+func (mx *Mux) Put(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mPUT, pattern, handlerFn)
 }
 
 // Patch adds a route that matches a PATCH http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Patch(pattern string, handler http.Handler) {
-	mx.handle(mPATCH, pattern, handler)
+func (mx *Mux) Patch(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mPATCH, pattern, handlerFn)
 }
 
 // Delete adds a route that matches a DELETE http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Delete(pattern string, handler http.Handler) {
-	mx.handle(mDELETE, pattern, handler)
+func (mx *Mux) Delete(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mDELETE, pattern, handlerFn)
 }
 
 // Trace adds a route that matches a TRACE http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Trace(pattern string, handler http.Handler) {
-	mx.handle(mTRACE, pattern, handler)
+func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mTRACE, pattern, handlerFn)
 }
 
 // Options adds a route that matches a OPTIONS http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Options(pattern string, handler http.Handler) {
-	mx.handle(mOPTIONS, pattern, handler)
+func (mx *Mux) Options(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mOPTIONS, pattern, handlerFn)
 }
 
 // NotFound sets a custom http.HandlerFunc for missing routes on the treeRouter.
-func (mx *Mux) NotFound(handler http.Handler) {
-	mx.router.notFoundHandler = &handler
+func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
+	mx.router.notFoundHandler = &handlerFn
 }
 
 // FileServer conveniently sets up a http.FileServer handler to serve
@@ -242,18 +246,18 @@ func (mx *Mux) Mount(path string, handler http.Handler) {
 	}
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
-	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	subHandler := func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
 		rctx.RoutePath = "/" + rctx.Params.Del("*")
 		handler.ServeHTTP(w, r)
-	})
+	}
 
 	if path == "" || path[len(path)-1] != '/' {
-		mx.Handle(path, subHandler)
-		mx.Handle(path+"/", mx.router.NotFoundHandler())
+		mx.HandleFunc(path, subHandler)
+		mx.HandleFunc(path+"/", mx.router.NotFoundHandler())
 		path += "/"
 	}
-	mx.Handle(path+"*", subHandler)
+	mx.HandleFunc(path+"*", subHandler)
 }
 
 // ServeHTTP is the single method of the http.Handler interface that makes
@@ -294,7 +298,7 @@ type treeRouter struct {
 	routes map[methodTyp]*tree
 
 	// Custom route not found handler
-	notFoundHandler *http.Handler
+	notFoundHandler *http.HandlerFunc
 }
 
 // newTreeRouter creates a new treeRouter object and initializes the trees for
@@ -311,11 +315,11 @@ func newTreeRouter() *treeRouter {
 }
 
 // NotFoundHandlerFn returns the HandlerFunc setup on the tree.
-func (tr treeRouter) NotFoundHandler() http.Handler {
+func (tr treeRouter) NotFoundHandler() http.HandlerFunc {
 	if tr.notFoundHandler != nil {
 		return *tr.notFoundHandler
 	}
-	return http.NotFoundHandler()
+	return http.NotFound
 }
 
 // ServeHTTP is the main routing method for each request.
