@@ -20,11 +20,11 @@ func TestThrottleBacklog(t *testing.T) {
 
 	r.Use(ThrottleBacklog(10, 50, time.Second*10))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", chi.HFn(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second * 1) // Expensive operation.
 		w.Write(testContent)
-	})
+	}))
 
 	server := httptest.NewServer(r)
 
@@ -62,11 +62,11 @@ func TestThrottleClientTimeout(t *testing.T) {
 
 	r.Use(ThrottleBacklog(10, 50, time.Second*10))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", chi.HFn(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second * 5) // Expensive operation.
 		w.Write(testContent)
-	})
+	}))
 
 	server := httptest.NewServer(r)
 
@@ -95,11 +95,11 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 	r.Use(ThrottleBacklog(50, 100, time.Second*5))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", chi.HFn(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second * 10) // Expensive operation.
 		w.Write(testContent)
-	})
+	}))
 
 	server := httptest.NewServer(r)
 
@@ -151,11 +151,11 @@ func TestThrottleMaximum(t *testing.T) {
 
 	r.Use(ThrottleBacklog(50, 50, time.Second*5))
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", chi.HFn(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		time.Sleep(time.Second * 2) // Expensive operation.
 		w.Write(testContent)
-	})
+	}))
 
 	server := httptest.NewServer(r)
 

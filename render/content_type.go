@@ -3,9 +3,7 @@ package render
 import (
 	"net/http"
 	"strings"
-
-	"github.com/pressly/chi"
-	"golang.org/x/net/context"
+	"context"
 )
 
 // A ContentType is an enumeration of HTTP content types.
@@ -19,8 +17,8 @@ const (
 	ContentTypeXML
 )
 
-func ParseContentType(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func ParseContentType(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var contentType ContentType
 
 		// Parse request Accept header.
@@ -47,7 +45,10 @@ func ParseContentType(next chi.Handler) chi.Handler {
 			contentType = ContentTypeEventStream
 		}
 
-		ctx = context.WithValue(ctx, "contentType", contentType)
-		next.ServeHTTPC(ctx, w, r)
+		// TODO: use a ContentTypeCtxKey value....?
+		ctx := context.WithValue(r.Context(), "contentType", contentType)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
 	})
 }

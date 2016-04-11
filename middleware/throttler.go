@@ -3,9 +3,6 @@ package middleware
 import (
 	"net/http"
 	"time"
-
-	"github.com/pressly/chi"
-	"golang.org/x/net/context"
 )
 
 const (
@@ -20,14 +17,14 @@ var (
 
 // Throttle is a middleware that limits number of currently processed requests
 // at a time.
-func Throttle(limit int) func(chi.Handler) chi.Handler {
+func Throttle(limit int) func(http.Handler) http.Handler {
 	return ThrottleBacklog(limit, 0, defaultBacklogTimeout)
 }
 
 // ThrottleBacklog is a middleware that limits number of currently processed
 // requests at a time and provides a backlog for holding a finite number of
 // pending requests.
-func ThrottleBacklog(limit int, backlogLimit int, backlogTimeout time.Duration) func(chi.Handler) chi.Handler {
+func ThrottleBacklog(limit int, backlogLimit int, backlogTimeout time.Duration) func(http.Handler) http.Handler {
 	if limit < 1 {
 		panic("middleware.Throttle expects limit > 0")
 	}
@@ -50,7 +47,7 @@ func ThrottleBacklog(limit int, backlogLimit int, backlogTimeout time.Duration) 
 		t.backlogTokens <- token{}
 	}
 
-	fn := func(h chi.Handler) chi.Handler {
+	fn := func(h http.Handler) http.Handler {
 		t.h = h
 		return &t
 	}
@@ -63,14 +60,15 @@ type token struct{}
 
 // throttler limits number of currently processed requests at a time.
 type throttler struct {
-	h              chi.Handler
+	h              http.Handler
 	tokens         chan token
 	backlogTokens  chan token
 	backlogTimeout time.Duration
 }
 
 // ServeHTTPC implements chi.Handler interface.
-func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (t *throttler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	select {
 	case <-ctx.Done():
 		http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
@@ -93,7 +91,7 @@ func (t *throttler) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *ht
 			defer func() {
 				t.tokens <- tok
 			}()
-			t.h.ServeHTTPC(ctx, w, r)
+			t.h.ServeHTTP(w, r)
 		}
 		return
 	default:

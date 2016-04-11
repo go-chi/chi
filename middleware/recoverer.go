@@ -8,9 +8,6 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
-
-	"github.com/pressly/chi"
-	"golang.org/x/net/context"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a
@@ -18,11 +15,11 @@ import (
 // possible.
 //
 // Recoverer prints a request ID if one is provided.
-func Recoverer(next chi.Handler) chi.Handler {
-	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func Recoverer(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				reqID := GetReqID(ctx)
+				reqID := GetReqID(r.Context())
 				prefix := requestPrefix(reqID, r)
 				printPanic(prefix, reqID, err)
 				debug.PrintStack()
@@ -30,10 +27,10 @@ func Recoverer(next chi.Handler) chi.Handler {
 			}
 		}()
 
-		next.ServeHTTPC(ctx, w, r)
+		next.ServeHTTP(w, r)
 	}
 
-	return chi.HandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 func printPanic(buf *bytes.Buffer, reqID string, err interface{}) {

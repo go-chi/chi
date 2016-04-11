@@ -11,9 +11,6 @@ import (
 	"net"
 	"net/http"
 	"time"
-
-	"github.com/pressly/chi"
-	"golang.org/x/net/context"
 )
 
 // Logger is a middleware that logs the start and end of each request, along
@@ -22,9 +19,9 @@ import (
 // print in color, otherwise it will print in black and white.
 //
 // Logger prints a request ID if one is provided.
-func Logger(next chi.Handler) chi.Handler {
-	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		reqID := GetReqID(ctx)
+func Logger(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		reqID := GetReqID(r.Context())
 		prefix := requestPrefix(reqID, r)
 		lw := wrapWriter(w)
 
@@ -34,10 +31,10 @@ func Logger(next chi.Handler) chi.Handler {
 			printRequest(prefix, reqID, lw, t2.Sub(t1))
 		}()
 
-		next.ServeHTTPC(ctx, lw, r)
+		next.ServeHTTP(lw, r)
 	}
 
-	return chi.HandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {

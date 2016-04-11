@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
-
 	"github.com/pressly/chi"
-	"golang.org/x/net/context"
 )
 
 // Profiler is a convenient subrouter used for mounting net/http/pprof. ie.
@@ -23,21 +21,22 @@ func Profiler() http.Handler {
 	r := chi.NewRouter()
 	r.Use(NoCache)
 
-	r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.Get("/", chi.HFn(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.RequestURI+"/pprof/", 301)
-	})
-	r.Handle("/pprof", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	}))
+	r.Handle("/pprof", chi.HFn(func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.RequestURI+"/", 301)
-	})
-	r.Handle("/pprof/", pprof.Index)
-	r.Handle("/pprof/cmdline", pprof.Cmdline)
-	r.Handle("/pprof/profile", pprof.Profile)
-	r.Handle("/pprof/symbol", pprof.Symbol)
-	r.Handle("/pprof/block", pprof.Handler("block").ServeHTTP)
-	r.Handle("/pprof/heap", pprof.Handler("heap").ServeHTTP)
-	r.Handle("/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP)
-	r.Handle("/pprof/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
-	r.Handle("/vars", expVars)
+	}))
+
+	r.Handle("/pprof/", chi.HFn(pprof.Index))
+	r.Handle("/pprof/cmdline", chi.HFn(pprof.Cmdline))
+	r.Handle("/pprof/profile", chi.HFn(pprof.Profile))
+	r.Handle("/pprof/symbol", chi.HFn(pprof.Symbol))
+	r.Handle("/pprof/block", pprof.Handler("block"))
+	r.Handle("/pprof/heap", pprof.Handler("heap"))
+	r.Handle("/pprof/goroutine", pprof.Handler("goroutine"))
+	r.Handle("/pprof/threadcreate", pprof.Handler("threadcreate"))
+	r.Handle("/vars", chi.HFn(expVars))
 
 	return r
 }
