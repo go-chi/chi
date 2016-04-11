@@ -5,14 +5,15 @@ import (
 	"strings"
 )
 
-func chain(middlewares []func(http.Handler) http.Handler, handler http.Handler) http.Handler {
+// Build a http.Handler chain
+func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
 	// Return ahead of time if there aren't any middlewares for the chain
 	if middlewares == nil || len(middlewares) == 0 {
-		return handler
+		return endpoint
 	}
 
 	// Wrap the end handler with the middleware chain
-	h := middlewares[len(middlewares)-1](handler)
+	h := middlewares[len(middlewares)-1](endpoint)
 	for i := len(middlewares) - 2; i >= 0; i-- {
 		h = middlewares[i](h)
 	}
