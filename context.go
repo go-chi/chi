@@ -1,6 +1,6 @@
 package chi
 
-import "golang.org/x/net/context"
+import "context"
 
 var _ context.Context = &Context{}
 
@@ -34,4 +34,22 @@ func newContext(parent context.Context) *Context {
 func (x *Context) reset() {
 	x.Params = x.Params[:0]
 	x.RoutePath = ""
+}
+
+// RouteContext returns chi's routing context object that holds url params
+// and a routing path for subrouters.
+func RouteContext(ctx context.Context) *Context {
+	rctx, _ := ctx.(*Context)
+	if rctx == nil {
+		rctx = ctx.Value(routeCtxKey).(*Context)
+	}
+	return rctx
+}
+
+// URLParam returns a url paramter from the routing context.
+func URLParam(ctx context.Context, key string) string {
+	if rctx := RouteContext(ctx); rctx != nil {
+		return rctx.Params.Get(key)
+	}
+	return ""
 }

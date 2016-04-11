@@ -25,6 +25,7 @@ scaled very well.
 * **Designed for modular/composable APIs** - middlewares, inline middleware groups/chains, and subrouter mounting
 * **Context control** - built on `net/context` with value chaining, deadlines and timeouts
 * **Robust** - tested / used in production
+* **No external dependencies** - plain ol' Go 1.7+ stdlib
 
 ## Router design
 

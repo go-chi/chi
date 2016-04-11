@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-
-	"golang.org/x/net/context"
+	"context"
 )
 
 var _ Router = &Mux{}
@@ -22,15 +21,14 @@ type Mux struct {
 	// A parent root context for any request that is usually a server context
 	parentCtx context.Context
 
-	// The middleware stack, supporting..
-	// func(http.Handler) http.Handler and func(chi.Handler) chi.Handler
-	middlewares []interface{}
+	// The middleware stack
+	middlewares []func(http.Handler) http.Handler
 
 	// The radix trie router
 	router *treeRouter
 
 	// The mux handler, chained middleware stack and tree router
-	handler Handler
+	handler http.Handler
 
 	// Controls the behaviour of middleware chain generation when a mux
 	// is registered as an inline group inside another mux.
@@ -85,89 +83,87 @@ func NewMux(parent ...context.Context) *Mux {
 }
 
 // Use appends a middleware handler to the Mux middleware stack.
-func (mx *Mux) Use(mws ...interface{}) {
-	for _, mw := range mws {
-		mx.middlewares = append(mx.middlewares, assertMiddleware(mw))
-	}
+func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
+	mx.middlewares = append(mx.middlewares, middlewares...)
 }
 
 // Handle adds a route for all http methods that match the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Handle(pattern string, handlers ...interface{}) {
-	mx.handle(mALL, pattern, handlers...)
+func (mx *Mux) Handle(pattern string, handler http.Handler) {
+	mx.handle(mALL, pattern, handler)
 }
 
 // Connect adds a route that matches a CONNECT http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Connect(pattern string, handlers ...interface{}) {
-	mx.handle(mCONNECT, pattern, handlers...)
+func (mx *Mux) Connect(pattern string, handler http.Handler) {
+	mx.handle(mCONNECT, pattern, handler)
 }
 
 // Head adds a route that matches a HEAD http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Head(pattern string, handlers ...interface{}) {
-	mx.handle(mHEAD, pattern, handlers...)
+func (mx *Mux) Head(pattern string, handler http.Handler) {
+	mx.handle(mHEAD, pattern, handler)
 }
 
 // Get adds a route that matches a GET http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Get(pattern string, handlers ...interface{}) {
-	mx.handle(mGET, pattern, handlers...)
+func (mx *Mux) Get(pattern string, handler http.Handler) {
+	mx.handle(mGET, pattern, handler)
 }
 
 // Post adds a route that matches a POST http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Post(pattern string, handlers ...interface{}) {
-	mx.handle(mPOST, pattern, handlers...)
+func (mx *Mux) Post(pattern string, handler http.Handler) {
+	mx.handle(mPOST, pattern, handler)
 }
 
 // Put adds a route that matches a PUT http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Put(pattern string, handlers ...interface{}) {
-	mx.handle(mPUT, pattern, handlers...)
+func (mx *Mux) Put(pattern string, handler http.Handler) {
+	mx.handle(mPUT, pattern, handler)
 }
 
 // Patch adds a route that matches a PATCH http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Patch(pattern string, handlers ...interface{}) {
-	mx.handle(mPATCH, pattern, handlers...)
+func (mx *Mux) Patch(pattern string, handler http.Handler) {
+	mx.handle(mPATCH, pattern, handler)
 }
 
 // Delete adds a route that matches a DELETE http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Delete(pattern string, handlers ...interface{}) {
-	mx.handle(mDELETE, pattern, handlers...)
+func (mx *Mux) Delete(pattern string, handler http.Handler) {
+	mx.handle(mDELETE, pattern, handler)
 }
 
 // Trace adds a route that matches a TRACE http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Trace(pattern string, handlers ...interface{}) {
-	mx.handle(mTRACE, pattern, handlers...)
+func (mx *Mux) Trace(pattern string, handler http.Handler) {
+	mx.handle(mTRACE, pattern, handler)
 }
 
 // Options adds a route that matches a OPTIONS http method and the `pattern`
 // for the `handlers` chain.
-func (mx *Mux) Options(pattern string, handlers ...interface{}) {
-	mx.handle(mOPTIONS, pattern, handlers...)
+func (mx *Mux) Options(pattern string, handler http.Handler) {
+	mx.handle(mOPTIONS, pattern, handler)
 }
 
 // NotFound sets a custom http.HandlerFunc for missing routes on the treeRouter.
-func (mx *Mux) NotFound(h HandlerFunc) {
-	mx.router.notFoundHandler = &h
+func (mx *Mux) NotFound(handler http.Handler) {
+	mx.router.notFoundHandler = &handler
 }
 
 // FileServer conveniently sets up a http.FileServer handler to serve
 // static files from a http.FileSystem.
 func (mx *Mux) FileServer(path string, root http.FileSystem) {
 	fs := http.StripPrefix(path, http.FileServer(root))
-	mx.Get(path+"*", func(w http.ResponseWriter, r *http.Request) {
+	mx.Get(path+"*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
-	})
+	}))
 }
 
 // handle creates a chi.Handler from a chain of middlewares and an end handler,
 // and then registers the route in the router.
-func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{}) {
+func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		panic(fmt.Sprintf("pattern must begin with '/' in '%s'", pattern))
 	}
@@ -178,16 +174,19 @@ func (mx *Mux) handle(method methodTyp, pattern string, handlers ...interface{})
 	// use inline middlewares via Group()'s and other routes that only execute after
 	// a matched pattern on the treeRouter.
 	if !mx.inline && mx.handler == nil {
+		// TODO: we may remove the treeRouter type and collapse it into the Mux{},
+		// at that point, we'd chain to just mx instead of mx.router, or consider
+		// some other ideas..
 		mx.handler = chain(mx.middlewares, mx.router)
 	}
 
 	// Build endpoint handler with inline middlewares for the route
-	var endpoint Handler
+	var endpoint http.Handler
 	if mx.inline {
-		mx.handler = mx.router
-		endpoint = chain(mx.middlewares, handlers...)
+		mx.handler = mx.router // TODO: just mx ...?
+		endpoint = chain(mx.middlewares, handler)
 	} else {
-		endpoint = chain([]interface{}{}, handlers...)
+		endpoint = handler
 	}
 
 	// Set the route for the respective HTTP methods
@@ -218,7 +217,7 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 }
 
 // Route creates a new Mux with a fresh middleware stack and mounts it
-// along the `pattern`. This is very simiular to the Group, but attaches
+// along the `pattern`. This is very similar to Group, but attaches
 // the group along a new routing path. See _examples/ for example usage.
 func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 	subRouter := NewRouter()
@@ -232,29 +231,26 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // Mount attaches another mux as a subrouter along a routing path. It's very useful
 // to split up a large API as many independent routers and compose them as a single
 // service using Mount. See _examples/ for example usage.
-func (mx *Mux) Mount(path string, handlers ...interface{}) {
-	// Build chain with any inline middlewares and endpoint handler for the subrouter
-	h := chain([]interface{}{}, handlers...)
+func (mx *Mux) Mount(path string, handler http.Handler) {
+	// TODO: ... what if mount accepted just a router ...?
 
 	// Assign sub-Router's with the parent not found handler if not specified.
-	for _, hh := range handlers {
-		if sr, ok := hh.(*Mux); ok {
-			if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
-				sr.NotFound(*mx.router.notFoundHandler)
-			}
+	if sr, ok := handler.(*Mux); ok {
+		if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
+			sr.NotFound(*mx.router.notFoundHandler)
 		}
 	}
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
-	subHandler := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		rctx := RouteContext(ctx)
+	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rctx := RouteContext(r.Context())
 		rctx.RoutePath = "/" + rctx.Params.Del("*")
-		h.ServeHTTPC(ctx, w, r)
+		handler.ServeHTTP(w, r)
 	})
 
 	if path == "" || path[len(path)-1] != '/' {
 		mx.Handle(path, subHandler)
-		mx.Handle(path+"/", mx.router.NotFoundHandlerFn())
+		mx.Handle(path+"/", mx.router.NotFoundHandler())
 		path += "/"
 	}
 	mx.Handle(path+"*", subHandler)
@@ -264,16 +260,31 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 // Mux interoperable with the standard library. It uses a sync.Pool to get and
 // reuse routing contexts for each request.
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := mx.pool.Get().(*Context)
-	mx.ServeHTTPC(ctx, w, r)
-	ctx.reset()
-	mx.pool.Put(ctx)
+
+	//ctx := mx.pool.Get().(*Context)
+	//r = r.WithContext(ctx)
+	//mx.routeHTTP(w, r)
+	//ctx.reset()
+	//mx.pool.Put(ctx)
+
+	// TODO: do we care about zero-alloc routing? test actual
+	// throughput, if not, switch the params to map[string]string
+
+	ctx := r.Context()
+	rctx, ok := ctx.(*Context)
+	if !ok || rctx == nil {
+		rctx, ok = ctx.Value(routeCtxKey).(*Context)
+		if !ok {
+			//fmt.Println("We're making a new context!!")
+			rctx = newContext(mx.parentCtx)
+			r = r.WithContext(rctx)
+		}
+	}
+	mx.handler.ServeHTTP(w, r)
 }
 
-// ServeHTTPC is chi's Handler method that adds a context.Context argument to the
-// standard ServeHTTP handler function.
-func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	mx.handler.ServeHTTPC(ctx, w, r)
+func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
+	mx.handler.ServeHTTP(w, r)
 }
 
 // A treeRouter manages a radix trie prefix-router for each HTTP method and passes
@@ -283,7 +294,7 @@ type treeRouter struct {
 	routes map[methodTyp]*tree
 
 	// Custom route not found handler
-	notFoundHandler *HandlerFunc
+	notFoundHandler *http.Handler
 }
 
 // newTreeRouter creates a new treeRouter object and initializes the trees for
@@ -300,17 +311,17 @@ func newTreeRouter() *treeRouter {
 }
 
 // NotFoundHandlerFn returns the HandlerFunc setup on the tree.
-func (tr treeRouter) NotFoundHandlerFn() HandlerFunc {
+func (tr treeRouter) NotFoundHandler() http.Handler {
 	if tr.notFoundHandler != nil {
 		return *tr.notFoundHandler
 	}
-	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		http.NotFound(w, r)
-	})
+	return http.NotFoundHandler()
 }
 
-// ServeHTTPC is the main routing method for each request.
-func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+// ServeHTTP is the main routing method for each request.
+func (tr treeRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	// Grab the root context object
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
@@ -326,7 +337,7 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Check if method is supported by chi
 	method, ok := methodMap[r.Method]
 	if !ok {
-		methodNotAllowedHandler(ctx, w, r)
+		methodNotAllowedHandler(w, r)
 		return
 	}
 
@@ -334,10 +345,10 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	cxh := tr.routes[method].Find(rctx, routePath)
 
 	if cxh == nil {
-		tr.NotFoundHandlerFn().ServeHTTPC(ctx, w, r)
+		tr.NotFoundHandler().ServeHTTP(w, r)
 		return
 	}
 
 	// Serve it
-	cxh.ServeHTTPC(ctx, w, r)
+	cxh.ServeHTTP(w, r)
 }

@@ -7,6 +7,7 @@ package chi
 import (
 	"sort"
 	"strings"
+	"net/http"
 )
 
 type nodeTyp uint8
@@ -21,7 +22,7 @@ const (
 // WalkFn is used when walking the tree. Takes a
 // key and value, returning if iteration should
 // be terminated.
-type WalkFn func(path string, handler Handler) bool
+type WalkFn func(path string, handler http.Handler) bool
 
 // edge is used to represent an edge node
 type edge struct {
@@ -36,7 +37,7 @@ type node struct {
 	prefix string
 
 	// HTTP handler on the leaf node
-	handler Handler
+	handler http.Handler
 
 	// Edges should be stored in-order for iteration,
 	// in groups of the node type.
@@ -271,7 +272,7 @@ type tree struct {
 	root *node
 }
 
-func (t *tree) Insert(pattern string, handler Handler) {
+func (t *tree) Insert(pattern string, handler http.Handler) {
 	var parent *node
 	n := t.root
 	search := pattern
@@ -359,7 +360,7 @@ func (t *tree) Insert(pattern string, handler Handler) {
 	}
 }
 
-func (t *tree) Find(ctx *Context, path string) Handler {
+func (t *tree) Find(ctx *Context, path string) http.Handler {
 	node := t.root.findNode(ctx, path)
 	if node == nil {
 		return nil
@@ -411,7 +412,7 @@ type param struct {
 	Key, Value string
 }
 
-type params []param
+type params []param // TODO: change to map[string]string ?
 
 func (ps *params) Add(key string, value string) {
 	*ps = append(*ps, param{key, value})

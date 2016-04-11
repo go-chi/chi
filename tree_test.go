@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
-
-	"golang.org/x/net/context"
+	"context"
 )
 
 var (
@@ -15,27 +14,27 @@ var (
 )
 
 func TestTree(t *testing.T) {
-	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hIndex := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hFavicon := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleNear := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShowRelated := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShowOpts := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleSlug := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleByUser := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminAppShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminAppShowCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserProfile := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserSuper := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserAll := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hHubView1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hHubView2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hHubView3 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hStub := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hIndex := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hFavicon := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleList := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleNear := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleShowRelated := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleShowOpts := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleSlug := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleByUser := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserList := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserProfile := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserSuper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserAll := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hHubView1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hHubView2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hHubView3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &tree{root: &node{}}
 
@@ -94,7 +93,7 @@ func TestTree(t *testing.T) {
 
 	tests := []struct {
 		r string            // input request path
-		h Handler           // output matched handler
+		h http.Handler           // output matched handler
 		p map[string]string // output params
 	}{
 		{r: "/", h: hIndex, p: emptyParams},
@@ -179,8 +178,8 @@ func debugPrintTree(parent int, i int, n *node, label byte) bool {
 }
 
 func BenchmarkTreeGet(b *testing.B) {
-	h1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	h2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &tree{root: &node{}}
 	tr.Insert("/", h1)
@@ -204,9 +203,9 @@ func BenchmarkTreeGet(b *testing.B) {
 }
 
 // func BenchmarkMuxGet(b *testing.B) {
-// 	h1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-// 	h2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-// 	h3 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+// 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+// 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+// 	h3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 //
 // 	mx := NewRouter()
 // 	mx.Get("/", h1)
