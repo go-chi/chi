@@ -231,6 +231,111 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+func TestMuxServeHTTP(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bye"))
+	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	testcases := []struct {
+		HTTPMethod         string
+		URI                string
+		expectedHTTPStatus int
+		expectedResp       string
+	}{
+		{
+			HTTPMethod:         "GET",
+			URI:                "/hi",
+			expectedHTTPStatus: 200,
+			expectedResp:       "bye",
+		},
+		{
+			HTTPMethod:         "GET",
+			URI:                "/hello",
+			expectedHTTPStatus: 404,
+			expectedResp:       "nothing here",
+		},
+	}
+
+	for _, tc := range testcases {
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest(tc.HTTPMethod, tc.URI, nil)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		r.ServeHTTP(resp, req)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if resp.Code != tc.expectedHTTPStatus {
+			t.Fatalf("%v != %v", tc.expectedHTTPStatus, resp.Code)
+		}
+		if string(b) != tc.expectedResp {
+			t.Fatalf("%s != %s", tc.expectedResp, b)
+		}
+	}
+}
+
+func TestMuxServeHTTPC(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		s, _ := ctx.Value("ctx").(string)
+		w.Write([]byte(s))
+	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		s, _ := ctx.Value("ctx").(string)
+		w.Write([]byte(s))
+	})
+
+	testcases := []struct {
+		HTTPMethod         string
+		URI                string
+		Ctx                context.Context
+		expectedHTTPStatus int
+		expectedResp       string
+	}{
+		{
+			HTTPMethod:         "GET",
+			URI:                "/hi",
+			Ctx:                context.WithValue(context.Background(), "ctx", "hi ctx"),
+			expectedHTTPStatus: 200,
+			expectedResp:       "hi ctx",
+		},
+		{
+			HTTPMethod:         "GET",
+			URI:                "/hello",
+			Ctx:                context.WithValue(context.Background(), "ctx", "nothing here ctx"),
+			expectedHTTPStatus: 404,
+			expectedResp:       "nothing here ctx",
+		},
+	}
+
+	for _, tc := range testcases {
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest(tc.HTTPMethod, tc.URI, nil)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		r.ServeHTTPC(tc.Ctx, resp, req)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if resp.Code != tc.expectedHTTPStatus {
+			t.Fatalf("%v != %v", tc.expectedHTTPStatus, resp.Code)
+		}
+		if string(b) != tc.expectedResp {
+			t.Fatalf("%s != %s", tc.expectedResp, b)
+		}
+	}
+}
+
 func TestMuxNestedNotFound(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
