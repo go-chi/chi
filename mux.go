@@ -273,16 +273,19 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // ServeHTTPC is chi's Handler method that adds a context.Context argument to the
 // standard ServeHTTP handler function.
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	rctx, _ := ctx.(*Context)
-	if rctx == nil {
-		rctx = mx.pool.Get().(*Context)
-		rctx.Context = ctx
-		defer func() {
-			rctx.reset()
-			mx.pool.Put(rctx)
-		}()
+	rctx, ok := ctx.(*Context)
+	if !ok || rctx == nil {
+		rctx, ok = ctx.Value(routeCtxKey).(*Context)
+		if !ok {
+			rctx = mx.pool.Get().(*Context)
+			defer func() {
+				rctx.reset()
+				mx.pool.Put(rctx)
+			}()
+			ctx = context.WithValue(ctx, routeCtxKey, rctx)
+		}
 	}
-	mx.handler.ServeHTTPC(rctx, w, r)
+	mx.handler.ServeHTTPC(ctx, w, r)
 }
 
 // A treeRouter manages a radix trie prefix-router for each HTTP method and passes
