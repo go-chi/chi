@@ -314,7 +314,10 @@ func (tr treeRouter) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *h
 	// Grab the root context object
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
-		rctx = ctx.Value(routeCtxKey).(*Context)
+		rctx, _ = ctx.Value(routeCtxKey).(*Context)
+		if rctx == nil {
+			panic("chi: route context is required.")
+		}
 	}
 
 	// The request path

@@ -15,6 +15,57 @@ import (
 	"golang.org/x/net/context"
 )
 
+func TestMuxServeHTTP(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bye"))
+	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	// Thanks to https://github.com/mrcpvn for the nice table test code
+	testcases := []struct {
+		Method         string
+		Path           string
+		ExpectedStatus int
+		ExpectedBody   string
+	}{
+		{
+			Method:         "GET",
+			Path:           "/hi",
+			ExpectedStatus: 200,
+			ExpectedBody:   "bye",
+		},
+		{
+			Method:         "GET",
+			Path:           "/hello",
+			ExpectedStatus: 404,
+			ExpectedBody:   "nothing here",
+		},
+	}
+
+	for _, tc := range testcases {
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest(tc.Method, tc.Path, nil)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		r.ServeHTTP(resp, req)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if resp.Code != tc.ExpectedStatus {
+			t.Fatalf("%v != %v", tc.ExpectedStatus, resp.Code)
+		}
+		if string(b) != tc.ExpectedBody {
+			t.Fatalf("%s != %s", tc.ExpectedBody, b)
+		}
+	}
+}
+
 func TestMux(t *testing.T) {
 	var count uint64
 	countermw := func(next http.Handler) http.Handler {
