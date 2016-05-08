@@ -77,5 +77,8 @@ func Respond(w http.ResponseWriter, status int, v interface{}) {
 		v = reflect.MakeSlice(val.Type(), 0, 0).Interface()
 	}
 
+	// TODO: support other types based on request Accept header?
+	// render.Respond(ctx, w, 200, data)
+
 	JSON(w, status, v)
 }

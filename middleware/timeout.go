@@ -40,6 +40,7 @@ func Timeout(timeout time.Duration) func(next http.Handler) http.Handler {
 				}
 			}()
 
+			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)

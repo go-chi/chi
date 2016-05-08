@@ -65,6 +65,7 @@ func RequestID(next http.Handler) http.Handler {
 		myid := atomic.AddUint64(&reqid, 1)
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, RequestIDKey, fmt.Sprintf("%s-%06d", prefix, myid))
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)

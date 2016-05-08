@@ -19,7 +19,7 @@ var _ Router = &Mux{}
 // parts composed of middlewares and end handlers.
 type Mux struct {
 	// A parent root context for any request that is usually a server context
-	parentCtx context.Context
+	parentCtx context.Context // TODO: necessary...?
 
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
@@ -237,6 +237,9 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // service using Mount. See _examples/ for example usage.
 func (mx *Mux) Mount(path string, handler http.Handler) {
 	// TODO: ... what if mount accepted just a router ...?
+	// would it make subrouting easier/better...?
+	// does it make sense to ever Mount() a http.Handler? .. or would they just
+	// use .Handle() anyways..?
 
 	// Assign sub-Router's with the parent not found handler if not specified.
 	if sr, ok := handler.(*Mux); ok {

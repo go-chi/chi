@@ -1,9 +1,9 @@
 package render
 
 import (
+	"context"
 	"net/http"
 	"strings"
-	"context"
 )
 
 // A ContentType is an enumeration of HTTP content types.
@@ -16,6 +16,15 @@ const (
 	ContentTypeEventStream
 	ContentTypeXML
 )
+
+type ctxKey int
+
+const ContentTypeCtxKey ctxKey = iota
+
+// TODO: is this middleware still useful? if render.Respond()
+// accepted the type somehow, then its less important.
+// perhaps we keep it, and pass ctx as first argument..?
+// or... make signature: render.Respond(w, r, status, data)
 
 func ParseContentType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,8 +54,7 @@ func ParseContentType(next http.Handler) http.Handler {
 			contentType = ContentTypeEventStream
 		}
 
-		// TODO: use a ContentTypeCtxKey value....?
-		ctx := context.WithValue(r.Context(), "contentType", contentType)
+		ctx := context.WithValue(r.Context(), ContentTypeCtxKey, contentType)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

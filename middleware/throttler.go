@@ -66,7 +66,7 @@ type throttler struct {
 	backlogTimeout time.Duration
 }
 
-// ServeHTTPC implements chi.Handler interface.
+// ServeHTTP is the primary throttler request handler
 func (t *throttler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	select {
