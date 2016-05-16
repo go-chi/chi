@@ -15,34 +15,39 @@ import (
 	"golang.org/x/net/context"
 )
 
-func TestMuxServeHTTP(t *testing.T) {
+func TestMuxServeHTTPC(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("bye"))
+		s, _ := ctx.Value("testCtx").(string)
+		w.Write([]byte(s))
 	})
 	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		s, _ := ctx.Value("testCtx").(string)
 		w.WriteHeader(404)
-		w.Write([]byte("nothing here"))
+		w.Write([]byte(s))
 	})
 
-	// Thanks to https://github.com/mrcpvn for the nice table test code
+	// Thanks to https://github.com/mrcpvn for the clean table test submission
 	testcases := []struct {
 		Method         string
 		Path           string
+		Ctx            context.Context
 		ExpectedStatus int
 		ExpectedBody   string
 	}{
 		{
 			Method:         "GET",
 			Path:           "/hi",
+			Ctx:            context.WithValue(context.Background(), "testCtx", "hi ctx"),
 			ExpectedStatus: 200,
-			ExpectedBody:   "bye",
+			ExpectedBody:   "hi ctx",
 		},
 		{
 			Method:         "GET",
 			Path:           "/hello",
+			Ctx:            context.WithValue(context.Background(), "testCtx", "nothing here ctx"),
 			ExpectedStatus: 404,
-			ExpectedBody:   "nothing here",
+			ExpectedBody:   "nothing here ctx",
 		},
 	}
 
@@ -52,7 +57,7 @@ func TestMuxServeHTTP(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
-		r.ServeHTTP(resp, req)
+		r.ServeHTTPC(tc.Ctx, resp, req)
 		b, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("%v", err)

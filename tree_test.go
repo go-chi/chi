@@ -142,7 +142,7 @@ func TestTree(t *testing.T) {
 
 	for i, tt := range tests {
 		// params := make(map[string]string, 0)
-		rctx := newContext(context.Background())
+		rctx := NewContext()
 		handler := tr.Find(rctx, tt.r) //, params)
 		params := urlParams(rctx)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
@@ -197,7 +197,7 @@ func BenchmarkTreeGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// params := map[string]string{}
-		mctx := newContext(context.Background())
+		mctx := NewContext()
 		tr.Find(mctx, "/ping/123/456")
 		// tr.Find("/pingggg", params)
 	}
