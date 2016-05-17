@@ -9,8 +9,8 @@ import (
 // NewRouter returns a new Mux object that implements the Router interface.
 // It accepts an optional parent context.Context argument used by all
 // request contexts useful for signaling a server shutdown.
-func NewRouter(parent ...context.Context) *Mux {
-	return NewMux(parent...)
+func NewRouter() *Mux {
+	return NewMux()
 }
 
 // A Router consisting of the core routing methods used by chi's Mux.

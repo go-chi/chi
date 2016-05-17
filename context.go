@@ -22,10 +22,10 @@ type Context struct {
 	RoutePath string
 }
 
-// neContext returns a new routing context object.
-func newContext(parent context.Context) *Context {
+// NewContext returns a new routing context object.
+func NewContext() *Context {
 	rctx := &Context{}
-	ctx := context.WithValue(parent, routeCtxKey, rctx)
+	ctx := context.WithValue(context.Background(), routeCtxKey, rctx)
 	rctx.Context = ctx
 	return rctx
 }

@@ -19,9 +19,6 @@ var _ Router = &Mux{}
 // for writing large REST API services that break a handler into many smaller
 // parts composed of middlewares and end handlers.
 type Mux struct {
-	// A parent root context for any request that is usually a server context
-	parentCtx context.Context
-
 	// The middleware stack, supporting..
 	// func(http.Handler) http.Handler and func(chi.Handler) chi.Handler
 	middlewares []interface{}
@@ -70,17 +67,11 @@ var methodMap = map[string]methodTyp{
 }
 
 // NewMux returns a new Mux object with an optional parent context.
-func NewMux(parent ...context.Context) *Mux {
-	pctx := context.Background()
-	if len(parent) > 0 {
-		pctx = parent[0]
-	}
-
-	mux := &Mux{parentCtx: pctx, router: newTreeRouter(), handler: nil}
+func NewMux() *Mux {
+	mux := &Mux{router: newTreeRouter(), handler: nil}
 	mux.pool.New = func() interface{} {
-		return newContext(pctx)
+		return NewContext()
 	}
-
 	return mux
 }
 
@@ -264,15 +255,31 @@ func (mx *Mux) Mount(path string, handlers ...interface{}) {
 // Mux interoperable with the standard library. It uses a sync.Pool to get and
 // reuse routing contexts for each request.
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := mx.pool.Get().(*Context)
-	mx.ServeHTTPC(ctx, w, r)
-	ctx.reset()
-	mx.pool.Put(ctx)
+	mx.ServeHTTPC(nil, w, r)
 }
 
 // ServeHTTPC is chi's Handler method that adds a context.Context argument to the
 // standard ServeHTTP handler function.
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	if ctx == nil {
+		rctx := mx.pool.Get().(*Context)
+		mx.handler.ServeHTTPC(rctx, w, r)
+		rctx.reset()
+		mx.pool.Put(rctx)
+		return
+	}
+
+	if rctx, ok := ctx.(*Context); !ok {
+		if rctx, ok = ctx.Value(routeCtxKey).(*Context); !ok {
+			rctx = mx.pool.Get().(*Context)
+			ctx = context.WithValue(ctx, routeCtxKey, rctx)
+			mx.handler.ServeHTTPC(ctx, w, r)
+			rctx.reset()
+			mx.pool.Put(rctx)
+			return
+		}
+	}
+
 	mx.handler.ServeHTTPC(ctx, w, r)
 }
 
