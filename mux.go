@@ -1,10 +1,10 @@
 package chi
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
-	"context"
 )
 
 var _ Router = &Mux{}
@@ -202,10 +202,10 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	}
 }
 
-// Group creates a new inline-Mux with a fresh middleware stack. It's useful
+// Stack creates a new inline-Mux with a fresh middleware stack. It's useful
 // for a group of handlers along the same routing path that use the same
 // middleware(s). See _examples/ for an example usage.
-func (mx *Mux) Group(fn func(r Router)) Router {
+func (mx *Mux) Stack(fn func(r Router)) Router {
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
@@ -220,10 +220,10 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 	return g
 }
 
-// Route creates a new Mux with a fresh middleware stack and mounts it
+// Group creates a new Mux with a fresh middleware stack and mounts it
 // along the `pattern`. This is very similar to Group, but attaches
 // the group along a new routing path. See _examples/ for example usage.
-func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
+func (mx *Mux) Group(pattern string, fn func(r Router)) Router {
 	subRouter := NewRouter()
 	mx.Mount(pattern, subRouter)
 	if fn != nil {

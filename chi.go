@@ -22,8 +22,8 @@ type Router interface {
 	http.Handler
 
 	Use(middlewares ...func(http.Handler) http.Handler)
-	Group(fn func(r Router)) Router // TODO: rename to XXX?
-	Route(pattern string, fn func(r Router)) Router // TODO: rename to Group()..?
+	Stack(fn func(r Router)) Router
+	Group(pattern string, fn func(r Router)) Router
 	Mount(pattern string, h http.Handler) // TODO: mount a Router instead of http.Handler?
 
 	Handle(pattern string, h http.Handler)
@@ -56,4 +56,3 @@ func (ms Middlewares) Then(endpoint http.HandlerFunc) http.HandlerFunc {
 func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
 	return Middlewares(middlewares)
 }
-
