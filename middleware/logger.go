@@ -85,14 +85,20 @@ func printRequest(buf *bytes.Buffer, reqID string, w writerProxy, dt time.Durati
 
 	buf.WriteString(" in ")
 	if dt < 500*time.Millisecond {
-		cW(buf, nGreen, "%s", dt)
+		cW(buf, nGreen, "%s (%.3fµs)", dt, Microseconds(dt))
 	} else if dt < 5*time.Second {
-		cW(buf, nYellow, "%s", dt)
+		cW(buf, nYellow, "%s (%.3fµs)", dt, Microseconds(dt))
 	} else {
-		cW(buf, nRed, "%s", dt)
+		cW(buf, nRed, "%s (%.3fµs)", dt, Microseconds(dt))
 	}
 
 	log.Print(buf.String())
+}
+
+func Microseconds(d time.Duration) float64 {
+	µsec := d / time.Microsecond
+	nsec := d % time.Microsecond
+	return float64(µsec) + float64(nsec)*1e-9/1e-6
 }
 
 // writerProxy is a proxy around an http.ResponseWriter that allows you to hook
