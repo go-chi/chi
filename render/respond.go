@@ -6,21 +6,50 @@ import (
 	"encoding/xml"
 	"net/http"
 	"reflect"
+
+	"golang.org/x/net/context"
 )
 
-func String(w http.ResponseWriter, status int, v string) {
+var Respond = DefaultRespond
+
+func DefaultRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
+	switch contentType, _ := ctx.Value("contentType").(ContentType); contentType {
+	case ContentTypeJSON:
+		JSON(ctx, w, v)
+	case ContentTypeXML:
+		XML(ctx, w, v)
+	default:
+		JSON(ctx, w, v)
+	}
+}
+
+func String(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	status, _ := ctx.Value("status").(int)
+	if status == 0 {
+		status = 200
+	}
 	w.WriteHeader(status)
 	w.Write([]byte(v))
 }
 
-func HTML(w http.ResponseWriter, status int, v string) {
+func HTML(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	status, _ := ctx.Value("status").(int)
+	if status == 0 {
+		status = 200
+	}
 	w.WriteHeader(status)
 	w.Write([]byte(v))
 }
 
-func JSON(w http.ResponseWriter, status int, v interface{}) {
+func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
+	// Force to return empty JSON array [] instead of null in case of zero slice.
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.Slice && val.IsNil() {
+		v = reflect.MakeSlice(val.Type(), 0, 0).Interface()
+	}
+
 	b, err := json.Marshal(v)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -34,15 +63,15 @@ func JSON(w http.ResponseWriter, status int, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	status, _ := ctx.Value("status").(int)
+	if status == 0 {
+		status = 200
+	}
 	w.WriteHeader(status)
 	w.Write(b)
 }
 
-func Noop(w http.ResponseWriter) {
-	String(w, http.StatusOK, "")
-}
-
-func XML(w http.ResponseWriter, status int, v interface{}) {
+func XML(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	b, err := xml.Marshal(v)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -50,6 +79,10 @@ func XML(w http.ResponseWriter, status int, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
+	status, _ := ctx.Value("status").(int)
+	if status == 0 {
+		status = 200
+	}
 	w.WriteHeader(status)
 
 	// Try to find <?xml header in first 100 bytes (just in case there're some XML comments).
@@ -65,20 +98,6 @@ func XML(w http.ResponseWriter, status int, v interface{}) {
 	w.Write(b)
 }
 
-func Respond(w http.ResponseWriter, status int, v interface{}) {
-	if err, ok := v.(error); ok {
-		JSON(w, status, map[string]interface{}{"error": err.Error()})
-		return
-	}
-
-	// Force to return empty JSON array [] instead of null in case of zero slice.
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Slice && val.IsNil() {
-		v = reflect.MakeSlice(val.Type(), 0, 0).Interface()
-	}
-
-	// TODO: support other types based on request Accept header?
-	// render.Respond(ctx, w, 200, data)
-
-	JSON(w, status, v)
+func Status(ctx context.Context, status int) context.Context {
+	return context.WithValue(ctx, "status", status)
 }
