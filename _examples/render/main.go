@@ -73,12 +73,13 @@ func main() {
 	})
 
 	v2 := render.NewPresenter()
+	v2.RegisterFrom(render.DefaultPresenter)
 	v2.Register(func(ctx context.Context, from *PresenterObject) (*PresenterObjectV2, error) {
 		return &PresenterObjectV2{PresenterObject: from, ResourceURL: from.URL}, nil
 	})
-	v2.RegisterFrom(render.DefaultPresenter)
 
 	v1 := render.NewPresenter()
+	v1.RegisterFrom(v2)
 	v1.Register(func(ctx context.Context, from *PresenterObjectV2) (*PresenterObjectV1, error) {
 		to := &PresenterObjectV1{
 			PresenterObjectV2: from,
@@ -89,28 +90,6 @@ func main() {
 		}
 		return to, nil
 	})
-	v1.RegisterFrom(v2)
-
-	render.Respond = func(ctx context.Context, w http.ResponseWriter, v interface{}) {
-		// Set response status based on Error value/type.
-		val := reflect.ValueOf(v)
-		if err, ok := val.Interface().(error); ok {
-			switch err {
-			case ErrUnauthorized:
-				ctx = render.Status(ctx, 401)
-			case ErrForbidden:
-				ctx = render.Status(ctx, 403)
-			case ErrNotFound:
-				ctx = render.Status(ctx, 404)
-			default:
-				ctx = render.Status(ctx, 500)
-			}
-			render.DefaultRespond(ctx, w, map[string]string{"error": err.Error()})
-			return
-		}
-
-		render.DefaultRespond(ctx, w, v)
-	}
 
 	r.Get("/", objectHandler)
 	r.Get("/v2", render.UsePresenter(v2), objectHandler)
@@ -145,4 +124,29 @@ func randomErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	rand.Seed(time.Now().Unix())
 	render.Respond(ctx, w, errors[rand.Intn(len(errors))])
+}
+
+func init() {
+	render.Respond = customRespond
+}
+
+func customRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
+	// Set response status based on Error value/type.
+	val := reflect.ValueOf(v)
+	if err, ok := val.Interface().(error); ok {
+		switch err {
+		case ErrUnauthorized:
+			ctx = render.Status(ctx, 401)
+		case ErrForbidden:
+			ctx = render.Status(ctx, 403)
+		case ErrNotFound:
+			ctx = render.Status(ctx, 404)
+		default:
+			ctx = render.Status(ctx, 500)
+		}
+		render.DefaultRespond(ctx, w, map[string]string{"error": err.Error()})
+		return
+	}
+
+	render.DefaultRespond(ctx, w, v)
 }
