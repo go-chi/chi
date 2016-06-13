@@ -76,30 +76,25 @@ func (p *presenter) Present(ctx context.Context, from interface{}) interface{} {
 }
 
 func (p *presenter) register(conversionFunc interface{}) error {
-	fv := reflect.ValueOf(conversionFunc)
-	ft := fv.Type()
-	if ft.Kind() != reflect.Func {
-		return fmt.Errorf("expected func, got: %v", ft)
+	fnType := reflect.TypeOf(conversionFunc)
+	if fnType.Kind() != reflect.Func {
+		return fmt.Errorf("expected func, got: %v", fnType)
 	}
-	if ft.NumIn() != 2 {
-		return fmt.Errorf("expected two arguments, got: %v", ft.NumIn())
+	if fnType.NumIn() != 2 {
+		return fmt.Errorf("expected two arguments, got: %v", fnType.NumIn())
 	}
-	if ft.NumOut() != 2 {
-		return fmt.Errorf("expected two return values, got: %v", ft.NumOut())
+	if fnType.NumOut() != 2 {
+		return fmt.Errorf("expected two return values, got: %v", fnType.NumOut())
 	}
-	// if ft.In(0).Kind() != reflect.Ptr {
-	// 	return fmt.Errorf("expected pointer arg for 'in' param 0, got: %v", ft)
-	// }
-	// if ft.Out(0).Kind() != reflect.Ptr {
-	// 	return fmt.Errorf("expected pointer arg for 'out' param 0, got: %v", ft)
-	// }
-	// var forErrorType error
-	// errorType := reflect.TypeOf(&forErrorType).Elem()
-	// if ft.Out(0) != errorType {
-	// 	return fmt.Errorf("expected error return, got: %v", ft)
-	// }
+	var contextZeroValue context.Context
+	if !fnType.In(0).Implements(reflect.TypeOf(&contextZeroValue).Elem()) {
+		return fmt.Errorf("expected context.Context as first argument, got: %v", fnType)
+	}
+	var errorZeroValue error
+	if !fnType.Out(1).Implements(reflect.TypeOf(&errorZeroValue).Elem()) {
+		return fmt.Errorf("expected error as second return value, got: %v", fnType)
+	}
 
-	p.ConversionFnStore[ft.In(1)] = fv
-
+	p.ConversionFnStore[fnType.In(1)] = reflect.ValueOf(conversionFunc)
 	return nil
 }
