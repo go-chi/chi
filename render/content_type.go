@@ -32,10 +32,6 @@ func ParseContentType(next http.Handler) http.Handler {
 		fields := strings.Split(r.Header.Get("Accept"), ",")
 		if len(fields) > 0 {
 			switch strings.TrimSpace(fields[0]) {
-			// case "text/plain":
-			// 	contentType = ContentTypePlainText
-			// case "text/html", "application/xhtml+xml":
-			// 	contentType = ContentTypeHTML
 			case "application/json", "text/javascript":
 				contentType = ContentTypeJSON
 			case "text/event-stream":
@@ -47,14 +43,7 @@ func ParseContentType(next http.Handler) http.Handler {
 			}
 		}
 
-		// Explicitly requested stream.
-		if _, ok := r.URL.Query()["stream"]; ok {
-			contentType = ContentTypeEventStream
-		}
-
-		ctx := context.WithValue(r.Context(), ContentTypeCtxKey, contentType)
-		r = r.WithContext(ctx)
-
-		next.ServeHTTP(w, r)
+		ctx = context.WithValue(ctx, contentTypeCtxKey, contentType)
+		next.ServeHTTPC(ctx, w, r)
 	})
 }

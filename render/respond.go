@@ -13,7 +13,15 @@ import (
 var Respond = DefaultRespond
 
 func DefaultRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
-	switch contentType, _ := ctx.Value("contentType").(ContentType); contentType {
+	// Present the object.
+	if presenter, ok := ctx.Value(presenterCtxKey).(Presenter); ok {
+		v = presenter.Present(ctx, v)
+	} else {
+		v = DefaultPresenter.Present(ctx, v)
+	}
+
+	// Format data based on Content-Type.
+	switch contentType, _ := ctx.Value(contentTypeCtxKey).(ContentType); contentType {
 	case ContentTypeJSON:
 		JSON(ctx, w, v)
 	case ContentTypeXML:
@@ -25,7 +33,7 @@ func DefaultRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
 
 func String(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	status, _ := ctx.Value("status").(int)
+	status, _ := ctx.Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -35,7 +43,7 @@ func String(ctx context.Context, w http.ResponseWriter, v string) {
 
 func HTML(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	status, _ := ctx.Value("status").(int)
+	status, _ := ctx.Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -63,7 +71,7 @@ func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	status, _ := ctx.Value("status").(int)
+	status, _ := ctx.Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -79,7 +87,7 @@ func XML(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	status, _ := ctx.Value("status").(int)
+	status, _ := ctx.Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -99,5 +107,5 @@ func XML(ctx context.Context, w http.ResponseWriter, v interface{}) {
 }
 
 func Status(ctx context.Context, status int) context.Context {
-	return context.WithValue(ctx, "status", status)
+	return context.WithValue(ctx, statusCtxKey, status)
 }
