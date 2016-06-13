@@ -10,7 +10,9 @@ import (
 type ContentType int
 
 const (
-	ContentTypeJSON = iota
+	ContentTypePlainText = iota
+	ContentTypeHTML
+	ContentTypeJSON
 	ContentTypeEventStream
 	ContentTypeXML
 )
@@ -32,6 +34,10 @@ func ParseContentType(next http.Handler) http.Handler {
 		fields := strings.Split(r.Header.Get("Accept"), ",")
 		if len(fields) > 0 {
 			switch strings.TrimSpace(fields[0]) {
+			case "text/plain":
+				contentType = ContentTypePlainText
+			case "text/html", "application/xhtml+xml":
+				contentType = ContentTypeHTML
 			case "application/json", "text/javascript":
 				contentType = ContentTypeJSON
 			case "text/event-stream":
