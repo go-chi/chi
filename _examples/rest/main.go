@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 	"github.com/pressly/chi"
 	"github.com/pressly/chi/middleware"
 	"github.com/pressly/chi/render"
-	"golang.org/x/net/context"
 )
 
 func main() {
@@ -41,14 +41,14 @@ func main() {
 		// Stop processing after 2.5 seconds.
 		r.Use(middleware.Timeout(2500 * time.Millisecond))
 
-		r.Get("/slow", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		r.Get("/slow", func(w http.ResponseWriter, r *http.Request) {
 			rand.Seed(time.Now().Unix())
 
 			// Processing will take 1-5 seconds.
 			processTime := time.Duration(rand.Intn(4)+1) * time.Second
 
 			select {
-			case <-ctx.Done():
+			case <-r.Context().Done():
 				return
 
 			case <-time.After(processTime):
@@ -67,10 +67,10 @@ func main() {
 		// Only one request will be processed at a time.
 		r.Use(middleware.Throttle(1))
 
-		r.Get("/throttled", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		r.Get("/throttled", func(w http.ResponseWriter, r *http.Request) {
 			select {
-			case <-ctx.Done():
-				switch ctx.Err() {
+			case <-r.Context().Done():
+				switch r.Context().Err() {
 				case context.DeadlineExceeded:
 					w.WriteHeader(504)
 					w.Write([]byte("Processing too slow\n"))
@@ -89,8 +89,11 @@ func main() {
 
 	// RESTy routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
-		r.Get("/", paginate, listArticles) // GET /articles
-		r.Post("/", createArticle)         // POST /articles
+		r.Group(func(r chi.Router) {
+			r.Use(paginate)
+			r.Get("/", listArticles) // GET /articles
+		})
+		r.Post("/", createArticle) // POST /articles
 
 		r.Route("/:articleID", func(r chi.Router) {
 			r.Use(ArticleCtx)
@@ -111,25 +114,25 @@ type Article struct {
 	Title string `json:"title"`
 }
 
-func ArticleCtx(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		articleID := chi.URLParam(ctx, "articleID")
+func ArticleCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		articleID := chi.URLParam(r.Context(), "articleID")
 		article, err := dbGetArticle(articleID)
 		if err != nil {
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
-		ctx = context.WithValue(ctx, "article", article)
-		next.ServeHTTPC(ctx, w, r)
+		ctx := context.WithValue(r.Context(), "article", article)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func listArticles(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func listArticles(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("list of articles.."))
 	// or render.Data(w, 200, []byte("list of articles.."))
 }
 
-func createArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func createArticle(w http.ResponseWriter, r *http.Request) {
 	var article *Article
 
 	// btw, you could do this body reading / marhsalling in a nice bind middleware
@@ -150,8 +153,8 @@ func createArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	w.Write([]byte(article.Title))
 }
 
-func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	article, ok := ctx.Value("article").(*Article)
+func getArticle(w http.ResponseWriter, r *http.Request) {
+	article, ok := r.Context().Value("article").(*Article)
 	if !ok {
 		http.Error(w, http.StatusText(422), 422)
 		return
@@ -165,8 +168,8 @@ func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
 }
 
-func updateArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	article, ok := ctx.Value("article").(*Article)
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+	article, ok := r.Context().Value("article").(*Article)
 	if !ok {
 		http.Error(w, http.StatusText(404), 404)
 		return
@@ -195,8 +198,8 @@ func updateArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	// w.Write([]byte(fmt.Sprintf("updated article, title:%s", uArticle.Title)))
 }
 
-func deleteArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	article, ok := ctx.Value("article").(*Article)
+func deleteArticle(w http.ResponseWriter, r *http.Request) {
+	article, ok := r.Context().Value("article").(*Article)
 	if !ok {
 		http.Error(w, http.StatusText(422), 422)
 		return
@@ -210,11 +213,11 @@ func dbGetArticle(id string) (*Article, error) {
 	return &Article{ID: id, Title: "Going all the way,"}, nil
 }
 
-func paginate(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func paginate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// just a stub.. some ideas are to look at URL query params for something like
 		// the page number, or the limit, and send a query cursor down the chain
-		next.ServeHTTPC(ctx, w, r)
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -228,19 +231,19 @@ func adminRouter() http.Handler { // or chi.Router {
 	r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("admin: list accounts.."))
 	})
-	r.Get("/users/:userId", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(ctx, "userId"))))
+	r.Get("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(r.Context(), "userId"))))
 	})
 	return r
 }
 
-func AdminOnly(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		isAdmin, ok := ctx.Value("acl.admin").(bool)
+func AdminOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		isAdmin, ok := r.Context().Value("acl.admin").(bool)
 		if !ok || !isAdmin {
 			http.Error(w, http.StatusText(403), 403)
 			return
 		}
-		next.ServeHTTPC(ctx, w, r)
+		next.ServeHTTP(w, r)
 	})
 }
