@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/pressly/chi"
 	"github.com/pressly/chi/middleware"
-	"golang.org/x/net/context"
 )
 
 func main() {
@@ -17,10 +17,10 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Use(func(h chi.Handler) chi.Handler {
-		return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			ctx = context.WithValue(ctx, "example", true)
-			h.ServeHTTPC(ctx, w, r)
+	r.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "example", true)
+			h.ServeHTTP(w, r.WithContext(ctx))
 		})
 	})
 
@@ -43,15 +43,15 @@ func accountsRouter() chi.Router { // or http.Handler
 	r.Group(func(r chi.Router) {
 		r.Use(sup2)
 
-		r.Get("/hi2", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			v := ctx.Value("sup2").(string)
+		r.Get("/hi2", func(w http.ResponseWriter, r *http.Request) {
+			v := r.Context().Value("sup2").(string)
 			w.Write([]byte(fmt.Sprintf("hi2 - '%s'", v)))
 		})
-		r.Get("/ahh", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			v := ctx.Value("sup2").(string)
+		r.Get("/ahh", func(w http.ResponseWriter, r *http.Request) {
+			v := r.Context().Value("sup2").(string)
 			w.Write([]byte(fmt.Sprintf("ahh - '%s'", v)))
 		})
-		r.Get("/fail", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		r.Get("/fail", func(w http.ResponseWriter, r *http.Request) {
 			panic("no..")
 		})
 	})
@@ -66,40 +66,40 @@ func accountsRouter() chi.Router { // or http.Handler
 	return r
 }
 
-func sup1(next chi.Handler) chi.Handler {
-	hfn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		ctx = context.WithValue(ctx, "sup1", "sup1")
-		next.ServeHTTPC(ctx, w, r)
+func sup1(next http.Handler) http.Handler {
+	hfn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), "sup1", "sup1")
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
-	return chi.HandlerFunc(hfn)
+	return http.HandlerFunc(hfn)
 }
 
-func sup2(next chi.Handler) chi.Handler {
-	hfn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		ctx = context.WithValue(ctx, "sup2", "sup2")
-		next.ServeHTTPC(ctx, w, r)
+func sup2(next http.Handler) http.Handler {
+	hfn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), "sup2", "sup2")
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
-	return chi.HandlerFunc(hfn)
+	return http.HandlerFunc(hfn)
 }
 
-func accountCtx(h chi.Handler) chi.Handler {
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		ctx = context.WithValue(ctx, "account", "account 123")
-		h.ServeHTTPC(ctx, w, r)
+func accountCtx(h http.Handler) http.Handler {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), "account", "account 123")
+		h.ServeHTTP(w, r.WithContext(ctx))
 	}
-	return chi.HandlerFunc(handler)
+	return http.HandlerFunc(handler)
 }
 
-func apiIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func apiIndex(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("root"))
 }
 
-func listAccounts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func listAccounts(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("list accounts"))
 }
 
-func hiAccounts(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	sup1 := ctx.Value("sup1").(string)
+func hiAccounts(w http.ResponseWriter, r *http.Request) {
+	sup1 := r.Context().Value("sup1").(string)
 	w.Write([]byte(fmt.Sprintf("hi accounts %v", sup1)))
 }
 
@@ -107,14 +107,14 @@ func createAccount(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("create account"))
 }
 
-func getAccount(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	accountID := chi.URLParam(ctx, "accountID")
-	account := ctx.Value("account").(string)
+func getAccount(w http.ResponseWriter, r *http.Request) {
+	accountID := chi.URLParam(r.Context(), "accountID")
+	account := r.Context().Value("account").(string)
 	w.Write([]byte(fmt.Sprintf("get account id:%s details:%s", accountID, account)))
 }
 
-func updateAccount(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	account := ctx.Value("account").(string)
+func updateAccount(w http.ResponseWriter, r *http.Request) {
+	account := r.Context().Value("account").(string)
 	w.Write([]byte(fmt.Sprintf("update account:%s", account)))
 }
 
