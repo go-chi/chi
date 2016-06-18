@@ -287,6 +287,37 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+func TestMuxTrailingSlash(t *testing.T) {
+	r := NewRouter()
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	subRoutes := NewRouter()
+	indexHandler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		accountID := URLParam(ctx, "accountID")
+		w.Write([]byte(accountID))
+	}
+	subRoutes.Get("/", indexHandler)
+
+	r.Mount("/accounts/:accountID", subRoutes)
+	r.Get("/accounts/:accountID/", indexHandler)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
+		t.Fatalf(resp)
+	}
+}
+
 func TestMuxNestedNotFound(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
