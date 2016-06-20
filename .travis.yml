@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - tip
+  - 1.7beta2
 
 install:
   - go get -u golang.org/x/tools/cmd/goimports
