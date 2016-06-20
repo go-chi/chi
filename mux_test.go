@@ -287,6 +287,8 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+// Test a mux that routes a trailing slash, see also middleware/strip_test.go
+// for an example of using a middleware to handle trailing slashes.
 func TestMuxTrailingSlash(t *testing.T) {
 	r := NewRouter()
 	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
