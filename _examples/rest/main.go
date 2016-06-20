@@ -116,7 +116,7 @@ type Article struct {
 
 func ArticleCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		articleID := chi.URLParam(r.Context(), "articleID")
+		articleID := chi.URLParam(r, "articleID")
 		article, err := dbGetArticle(articleID)
 		if err != nil {
 			http.Error(w, http.StatusText(404), 404)
@@ -232,7 +232,7 @@ func adminRouter() http.Handler { // or chi.Router {
 		w.Write([]byte("admin: list accounts.."))
 	})
 	r.Get("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(r.Context(), "userId"))))
+		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(r, "userId"))))
 	})
 	return r
 }

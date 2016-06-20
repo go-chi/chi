@@ -108,7 +108,7 @@ func createAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAccount(w http.ResponseWriter, r *http.Request) {
-	accountID := chi.URLParam(r.Context(), "accountID")
+	accountID := chi.URLParam(r, "accountID")
 	account := r.Context().Value("account").(string)
 	w.Write([]byte(fmt.Sprintf("get account id:%s details:%s", accountID, account)))
 }
