@@ -40,7 +40,7 @@ func accountsRouter() chi.Router { // or http.Handler
 	r.Post("/", createAccount)
 	r.Get("/hi", hiAccounts)
 
-	r.Group(func(r chi.Router) {
+	r.Inline(func(r chi.Router) {
 		r.Use(sup2)
 
 		r.Get("/hi2", func(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +56,7 @@ func accountsRouter() chi.Router { // or http.Handler
 		})
 	})
 
-	r.Route("/:accountID", func(r chi.Router) {
+	r.Group("/:accountID", func(r chi.Router) {
 		r.Use(accountCtx)
 		r.Get("/", getAccount)
 		r.Put("/", updateAccount)

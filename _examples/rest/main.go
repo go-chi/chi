@@ -34,7 +34,7 @@ func main() {
 	})
 
 	// Slow handlers/operations.
-	r.Group(func(r chi.Router) {
+	r.Inline(func(r chi.Router) {
 		// Stop processing when client disconnects.
 		r.Use(middleware.CloseNotify)
 
@@ -60,7 +60,7 @@ func main() {
 	})
 
 	// Throttle very expensive handlers/operations.
-	r.Group(func(r chi.Router) {
+	r.Inline(func(r chi.Router) {
 		// Stop processing after 30 seconds.
 		r.Use(middleware.Timeout(30 * time.Second))
 
@@ -88,14 +88,14 @@ func main() {
 	})
 
 	// RESTy routes for "articles" resource
-	r.Route("/articles", func(r chi.Router) {
-		r.Group(func(r chi.Router) {
+	r.Group("/articles", func(r chi.Router) {
+		r.Inline(func(r chi.Router) {
 			r.Use(paginate)
 			r.Get("/", listArticles) // GET /articles
 		})
 		r.Post("/", createArticle) // POST /articles
 
-		r.Route("/:articleID", func(r chi.Router) {
+		r.Group("/:articleID", func(r chi.Router) {
 			r.Use(ArticleCtx)
 			r.Get("/", getArticle)       // GET /articles/123
 			r.Put("/", updateArticle)    // PUT /articles/123

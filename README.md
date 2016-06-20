@@ -36,14 +36,14 @@ Built on top of the tree is the `Router` interface:
 // Register a middleware handler (or few) on the middleware stack
 Use(middlewares ...interface{})
 
-// Register a new middleware stack
-Group(fn func(r Router)) Router
-
 // Mount an inline sub-router
-Route(pattern string, fn func(r Router)) Router
+Group(pattern string, fn func(r Router)) Router
 
 // Mount a sub-router
 Mount(pattern string, handlers ...interface{})
+
+// Register a new middleware stack
+Inline(fn func(r Router)) Router
 
 // Register routing handler for all http methods
 Handle(pattern string, handlers ...interface{})
@@ -182,11 +182,11 @@ func main() {
   })
 
   // RESTy routes for "articles" resource
-  r.Route("/articles", func(r chi.Router) {
+  r.Group("/articles", func(r chi.Router) {
     r.Get("/", paginate, listArticles)  // GET /articles
     r.Post("/", createArticle)          // POST /articles
 
-    r.Route("/:articleID", func(r chi.Router) {
+    r.Group("/:articleID", func(r chi.Router) {
       r.Use(ArticleCtx)
       r.Get("/", getArticle)            // GET /articles/123
       r.Put("/", updateArticle)         // PUT /articles/123

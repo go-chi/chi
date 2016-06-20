@@ -86,9 +86,7 @@ func TestMux(t *testing.T) {
 	_ = pingAll2
 
 	pingOne := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		idParam := URLParam(ctx, "id")
-
+		idParam := URLParam(r, "id")
 		w.WriteHeader(200)
 		w.Write([]byte(fmt.Sprintf("ping one id: %s", idParam)))
 	}
@@ -402,7 +400,7 @@ func TestMuxRootGroup(t *testing.T) {
 	// 		next.ServeHTTPC(ctx, w, r)
 	// 	})
 	// })
-	r.Stack(func(r Router) {
+	r.Inline(func(r Router) {
 		r.Use(stdmw)
 		r.Get("/group", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("root group"))
@@ -439,7 +437,7 @@ func TestMuxBig(t *testing.T) {
 			next.ServeHTTP(w, r)
 		})
 	})
-	r.Stack(func(r Router) {
+	r.Inline(func(r Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				next.ServeHTTP(w, r)
@@ -450,17 +448,17 @@ func TestMuxBig(t *testing.T) {
 		})
 		r.Get("/hubs/:hubID/view", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			s := fmt.Sprintf("/hubs/%s/view reqid:%s", URLParam(ctx, "hubID"), ctx.Value("requestID"))
+			s := fmt.Sprintf("/hubs/%s/view reqid:%s", URLParam(r, "hubID"), ctx.Value("requestID"))
 			w.Write([]byte(s))
 		})
 		r.Get("/hubs/:hubID/view/*", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s", URLParam(ctx, "hubID"), URLParam(ctx, "*"),
+			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s", URLParamFromCtx(ctx, "hubID"), URLParam(r, "*"),
 				ctx.Value("requestID"))
 			w.Write([]byte(s))
 		})
 	})
-	r.Stack(func(r Router) {
+	r.Inline(func(r Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
@@ -481,8 +479,7 @@ func TestMuxBig(t *testing.T) {
 		})
 
 		r.Get("/woot/:wootID/*", func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-			s := fmt.Sprintf("/woot/%s/%s", URLParam(ctx, "wootID"), URLParam(ctx, "*"))
+			s := fmt.Sprintf("/woot/%s/%s", URLParam(r, "wootID"), URLParam(r, "*"))
 			w.Write([]byte(s))
 		})
 
@@ -493,12 +490,12 @@ func TestMuxBig(t *testing.T) {
 				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
 					s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
-						URLParam(ctx, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
+						URLParam(r, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
 				r.Get("/touch", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
-					s := fmt.Sprintf("/hubs/%s/touch reqid:%s session:%s", URLParam(ctx, "hubID"),
+					s := fmt.Sprintf("/hubs/%s/touch reqid:%s session:%s", URLParam(r, "hubID"),
 						ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
@@ -506,7 +503,7 @@ func TestMuxBig(t *testing.T) {
 				sr3 = NewRouter()
 				sr3.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
-					s := fmt.Sprintf("/hubs/%s/webhooks reqid:%s session:%s", URLParam(ctx, "hubID"),
+					s := fmt.Sprintf("/hubs/%s/webhooks reqid:%s session:%s", URLParam(r, "hubID"),
 						ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
@@ -514,8 +511,8 @@ func TestMuxBig(t *testing.T) {
 					sr4 = r.(*Mux)
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
-						s := fmt.Sprintf("/hubs/%s/webhooks/%s reqid:%s session:%s", URLParam(ctx, "hubID"),
-							URLParam(ctx, "webhookID"), ctx.Value("requestID"), ctx.Value("session.user"))
+						s := fmt.Sprintf("/hubs/%s/webhooks/%s reqid:%s session:%s", URLParam(r, "hubID"),
+							URLParam(r, "webhookID"), ctx.Value("requestID"), ctx.Value("session.user"))
 						w.Write([]byte(s))
 					})
 				})
@@ -525,7 +522,7 @@ func TestMuxBig(t *testing.T) {
 					sr5 = r.(*Mux)
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
-						s := fmt.Sprintf("/hubs/%s/posts reqid:%s session:%s", URLParam(ctx, "hubID"),
+						s := fmt.Sprintf("/hubs/%s/posts reqid:%s session:%s", URLParam(r, "hubID"),
 							ctx.Value("requestID"), ctx.Value("session.user"))
 						w.Write([]byte(s))
 					})
@@ -733,6 +730,31 @@ func TestMuxSubroutes(t *testing.T) {
 	}
 	resp = testRequest(t, ts, "GET", "/accounts/44/hi", nil)
 	expected = "account2"
+	if resp != expected {
+		t.Fatalf("expected:%s got:%s", expected, resp)
+	}
+}
+
+func TestSingleHandler(t *testing.T) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := URLParam(r, "name")
+		w.Write([]byte("hi "+name))
+	})
+
+	r, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatalf("unable to build new request: %s", err)
+	}
+
+	rctx := NewRouteContext(context.Background())
+	r = r.WithContext(rctx)
+	rctx.Params.Set("name", "joe")
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+
+	resp := string(w.Body.Bytes())
+	expected := "hi joe"
 	if resp != expected {
 		t.Fatalf("expected:%s got:%s", expected, resp)
 	}

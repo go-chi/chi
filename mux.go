@@ -76,7 +76,7 @@ func NewMux(parent ...context.Context) *Mux {
 
 	mux := &Mux{parentCtx: pctx, router: newTreeRouter(), handler: nil}
 	mux.pool.New = func() interface{} {
-		return newContext(pctx)
+		return NewRouteContext(pctx)
 	}
 
 	return mux
@@ -202,10 +202,10 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	}
 }
 
-// Stack creates a new inline-Mux with a fresh middleware stack. It's useful
+// Inline creates a new inline-Mux with a fresh middleware stack. It's useful
 // for a group of handlers along the same routing path that use the same
 // middleware(s). See _examples/ for an example usage.
-func (mx *Mux) Stack(fn func(r Router)) Router {
+func (mx *Mux) Inline(fn func(r Router)) Router {
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
@@ -221,7 +221,7 @@ func (mx *Mux) Stack(fn func(r Router)) Router {
 }
 
 // Group creates a new Mux with a fresh middleware stack and mounts it
-// along the `pattern`. This is very similar to Group, but attaches
+// along the `pattern` as a subrouter. This is very similar to Group, but attaches
 // the group along a new routing path. See _examples/ for example usage.
 func (mx *Mux) Group(pattern string, fn func(r Router)) Router {
 	subRouter := NewRouter()
@@ -280,10 +280,10 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	rctx, ok := ctx.(*Context)
 	if !ok || rctx == nil {
-		rctx, ok = ctx.Value(routeCtxKey).(*Context)
+		rctx, ok = ctx.Value(RouteCtxKey).(*Context)
 		if !ok {
 			//fmt.Println("We're making a new context!!")
-			rctx = newContext(mx.parentCtx)
+			rctx = NewRouteContext(mx.parentCtx)
 			r = r.WithContext(rctx)
 		}
 	}
@@ -332,7 +332,7 @@ func (tr treeRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Grab the root context object
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
-		rctx = ctx.Value(routeCtxKey).(*Context)
+		rctx = ctx.Value(RouteCtxKey).(*Context)
 	}
 
 	// The request path

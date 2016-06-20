@@ -22,9 +22,9 @@ type Router interface {
 	http.Handler
 
 	Use(middlewares ...func(http.Handler) http.Handler)
-	Stack(fn func(r Router)) Router
 	Group(pattern string, fn func(r Router)) Router
 	Mount(pattern string, h http.Handler) // TODO: mount a Router instead of http.Handler?
+	Inline(fn func(r Router)) Router
 
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
