@@ -12,9 +12,12 @@ import (
 // matches, then it will serve the handler.
 func StripSlashes(next chi.Handler) chi.Handler {
 	fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		rctx := chi.RouteContext(ctx)
 		path := r.URL.Path
+		if rctx.RoutePath != "" {
+			path = rctx.RoutePath
+		}
 		if len(path) > 1 && path[len(path)-1] == '/' {
-			rctx := chi.RouteContext(ctx)
 			rctx.RoutePath = path[:len(path)-1]
 		}
 		next.ServeHTTPC(ctx, w, r)
