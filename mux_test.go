@@ -14,6 +14,62 @@ import (
 	"time"
 )
 
+func TestMuxServeHTTPC(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		s, _ := ctx.Value("testCtx").(string)
+		w.Write([]byte(s))
+	})
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		s, _ := ctx.Value("testCtx").(string)
+		w.WriteHeader(404)
+		w.Write([]byte(s))
+	})
+
+	// Thanks to https://github.com/mrcpvn for the clean table test submission
+	testcases := []struct {
+		Method         string
+		Path           string
+		Ctx            context.Context
+		ExpectedStatus int
+		ExpectedBody   string
+	}{
+		{
+			Method:         "GET",
+			Path:           "/hi",
+			Ctx:            context.WithValue(context.Background(), "testCtx", "hi ctx"),
+			ExpectedStatus: 200,
+			ExpectedBody:   "hi ctx",
+		},
+		{
+			Method:         "GET",
+			Path:           "/hello",
+			Ctx:            context.WithValue(context.Background(), "testCtx", "nothing here ctx"),
+			ExpectedStatus: 404,
+			ExpectedBody:   "nothing here ctx",
+		},
+	}
+
+	for _, tc := range testcases {
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest(tc.Method, tc.Path, nil)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		r.ServeHTTPC(tc.Ctx, resp, req)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if resp.Code != tc.ExpectedStatus {
+			t.Fatalf("%v != %v", tc.ExpectedStatus, resp.Code)
+		}
+		if string(b) != tc.ExpectedBody {
+			t.Fatalf("%s != %s", tc.ExpectedBody, b)
+		}
+	}
+}
+
 func TestMux(t *testing.T) {
 	var count uint64
 	countermw := func(next http.Handler) http.Handler {
@@ -226,6 +282,39 @@ func TestMuxPlain(t *testing.T) {
 	defer ts.Close()
 
 	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
+		t.Fatalf(resp)
+	}
+}
+
+// Test a mux that routes a trailing slash, see also middleware/strip_test.go
+// for an example of using a middleware to handle trailing slashes.
+func TestMuxTrailingSlash(t *testing.T) {
+	r := NewRouter()
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	subRoutes := NewRouter()
+	indexHandler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		accountID := URLParam(ctx, "accountID")
+		w.Write([]byte(accountID))
+	}
+	subRoutes.Get("/", indexHandler)
+
+	r.Mount("/accounts/:accountID", subRoutes)
+	r.Get("/accounts/:accountID/", indexHandler)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
 		t.Fatalf(resp)
 	}
 	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {

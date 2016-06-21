@@ -68,17 +68,11 @@ var methodMap = map[string]methodTyp{
 }
 
 // NewMux returns a new Mux object with an optional parent context.
-func NewMux(parent ...context.Context) *Mux {
-	pctx := context.Background()
-	if len(parent) > 0 {
-		pctx = parent[0]
-	}
-
-	mux := &Mux{parentCtx: pctx, router: newTreeRouter(), handler: nil}
+func NewMux() *Mux {
+	mux := &Mux{router: newTreeRouter(), handler: nil}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext(pctx)
 	}
-
 	return mux
 }
 
