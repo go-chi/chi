@@ -65,8 +65,6 @@ func TestStripSlashesInRoute(t *testing.T) {
 	})
 
 	r.Route("/accounts/:accountID", func(r chi.Router) {
-		// This middleware must be mounted at the top level of the router, not at the end-handler
-		// because then it'll be too late and will end up in a 404
 		r.Use(StripSlashes)
 		r.Get("/query", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			accountID := chi.URLParam(ctx, "accountID")
