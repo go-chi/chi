@@ -233,6 +233,39 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+// Test a mux that routes a trailing slash, see also middleware/strip_test.go
+// for an example of using a middleware to handle trailing slashes.
+func TestMuxTrailingSlash(t *testing.T) {
+	r := NewRouter()
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	subRoutes := NewRouter()
+	indexHandler := func(w http.ResponseWriter, r *http.Request) {
+		accountID := URLParam(r, "accountID")
+		w.Write([]byte(accountID))
+	}
+	subRoutes.Get("/", indexHandler)
+
+	r.Mount("/accounts/:accountID", subRoutes)
+	r.Get("/accounts/:accountID/", indexHandler)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
+		t.Fatalf(resp)
+	}
+}
+
 func TestMuxNestedNotFound(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
@@ -387,7 +420,7 @@ func TestMuxRootGroup(t *testing.T) {
 	}
 	// stdmw := func(next Handler) Handler {
 	// 	stdmwInit++
-	// 	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// 	return HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	// 		log.Println("$$$$$ stdmw handlerfunc here!")
 	// 		stdmwHandler++
 	// 		next.ServeHTTPC(ctx, w, r)
@@ -396,7 +429,7 @@ func TestMuxRootGroup(t *testing.T) {
 
 	r := NewRouter()
 	// r.Use(func(next Handler) Handler {
-	// 	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// 	return HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	// 		next.ServeHTTPC(ctx, w, r)
 	// 	})
 	// })
@@ -738,7 +771,7 @@ func TestMuxSubroutes(t *testing.T) {
 func TestSingleHandler(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := URLParam(r, "name")
-		w.Write([]byte("hi "+name))
+		w.Write([]byte("hi " + name))
 	})
 
 	r, err := http.NewRequest("GET", "/", nil)
