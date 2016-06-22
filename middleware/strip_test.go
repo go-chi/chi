@@ -52,6 +52,45 @@ func TestStripSlashes(t *testing.T) {
 	}
 }
 
+func TestStripSlashesInRoute(t *testing.T) {
+	r := chi.NewRouter()
+
+	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi"))
+	})
+
+	r.Route("/accounts/:accountID", func(r chi.Router) {
+		// This middleware must be mounted at the top level of the router, not at the end-handler
+		// because then it'll be too late and will end up in a 404
+		r.Use(StripSlashes)
+		r.Get("/query", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+			accountID := chi.URLParam(ctx, "accountID")
+			w.Write([]byte(accountID))
+		})
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, resp := testRequest(t, ts, "GET", "/hi", nil); resp != "hi" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/hi/", nil); resp != "nothing here" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query/", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+}
+
 func TestRedirectSlashes(t *testing.T) {
 	r := chi.NewRouter()
 
