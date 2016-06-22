@@ -237,14 +237,14 @@ func TestMuxPlain(t *testing.T) {
 // for an example of using a middleware to handle trailing slashes.
 func TestMuxTrailingSlash(t *testing.T) {
 	r := NewRouter()
-	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("nothing here"))
 	})
 
 	subRoutes := NewRouter()
-	indexHandler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		accountID := URLParam(ctx, "accountID")
+	indexHandler := func(w http.ResponseWriter, r *http.Request) {
+		accountID := URLParam(r, "accountID")
 		w.Write([]byte(accountID))
 	}
 	subRoutes.Get("/", indexHandler)
@@ -420,7 +420,7 @@ func TestMuxRootGroup(t *testing.T) {
 	}
 	// stdmw := func(next Handler) Handler {
 	// 	stdmwInit++
-	// 	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// 	return HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	// 		log.Println("$$$$$ stdmw handlerfunc here!")
 	// 		stdmwHandler++
 	// 		next.ServeHTTPC(ctx, w, r)
@@ -429,7 +429,7 @@ func TestMuxRootGroup(t *testing.T) {
 
 	r := NewRouter()
 	// r.Use(func(next Handler) Handler {
-	// 	return HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// 	return HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	// 		next.ServeHTTPC(ctx, w, r)
 	// 	})
 	// })
