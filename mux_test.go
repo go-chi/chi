@@ -287,6 +287,45 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+func TestMuxEmptyRoutes(t *testing.T) {
+	mux := NewRouter()
+
+	apiRouter := NewRouter()
+	// oops, we forgot to declare any route handlers
+
+	mux.Handle("/api*", apiRouter)
+
+	if resp := testHandler(t, mux, "GET", "/", nil); resp != "404 page not found\n" {
+		t.Fatalf(resp)
+	}
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != `chi: attempting to route to a mux with no handlers.` {
+					t.Fatalf("expecting empty route panic")
+				}
+			}
+		}()
+
+		resp := testHandler(t, mux, "GET", "/api", nil)
+		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", resp)
+	}()
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if r != `chi: attempting to route to a mux with no handlers.` {
+					t.Fatalf("expecting empty route panic")
+				}
+			}
+		}()
+
+		resp := testHandler(t, mux, "GET", "/api/abc", nil)
+		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", resp)
+	}()
+}
+
 // Test a mux that routes a trailing slash, see also middleware/strip_test.go
 // for an example of using a middleware to handle trailing slashes.
 func TestMuxTrailingSlash(t *testing.T) {
@@ -914,6 +953,13 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	defer resp.Body.Close()
 
 	return string(respBody)
+}
+
+func testHandler(t *testing.T, h http.Handler, method, path string, body io.Reader) string {
+	r, _ := http.NewRequest(method, path, body)
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+	return string(w.Body.Bytes())
 }
 
 type testFileSystem struct {

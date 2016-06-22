@@ -261,6 +261,11 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // ServeHTTPC is chi's Handler method that adds a context.Context argument to the
 // standard ServeHTTP handler function.
 func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// Ensure the mux has some routes defined on the mux
+	if mx.handler == nil {
+		panic("chi: attempting to route to a mux with no handlers.")
+	}
+
 	if ctx == nil {
 		rctx := mx.pool.Get().(*Context)
 		mx.handler.ServeHTTPC(rctx, w, r)
@@ -280,6 +285,7 @@ func (mx *Mux) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Re
 		}
 	}
 
+	// Serve through mux handler
 	mx.handler.ServeHTTPC(ctx, w, r)
 }
 
