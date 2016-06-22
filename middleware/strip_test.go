@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/pressly/chi"
-	"golang.org/x/net/context"
 )
 
 func TestStripSlashes(t *testing.T) {
@@ -16,18 +15,18 @@ func TestStripSlashes(t *testing.T) {
 	// because then it'll be too late and will end up in a 404
 	r.Use(StripSlashes)
 
-	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("nothing here"))
 	})
 
-	r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("root"))
 	})
 
-	r.Route("/accounts/:accountID", func(r chi.Router) {
-		r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			accountID := chi.URLParam(ctx, "accountID")
+	r.Group("/accounts/:accountID", func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			accountID := chi.URLParam(r, "accountID")
 			w.Write([]byte(accountID))
 		})
 	})
@@ -59,18 +58,18 @@ func TestRedirectSlashes(t *testing.T) {
 	// because then it'll be too late and will end up in a 404
 	r.Use(RedirectSlashes)
 
-	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("nothing here"))
 	})
 
-	r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("root"))
 	})
 
-	r.Route("/accounts/:accountID", func(r chi.Router) {
-		r.Get("/", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			accountID := chi.URLParam(ctx, "accountID")
+	r.Group("/accounts/:accountID", func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			accountID := chi.URLParam(r, "accountID")
 			w.Write([]byte(accountID))
 		})
 	})
