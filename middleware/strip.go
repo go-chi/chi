@@ -12,7 +12,7 @@ import (
 func StripSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		var path string
-		rctx := chi.RouteContext(ctx)
+		rctx := chi.RouteContext(r.Context())
 		if rctx.RoutePath != "" {
 			path = rctx.RoutePath
 		} else {
@@ -31,7 +31,7 @@ func StripSlashes(next http.Handler) http.Handler {
 func RedirectSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		var path string
-		rctx := chi.RouteContext(ctx)
+		rctx := chi.RouteContext(r.Context())
 		if rctx.RoutePath != "" {
 			path = rctx.RoutePath
 		} else {

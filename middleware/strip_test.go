@@ -54,19 +54,19 @@ func TestStripSlashes(t *testing.T) {
 func TestStripSlashesInRoute(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.NotFound(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		w.Write([]byte("nothing here"))
 	})
 
-	r.Get("/hi", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hi"))
 	})
 
-	r.Route("/accounts/:accountID", func(r chi.Router) {
+	r.Group("/accounts/:accountID", func(r chi.Router) {
 		r.Use(StripSlashes)
-		r.Get("/query", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			accountID := chi.URLParam(ctx, "accountID")
+		r.Get("/query", func(w http.ResponseWriter, r *http.Request) {
+			accountID := chi.URLParam(r, "accountID")
 			w.Write([]byte(accountID))
 		})
 	})
