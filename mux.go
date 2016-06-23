@@ -267,6 +267,10 @@ func (mx *Mux) Mount(path string, handler http.Handler) {
 // Mux interoperable with the standard library. It uses a sync.Pool to get and
 // reuse routing contexts for each request.
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Ensure the mux has some routes defined on the mux
+	if mx.handler == nil {
+		panic("chi: attempting to route to a mux with no handlers.")
+	}
 
 	//ctx := mx.pool.Get().(*Context)
 	//r = r.WithContext(ctx)

@@ -11,9 +11,14 @@ import (
 // matches, then it will serve the handler.
 func StripSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
+		var path string
+		rctx := chi.RouteContext(ctx)
+		if rctx.RoutePath != "" {
+			path = rctx.RoutePath
+		} else {
+			path = r.URL.Path
+		}
 		if len(path) > 1 && path[len(path)-1] == '/' {
-			rctx := chi.RouteContext(r.Context())
 			rctx.RoutePath = path[:len(path)-1]
 		}
 		next.ServeHTTP(w, r)
@@ -25,7 +30,13 @@ func StripSlashes(next http.Handler) http.Handler {
 // slash and redirect to the same path, less the trailing slash.
 func RedirectSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
+		var path string
+		rctx := chi.RouteContext(ctx)
+		if rctx.RoutePath != "" {
+			path = rctx.RoutePath
+		} else {
+			path = r.URL.Path
+		}
 		if len(path) > 1 && path[len(path)-1] == '/' {
 			path = path[:len(path)-1]
 			http.Redirect(w, r, path, 301)
