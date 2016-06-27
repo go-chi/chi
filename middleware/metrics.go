@@ -63,20 +63,24 @@ func Metrics(handler MetricsHandler) func(next http.Handler) http.Handler {
 	}
 }
 
-var xForwardedProto = http.CanonicalHeaderKey("X-Forwarded-Proto")
+var (
+	httpScheme      = "http"
+	httpsScheme     = "https"
+	xForwardedProto = http.CanonicalHeaderKey("X-Forwarded-Proto")
+)
 
 func getRequestURL(r *http.Request) string {
 
-	scheme := "http"
+	scheme := httpScheme
 
 	// Is HTTPS with TLS connection ?
 	if r.TLS != nil {
-		scheme = "https"
+		scheme = httpsScheme
 	}
 
 	// or with a reverse proxy ?
-	if xfp := r.Header.Get(xForwardedProto); xfp == "https" {
-		scheme = "https"
+	if xfp := r.Header.Get(xForwardedProto); xfp == httpsScheme {
+		scheme = httpsScheme
 	}
 
 	return fmt.Sprintf("%s://%s%s", scheme, r.Host, r.RequestURI)
