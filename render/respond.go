@@ -31,7 +31,7 @@ func DefaultRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	}
 }
 
-func String(ctx context.Context, w http.ResponseWriter, v string) {
+func PlainText(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	status, _ := ctx.Value(statusCtxKey).(int)
 	if status == 0 {
@@ -39,6 +39,11 @@ func String(ctx context.Context, w http.ResponseWriter, v string) {
 	}
 	w.WriteHeader(status)
 	w.Write([]byte(v))
+}
+
+// TODO: Left for API backward compatibility. Remove for chi v2.
+func String(ctx context.Context, w http.ResponseWriter, v string) {
+	PlainText(ctx, w, v)
 }
 
 func HTML(ctx context.Context, w http.ResponseWriter, v string) {
