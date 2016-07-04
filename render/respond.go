@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
-	"reflect"
 
 	"golang.org/x/net/context"
 )
@@ -57,12 +56,6 @@ func HTML(ctx context.Context, w http.ResponseWriter, v string) {
 }
 
 func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
-	// Force to return empty JSON array [] instead of null in case of zero slice.
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Slice && val.IsNil() {
-		v = reflect.MakeSlice(val.Type(), 0, 0).Interface()
-	}
-
 	// TODO: go1.7
 	// enc := json.NewEncoder(w)
 	// enc.SetEscapeHTML(true)
