@@ -27,20 +27,19 @@ func UsePresenter(p Presenter) func(next chi.Handler) chi.Handler {
 	}
 }
 
-func NewPresenter() *presenter {
-	return &presenter{
+func NewPresenter(conversionFuncs ...interface{}) *presenter {
+	p := &presenter{
 		ConversionFnStore: map[reflect.Type]reflect.Value{},
 	}
+	p.Register(conversionFuncs...)
+	return p
 }
 
 type presenter struct {
 	ConversionFnStore map[reflect.Type]reflect.Value // map[*from.Type]func(context.Context, *from.Type) (*to.Type, error)
 }
 
-func (p *presenter) Register(conversionFunc interface{}, conversionFuncs ...interface{}) {
-	if err := p.register(conversionFunc); err != nil {
-		panic(err)
-	}
+func (p *presenter) Register(conversionFuncs ...interface{}) {
 	for _, fn := range conversionFuncs {
 		if err := p.register(fn); err != nil {
 			panic(err)
