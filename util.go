@@ -1,9 +1,6 @@
 package chi
 
-import (
-	"net/http"
-	"strings"
-)
+import "net/http"
 
 // chain builds a http.Handler composed of middlewares and endpoint handler in the
 // order they are passed.
@@ -25,14 +22,6 @@ func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler)
 // Respond with just the allowed methods, as required by RFC2616 for
 // 405 Method not allowed.
 func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
-	methods := make([]string, len(methodMap))
-	i := 0
-	for m := range methodMap {
-		methods[i] = m // still faster than append to array with capacity
-		i++
-	}
-
-	w.Header().Add("Allow", strings.Join(methods, ","))
 	w.WriteHeader(405)
 	w.Write([]byte(http.StatusText(405)))
 }
