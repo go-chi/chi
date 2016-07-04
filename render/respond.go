@@ -8,7 +8,10 @@ import (
 	"net/http"
 )
 
-var Respond = DefaultRespond
+var (
+	Respond      = DefaultRespond
+	statusCtxKey = &contextKey{"Status"}
+)
 
 func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// Present the object.

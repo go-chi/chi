@@ -7,7 +7,10 @@ import (
 	"reflect"
 )
 
-var DefaultPresenter = NewPresenter()
+var (
+	DefaultPresenter = NewPresenter()
+	presenterCtxKey  = &contextKey{"Presenter"}
+)
 
 type Presenter interface {
 	Present(r *http.Request, from interface{}) interface{}

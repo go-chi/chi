@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+var (
+	contentTypeCtxKey = &contextKey{"ContentType"}
+)
+
 // A ContentType is an enumeration of HTTP content types.
 type ContentType int
 
