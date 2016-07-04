@@ -17,7 +17,7 @@ type Router interface {
 	Route(pattern string, fn func(r Router)) Router
 	Group(fn func(r Router)) Router
 
-	Mount(pattern string, h http.Handler) // TODO: mount a Router instead of http.Handler?
+	Mount(pattern string, h http.Handler)
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
 	NotFound(h http.HandlerFunc)

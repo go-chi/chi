@@ -159,7 +159,7 @@ func (mx *Mux) FileServer(path string, root http.FileSystem) {
 // and then registers the route in the router.
 func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	if len(pattern) == 0 || pattern[0] != '/' {
-		panic(fmt.Sprintf("pattern must begin with '/' in '%s'", pattern))
+		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
 
 	// Build the single mux handler that is a chain of the middleware stack, as
@@ -210,7 +210,7 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 	return g
 }
 
-// Group creates a new Mux with a fresh middleware stack and mounts it
+// Route creates a new Mux with a fresh middleware stack and mounts it
 // along the `pattern` as a subrouter. This is very similar to Group, but attaches
 // the group along a new routing path. See _examples/ for example usage.
 func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
@@ -222,15 +222,10 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 	return subRouter
 }
 
-// Mount attaches another mux as a subrouter along a routing path. It's very useful
-// to split up a large API as many independent routers and compose them as a single
-// service using Mount. See _examples/ for example usage.
+// Mount attaches another chi Router as a subrouter along a routing path. It's very
+// useful to split up a large API as many independent routers and compose them as
+// a single service using Mount. See _examples/ for example usage.
 func (mx *Mux) Mount(path string, handler http.Handler) {
-	// TODO: ... what if mount accepted just a router ...?
-	// would it make subrouting easier/better...?
-	// does it make sense to ever Mount() a http.Handler? .. or would they just
-	// use .Handle() anyways..?
-
 	// Assign sub-Router's with the parent not found handler if not specified.
 	if sr, ok := handler.(*Mux); ok {
 		if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
