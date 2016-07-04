@@ -15,35 +15,43 @@ import (
 	"github.com/pressly/chi/render"
 )
 
-type RuntimeObject struct {
-	ID       int      `json:"id"`
-	AuthData string   `json:"auth_data"`
-	Data     []string `json:"data"`
+// Article is runtime object, not meant to be sent via REST.
+type Article struct {
+	ID                     int      `db:"id" json:"id" xml:"id"`
+	Title                  string   `db:"title" json:"title" xml:"title"`
+	Data                   []string `db:"data,stringarray" json:"data" xml:"data"`
+	CustomDataForAuthUsers string   `db:"custom_data" json:"-" xml:"-"`
 }
 
-type PresenterObject struct {
-	*RuntimeObject `json:",inline"`
+// ArticleAPI is Article object presented in latest API version for REST response.
+type ArticleAPI struct {
+	*Article `json:",inline" xml:",inline"`
 
-	URL   string `json:"url"`
-	False bool   `json:"false"`
+	// Additional fields.
+	URL        string `json:"url" xml:"url"`
+	ViewsCount int64  `json:"views_count" xml:"views_count"`
 
-	// Omit by default. Show explicitly for auth'd users only.
-	AuthData interface{} `json:"auth_data,omitempty"`
+	// Omitted fields.
+	// Show custom_data explicitly for auth'd users only.
+	CustomDataForAuthUsers interface{} `json:"custom_data,omitempty" xml:"custom_data,omitempty"`
 }
 
-type PresenterObjectV2 struct {
-	*PresenterObject `json:",inline"`
+// ArticleAPIv2 is Article presented in API version 2 for REST response.
+type ArticleAPIv2 struct {
+	*ArticleAPI `json:",inline" xml:",inline"`
 
-	ResourceURL string `json:"resource_url"`
+	// Additional fields.
+	SelfURL string `json:"self_url" xml:"self_url"`
 
-	// Omit.
-	URL interface{} `json:"url,omitempty"`
+	// Omitted fields.
+	URL interface{} `json:"url,omitempty" xml:"url,omitempty"`
 }
 
-type PresenterObjectV1 struct {
-	*PresenterObjectV2 `json:",inline"`
+// ArticleAPIv1 is Article presented in API version 1 for REST response.
+type ArticleAPIv1 struct {
+	*ArticleAPIv2 `json:",inline" xml:",inline"`
 
-	Data map[string]bool `json:"data"`
+	Data map[string]bool `json:"data" xml:"data"`
 }
 
 var (
@@ -51,41 +59,95 @@ var (
 	ErrForbidden    = errors.New("Forbidden")
 	ErrNotFound     = errors.New("Resource not found")
 
-	v2 = render.NewPresenter()
-	v1 = render.NewPresenter()
+	API   = render.NewPresenter()
+	APIv2 = render.NewPresenter()
+	APIv1 = render.NewPresenter()
 )
 
 func init() {
 	render.Respond = customRespond
 
-	render.DefaultPresenter.Register(func(ctx context.Context, from *RuntimeObject) (*PresenterObject, error) {
-		to := &PresenterObject{
-			RuntimeObject: from,
-			URL:           fmt.Sprintf("https://api.example.com/objects/%v", from.ID),
+	API = render.DefaultPresenter
+	API.Register(func(ctx context.Context, from *Article) (*ArticleAPI, error) {
+		rand.Seed(time.Now().Unix())
+		to := &ArticleAPI{
+			Article:    from,
+			ViewsCount: rand.Int63n(100000),
+			URL:        fmt.Sprintf("http://localhost:3333/?id=%v", from.ID),
 		}
 		// Only show to auth'd user.
 		if _, ok := ctx.Value("auth").(bool); ok {
-			to.AuthData = from.AuthData
+			to.CustomDataForAuthUsers = from.CustomDataForAuthUsers
 		}
 		return to, nil
 	})
 
-	v2.RegisterFrom(render.DefaultPresenter)
-	v2.Register(func(ctx context.Context, from *PresenterObject) (*PresenterObjectV2, error) {
-		return &PresenterObjectV2{PresenterObject: from, ResourceURL: from.URL}, nil
+	APIv2.RegisterFrom(API)
+	APIv2.Register(func(ctx context.Context, from *ArticleAPI) (*ArticleAPIv2, error) {
+		return &ArticleAPIv2{
+			ArticleAPI: from,
+			SelfURL:    fmt.Sprintf("http://localhost:3333/v2?id=%v", from.ID),
+		}, nil
 	})
 
-	v1.RegisterFrom(v2)
-	v1.Register(func(ctx context.Context, from *PresenterObjectV2) (*PresenterObjectV1, error) {
-		to := &PresenterObjectV1{
-			PresenterObjectV2: from,
-			Data:              map[string]bool{},
+	APIv1.RegisterFrom(APIv2)
+	APIv1.Register(func(ctx context.Context, from *ArticleAPIv2) (*ArticleAPIv1, error) {
+		to := &ArticleAPIv1{
+			ArticleAPIv2: from,
+			Data:         map[string]bool{},
 		}
+		to.SelfURL = fmt.Sprintf("http://localhost:3333/v1?id=%v", from.ID)
 		for _, item := range from.Data {
 			to.Data[item] = true
 		}
 		return to, nil
 	})
+}
+
+func main() {
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(render.ParseContentType)
+
+	r.Get("/", getArticle)                               // API latest version by default.
+	r.Get("/v2", render.UsePresenter(APIv2), getArticle) // API version 2.
+	r.Get("/v1", render.UsePresenter(APIv1), getArticle) // API version 1.
+
+	r.Get("/error", randomErrorHandler)
+
+	http.ListenAndServe(":3333", r)
+}
+
+func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	article := &Article{
+		ID:    1,
+		Title: "Article #1",
+		Data:  []string{"one", "two", "three", "four"},
+		CustomDataForAuthUsers: "secret data for auth'd users only",
+	}
+
+	// Simulate some context values:
+	// 1. ?auth=true simluates authenticated session/user.
+	// 2. ?error=true simulates random error.
+	if r.URL.Query().Get("auth") != "" {
+		ctx = context.WithValue(ctx, "auth", true)
+	}
+	if r.URL.Query().Get("error") != "" {
+		render.Respond(ctx, w, errors.New("error"))
+		return
+	}
+
+	render.Respond(ctx, w, article)
+}
+
+func randomErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	errors := []error{ErrUnauthorized, ErrForbidden, ErrNotFound}
+
+	rand.Seed(time.Now().Unix())
+	render.Respond(ctx, w, errors[rand.Intn(len(errors))])
 }
 
 // customRespond sets response status code based on Error value/type.
@@ -107,47 +169,4 @@ func customRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	}
 
 	render.DefaultRespond(ctx, w, v)
-}
-
-func main() {
-	r := chi.NewRouter()
-
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(render.ParseContentType)
-
-	r.Get("/", objectHandler)
-	r.Get("/v2", render.UsePresenter(v2), objectHandler)
-	r.Get("/v1", render.UsePresenter(v1), objectHandler)
-
-	r.Get("/error", randomErrorHandler)
-
-	http.ListenAndServe(":3333", r)
-}
-
-func objectHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	obj := &RuntimeObject{
-		ID:       1,
-		AuthData: "secret data for auth'd users only",
-		Data:     []string{"one", "two", "three", "four"},
-	}
-
-	// Simulate some context values (copy over from query params).
-	if r.URL.Query().Get("auth") != "" {
-		ctx = context.WithValue(ctx, "auth", true)
-	}
-	if r.URL.Query().Get("error") != "" {
-		render.Respond(ctx, w, errors.New("error"))
-		return
-	}
-
-	render.Respond(ctx, w, obj)
-}
-
-func randomErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	errors := []error{ErrUnauthorized, ErrForbidden, ErrNotFound}
-
-	rand.Seed(time.Now().Unix())
-	render.Respond(ctx, w, errors[rand.Intn(len(errors))])
 }
