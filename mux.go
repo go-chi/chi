@@ -1,7 +1,6 @@
 package chi
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -18,9 +17,6 @@ var _ Router = &Mux{}
 // for writing large REST API services that break a handler into many smaller
 // parts composed of middlewares and end handlers.
 type Mux struct {
-	// A parent root context for any request that is usually a server context
-	parentCtx context.Context // TODO: necessary...?
-
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
 
@@ -68,17 +64,11 @@ var methodMap = map[string]methodTyp{
 }
 
 // NewMux returns a new Mux object with an optional parent context.
-func NewMux(parent ...context.Context) *Mux {
-	pctx := context.Background()
-	if len(parent) > 0 {
-		pctx = parent[0]
-	}
-
-	mux := &Mux{parentCtx: pctx, router: newTreeRouter(), handler: nil}
+func NewMux() *Mux {
+	mux := &Mux{router: newTreeRouter(), handler: nil}
 	mux.pool.New = func() interface{} {
-		return NewRouteContext(pctx)
+		return NewRouteContext()
 	}
-
 	return mux
 }
 
@@ -287,7 +277,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rctx, ok = ctx.Value(RouteCtxKey).(*Context)
 		if !ok {
 			//fmt.Println("We're making a new context!!")
-			rctx = NewRouteContext(mx.parentCtx)
+			rctx = NewRouteContext()
 			r = r.WithContext(rctx)
 		}
 	}

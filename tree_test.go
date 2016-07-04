@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
-	"context"
 )
 
 var (
@@ -93,7 +92,7 @@ func TestTree(t *testing.T) {
 
 	tests := []struct {
 		r string            // input request path
-		h http.Handler           // output matched handler
+		h http.Handler      // output matched handler
 		p map[string]string // output params
 	}{
 		{r: "/", h: hIndex, p: emptyParams},
@@ -141,7 +140,7 @@ func TestTree(t *testing.T) {
 
 	for i, tt := range tests {
 		// params := make(map[string]string, 0)
-		rctx := NewRouteContext(context.Background())
+		rctx := NewRouteContext()
 		handler := tr.Find(rctx, tt.r) //, params)
 		params := urlParams(rctx)
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
@@ -196,7 +195,7 @@ func BenchmarkTreeGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// params := map[string]string{}
-		mctx := NewRouteContext(context.Background())
+		mctx := NewRouteContext()
 		tr.Find(mctx, "/ping/123/456")
 		// tr.Find("/pingggg", params)
 	}

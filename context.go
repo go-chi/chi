@@ -23,15 +23,10 @@ type Context struct {
 	RoutePath string
 }
 
-// TODO: do we add a ShutdownCh that tells us to stop listening etc...?
-// or call it StopCh ? ...
-// perhaps, just offer this as a middleware.... ctx.Value(middleware.StopCh).(chan struct{}) bad..
-// .. hmm..
-
 // NewRouteContext returns a new routing context object.
-func NewRouteContext(parent context.Context) *Context {
+func NewRouteContext() *Context {
 	rctx := &Context{}
-	ctx := context.WithValue(parent, RouteCtxKey, rctx)
+	ctx := context.WithValue(context.Background(), RouteCtxKey, rctx)
 	rctx.Context = ctx
 	return rctx
 }

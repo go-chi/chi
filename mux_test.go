@@ -818,7 +818,7 @@ func TestSingleHandler(t *testing.T) {
 		t.Fatalf("unable to build new request: %s", err)
 	}
 
-	rctx := NewRouteContext(context.Background())
+	rctx := NewRouteContext()
 	r = r.WithContext(rctx)
 	rctx.Params.Set("name", "joe")
 
