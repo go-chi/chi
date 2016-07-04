@@ -11,28 +11,30 @@ import (
 
 var Respond = DefaultRespond
 
-func DefaultRespond(ctx context.Context, w http.ResponseWriter, v interface{}) {
+func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
+	ctx := r.Context()
+
 	// Present the object.
 	if presenter, ok := ctx.Value(presenterCtxKey).(Presenter); ok {
-		v = presenter.Present(ctx, v)
+		v = presenter.Present(r, v)
 	} else {
-		v = DefaultPresenter.Present(ctx, v)
+		v = DefaultPresenter.Present(r, v)
 	}
 
 	// Format data based on Content-Type.
 	switch contentType, _ := ctx.Value(contentTypeCtxKey).(ContentType); contentType {
 	case ContentTypeJSON:
-		JSON(ctx, w, v)
+		JSON(w, r, v)
 	case ContentTypeXML:
-		XML(ctx, w, v)
+		XML(w, r, v)
 	default:
-		JSON(ctx, w, v)
+		JSON(w, r, v)
 	}
 }
 
-func PlainText(ctx context.Context, w http.ResponseWriter, v string) {
+func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	status, _ := ctx.Value(statusCtxKey).(int)
+	status, _ := r.Context().Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -40,14 +42,9 @@ func PlainText(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Write([]byte(v))
 }
 
-// TODO: Left for API backward compatibility. Remove for chi v2.
-func String(ctx context.Context, w http.ResponseWriter, v string) {
-	PlainText(ctx, w, v)
-}
-
-func HTML(ctx context.Context, w http.ResponseWriter, v string) {
+func HTML(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	status, _ := ctx.Value(statusCtxKey).(int)
+	status, _ := r.Context().Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -55,7 +52,7 @@ func HTML(ctx context.Context, w http.ResponseWriter, v string) {
 	w.Write([]byte(v))
 }
 
-func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
+func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// TODO: go1.7
 	// enc := json.NewEncoder(w)
 	// enc.SetEscapeHTML(true)
@@ -77,7 +74,7 @@ func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	status, _ := ctx.Value(statusCtxKey).(int)
+	status, _ := r.Context().Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -85,7 +82,7 @@ func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	w.Write(b)
 }
 
-func XML(ctx context.Context, w http.ResponseWriter, v interface{}) {
+func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	b, err := xml.Marshal(v)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,7 +90,7 @@ func XML(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	status, _ := ctx.Value(statusCtxKey).(int)
+	status, _ := r.Context().Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
@@ -112,6 +109,6 @@ func XML(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	w.Write(b)
 }
 
-func Status(ctx context.Context, status int) context.Context {
-	return context.WithValue(ctx, statusCtxKey, status)
+func Status(r *http.Request, status int) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), statusCtxKey, status))
 }

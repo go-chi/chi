@@ -5,25 +5,23 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/pressly/chi"
-
 	"golang.org/x/net/context"
 )
 
 var DefaultPresenter = NewPresenter()
 
 type Presenter interface {
-	Present(ctx context.Context, from interface{}) interface{}
+	Present(r *http.Request, from interface{}) interface{}
 }
 
 // UsePresenter is a middleware that sets custom presenter into the context chain.
-func UsePresenter(p Presenter) func(next chi.Handler) chi.Handler {
-	return func(next chi.Handler) chi.Handler {
-		fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			ctx = context.WithValue(ctx, presenterCtxKey, p)
-			next.ServeHTTPC(ctx, w, r)
+func UsePresenter(p Presenter) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), presenterCtxKey, p))
+			next.ServeHTTP(w, r)
 		}
-		return chi.HandlerFunc(fn)
+		return http.HandlerFunc(fn)
 	}
 }
 
@@ -58,14 +56,14 @@ func (p *presenter) RegisterFrom(presenter *presenter, presenters ...*presenter)
 	}
 }
 
-func (p *presenter) Present(ctx context.Context, from interface{}) interface{} {
+func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 	obj := from
 	for i := 0; i < 100; i++ {
 		fn, ok := p.ConversionFnStore[reflect.TypeOf(obj)]
 		if !ok {
 			return obj
 		}
-		resp := fn.Call([]reflect.Value{reflect.ValueOf(ctx), reflect.ValueOf(obj)})
+		resp := fn.Call([]reflect.Value{reflect.ValueOf(r.Context()), reflect.ValueOf(obj)})
 		if !resp[1].IsNil() {
 			return resp[1].Interface()
 		}

@@ -17,10 +17,6 @@ const (
 	ContentTypeXML
 )
 
-type ctxKey int
-
-const ContentTypeCtxKey ctxKey = iota
-
 // TODO: is this middleware still useful? if render.Respond()
 // accepted the type somehow, then its less important.
 // perhaps we keep it, and pass ctx as first argument..?
@@ -49,7 +45,9 @@ func ParseContentType(next http.Handler) http.Handler {
 			}
 		}
 
-		ctx = context.WithValue(ctx, contentTypeCtxKey, contentType)
-		next.ServeHTTPC(ctx, w, r)
+		ctx := context.WithValue(r.Context(), contentTypeCtxKey, contentType)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
 	})
 }
