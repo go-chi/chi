@@ -5,25 +5,11 @@ import (
 	"net/http"
 )
 
-var _ context.Context = &Context{}
-
-type ctxKey int // TODO: use stdlib technique with just a struct and name with vars, easier to debug.
-
-/*
-// contextKey is a value for use with context.WithValue. It's used as
-// a pointer so it fits in an interface{} without allocation.
-type contextKey struct {
-	name string
-}
-
-func (k *contextKey) String() string { return "net/http context value " + k.name }
-
-var RouteCtxKey = &contextKey{"chi.RouteContext"}
-*/
-
-const (
-	RouteCtxKey ctxKey = iota // TODO: export?
+var (
+	RouteCtxKey = &contextKey{"RouteContext"}
 )
+
+var _ context.Context = &Context{}
 
 // A Context is the default routing context set on the root node of a
 // request context to track URL parameters and an optional routing path.
@@ -80,4 +66,15 @@ func URLParamFromCtx(ctx context.Context, key string) string {
 		return rctx.Params.Get(key)
 	}
 	return ""
+}
+
+// contextKey is a value for use with context.WithValue. It's used as
+// a pointer so it fits in an interface{} without allocation. This technique
+// for defining context keys was copied from Go 1.7's new use of context in net/http.
+type contextKey struct {
+	name string
+}
+
+func (k *contextKey) String() string {
+	return "chi context value " + k.name
 }
