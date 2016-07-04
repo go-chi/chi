@@ -1,19 +1,17 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
-
-	"github.com/pressly/chi"
-	"golang.org/x/net/context"
 )
 
 // WithValue is a middleware that sets a given key/value in a context chain.
-func WithValue(key interface{}, val interface{}) func(next chi.Handler) chi.Handler {
-	return func(next chi.Handler) chi.Handler {
-		fn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			ctx = context.WithValue(ctx, key, val)
-			next.ServeHTTPC(ctx, w, r)
+func WithValue(key interface{}, val interface{}) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), key, val))
+			next.ServeHTTP(w, r)
 		}
-		return chi.HandlerFunc(fn)
+		return http.HandlerFunc(fn)
 	}
 }
