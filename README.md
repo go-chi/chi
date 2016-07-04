@@ -88,8 +88,8 @@ The supported handlers are as follows..
 ### Middleware handlers
 
 ```go
-// Standard HTTP middleware. Compatible and friendly for when a request context isn't needed.
-func StdMiddleware(next http.Handler) http.Handler {
+// HTTP middleware.
+func Middleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     next.ServeHTTP(w, r)
   })
@@ -99,14 +99,14 @@ func StdMiddleware(next http.Handler) http.Handler {
 ### Request handlers
 
 ```go
-// Standard HTTP handler
-func StdHandler(w http.ResponseWriter, r *http.Request) {
+// HTTP handler.
+func Handler(w http.ResponseWriter, r *http.Request) {
   w.Write([]byte("hi"))
 }
 ```
 
 ```go
-// net/context HTTP request handler
+// HTTP handler with use of request context.
 func CtxHandler(w http.ResponseWriter, r *http.Request) {
   userID := chi.URLParam(r, "userID") // from a route like /users/:userID
 
@@ -119,16 +119,15 @@ func CtxHandler(w http.ResponseWriter, r *http.Request) {
 
 ## context?
 
-`net/context` is a tiny library written by [Sameer Ajmani](https://github.com/Sajmani) that provides
-a simple interface to signal context across call stacks and goroutines.
+`context` is a tiny pkg that provides simple interface to signal context across call stacks
+and goroutines. It was originally written by [Sameer Ajmani](https://github.com/Sajmani)
+and is available in stdlib since go1.7.
 
 Learn more at https://blog.golang.org/context
 
 and..
-* Docs: https://godoc.org/golang.org/x/net/context
-* Source: https://github.com/golang/net/tree/master/context
-* net/http client managed by context.Context: https://github.com/golang/net/tree/master/context/ctxhttp
-
+* Docs: https://tip.golang.org/pkg/context
+* Source: https://github.com/golang/go/tree/master/src/context
 
 ## Examples
 
