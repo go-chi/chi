@@ -417,7 +417,7 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	var handlerCount uint64
 
-	r.Get("/", Use(inCtxmw).Then(func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/", Use(inCtxmw).Handler(func(w http.ResponseWriter, r *http.Request) {
 		handlerCount++
 		ctx := r.Context()
 		ctxmwHandlerCount := ctx.Value("count.ctxmwHandler").(uint64)

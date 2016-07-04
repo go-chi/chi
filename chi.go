@@ -40,9 +40,8 @@ func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middl
 	return *ms
 }
 
-// TODO: is there a better function name than "Then()"
-func (ms Middlewares) Then(endpoint http.HandlerFunc) http.HandlerFunc {
-	return chain(ms, endpoint).ServeHTTP
+func (ms Middlewares) Handler(h http.HandlerFunc) http.HandlerFunc {
+	return chain(ms, h).ServeHTTP
 }
 
 func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
