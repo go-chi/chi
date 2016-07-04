@@ -27,17 +27,31 @@ func main() {
 	r.Use(render.ParseContentType)
 	r.Use(render.UsePresenter(v3.Presenter)) // API version 3 (latest) by default.
 
-	r.Get("/", getArticle)                                      // API version 3 (latest).
-	r.Get("/v3", getArticle)                                    // API version 3.
-	r.Get("/v2", render.UsePresenter(v2.Presenter), getArticle) // API version 2.
-	r.Get("/v1", render.UsePresenter(v1.Presenter), getArticle) // API version 1.
+	// API version 3.
+	r.Get("/", redirectV3)
+	r.Route("/v3", func(r chi.Router) {
+		r.Use(render.UsePresenter(v3.Presenter))
+		r.Get("/", getArticle)
+	})
+
+	// API version 2.
+	r.Route("/v2", func(r chi.Router) {
+		r.Use(render.UsePresenter(v2.Presenter))
+		r.Get("/", getArticle)
+	})
+
+	// API version 1.
+	r.Route("/v1", func(r chi.Router) {
+		r.Use(render.UsePresenter(v1.Presenter))
+		r.Get("/", getArticle)
+	})
 
 	r.Get("/error", randomErrorHandler)
 
 	http.ListenAndServe(":3333", r)
 }
 
-func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getArticle(w http.ResponseWriter, r *http.Request) {
 	article := &data.Article{
 		ID:    1,
 		Title: "Article #1",
@@ -49,42 +63,46 @@ func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// 1. ?auth=true simluates authenticated session/user.
 	// 2. ?error=true simulates random error.
 	if r.URL.Query().Get("auth") != "" {
-		ctx = context.WithValue(ctx, "auth", true)
+		r = r.WithContext(context.WithValue(r.Context(), "auth", true))
 	}
 	if r.URL.Query().Get("error") != "" {
-		render.Respond(ctx, w, errors.New("error"))
+		render.Respond(w, r, errors.New("error"))
 		return
 	}
 
-	render.Respond(ctx, w, article)
+	render.Respond(w, r, article)
 }
 
-func randomErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func redirectV3(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/v3", 302)
+}
+
+func randomErrorHandler(w http.ResponseWriter, r *http.Request) {
 	errors := []error{data.ErrUnauthorized, data.ErrForbidden, data.ErrNotFound}
 
 	rand.Seed(time.Now().Unix())
-	render.Respond(ctx, w, errors[rand.Intn(len(errors))])
+	render.Respond(w, r, errors[rand.Intn(len(errors))])
 }
 
 func init() {
 	// custom responder that sets response status code based on Error value/type.
-	render.Respond = func(ctx context.Context, w http.ResponseWriter, v interface{}) {
+	render.Respond = func(w http.ResponseWriter, r *http.Request, v interface{}) {
 		val := reflect.ValueOf(v)
 		if err, ok := val.Interface().(error); ok {
 			switch err {
 			case data.ErrUnauthorized:
-				ctx = render.Status(ctx, 401)
+				r = render.Status(r, 401)
 			case data.ErrForbidden:
-				ctx = render.Status(ctx, 403)
+				r = render.Status(r, 403)
 			case data.ErrNotFound:
-				ctx = render.Status(ctx, 404)
+				r = render.Status(r, 404)
 			default:
-				ctx = render.Status(ctx, 500)
+				r = render.Status(r, 500)
 			}
-			render.DefaultRespond(ctx, w, map[string]string{"error": err.Error()})
+			render.DefaultRespond(w, r, map[string]string{"error": err.Error()})
 			return
 		}
 
-		render.DefaultRespond(ctx, w, v)
+		render.DefaultRespond(w, r, v)
 	}
 }
