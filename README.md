@@ -306,7 +306,7 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 ## License
 
-Copyright (c) 2015-2016 [Peter Kieltyka](https://github.com/pkieltyka)
+Copyright (c) 2015-present [Peter Kieltyka](https://github.com/pkieltyka)
 
 Licensed under [MIT License](./LICENSE)
 
