@@ -37,13 +37,13 @@ Built on top of the tree is the `Router` interface:
 Use(middlewares ...func(http.Handler) http.Handler)
 
 // Mount a sub-router along a pattern
-Group(pattern string, fn func(r Router)) Router
+Route(pattern string, fn func(r Router)) Router
+
+// Register a new inline-Mux, which offers a fresh middleware stack
+Group(fn func(r Router)) Router
 
 // Mount a sub-router
 Mount(pattern string, handler http.Handler)
-
-// Register a new inline-Mux, which offers a fresh middleware stack
-Inline(fn func(r Router)) Router
 
 // Register routing handler for all http methods
 Handle(pattern string, handler http.Handler)
