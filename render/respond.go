@@ -63,6 +63,14 @@ func JSON(ctx context.Context, w http.ResponseWriter, v interface{}) {
 		v = reflect.MakeSlice(val.Type(), 0, 0).Interface()
 	}
 
+	// TODO: go1.7
+	// enc := json.NewEncoder(w)
+	// enc.SetEscapeHTML(true)
+	// if err := enc.Encode(v); err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+
 	b, err := json.Marshal(v)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
