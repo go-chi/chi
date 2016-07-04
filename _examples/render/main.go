@@ -1,13 +1,12 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 	"net/http"
 	"reflect"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/pressly/chi"
 	"github.com/pressly/chi/_examples/render/data"

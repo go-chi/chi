@@ -2,11 +2,10 @@ package render
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
-
-	"golang.org/x/net/context"
 )
 
 var Respond = DefaultRespond
