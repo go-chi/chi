@@ -11,17 +11,15 @@ import (
 var Respond = DefaultRespond
 
 func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
-	ctx := r.Context()
-
 	// Present the object.
-	if presenter, ok := ctx.Value(presenterCtxKey).(Presenter); ok {
+	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 		v = presenter.Present(r, v)
 	} else {
 		v = DefaultPresenter.Present(r, v)
 	}
 
 	// Format data based on Content-Type.
-	switch contentType, _ := ctx.Value(contentTypeCtxKey).(ContentType); contentType {
+	switch getContentType(r) {
 	case ContentTypeJSON:
 		JSON(w, r, v)
 	case ContentTypeXML:

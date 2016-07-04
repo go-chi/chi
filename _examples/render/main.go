@@ -23,15 +23,13 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(render.ParseContentType)
 	r.Use(render.UsePresenter(v3.Presenter)) // API version 3 (latest) by default.
 
 	// API version 3.
-	r.Get("/", redirectV3)
-	r.Route("/v3", func(r chi.Router) {
-		r.Use(render.UsePresenter(v3.Presenter))
-		r.Get("/", getArticle)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/v3", 302)
 	})
+	r.Get("/v3", getArticle)
 
 	// API version 2.
 	r.Route("/v2", func(r chi.Router) {
@@ -70,10 +68,6 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Respond(w, r, article)
-}
-
-func redirectV3(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/v3", 302)
 }
 
 func randomErrorHandler(w http.ResponseWriter, r *http.Request) {

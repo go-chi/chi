@@ -31,7 +31,7 @@ func ArticleV3(ctx context.Context, from *data.Article) (*Article, error) {
 	to := &Article{
 		Article:    from,
 		ViewsCount: rand.Int63n(100000),
-		URL:        fmt.Sprintf("http://localhost:3333/?id=%v", from.ID),
+		URL:        fmt.Sprintf("http://localhost:3333/v3/?id=%v", from.ID),
 		Version:    "v3",
 	}
 	// Only show to auth'd user.
