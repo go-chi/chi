@@ -35,19 +35,14 @@ func ParseContentType(next chi.Handler) chi.Handler {
 				contentType = ContentTypeJSON
 			case "text/event-stream":
 				contentType = ContentTypeEventStream
-			case "text/xml":
+			case "text/xml", "application/xml":
 				contentType = ContentTypeXML
 			default:
 				contentType = ContentTypeJSON
 			}
 		}
 
-		// Explicitly requested stream.
-		if _, ok := r.URL.Query()["stream"]; ok {
-			contentType = ContentTypeEventStream
-		}
-
-		ctx = context.WithValue(ctx, "contentType", contentType)
+		ctx = context.WithValue(ctx, contentTypeCtxKey, contentType)
 		next.ServeHTTPC(ctx, w, r)
 	})
 }
