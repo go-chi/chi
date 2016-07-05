@@ -14,6 +14,24 @@ import (
 	"time"
 )
 
+// TODO: mux test..
+/*
+
+r.Route("/todos", func(r chi.Router) {
+	r.Get("/", rs.List)    // GET /todos - read a list of todos
+	r.Post("/", rs.Create) // POST /todos - create a new todo and persist it
+	// r.Put("/", rs.Delete) // ******** BUG <----<< this route matches the empty /:id PUT ..
+
+	r.Route("/:id", func(r chi.Router) {
+		// r.Use(rs.TodoCtx) // lets have a todos map, and lets actually load/manipulate
+		r.Get("/", rs.Get)       // GET /todos/:id - read a single todo by :id
+		r.Put("/", rs.Update)    // PUT /todos/:id - update a single todo by :id
+		r.Delete("/", rs.Delete) // DELETE /todos/:id - delete a single todo by :id
+	})
+})
+
+*/
+
 func TestMux(t *testing.T) {
 	var count uint64
 	countermw := func(next http.Handler) http.Handler {

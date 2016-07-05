@@ -23,5 +23,5 @@ func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler)
 // 405 Method not allowed.
 func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(405)
-	w.Write([]byte(http.StatusText(405)))
+	w.Write(nil)
 }

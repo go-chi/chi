@@ -222,6 +222,10 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 	return subRouter
 }
 
+func (mx *Mux) Add(rs ...Router) {
+	// mx.Join(rt)
+}
+
 // Mount attaches another chi Router as a subrouter along a routing path. It's very
 // useful to split up a large API as many independent routers and compose them as
 // a single service using Mount. See _examples/ for example usage.
