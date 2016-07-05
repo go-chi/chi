@@ -32,6 +32,7 @@ func main() {
 
 	// API version 3.
 	r.Route("/v3", func(r chi.Router) {
+		r.Use(randomErrorMiddleware)
 		r.Mount("/articles", articleRouter())
 	})
 
@@ -46,8 +47,6 @@ func main() {
 		r.Use(render.UsePresenter(v1.Presenter))
 		r.Mount("/articles", articleRouter())
 	})
-
-	r.Get("/error", randomErrorHandler)
 
 	http.ListenAndServe(":3333", r)
 }
@@ -103,11 +102,18 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, article)
 }
 
-func randomErrorHandler(w http.ResponseWriter, r *http.Request) {
-	errors := []error{data.ErrUnauthorized, data.ErrForbidden, data.ErrNotFound}
+func randomErrorMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rand.Seed(time.Now().Unix())
 
-	rand.Seed(time.Now().Unix())
-	render.Respond(w, r, errors[rand.Intn(len(errors))])
+		// One in three chance of random error.
+		if rand.Int31n(3) == 0 {
+			errors := []error{data.ErrUnauthorized, data.ErrForbidden, data.ErrNotFound}
+			render.Respond(w, r, errors[rand.Intn(len(errors))])
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func init() {
