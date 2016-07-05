@@ -80,20 +80,21 @@ func randomErrorHandler(w http.ResponseWriter, r *http.Request) {
 func init() {
 	// custom responder that sets response status code based on Error value/type.
 	render.Respond = func(w http.ResponseWriter, r *http.Request, v interface{}) {
-		val := reflect.ValueOf(v)
-		if err, ok := val.Interface().(error); ok {
-			switch err {
-			case data.ErrUnauthorized:
-				r = render.Status(r, 401)
-			case data.ErrForbidden:
-				r = render.Status(r, 403)
-			case data.ErrNotFound:
-				r = render.Status(r, 404)
-			default:
-				r = render.Status(r, 500)
+		if val := reflect.ValueOf(v); val.IsValid() {
+			if err, ok := val.Interface().(error); ok {
+				switch err {
+				case data.ErrUnauthorized:
+					r = render.Status(r, 401)
+				case data.ErrForbidden:
+					r = render.Status(r, 403)
+				case data.ErrNotFound:
+					r = render.Status(r, 404)
+				default:
+					r = render.Status(r, 500)
+				}
+				render.DefaultRespond(w, r, map[string]string{"error": err.Error()})
+				return
 			}
-			render.DefaultRespond(w, r, map[string]string{"error": err.Error()})
-			return
 		}
 
 		render.DefaultRespond(w, r, v)
