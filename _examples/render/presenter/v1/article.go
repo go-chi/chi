@@ -27,7 +27,7 @@ func ArticleV2ToV1(ctx context.Context, from *v2.Article) (*Article, error) {
 		Data:    map[string]bool{},
 	}
 	to.SelfURL = fmt.Sprintf("http://localhost:3333/v1?id=%v", from.ID)
-	to.Version = "v1"
+	to.APIVersion = "v1"
 	for _, item := range from.Data {
 		to.Data[item] = true
 	}

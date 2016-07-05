@@ -30,6 +30,6 @@ func ArticleV3ToV2(ctx context.Context, from *v3.Article) (*Article, error) {
 		Article: from,
 		SelfURL: fmt.Sprintf("http://localhost:3333/v2?id=%v", from.ID),
 	}
-	to.Version = "v2"
+	to.APIVersion = "v2"
 	return to, nil
 }

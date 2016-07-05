@@ -25,22 +25,26 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(render.UsePresenter(v3.Presenter)) // API version 3 (latest) by default.
 
-	// API version 3.
+	// Redirect for Example convinience.
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/v3", 302)
+		http.Redirect(w, r, "/v3/articles/1", 302)
 	})
-	r.Get("/v3", getArticle)
+
+	// API version 3.
+	r.Route("/v3", func(r chi.Router) {
+		r.Mount("/articles", articleRouter())
+	})
 
 	// API version 2.
 	r.Route("/v2", func(r chi.Router) {
 		r.Use(render.UsePresenter(v2.Presenter))
-		r.Get("/", getArticle)
+		r.Mount("/articles", articleRouter())
 	})
 
 	// API version 1.
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(render.UsePresenter(v1.Presenter))
-		r.Get("/", getArticle)
+		r.Mount("/articles", articleRouter())
 	})
 
 	r.Get("/error", randomErrorHandler)
@@ -48,7 +52,36 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
+func articleRouter() http.Handler {
+	r := chi.NewRouter()
+	r.Get("/", listArticles)
+	r.Route("/:articleID", func(r chi.Router) {
+		r.Get("/", getArticle)
+		// r.Put("/", updateArticle)
+		// r.Delete("/", deleteArticle)
+	})
+	return r
+}
+
+func listArticles(w http.ResponseWriter, r *http.Request) {
+	articles := []*data.Article{
+		&data.Article{
+			ID:    1,
+			Title: "Article #1",
+			Data:  []string{"one", "two", "three", "four"},
+			CustomDataForAuthUsers: "secret data for auth'd users only",
+		},
+	}
+
+	render.Respond(w, r, articles)
+}
+
 func getArticle(w http.ResponseWriter, r *http.Request) {
+	if chi.URLParam(r, "articleID") != "1" {
+		render.Respond(w, r, data.ErrNotFound)
+		return
+	}
+
 	article := &data.Article{
 		ID:    1,
 		Title: "Article #1",

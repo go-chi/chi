@@ -17,7 +17,7 @@ type Article struct {
 	// Additional fields.
 	URL        string `json:"url" xml:"url"`
 	ViewsCount int64  `json:"views_count" xml:"views_count"`
-	Version    string `json:"version" xml:"version"`
+	APIVersion string `json:"api_version" xml:"api_version"`
 
 	// Omitted fields.
 	// Show custom_data explicitly for auth'd users only.
@@ -32,7 +32,7 @@ func ArticleV3(ctx context.Context, from *data.Article) (*Article, error) {
 		Article:    from,
 		ViewsCount: rand.Int63n(100000),
 		URL:        fmt.Sprintf("http://localhost:3333/v3/?id=%v", from.ID),
-		Version:    "v3",
+		APIVersion: "v3",
 	}
 	// Only show to auth'd user.
 	if _, ok := ctx.Value("auth").(bool); ok {
