@@ -2,16 +2,12 @@ package render
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
 )
 
-var (
-	Respond      = DefaultRespond
-	statusCtxKey = &contextKey{"Status"}
-)
+var Respond = DefaultRespond
 
 func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// Present the object.
@@ -34,31 +30,27 @@ func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	status, _ := r.Context().Value(statusCtxKey).(int)
-	if status == 0 {
-		status = 200
+	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+		w.WriteHeader(status)
 	}
-	w.WriteHeader(status)
+
 	w.Write([]byte(v))
 }
 
 func HTML(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	status, _ := r.Context().Value(statusCtxKey).(int)
-	if status == 0 {
-		status = 200
+	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+		w.WriteHeader(status)
 	}
-	w.WriteHeader(status)
+
 	w.Write([]byte(v))
 }
 
 func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	status, _ := r.Context().Value(statusCtxKey).(int)
-	if status == 0 {
-		status = 200
+	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+		w.WriteHeader(status)
 	}
-	w.WriteHeader(status)
 
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(true)
@@ -76,11 +68,9 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	status, _ := r.Context().Value(statusCtxKey).(int)
-	if status == 0 {
-		status = 200
+	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+		w.WriteHeader(status)
 	}
-	w.WriteHeader(status)
 
 	// Try to find <?xml header in first 100 bytes (just in case there're some XML comments).
 	findHeaderUntil := len(b)
@@ -95,6 +85,6 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	w.Write(b)
 }
 
-func Status(r *http.Request, status int) *http.Request {
-	return r.WithContext(context.WithValue(r.Context(), statusCtxKey, status))
+func NoContent(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(204)
 }
