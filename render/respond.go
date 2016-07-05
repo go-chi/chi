@@ -53,33 +53,19 @@ func HTML(w http.ResponseWriter, r *http.Request, v string) {
 }
 
 func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
-	// TODO: go1.7
-	// enc := json.NewEncoder(w)
-	// enc.SetEscapeHTML(true)
-	// if err := enc.Encode(v); err != nil {
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-
-	b, err := json.Marshal(v)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if len(b) > 0 {
-		b = bytes.Replace(b, []byte("\\u003c"), []byte("<"), -1)
-		b = bytes.Replace(b, []byte("\\u003e"), []byte(">"), -1)
-		b = bytes.Replace(b, []byte("\\u0026"), []byte("&"), -1)
-	}
-
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	status, _ := r.Context().Value(statusCtxKey).(int)
 	if status == 0 {
 		status = 200
 	}
 	w.WriteHeader(status)
-	w.Write(b)
+
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(true)
+	if err := enc.Encode(v); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func XML(w http.ResponseWriter, r *http.Request, v interface{}) {

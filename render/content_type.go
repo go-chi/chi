@@ -32,6 +32,8 @@ func SetContentType(contentType ContentType) func(next http.Handler) http.Handle
 	}
 }
 
+// getContentType is a helper function that returns ContentType based on
+// context or request headers.
 func getContentType(r *http.Request) ContentType {
 	if contentType, ok := r.Context().Value(contentTypeCtxKey).(ContentType); ok {
 		return contentType
@@ -54,5 +56,5 @@ func getContentType(r *http.Request) ContentType {
 		}
 	}
 
-	return ContentTypePlainText // Default Content-Type.
+	return ContentTypePlainText // Default ContentType.
 }
