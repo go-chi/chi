@@ -1,19 +1,10 @@
 package chi
 
-import (
-	"context"
-	"net/http"
-)
+import "net/http"
 
 // NewRouter returns a new Mux object that implements the Router interface.
-// It accepts an optional parent context.Context argument used by all
-// request contexts useful for signaling a server shutdown.
-
-// TODO: remove this parent context....? does it work..? do we need it?
-// or do we add our own signal to each routeContext ...?
-
-func NewRouter(parent ...context.Context) *Mux {
-	return NewMux(parent...)
+func NewRouter() *Mux {
+	return NewMux()
 }
 
 // A Router consisting of the core routing methods used by chi's Mux,
@@ -22,10 +13,11 @@ type Router interface {
 	http.Handler
 
 	Use(middlewares ...func(http.Handler) http.Handler)
-	Group(pattern string, fn func(r Router)) Router
-	Mount(pattern string, h http.Handler) // TODO: mount a Router instead of http.Handler?
-	Inline(fn func(r Router)) Router
 
+	Route(pattern string, fn func(r Router)) Router
+	Group(fn func(r Router)) Router
+
+	Mount(pattern string, h http.Handler)
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
 	NotFound(h http.HandlerFunc)
@@ -48,9 +40,8 @@ func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middl
 	return *ms
 }
 
-// TODO: is there a better function name than "Then()"
-func (ms Middlewares) Then(endpoint http.HandlerFunc) http.HandlerFunc {
-	return chain(ms, endpoint).ServeHTTP
+func (ms Middlewares) Handler(h http.HandlerFunc) http.HandlerFunc {
+	return chain(ms, h).ServeHTTP
 }
 
 func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {

@@ -1,7 +1,6 @@
 package chi
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -18,9 +17,6 @@ var _ Router = &Mux{}
 // for writing large REST API services that break a handler into many smaller
 // parts composed of middlewares and end handlers.
 type Mux struct {
-	// A parent root context for any request that is usually a server context
-	parentCtx context.Context // TODO: necessary...?
-
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
 
@@ -68,17 +64,11 @@ var methodMap = map[string]methodTyp{
 }
 
 // NewMux returns a new Mux object with an optional parent context.
-func NewMux(parent ...context.Context) *Mux {
-	pctx := context.Background()
-	if len(parent) > 0 {
-		pctx = parent[0]
-	}
-
-	mux := &Mux{parentCtx: pctx, router: newTreeRouter(), handler: nil}
+func NewMux() *Mux {
+	mux := &Mux{router: newTreeRouter(), handler: nil}
 	mux.pool.New = func() interface{} {
-		return NewRouteContext(pctx)
+		return NewRouteContext()
 	}
-
 	return mux
 }
 
@@ -169,7 +159,7 @@ func (mx *Mux) FileServer(path string, root http.FileSystem) {
 // and then registers the route in the router.
 func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	if len(pattern) == 0 || pattern[0] != '/' {
-		panic(fmt.Sprintf("pattern must begin with '/' in '%s'", pattern))
+		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
 
 	// Build the single mux handler that is a chain of the middleware stack, as
@@ -202,10 +192,10 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	}
 }
 
-// Inline creates a new inline-Mux with a fresh middleware stack. It's useful
+// Group creates a new inline-Mux with a fresh middleware stack. It's useful
 // for a group of handlers along the same routing path that use the same
 // middleware(s). See _examples/ for an example usage.
-func (mx *Mux) Inline(fn func(r Router)) Router {
+func (mx *Mux) Group(fn func(r Router)) Router {
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
@@ -220,10 +210,10 @@ func (mx *Mux) Inline(fn func(r Router)) Router {
 	return g
 }
 
-// Group creates a new Mux with a fresh middleware stack and mounts it
+// Route creates a new Mux with a fresh middleware stack and mounts it
 // along the `pattern` as a subrouter. This is very similar to Group, but attaches
 // the group along a new routing path. See _examples/ for example usage.
-func (mx *Mux) Group(pattern string, fn func(r Router)) Router {
+func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 	subRouter := NewRouter()
 	mx.Mount(pattern, subRouter)
 	if fn != nil {
@@ -232,15 +222,10 @@ func (mx *Mux) Group(pattern string, fn func(r Router)) Router {
 	return subRouter
 }
 
-// Mount attaches another mux as a subrouter along a routing path. It's very useful
-// to split up a large API as many independent routers and compose them as a single
-// service using Mount. See _examples/ for example usage.
+// Mount attaches another chi Router as a subrouter along a routing path. It's very
+// useful to split up a large API as many independent routers and compose them as
+// a single service using Mount. See _examples/ for example usage.
 func (mx *Mux) Mount(path string, handler http.Handler) {
-	// TODO: ... what if mount accepted just a router ...?
-	// would it make subrouting easier/better...?
-	// does it make sense to ever Mount() a http.Handler? .. or would they just
-	// use .Handle() anyways..?
-
 	// Assign sub-Router's with the parent not found handler if not specified.
 	if sr, ok := handler.(*Mux); ok {
 		if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
@@ -287,7 +272,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		rctx, ok = ctx.Value(RouteCtxKey).(*Context)
 		if !ok {
 			//fmt.Println("We're making a new context!!")
-			rctx = NewRouteContext(mx.parentCtx)
+			rctx = NewRouteContext()
 			r = r.WithContext(rctx)
 		}
 	}
