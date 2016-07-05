@@ -4,12 +4,26 @@ import (
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"net/http"
+	"reflect"
 )
 
 var Respond = DefaultRespond
 
 func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Chan:
+		switch getContentType(r) {
+		case ContentTypeEventStream:
+			EventStream(w, r, v)
+			return
+		default:
+			channelIntoSlice(w, r, v)
+			return
+		}
+	}
+
 	// Present the object.
 	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 		v = presenter.Present(r, v)
@@ -87,4 +101,74 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 func NoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
+}
+
+func EventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
+	if reflect.TypeOf(v).Kind() != reflect.Chan {
+		panic(fmt.Sprintf("render.EventStream() expects channel, not %v", reflect.TypeOf(v).Kind()))
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(200)
+
+	ctx := r.Context()
+	for {
+		switch chosen, recv, ok := reflect.Select([]reflect.SelectCase{
+			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ctx.Done())},
+			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(v)},
+		}); chosen {
+		case 0: // equivalent to: case <-ctx.Done()
+			w.Write([]byte("event: error\ndata: {\"error\":\"Server Timeout\"}\n\n"))
+			return
+
+		default: // equivalent to: case recv, ok := <-stream
+			if !ok {
+				w.Write([]byte("event: EOF\n\n"))
+				return
+			}
+
+			// TODO: Can't use json Encoder - it panics on bufio.Flush(). Why?!
+			// enc := json.NewEncoder(w)
+			// enc.Encode(recv.Interface())
+			bytes, err := json.Marshal(recv.Interface())
+			if err != nil {
+				w.Write([]byte(fmt.Sprintf("event: error\ndata: {\"error\":\"%v\"}\n\n", err)))
+				if f, ok := w.(http.Flusher); ok {
+					f.Flush()
+				}
+				continue
+			}
+			w.Write([]byte(fmt.Sprintf("event: data\ndata: %s\n\n", bytes)))
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+		}
+	}
+}
+
+// channelIntoSlice buffers channel data and responds with complete slice.
+func channelIntoSlice(w http.ResponseWriter, r *http.Request, v interface{}) {
+	ctx := r.Context()
+
+	var resp []interface{}
+	for {
+		switch chosen, recv, ok := reflect.Select([]reflect.SelectCase{
+			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ctx.Done())},
+			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(v)},
+		}); chosen {
+		case 0: // equivalent to: case <-ctx.Done()
+			http.Error(w, "Server Timeout", 504)
+			return
+
+		default: // equivalent to: case recv, ok := <-stream
+			if !ok {
+				DefaultRespond(w, r, resp)
+				return
+			}
+			resp = append(resp, recv.Interface())
+		}
+	}
+	panic("unreachable")
 }

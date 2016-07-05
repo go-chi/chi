@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"reflect"
@@ -63,15 +64,23 @@ func articleRouter() http.Handler {
 }
 
 func listArticles(w http.ResponseWriter, r *http.Request) {
-	articles := []*data.Article{
-		&data.Article{
-			ID:    1,
-			Title: "Article #1",
-			Data:  []string{"one", "two", "three", "four"},
-			CustomDataForAuthUsers: "secret data for auth'd users only",
-		},
-	}
+	articles := make(chan *data.Article, 5)
 
+	// Load data asynchronously into the channel (simulate slow storage):
+	go func() {
+		for i := 1; i <= 10; i++ {
+			articles <- &data.Article{
+				ID:    i,
+				Title: fmt.Sprintf("Article #%v", i),
+				Data:  []string{"one", "two", "three", "four"},
+				CustomDataForAuthUsers: "secret data for auth'd users only",
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		close(articles)
+	}()
+
+	// Start streaming data from the channel.
 	render.Respond(w, r, articles)
 }
 
