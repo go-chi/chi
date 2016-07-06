@@ -63,6 +63,9 @@ func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 	for {
 		fn, ok := p.ConversionFnStore[reflect.TypeOf(obj)]
 		if !ok {
+			if reflect.TypeOf(obj).Kind() == reflect.Slice {
+				return p.presentSlice(r, obj)
+			}
 			return obj
 		}
 		resp := fn.Call([]reflect.Value{reflect.ValueOf(r), reflect.ValueOf(obj)})
@@ -72,6 +75,27 @@ func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 		obj = resp[0].Interface()
 	}
 	panic("unreachable")
+}
+
+func (p *presenter) presentSlice(r *http.Request, from interface{}) interface{} {
+	elemFromType := reflect.TypeOf(from).Elem()
+	fn, ok := p.ConversionFnStore[elemFromType]
+	if !ok {
+		return from
+	}
+
+	elemToType := fn.Type().Out(0)
+	fromSlice := reflect.ValueOf(from)
+
+	toSlice := reflect.MakeSlice(reflect.SliceOf(elemToType), fromSlice.Len(), fromSlice.Len())
+	for i := 0; i < fromSlice.Len(); i++ {
+		resp := fn.Call([]reflect.Value{reflect.ValueOf(r), fromSlice.Index(i)})
+		if !resp[1].IsNil() {
+			return resp[1].Interface()
+		}
+		toSlice.Index(i).Set(resp[0])
+	}
+	return toSlice.Interface()
 }
 
 func (p *presenter) register(conversionFunc interface{}) error {

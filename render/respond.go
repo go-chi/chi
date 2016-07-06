@@ -30,13 +30,8 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 			channelEventStream(w, r, v)
 			return
 		default:
-			channelIntoSlice(w, r, v)
-			return
+			v = channelIntoSlice(w, r, v)
 		}
-	case reflect.Slice:
-		// TODO: Lookup presenter function for TypeOf(slice item),
-		// and if exists, create new slice of resulting type
-		// and present each item into it.
 	}
 
 	// Format data based on Content-Type.
@@ -164,24 +159,23 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 }
 
-// channelIntoSlice buffers channel data and responds with complete slice.
-func channelIntoSlice(w http.ResponseWriter, r *http.Request, v interface{}) {
+// channelIntoSlice buffers channel data into a slice.
+func channelIntoSlice(w http.ResponseWriter, r *http.Request, from interface{}) interface{} {
 	ctx := r.Context()
 
-	var resp []interface{}
+	var to []interface{}
 	for {
 		switch chosen, recv, ok := reflect.Select([]reflect.SelectCase{
 			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ctx.Done())},
-			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(v)},
+			{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(from)},
 		}); chosen {
 		case 0: // equivalent to: case <-ctx.Done()
 			http.Error(w, "Server Timeout", 504)
-			return
+			return nil
 
 		default: // equivalent to: case v, ok := <-stream
 			if !ok {
-				Respond(w, r, resp)
-				return
+				return to
 			}
 			v := recv.Interface()
 
@@ -192,7 +186,7 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, v interface{}) {
 				v = DefaultPresenter.Present(r, v)
 			}
 
-			resp = append(resp, v)
+			to = append(to, v)
 		}
 	}
 	panic("unreachable")
