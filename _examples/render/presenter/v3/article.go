@@ -24,9 +24,9 @@ type Article struct {
 	CustomDataForAuthUsers interface{} `json:"custom_data,omitempty" xml:"custom_data,omitempty"`
 }
 
-var Presenter = render.NewPresenter(ArticleV3)
+var Presenter = render.NewPresenter(ArticleToV3)
 
-func ArticleV3(r *http.Request, from *data.Article) (*Article, error) {
+func ArticleToV3(r *http.Request, from *data.Article) (*Article, error) {
 	rand.Seed(time.Now().Unix())
 	to := &Article{
 		Article:    from,

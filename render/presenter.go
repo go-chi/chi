@@ -60,7 +60,7 @@ func (p *presenter) RegisterFrom(presenter *presenter, presenters ...*presenter)
 
 func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 	obj := from
-	for i := 0; i < 100; i++ {
+	for {
 		fn, ok := p.ConversionFnStore[reflect.TypeOf(obj)]
 		if !ok {
 			return obj
@@ -71,27 +71,27 @@ func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 		}
 		obj = resp[0].Interface()
 	}
-	panic(fmt.Sprintf("render: Present(%T): too many converts", from))
+	panic("unreachable")
 }
 
 func (p *presenter) register(conversionFunc interface{}) error {
 	fnType := reflect.TypeOf(conversionFunc)
 	if fnType.Kind() != reflect.Func {
-		return fmt.Errorf("expected func, got: %v", fnType)
+		return fmt.Errorf("expected conversion function, got: %v", fnType)
 	}
 	if fnType.NumIn() != 2 {
-		return fmt.Errorf("expected two arguments, got: %v", fnType.NumIn())
+		return fmt.Errorf("expected conversion function with two arguments, got: %v", fnType.NumIn())
 	}
 	if fnType.NumOut() != 2 {
-		return fmt.Errorf("expected two return values, got: %v", fnType.NumOut())
+		return fmt.Errorf("expected conversion function with two return values, got: %v", fnType.NumOut())
 	}
 	var requestZeroValue *http.Request
 	if fnType.In(0) != reflect.TypeOf(&requestZeroValue).Elem() {
-		return fmt.Errorf("expected *http.Request as first argument, got: %v", fnType)
+		return fmt.Errorf("expected conversion function with *http.Request as first argument, got: %v", fnType)
 	}
 	var errorZeroValue error
 	if !fnType.Out(1).Implements(reflect.TypeOf(&errorZeroValue).Elem()) {
-		return fmt.Errorf("expected error as second return value, got: %v", fnType)
+		return fmt.Errorf("expected conversion function with error as second return value, got: %v", fnType)
 	}
 
 	if _, ok := p.ConversionFnStore[fnType.In(1)]; ok {
@@ -99,5 +99,18 @@ func (p *presenter) register(conversionFunc interface{}) error {
 	}
 
 	p.ConversionFnStore[fnType.In(1)] = reflect.ValueOf(conversionFunc)
-	return nil
+
+	// Check for conversion loop. The following returns nil if there was no loop.
+	typ := fnType.In(1)
+	for i := 0; i < 100; i++ {
+		fn, ok := p.ConversionFnStore[typ]
+		if !ok {
+			return nil
+		}
+		typ = fn.Type().Out(0)
+	}
+
+	// Conversion loop was detected. Clean up and error out:
+	delete(p.ConversionFnStore, fnType.In(1))
+	return fmt.Errorf("conversion loop for type %v", typ)
 }
