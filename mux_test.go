@@ -144,8 +144,8 @@ func TestMux(t *testing.T) {
 	defer ts.Close()
 
 	// GET /
-	if resp := testRequest(t, ts, "GET", "/", nil); resp != "hi peter" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/", nil); body != "hi peter" {
+		t.Fatalf(body)
 	}
 	tlogmsg, _ := logbuf.ReadString(0)
 	if tlogmsg != logmsg {
@@ -153,38 +153,38 @@ func TestMux(t *testing.T) {
 	}
 
 	// GET /ping
-	if resp := testRequest(t, ts, "GET", "/ping", nil); resp != "." {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ping", nil); body != "." {
+		t.Fatalf(body)
 	}
 
 	// GET /pingall
-	if resp := testRequest(t, ts, "GET", "/pingall", nil); resp != "ping all" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/pingall", nil); body != "ping all" {
+		t.Fatalf(body)
 	}
 
 	// GET /ping/all
-	if resp := testRequest(t, ts, "GET", "/ping/all", nil); resp != "ping all" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ping/all", nil); body != "ping all" {
+		t.Fatalf(body)
 	}
 
 	// GET /ping/all2
-	if resp := testRequest(t, ts, "GET", "/ping/all2", nil); resp != "ping all2" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ping/all2", nil); body != "ping all2" {
+		t.Fatalf(body)
 	}
 
 	// GET /ping/123
-	if resp := testRequest(t, ts, "GET", "/ping/123", nil); resp != "ping one id: 123" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ping/123", nil); body != "ping one id: 123" {
+		t.Fatalf(body)
 	}
 
 	// GET /ping/allan
-	if resp := testRequest(t, ts, "GET", "/ping/allan", nil); resp != "ping one id: allan" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ping/allan", nil); body != "ping one id: allan" {
+		t.Fatalf(body)
 	}
 
 	// GET /ping/1/woop
-	if resp := testRequest(t, ts, "GET", "/ping/1/woop", nil); resp != "woop." {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ping/1/woop", nil); body != "woop." {
+		t.Fatalf(body)
 	}
 
 	// HEAD /ping
@@ -200,8 +200,8 @@ func TestMux(t *testing.T) {
 	}
 
 	// GET /admin/catch-this
-	if resp := testRequest(t, ts, "GET", "/admin/catch-thazzzzz", nil); resp != "catchall" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/admin/catch-thazzzzz", nil); body != "catchall" {
+		t.Fatalf(body)
 	}
 
 	// POST /admin/catch-this
@@ -225,8 +225,8 @@ func TestMux(t *testing.T) {
 	}
 
 	// Custom http method DIE /ping/1/woop
-	if resp := testRequest(t, ts, "DIE", "/ping/1/woop", nil); resp != "Method Not Allowed" {
-		t.Fatalf(resp)
+	if resp, body := testRequest(t, ts, "DIE", "/ping/1/woop", nil); body != "" || resp.StatusCode != 405 {
+		t.Fatalf(fmt.Sprintf("expecting 405 status and empty body, got %d '%s'", resp.StatusCode, body))
 	}
 }
 
@@ -243,11 +243,11 @@ func TestMuxPlain(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" {
+		t.Fatalf(body)
 	}
 }
 
@@ -259,8 +259,8 @@ func TestMuxEmptyRoutes(t *testing.T) {
 
 	mux.Handle("/api*", apiRouter)
 
-	if resp := testHandler(t, mux, "GET", "/", nil); resp != "404 page not found\n" {
-		t.Fatalf(resp)
+	if _, body := testHandler(t, mux, "GET", "/", nil); body != "404 page not found\n" {
+		t.Fatalf(body)
 	}
 
 	func() {
@@ -272,8 +272,8 @@ func TestMuxEmptyRoutes(t *testing.T) {
 			}
 		}()
 
-		resp := testHandler(t, mux, "GET", "/api", nil)
-		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", resp)
+		_, body := testHandler(t, mux, "GET", "/api", nil)
+		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", body)
 	}()
 
 	func() {
@@ -285,8 +285,8 @@ func TestMuxEmptyRoutes(t *testing.T) {
 			}
 		}()
 
-		resp := testHandler(t, mux, "GET", "/api/abc", nil)
-		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", resp)
+		_, body := testHandler(t, mux, "GET", "/api/abc", nil)
+		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", body)
 	}()
 }
 
@@ -312,14 +312,14 @@ func TestMuxTrailingSlash(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" {
+		t.Fatalf(body)
 	}
 }
 
@@ -353,25 +353,25 @@ func TestMuxNestedNotFound(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "root 404" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "root 404" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/admin1/sub", nil); resp != "sub" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/admin1/sub", nil); body != "sub" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/admin1/nope", nil); resp != "sub 404" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/admin1/nope", nil); body != "sub 404" {
+		t.Fatalf(body)
 	}
-	if resp := testRequest(t, ts, "GET", "/admin2/sub", nil); resp != "sub2" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/admin2/sub", nil); body != "sub2" {
+		t.Fatalf(body)
 	}
 
 	// Not found pages should bubble up to the root.
-	if resp := testRequest(t, ts, "GET", "/admin2/nope", nil); resp != "root 404" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/admin2/nope", nil); body != "root 404" {
+		t.Fatalf(body)
 	}
 
 }
@@ -451,17 +451,17 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	// log.Println("routes set.")
 
-	var resp string
-	resp = testRequest(t, ts, "GET", "/", nil)
-	resp = testRequest(t, ts, "GET", "/", nil)
-	resp = testRequest(t, ts, "GET", "/", nil)
-	if resp != "inits:1 reqs:3 ctxValue:3" {
-		t.Fatalf("got: '%s'", resp)
+	var body string
+	_, body = testRequest(t, ts, "GET", "/", nil)
+	_, body = testRequest(t, ts, "GET", "/", nil)
+	_, body = testRequest(t, ts, "GET", "/", nil)
+	if body != "inits:1 reqs:3 ctxValue:3" {
+		t.Fatalf("got: '%s'", body)
 	}
 
-	resp = testRequest(t, ts, "GET", "/ping", nil)
-	if resp != "pong" {
-		t.Fatalf("got: '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/ping", nil)
+	if body != "pong" {
+		t.Fatalf("got: '%s'", body)
 	}
 }
 
@@ -501,9 +501,9 @@ func TestMuxRootGroup(t *testing.T) {
 	defer ts.Close()
 
 	// GET /group
-	resp := testRequest(t, ts, "GET", "/group", nil)
-	if resp != "root group" {
-		t.Fatalf("got: '%s'", resp)
+	_, body := testRequest(t, ts, "GET", "/group", nil)
+	if body != "root group" {
+		t.Fatalf("got: '%s'", body)
 	}
 	if stdmwInit != 1 || stdmwHandler != 1 {
 		t.Fatalf("stdmw counters failed, should be 1:1, got %d:%d", stdmwInit, stdmwHandler)
@@ -670,64 +670,64 @@ func TestMuxBig(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	var resp, expected string
+	var body, expected string
 
-	resp = testRequest(t, ts, "GET", "/favicon.ico", nil)
-	if resp != "fav" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/favicon.ico", nil)
+	if body != "fav" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/4/view", nil)
-	if resp != "/hubs/4/view reqid:1" {
-		t.Fatalf("got '%v'", resp)
+	_, body = testRequest(t, ts, "GET", "/hubs/4/view", nil)
+	if body != "/hubs/4/view reqid:1" {
+		t.Fatalf("got '%v'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/4/view/index.html", nil)
-	if resp != "/hubs/4/view/index.html reqid:1" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/hubs/4/view/index.html", nil)
+	if body != "/hubs/4/view/index.html reqid:1" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/", nil)
-	if resp != "/ reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/", nil)
+	if body != "/ reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/suggestions", nil)
-	if resp != "/suggestions reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/suggestions", nil)
+	if body != "/suggestions reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/woot/444/hiiii", nil)
-	if resp != "/woot/444/hiiii" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/woot/444/hiiii", nil)
+	if body != "/woot/444/hiiii" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/123", nil)
+	_, body = testRequest(t, ts, "GET", "/hubs/123", nil)
 	expected = "/hubs/123 reqid:1 session:elvis"
-	if resp != expected {
-		t.Fatalf("expected:%s got:%s", expected, resp)
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/123/touch", nil)
-	if resp != "/hubs/123/touch reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/hubs/123/touch", nil)
+	if body != "/hubs/123/touch reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/123/webhooks", nil)
-	if resp != "/hubs/123/webhooks reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/hubs/123/webhooks", nil)
+	if body != "/hubs/123/webhooks reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/123/posts", nil)
-	if resp != "/hubs/123/posts reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/hubs/123/posts", nil)
+	if body != "/hubs/123/posts reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/folders", nil)
-	if resp != "404 page not found\n" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/folders", nil)
+	if body != "404 page not found\n" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/folders/", nil)
-	if resp != "/folders/ reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/folders/", nil)
+	if body != "/folders/ reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/folders/public", nil)
-	if resp != "/folders/public reqid:1 session:elvis" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/folders/public", nil)
+	if body != "/folders/public reqid:1 session:elvis" {
+		t.Fatalf("got '%s'", body)
 	}
-	resp = testRequest(t, ts, "GET", "/folders/nothing", nil)
-	if resp != "404 page not found\n" {
-		t.Fatalf("got '%s'", resp)
+	_, body = testRequest(t, ts, "GET", "/folders/nothing", nil)
+	if body != "404 page not found\n" {
+		t.Fatalf("got '%s'", body)
 	}
 }
 
@@ -796,32 +796,32 @@ func TestMuxSubroutes(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	var resp, expected string
+	var body, expected string
 
-	resp = testRequest(t, ts, "GET", "/hubs/123/view", nil)
+	_, body = testRequest(t, ts, "GET", "/hubs/123/view", nil)
 	expected = "hub1"
-	if resp != expected {
-		t.Fatalf("expected:%s got:%s", expected, resp)
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/123/view/index.html", nil)
+	_, body = testRequest(t, ts, "GET", "/hubs/123/view/index.html", nil)
 	expected = "hub2"
-	if resp != expected {
-		t.Fatalf("expected:%s got:%s", expected, resp)
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
 	}
-	resp = testRequest(t, ts, "GET", "/hubs/123/users", nil)
+	_, body = testRequest(t, ts, "GET", "/hubs/123/users", nil)
 	expected = "hub3"
-	if resp != expected {
-		t.Fatalf("expected:%s got:%s", expected, resp)
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
 	}
-	resp = testRequest(t, ts, "GET", "/accounts/44", nil)
+	_, body = testRequest(t, ts, "GET", "/accounts/44", nil)
 	expected = "account1"
-	if resp != expected {
-		t.Fatalf("request:%s expected:%s got:%s", "GET /accounts/44", expected, resp)
+	if body != expected {
+		t.Fatalf("request:%s expected:%s got:%s", "GET /accounts/44", expected, body)
 	}
-	resp = testRequest(t, ts, "GET", "/accounts/44/hi", nil)
+	_, body = testRequest(t, ts, "GET", "/accounts/44/hi", nil)
 	expected = "account2"
-	if resp != expected {
-		t.Fatalf("expected:%s got:%s", expected, resp)
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
 	}
 }
 
@@ -843,10 +843,10 @@ func TestSingleHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 
-	resp := string(w.Body.Bytes())
+	body := string(w.Body.Bytes())
 	expected := "hi joe"
-	if resp != expected {
-		t.Fatalf("expected:%s got:%s", expected, resp)
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
 	}
 }
 
@@ -881,51 +881,51 @@ func TestMuxFileServer(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
+		t.Fatalf(body)
 	}
 
 	// HEADS UP: net/http notfoundhandler will kick-in for static assets
-	if resp := testRequest(t, ts, "GET", "/mounted/nothing-here", nil); resp == "nothing here" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/mounted/nothing-here", nil); body == "nothing here" {
+		t.Fatalf(body)
 	}
 
-	if resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp == "nothing here" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body == "nothing here" {
+		t.Fatalf(body)
 	}
 
-	if resp := testRequest(t, ts, "GET", "/mounted-nothing-here", nil); resp == "nothing here" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/mounted-nothing-here", nil); body == "nothing here" {
+		t.Fatalf(body)
 	}
 
-	if resp := testRequest(t, ts, "GET", "/hi", nil); resp != "bye" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
+		t.Fatalf(body)
 	}
 
-	if resp := testRequest(t, ts, "GET", "/ok", nil); resp != "ok\n" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/ok", nil); body != "ok\n" {
+		t.Fatalf(body)
 	}
 
-	if resp := testRequest(t, ts, "GET", "/mounted/ok", nil); resp != "ok\n" {
-		t.Fatalf(resp)
+	if _, body := testRequest(t, ts, "GET", "/mounted/ok", nil); body != "ok\n" {
+		t.Fatalf(body)
 	}
 
 	// TODO/FIX: testFileSystem mock struct.. it struggles to pass this since it gets
 	// into a redirect loop, however, it does work with http.Dir() using the disk.
-	// if resp := testRequest(t, ts, "GET", "/index.html", nil); resp != "index\n" {
-	// 	t.Fatalf(resp)
+	// if _, body := testRequest(t, ts, "GET", "/index.html", nil); body != "index\n" {
+	// 	t.Fatalf(body)
 	// }
 
-	// if resp := testRequest(t, ts, "GET", "/", nil); resp != "index\n" {
-	// 	t.Fatalf(resp)
+	// if _, body := testRequest(t, ts, "GET", "/", nil); body != "index\n" {
+	// 	t.Fatalf(body)
 	// }
 
-	// if resp := testRequest(t, ts, "GET", "/mounted", nil); resp != "index\n" {
-	// 	t.Fatalf(resp)
+	// if _, body := testRequest(t, ts, "GET", "/mounted", nil); body != "index\n" {
+	// 	t.Fatalf(body)
 	// }
 
-	// if resp := testRequest(t, ts, "GET", "/mounted/", nil); resp != "index\n" {
-	// 	t.Fatalf(resp)
+	// if _, body := testRequest(t, ts, "GET", "/mounted/", nil); body != "index\n" {
+	// 	t.Fatalf(body)
 	// }
 }
 
@@ -940,34 +940,34 @@ func urlParams(ctx context.Context) map[string]string {
 	return nil
 }
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) string {
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	if err != nil {
 		t.Fatal(err)
-		return ""
+		return nil, ""
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
-		return ""
+		return nil, ""
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
-		return ""
+		return nil, ""
 	}
 	defer resp.Body.Close()
 
-	return string(respBody)
+	return resp, string(respBody)
 }
 
-func testHandler(t *testing.T, h http.Handler, method, path string, body io.Reader) string {
+func testHandler(t *testing.T, h http.Handler, method, path string, body io.Reader) (*http.Response, string) {
 	r, _ := http.NewRequest(method, path, body)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
-	return string(w.Body.Bytes())
+	return w.Result(), string(w.Body.Bytes())
 }
 
 type testFileSystem struct {

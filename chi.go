@@ -14,11 +14,10 @@ type Router interface {
 
 	Use(middlewares ...func(http.Handler) http.Handler)
 
-	Mount(pattern string, h http.Handler) // TODO: accept Router ? ...
-	Route(pattern string, fn func(r Router)) Router
-
 	Group(fn func(r Router)) Router
-	Append(rs ...Router)
+	Route(pattern string, fn func(r Router)) Router
+	Mount(pattern string, r Router)
+	// Append(rs ...Router)
 
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)

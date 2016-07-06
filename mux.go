@@ -229,9 +229,9 @@ func (mx *Mux) Add(rs ...Router) {
 // Mount attaches another chi Router as a subrouter along a routing path. It's very
 // useful to split up a large API as many independent routers and compose them as
 // a single service using Mount. See _examples/ for example usage.
-func (mx *Mux) Mount(path string, handler http.Handler) {
+func (mx *Mux) Mount(path string, router Router) {
 	// Assign sub-Router's with the parent not found handler if not specified.
-	if sr, ok := handler.(*Mux); ok {
+	if sr, ok := router.(*Mux); ok {
 		if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
 			sr.NotFound(*mx.router.notFoundHandler)
 		}
@@ -241,7 +241,7 @@ func (mx *Mux) Mount(path string, handler http.Handler) {
 	subHandler := func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
 		rctx.RoutePath = "/" + rctx.Params.Del("*")
-		handler.ServeHTTP(w, r)
+		router.ServeHTTP(w, r)
 	}
 
 	if path == "" || path[len(path)-1] != '/' {
