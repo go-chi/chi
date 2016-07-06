@@ -123,16 +123,24 @@ func EventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 			w.Write([]byte("event: error\ndata: {\"error\":\"Server Timeout\"}\n\n"))
 			return
 
-		default: // equivalent to: case recv, ok := <-stream
+		default: // equivalent to: case v, ok := <-stream
 			if !ok {
 				w.Write([]byte("event: EOF\n\n"))
 				return
 			}
+			v := recv.Interface()
+
+			// Present the object.
+			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
+				v = presenter.Present(r, v)
+			} else {
+				v = DefaultPresenter.Present(r, v)
+			}
 
 			// TODO: Can't use json Encoder - it panics on bufio.Flush(). Why?!
 			// enc := json.NewEncoder(w)
-			// enc.Encode(recv.Interface())
-			bytes, err := json.Marshal(recv.Interface())
+			// enc.Encode(v.Interface())
+			bytes, err := json.Marshal(v)
 			if err != nil {
 				w.Write([]byte(fmt.Sprintf("event: error\ndata: {\"error\":\"%v\"}\n\n", err)))
 				if f, ok := w.(http.Flusher); ok {
@@ -162,12 +170,21 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, v interface{}) {
 			http.Error(w, "Server Timeout", 504)
 			return
 
-		default: // equivalent to: case recv, ok := <-stream
+		default: // equivalent to: case v, ok := <-stream
 			if !ok {
 				DefaultRespond(w, r, resp)
 				return
 			}
-			resp = append(resp, recv.Interface())
+			v := recv.Interface()
+
+			// Present the object.
+			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
+				v = presenter.Present(r, v)
+			} else {
+				v = DefaultPresenter.Present(r, v)
+			}
+
+			resp = append(resp, v)
 		}
 	}
 	panic("unreachable")
