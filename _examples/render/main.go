@@ -85,11 +85,11 @@ func listArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func getArticle(w http.ResponseWriter, r *http.Request) {
+	// Load article.
 	if chi.URLParam(r, "articleID") != "1" {
 		render.Respond(w, r, data.ErrNotFound)
 		return
 	}
-
 	article := &data.Article{
 		ID:    1,
 		Title: "Article #1",
@@ -127,7 +127,7 @@ func randomErrorMiddleware(next http.Handler) http.Handler {
 
 func init() {
 	// custom responder that sets response status code based on Error value/type.
-	render.Respond = func(w http.ResponseWriter, r *http.Request, v interface{}) {
+	render.ModifyResponse = func(r *http.Request, v interface{}) interface{} {
 		if val := reflect.ValueOf(v); val.IsValid() {
 			if err, ok := val.Interface().(error); ok {
 				switch err {
@@ -140,11 +140,9 @@ func init() {
 				default:
 					r = render.Status(r, 500)
 				}
-				render.DefaultRespond(w, r, map[string]string{"error": err.Error()})
-				return
+				return map[string]string{"error": err.Error()}
 			}
 		}
-
-		render.DefaultRespond(w, r, v)
+		return v
 	}
 }

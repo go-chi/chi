@@ -9,9 +9,13 @@ import (
 	"reflect"
 )
 
-var Respond = DefaultRespond
+var ModifyResponse func(r *http.Request, v interface{}) interface{}
 
-func DefaultRespond(w http.ResponseWriter, r *http.Request, v interface{}) {
+func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
+	if ModifyResponse != nil {
+		v = ModifyResponse(r, v)
+	}
+
 	switch reflect.TypeOf(v).Kind() {
 	case reflect.Chan:
 		switch getContentType(r) {
@@ -172,7 +176,7 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 		default: // equivalent to: case v, ok := <-stream
 			if !ok {
-				DefaultRespond(w, r, resp)
+				Respond(w, r, resp)
 				return
 			}
 			v := recv.Interface()
