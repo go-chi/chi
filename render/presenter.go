@@ -94,6 +94,10 @@ func (p *presenter) register(conversionFunc interface{}) error {
 		return fmt.Errorf("expected error as second return value, got: %v", fnType)
 	}
 
+	if _, ok := p.ConversionFnStore[fnType.In(1)]; ok {
+		return fmt.Errorf("duplicate conversion function for type %v", fnType.In(1))
+	}
+
 	p.ConversionFnStore[fnType.In(1)] = reflect.ValueOf(conversionFunc)
 	return nil
 }
