@@ -1,9 +1,9 @@
 package v3
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/pressly/chi/_examples/render/data"
@@ -26,7 +26,7 @@ type Article struct {
 
 var Presenter = render.NewPresenter(ArticleV3)
 
-func ArticleV3(ctx context.Context, from *data.Article) (*Article, error) {
+func ArticleV3(r *http.Request, from *data.Article) (*Article, error) {
 	rand.Seed(time.Now().Unix())
 	to := &Article{
 		Article:    from,
@@ -35,7 +35,7 @@ func ArticleV3(ctx context.Context, from *data.Article) (*Article, error) {
 		APIVersion: "v3",
 	}
 	// Only show to auth'd user.
-	if _, ok := ctx.Value("auth").(bool); ok {
+	if _, ok := r.Context().Value("auth").(bool); ok {
 		to.CustomDataForAuthUsers = from.CustomDataForAuthUsers
 	}
 	return to, nil

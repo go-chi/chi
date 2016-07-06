@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/pressly/chi/_examples/render/presenter/v2"
 	"github.com/pressly/chi/render"
@@ -21,7 +21,7 @@ func init() {
 	Presenter.RegisterFrom(v2.Presenter)
 }
 
-func ArticleV2ToV1(ctx context.Context, from *v2.Article) (*Article, error) {
+func ArticleV2ToV1(r *http.Request, from *v2.Article) (*Article, error) {
 	to := &Article{
 		Article: from,
 		Data:    map[string]bool{},

@@ -1,8 +1,8 @@
 package v2
 
 import (
-	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/pressly/chi/_examples/render/presenter/v3"
 	"github.com/pressly/chi/render"
@@ -25,7 +25,7 @@ func init() {
 	Presenter.RegisterFrom(v3.Presenter)
 }
 
-func ArticleV3ToV2(ctx context.Context, from *v3.Article) (*Article, error) {
+func ArticleV3ToV2(r *http.Request, from *v3.Article) (*Article, error) {
 	to := &Article{
 		Article: from,
 		SelfURL: fmt.Sprintf("http://localhost:3333/v2?id=%v", from.ID),

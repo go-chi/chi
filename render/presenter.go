@@ -65,7 +65,7 @@ func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 		if !ok {
 			return obj
 		}
-		resp := fn.Call([]reflect.Value{reflect.ValueOf(r.Context()), reflect.ValueOf(obj)})
+		resp := fn.Call([]reflect.Value{reflect.ValueOf(r), reflect.ValueOf(obj)})
 		if !resp[1].IsNil() {
 			return resp[1].Interface()
 		}
@@ -85,9 +85,9 @@ func (p *presenter) register(conversionFunc interface{}) error {
 	if fnType.NumOut() != 2 {
 		return fmt.Errorf("expected two return values, got: %v", fnType.NumOut())
 	}
-	var contextZeroValue context.Context
-	if !fnType.In(0).Implements(reflect.TypeOf(&contextZeroValue).Elem()) {
-		return fmt.Errorf("expected context.Context as first argument, got: %v", fnType)
+	var requestZeroValue *http.Request
+	if fnType.In(0) != reflect.TypeOf(&requestZeroValue).Elem() {
+		return fmt.Errorf("expected *http.Request as first argument, got: %v", fnType)
 	}
 	var errorZeroValue error
 	if !fnType.Out(1).Implements(reflect.TypeOf(&errorZeroValue).Elem()) {
