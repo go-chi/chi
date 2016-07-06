@@ -33,7 +33,6 @@ func main() {
 
 	// API version 3.
 	r.Route("/v3", func(r chi.Router) {
-		r.Use(randomErrorMiddleware)
 		r.Mount("/articles", articleRouter())
 	})
 
@@ -45,6 +44,7 @@ func main() {
 
 	// API version 1.
 	r.Route("/v1", func(r chi.Router) {
+		r.Use(randomErrorMiddleware) // Simulate random error, ie. version 1 is buggy.
 		r.Use(render.UsePresenter(v1.Presenter))
 		r.Mount("/articles", articleRouter())
 	})

@@ -16,23 +16,27 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 		v = ModifyResponse(r, v)
 	}
 
-	switch reflect.TypeOf(v).Kind() {
-	case reflect.Chan:
-		switch getContentType(r) {
-		case ContentTypeEventStream:
-			EventStream(w, r, v)
-			return
-		default:
-			channelIntoSlice(w, r, v)
-			return
-		}
-	}
-
 	// Present the object.
 	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 		v = presenter.Present(r, v)
 	} else {
 		v = DefaultPresenter.Present(r, v)
+	}
+
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Chan:
+		switch getContentType(r) {
+		case ContentTypeEventStream:
+			channelEventStream(w, r, v)
+			return
+		default:
+			channelIntoSlice(w, r, v)
+			return
+		}
+	case reflect.Slice:
+		// TODO: Lookup presenter function for TypeOf(slice item),
+		// and if exists, create new slice of resulting type
+		// and present each item into it.
 	}
 
 	// Format data based on Content-Type.
@@ -107,7 +111,7 @@ func NoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
 
-func EventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
+func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 	if reflect.TypeOf(v).Kind() != reflect.Chan {
 		panic(fmt.Sprintf("render.EventStream() expects channel, not %v", reflect.TypeOf(v).Kind()))
 	}
@@ -134,7 +138,7 @@ func EventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 			}
 			v := recv.Interface()
 
-			// Present the object.
+			// Present each channel item.
 			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 				v = presenter.Present(r, v)
 			} else {
@@ -181,7 +185,7 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, v interface{}) {
 			}
 			v := recv.Interface()
 
-			// Present the object.
+			// Present each channel item.
 			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 				v = presenter.Present(r, v)
 			} else {
