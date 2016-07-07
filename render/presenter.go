@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	DefaultPresenter = NewPresenter()
-	presenterCtxKey  = &contextKey{"Presenter"}
+	presenterCtxKey = &contextKey{"Presenter"}
 )
 
 type Presenter interface {
