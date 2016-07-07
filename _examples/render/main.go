@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"reflect"
 	"time"
 
 	"github.com/pressly/chi"
@@ -125,24 +124,27 @@ func randomErrorMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func init() {
-	// custom responder that sets response status code based on Error value/type.
-	render.ModifyResponse = func(r *http.Request, v interface{}) interface{} {
-		if val := reflect.ValueOf(v); val.IsValid() {
-			if err, ok := val.Interface().(error); ok {
-				switch err {
-				case data.ErrUnauthorized:
-					r = render.Status(r, 401)
-				case data.ErrForbidden:
-					r = render.Status(r, 403)
-				case data.ErrNotFound:
-					r = render.Status(r, 404)
-				default:
-					r = render.Status(r, 500)
-				}
-				return map[string]string{"error": err.Error()}
-			}
-		}
-		return v
-	}
-}
+// TODO: How can we let users check for interfaces during the runtime?
+// Perhaps, we allow func(r *http.Request, v interface{}) (interface{}, error)
+// as a special conversion function that'd be run ?
+// func init() {
+// 	// Respond status code based on Error value/type.
+// 	render.DefaultPresenter.Register(func(r *http.Request, v interface{}) (interface{}, error) {
+// 		if val := reflect.ValueOf(v); val.IsValid() {
+// 			if err, ok := val.Interface().(error); ok {
+// 				switch err {
+// 				case data.ErrUnauthorized:
+// 					r = render.Status(r, 401)
+// 				case data.ErrForbidden:
+// 					r = render.Status(r, 403)
+// 				case data.ErrNotFound:
+// 					r = render.Status(r, 404)
+// 				default:
+// 					r = render.Status(r, 500)
+// 				}
+// 				return map[string]string{"error": err.Error()}, nil
+// 			}
+// 		}
+// 		return v, nil
+// 	})
+// }

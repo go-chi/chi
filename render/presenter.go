@@ -101,21 +101,21 @@ func (p *presenter) presentSlice(r *http.Request, from interface{}) interface{} 
 func (p *presenter) register(conversionFunc interface{}) error {
 	fnType := reflect.TypeOf(conversionFunc)
 	if fnType.Kind() != reflect.Func {
-		return fmt.Errorf("expected conversion function, got: %v", fnType)
+		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	if fnType.NumIn() != 2 {
-		return fmt.Errorf("expected conversion function with two arguments, got: %v", fnType.NumIn())
+		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	if fnType.NumOut() != 2 {
-		return fmt.Errorf("expected conversion function with two return values, got: %v", fnType.NumOut())
+		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	var requestZeroValue *http.Request
 	if fnType.In(0) != reflect.TypeOf(&requestZeroValue).Elem() {
-		return fmt.Errorf("expected conversion function with *http.Request as first argument, got: %v", fnType)
+		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	var errorZeroValue error
 	if !fnType.Out(1).Implements(reflect.TypeOf(&errorZeroValue).Elem()) {
-		return fmt.Errorf("expected conversion function with error as second return value, got: %v", fnType)
+		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 
 	if _, ok := p.ConversionFnStore[fnType.In(1)]; ok {

@@ -9,13 +9,7 @@ import (
 	"reflect"
 )
 
-var ModifyResponse func(r *http.Request, v interface{}) interface{}
-
 func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
-	if ModifyResponse != nil {
-		v = ModifyResponse(r, v)
-	}
-
 	// Present the object.
 	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 		v = presenter.Present(r, v)
