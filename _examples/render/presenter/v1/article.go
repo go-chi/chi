@@ -18,7 +18,7 @@ type Article struct {
 var Presenter = render.NewPresenter(ArticleV2ToV1)
 
 func init() {
-	Presenter.RegisterFrom(v2.Presenter)
+	Presenter.CopyFrom(v2.Presenter)
 }
 
 func ArticleV2ToV1(r *http.Request, from *v2.Article) (*Article, error) {

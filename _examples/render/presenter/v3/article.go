@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/pressly/chi/_examples/render/data"
@@ -25,7 +26,7 @@ type Article struct {
 	CustomDataForAuthUsers interface{} `json:"custom_data,omitempty" xml:"custom_data,omitempty"`
 }
 
-var Presenter = render.NewPresenter(ArticleToV3, ArticleChanToV3Chan, ArticleSliceToV3Slice)
+var Presenter = render.NewPresenter(CatchAll, ArticleToV3, ArticleChanToV3Chan, ArticleSliceToV3Slice)
 
 func ArticleToV3(r *http.Request, from *data.Article) (*Article, error) {
 	log.Printf("item presenter!")
@@ -96,4 +97,13 @@ func ArticleSliceToV3Slice(r *http.Request, fromSlice []*data.Article) ([]*Artic
 	}
 
 	return toSlice, nil
+}
+
+func CatchAll(r *http.Request, v interface{}) (*http.Request, interface{}) {
+	if val := reflect.ValueOf(v); val.IsValid() {
+		if err, ok := val.Interface().(error); ok {
+			return data.PresentError(r, err)
+		}
+	}
+	return r, v
 }

@@ -25,7 +25,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(render.UsePresenter(v3.Presenter)) // API version 3 (latest) by default.
 
-	// Redirect for Example convinience.
+	// Redirect for Example convenience.
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/v3/articles/1", 302)
 	})
@@ -123,28 +123,3 @@ func randomErrorMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-// TODO: How can we let users check for interfaces during the runtime?
-// Perhaps, we allow func(r *http.Request, v interface{}) (interface{}, error)
-// as a special conversion function that'd be run ?
-// func init() {
-// 	// Respond status code based on Error value/type.
-// 	render.DefaultPresenter.Register(func(r *http.Request, v interface{}) (interface{}, error) {
-// 		if val := reflect.ValueOf(v); val.IsValid() {
-// 			if err, ok := val.Interface().(error); ok {
-// 				switch err {
-// 				case data.ErrUnauthorized:
-// 					r = render.Status(r, 401)
-// 				case data.ErrForbidden:
-// 					r = render.Status(r, 403)
-// 				case data.ErrNotFound:
-// 					r = render.Status(r, 404)
-// 				default:
-// 					r = render.Status(r, 500)
-// 				}
-// 				return map[string]string{"error": err.Error()}, nil
-// 			}
-// 		}
-// 		return v, nil
-// 	})
-// }

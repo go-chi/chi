@@ -12,7 +12,7 @@ import (
 func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// Present the object.
 	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
-		v = presenter.Present(r, v)
+		r, v = presenter.Present(r, v)
 	}
 
 	switch reflect.TypeOf(v).Kind() {
@@ -127,7 +127,7 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 			// Present each channel item.
 			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
-				v = presenter.Present(r, v)
+				r, v = presenter.Present(r, v)
 			}
 
 			// TODO: Can't use json Encoder - it panics on bufio.Flush(). Why?!
@@ -171,7 +171,7 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, from interface{}) 
 
 			// Present each channel item.
 			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
-				v = presenter.Present(r, v)
+				r, v = presenter.Present(r, v)
 			}
 
 			to = append(to, v)

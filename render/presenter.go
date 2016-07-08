@@ -12,7 +12,7 @@ var (
 )
 
 type Presenter interface {
-	Present(r *http.Request, from interface{}) interface{}
+	Present(r *http.Request, from interface{}) (*http.Request, interface{})
 }
 
 // UsePresenter is a middleware that sets custom presenter into the context chain.
@@ -28,14 +28,15 @@ func UsePresenter(p Presenter) func(next http.Handler) http.Handler {
 
 func NewPresenter(conversionFuncs ...interface{}) *presenter {
 	p := &presenter{
-		ConversionFnStore: map[reflect.Type]reflect.Value{},
+		fnStore: map[reflect.Type]reflect.Value{},
 	}
 	p.Register(conversionFuncs...)
 	return p
 }
 
 type presenter struct {
-	ConversionFnStore map[reflect.Type]reflect.Value // map[*from.Type]func(context.Context, *from.Type) (*to.Type, error)
+	fnStore    map[reflect.Type]reflect.Value // map[*FromType]func(r *http.Request, from *FromType) (*ToType, error)
+	fnCatchAll func(r *http.Request, from interface{}) (*http.Request, interface{})
 }
 
 func (p *presenter) Register(conversionFuncs ...interface{}) {
@@ -46,30 +47,33 @@ func (p *presenter) Register(conversionFuncs ...interface{}) {
 	}
 }
 
-func (p *presenter) RegisterFrom(presenter *presenter, presenters ...*presenter) {
-	for typ, fn := range presenter.ConversionFnStore {
-		p.ConversionFnStore[typ] = fn
-	}
+func (p *presenter) CopyFrom(presenters ...*presenter) {
 	for _, presenter := range presenters {
-		for typ, fn := range presenter.ConversionFnStore {
-			p.ConversionFnStore[typ] = fn
+		if p.fnCatchAll != nil {
+			p.fnCatchAll = presenter.fnCatchAll
+		}
+		for typ, fn := range presenter.fnStore {
+			p.fnStore[typ] = fn
 		}
 	}
 }
 
-func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
+func (p *presenter) Present(r *http.Request, from interface{}) (*http.Request, interface{}) {
 	obj := from
+	if p.fnCatchAll != nil {
+		r, obj = p.fnCatchAll(r, obj)
+	}
 	for {
-		fn, ok := p.ConversionFnStore[reflect.TypeOf(obj)]
+		fn, ok := p.fnStore[reflect.TypeOf(obj)]
 		if !ok {
 			if reflect.TypeOf(obj).Kind() == reflect.Slice {
-				return p.presentSlice(r, obj)
+				return r, p.presentSlice(r, obj)
 			}
-			return obj
+			return r, obj
 		}
 		resp := fn.Call([]reflect.Value{reflect.ValueOf(r), reflect.ValueOf(obj)})
 		if !resp[1].IsNil() {
-			return resp[1].Interface()
+			return r, resp[1].Interface()
 		}
 		obj = resp[0].Interface()
 	}
@@ -78,7 +82,7 @@ func (p *presenter) Present(r *http.Request, from interface{}) interface{} {
 
 func (p *presenter) presentSlice(r *http.Request, from interface{}) interface{} {
 	elemFromType := reflect.TypeOf(from).Elem()
-	fn, ok := p.ConversionFnStore[elemFromType]
+	fn, ok := p.fnStore[elemFromType]
 	if !ok {
 		return from
 	}
@@ -98,6 +102,14 @@ func (p *presenter) presentSlice(r *http.Request, from interface{}) interface{} 
 }
 
 func (p *presenter) register(conversionFunc interface{}) error {
+	if catchAllFn, ok := conversionFunc.(func(r *http.Request, from interface{}) (*http.Request, interface{})); ok {
+		if p.fnCatchAll != nil {
+			return fmt.Errorf("duplicate catch-all conversion function of type %T", conversionFunc)
+		}
+		p.fnCatchAll = catchAllFn
+		return nil
+	}
+
 	fnType := reflect.TypeOf(conversionFunc)
 	if fnType.Kind() != reflect.Func {
 		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
@@ -117,16 +129,16 @@ func (p *presenter) register(conversionFunc interface{}) error {
 		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 
-	if _, ok := p.ConversionFnStore[fnType.In(1)]; ok {
+	if _, ok := p.fnStore[fnType.In(1)]; ok {
 		return fmt.Errorf("duplicate conversion function for type %v", fnType.In(1))
 	}
 
-	p.ConversionFnStore[fnType.In(1)] = reflect.ValueOf(conversionFunc)
+	p.fnStore[fnType.In(1)] = reflect.ValueOf(conversionFunc)
 
 	// Check for conversion loop. The following returns nil if there was no loop.
 	typ := fnType.In(1)
 	for i := 0; i < 100; i++ {
-		fn, ok := p.ConversionFnStore[typ]
+		fn, ok := p.fnStore[typ]
 		if !ok {
 			return nil
 		}
@@ -134,6 +146,6 @@ func (p *presenter) register(conversionFunc interface{}) error {
 	}
 
 	// Conversion loop was detected. Clean up and error out:
-	delete(p.ConversionFnStore, fnType.In(1))
+	delete(p.fnStore, fnType.In(1))
 	return fmt.Errorf("conversion loop for type %v", typ)
 }

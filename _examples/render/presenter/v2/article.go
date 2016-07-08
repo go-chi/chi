@@ -22,7 +22,7 @@ type Article struct {
 var Presenter = render.NewPresenter(ArticleV3ToV2)
 
 func init() {
-	Presenter.RegisterFrom(v3.Presenter)
+	Presenter.CopyFrom(v3.Presenter)
 }
 
 func ArticleV3ToV2(r *http.Request, from *v3.Article) (*Article, error) {
