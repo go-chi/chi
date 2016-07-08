@@ -30,3 +30,19 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 
 	return resp.StatusCode, string(respBody)
 }
+
+type responseWriter struct{}
+
+func (m *responseWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (m *responseWriter) Write(p []byte) (int, error) {
+	return len(p), nil
+}
+
+func (m *responseWriter) WriteString(s string) (int, error) {
+	return len(s), nil
+}
+
+func (m *responseWriter) WriteHeader(int) {}
