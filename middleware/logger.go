@@ -6,7 +6,6 @@ package middleware
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -42,9 +41,6 @@ func NewLogger(appenders ...LogAppender) func(next http.Handler) http.Handler {
 
 		fn := func(w http.ResponseWriter, r *http.Request) {
 
-			reqID := GetReqID(r.Context())
-			url := getRequestURL(r)
-
 			var lw writerProxy
 			switch e := w.(type) {
 			case writerProxy:
@@ -53,40 +49,36 @@ func NewLogger(appenders ...LogAppender) func(next http.Handler) http.Handler {
 			default:
 				// We have to wrap the given http.ResponseWriter with a proxy
 				// in order to hook into various parts of the response process.
-				lw = wrapWriter(w)
+				// TODO: There is an allocation here, remove me.
+				lw = wrapWriter(w, r)
 			}
 
-			t := time.Now()
+			next.ServeHTTP(lw, r)
 
-			defer func() {
+			delta := lw.Duration()
+			status := lw.Status()
+			length := lw.BytesWritten()
+			reqID := lw.RequestID()
+			url := getRequestURL(r)
 
-				lw.SetDuration(t, time.Now())
+			for _, appender := range appenders {
 
-				delta := lw.Duration()
-				status := lw.Status()
-				length := lw.BytesWritten()
-
-				for _, appender := range appenders {
-
-					if appender == nil {
-						continue
-					}
-
-					appender.Append(LogEntry{
-						RequestID:     reqID,
-						Method:        r.Method,
-						URL:           url,
-						RemoteAddr:    r.RemoteAddr,
-						Status:        status,
-						BytesWritten:  length,
-						ExecutionTime: delta,
-					})
-
+				if appender == nil {
+					continue
 				}
 
-			}()
+				appender.Append(LogEntry{
+					RequestID:     reqID,
+					Method:        r.Method,
+					URL:           url,
+					RemoteAddr:    r.RemoteAddr,
+					Status:        status,
+					BytesWritten:  length,
+					ExecutionTime: delta,
+				})
 
-			next.ServeHTTP(lw, r)
+			}
+
 		}
 
 		return http.HandlerFunc(fn)
@@ -154,8 +146,8 @@ func (l defaultLogAppender) Append(e LogEntry) {
 }
 
 var (
-	httpScheme      = "http"
-	httpsScheme     = "https"
+	httpScheme      = "http://"
+	httpsScheme     = "https://"
 	xForwardedProto = http.CanonicalHeaderKey("X-Forwarded-Proto")
 )
 
@@ -173,7 +165,7 @@ func getRequestURL(r *http.Request) string {
 		scheme = httpsScheme
 	}
 
-	return fmt.Sprintf("%s://%s%s", scheme, r.Host, r.RequestURI)
+	return scheme + r.Host + r.RequestURI
 }
 
 // writerProxy is a proxy around an http.ResponseWriter that allows you to hook
@@ -197,22 +189,25 @@ type writerProxy interface {
 	Tee(io.Writer)
 	// Unwrap returns the original proxied target.
 	Unwrap() http.ResponseWriter
-	// SetDuration defines the execution time of the request.
-	// If a duration is already defined, the update will be ignored.
-	SetDuration(t1, t2 time.Time)
 	// Duration returns the total execution time of the request.
 	Duration() time.Duration
+	// RequestID returns the request ID, or an empty string otherwise.
+	RequestID() string
 }
 
 // WrapWriter wraps an http.ResponseWriter, returning a proxy that allows you to
 // hook into various parts of the response process.
-func wrapWriter(w http.ResponseWriter) writerProxy {
+func wrapWriter(w http.ResponseWriter, r *http.Request) writerProxy {
 	_, cn := w.(http.CloseNotifier)
 	_, fl := w.(http.Flusher)
 	_, hj := w.(http.Hijacker)
 	_, rf := w.(io.ReaderFrom)
 
-	bw := basicWriter{ResponseWriter: w}
+	// TODO: There is an allocation here, remove me.
+	reqID := GetReqID(r.Context())
+
+	bw := basicWriter{ResponseWriter: w, reqID: reqID, start: time.Now()}
+
 	if cn && fl && hj && rf {
 		return &fancyWriter{bw}
 	}
@@ -229,6 +224,8 @@ type basicWriter struct {
 	code        int
 	bytes       int
 	tee         io.Writer
+	reqID       string
+	start       time.Time
 	duration    time.Duration
 	hasDuration bool
 	wroteHeader bool
@@ -271,14 +268,15 @@ func (b *basicWriter) Tee(w io.Writer) {
 func (b *basicWriter) Unwrap() http.ResponseWriter {
 	return b.ResponseWriter
 }
-func (b *basicWriter) SetDuration(t1, t2 time.Time) {
+func (b *basicWriter) Duration() time.Duration {
 	if !b.hasDuration {
 		b.hasDuration = true
-		b.duration = t2.Sub(t1)
+		b.duration = time.Now().Sub(b.start)
 	}
-}
-func (b *basicWriter) Duration() time.Duration {
 	return b.duration
+}
+func (b *basicWriter) RequestID() string {
+	return b.reqID
 }
 
 // fancyWriter is a writer that additionally satisfies http.CloseNotifier,
