@@ -197,6 +197,8 @@ type writerProxy interface {
 
 // WrapWriter wraps an http.ResponseWriter, returning a proxy that allows you to
 // hook into various parts of the response process.
+// TODO: When reqID allocation is removed, delete this "hack" to optimize allocs
+// by injecting the http.Request
 func wrapWriter(w http.ResponseWriter, r *http.Request) writerProxy {
 	_, cn := w.(http.CloseNotifier)
 	_, fl := w.(http.Flusher)
