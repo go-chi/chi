@@ -31,7 +31,7 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
-func accountsRouter() chi.Router { // or http.Handler
+func accountsRouter() chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(sup1)

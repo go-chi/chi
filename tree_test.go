@@ -2,7 +2,6 @@ package chi
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"reflect"
 	"testing"
@@ -37,51 +36,51 @@ func TestTree(t *testing.T) {
 
 	tr := &tree{root: &node{}}
 
-	tr.Insert("/", hIndex)
-	tr.Insert("/favicon.ico", hFavicon)
+	tr.Insert(mGET, "/", hIndex)
+	tr.Insert(mGET, "/favicon.ico", hFavicon)
 
-	tr.Insert("/pages/*", hStub)
+	tr.Insert(mGET, "/pages/*", hStub)
 
-	tr.Insert("/article", hArticleList)
-	tr.Insert("/article/", hArticleList) // redirect..?
+	tr.Insert(mGET, "/article", hArticleList)
+	tr.Insert(mGET, "/article/", hArticleList) // redirect..?
 
-	tr.Insert("/article/near", hArticleNear)
+	tr.Insert(mGET, "/article/near", hArticleNear)
 	// tr.Insert("/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
-	tr.Insert("/article/:id", hStub)
-	tr.Insert("/article/:id", hArticleShow)
-	tr.Insert("/article/:id", hArticleShow) // duplicate will have no effect
-	tr.Insert("/article/@:user", hArticleByUser)
+	tr.Insert(mGET, "/article/:id", hStub)
+	tr.Insert(mGET, "/article/:id", hArticleShow)
+	tr.Insert(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
+	tr.Insert(mGET, "/article/@:user", hArticleByUser)
 
-	tr.Insert("/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
-	tr.Insert("/article/:id/:opts", hArticleShowOpts)
+	tr.Insert(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
+	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
 
-	tr.Insert("/article/:iffd/edit", hStub)
-	tr.Insert("/article/:id//related", hArticleShowRelated)
-	tr.Insert("/article/slug/:month/-/:day/:year", hArticleSlug)
+	tr.Insert(mGET, "/article/:iffd/edit", hStub)
+	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
+	tr.Insert(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	tr.Insert("/admin/user", hUserList)
-	tr.Insert("/admin/user/", hStub) // will get replaced by next route
-	tr.Insert("/admin/user/", hUserList)
+	tr.Insert(mGET, "/admin/user", hUserList)
+	tr.Insert(mGET, "/admin/user/", hStub) // will get replaced by next route
+	tr.Insert(mGET, "/admin/user/", hUserList)
 
-	tr.Insert("/admin/user//:id", hUserShow)
-	tr.Insert("/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+	tr.Insert(mGET, "/admin/user//:id", hUserShow)
+	tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 
-	tr.Insert("/admin/apps/:id", hAdminAppShow)
-	tr.Insert("/admin/apps/:id/*ff", hAdminAppShowCatchall)
+	tr.Insert(mGET, "/admin/apps/:id", hAdminAppShow)
+	tr.Insert(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
 
-	tr.Insert("/admin/*ff", hStub) // catchall segment will get replaced by next route
-	tr.Insert("/admin/*", hAdminCatchall)
+	tr.Insert(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.Insert(mGET, "/admin/*", hAdminCatchall)
 
-	tr.Insert("/users/:userID/profile", hUserProfile)
-	tr.Insert("/users/super/*", hUserSuper)
-	tr.Insert("/users/*", hUserAll)
+	tr.Insert(mGET, "/users/:userID/profile", hUserProfile)
+	tr.Insert(mGET, "/users/super/*", hUserSuper)
+	tr.Insert(mGET, "/users/*", hUserAll)
 
-	tr.Insert("/hubs/:hubID/view", hHubView1)
-	tr.Insert("/hubs/:hubID/view/*", hHubView2)
+	tr.Insert(mGET, "/hubs/:hubID/view", hHubView1)
+	tr.Insert(mGET, "/hubs/:hubID/view/*", hHubView2)
 	sr := NewRouter()
 	sr.Get("/users", hHubView3)
-	tr.Insert("/hubs/:hubID/*", sr)
-	tr.Insert("/hubs/:hubID/users", hHubView3)
+	tr.Insert(mGET, "/hubs/:hubID/*", sr)
+	tr.Insert(mGET, "/hubs/:hubID/users", hHubView3)
 
 	// tr.Insert("/debug*", hStub) // TODO: should we support this..?
 
@@ -141,8 +140,12 @@ func TestTree(t *testing.T) {
 	for i, tt := range tests {
 		// params := make(map[string]string, 0)
 		rctx := NewRouteContext()
-		handler := tr.Find(rctx, tt.r) //, params)
+
+		handlers := tr.Find(rctx, mGET, tt.r) //, params)
+		handler, _ := handlers[mGET]
+
 		params := urlParams(rctx)
+
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
 		}
@@ -152,43 +155,43 @@ func TestTree(t *testing.T) {
 	}
 }
 
-func debugPrintTree(parent int, i int, n *node, label byte) bool {
-	numEdges := 0
-	for _, edges := range n.edges {
-		numEdges += len(edges)
-	}
-
-	if n.handler != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handler)
-	} else {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf())
-	}
-
-	parent = i
-	for _, edges := range n.edges {
-		for _, e := range edges {
-			i++
-			if debugPrintTree(parent, i, e.node, e.label) {
-				return true
-			}
-		}
-	}
-	return false
-}
+// func debugPrintTree(parent int, i int, n *node, label byte) bool {
+// 	numEdges := 0
+// 	for _, edges := range n.edges {
+// 		numEdges += len(edges)
+// 	}
+//
+// 	if n.handler != nil {
+// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handler)
+// 	} else {
+// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf())
+// 	}
+//
+// 	parent = i
+// 	for _, edges := range n.edges {
+// 		for _, e := range edges {
+// 			i++
+// 			if debugPrintTree(parent, i, e.node, e.label) {
+// 				return true
+// 			}
+// 		}
+// 	}
+// 	return false
+// }
 
 func BenchmarkTreeGet(b *testing.B) {
 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &tree{root: &node{}}
-	tr.Insert("/", h1)
-	tr.Insert("/ping", h2)
-	tr.Insert("/pingall", h2)
-	tr.Insert("/ping/:id", h2)
-	tr.Insert("/ping/:id/woop", h2)
-	tr.Insert("/ping/:id/:opt", h2)
-	tr.Insert("/pinggggg", h2)
-	tr.Insert("/hello", h1)
+	tr.Insert(mGET, "/", h1)
+	tr.Insert(mGET, "/ping", h2)
+	tr.Insert(mGET, "/pingall", h2)
+	tr.Insert(mGET, "/ping/:id", h2)
+	tr.Insert(mGET, "/ping/:id/woop", h2)
+	tr.Insert(mGET, "/ping/:id/:opt", h2)
+	tr.Insert(mGET, "/pinggggg", h2)
+	tr.Insert(mGET, "/hello", h1)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -196,7 +199,7 @@ func BenchmarkTreeGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// params := map[string]string{}
 		mctx := NewRouteContext()
-		tr.Find(mctx, "/ping/123/456")
+		tr.Find(mctx, mGET, "/ping/123/456")
 		// tr.Find("/pingggg", params)
 	}
 }
