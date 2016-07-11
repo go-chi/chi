@@ -34,7 +34,7 @@ Built on top of the tree is the `Router` interface:
 
 ```go
 // Register a middleware handler (or few) on the middleware stack
-Use(middlewares ...func(http.Handler) http.Handler)
+Use(middlewares ...func(http.Handler) http.Handler
 
 // Mount a sub-router along a pattern
 Route(pattern string, fn func(r Router)) Router
@@ -43,7 +43,7 @@ Route(pattern string, fn func(r Router)) Router
 Group(fn func(r Router)) Router
 
 // Mount a sub-router
-Mount(pattern string, handler http.Handler)
+Mount(pattern string, subrouter Router)
 
 // Register routing handler for all http methods
 Handle(pattern string, handler http.Handler)
