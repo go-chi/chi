@@ -5,10 +5,41 @@ package chi
 // (MIT licensed)
 
 import (
+	"net/http"
 	"sort"
 	"strings"
-	"net/http"
 )
+
+// TODO: set the RoutePattern on the RouteContext
+
+type methodTyp int
+
+const (
+	mCONNECT methodTyp = 1 << iota
+	mDELETE
+	mGET
+	mHEAD
+	mOPTIONS
+	mPATCH
+	mPOST
+	mPUT
+	mTRACE
+
+	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
+		mPATCH | mPOST | mPUT | mTRACE
+)
+
+var methodMap = map[string]methodTyp{
+	"CONNECT": mCONNECT,
+	"DELETE":  mDELETE,
+	"GET":     mGET,
+	"HEAD":    mHEAD,
+	"OPTIONS": mOPTIONS,
+	"PATCH":   mPATCH,
+	"POST":    mPOST,
+	"PUT":     mPUT,
+	"TRACE":   mTRACE,
+}
 
 type nodeTyp uint8
 
@@ -19,10 +50,19 @@ const (
 	ntCatchAll                // /api/v1/*
 )
 
+// TODO: comment
+// TODO: if WalkFn is exported, this needs to be as well, which its better not to.
+// I have a few ideas, will massage it later.
+type methodHandlers map[methodTyp]http.Handler
+
 // WalkFn is used when walking the tree. Takes a
 // key and value, returning if iteration should
 // be terminated.
-type WalkFn func(path string, handler http.Handler) bool
+
+// TODO: .. lets leave it like this for now..
+// but we could also just make it
+// type WalkFn func(method string, pattern string, handler http.Handler) bool
+type WalkFn func(path string, handlers methodHandlers) bool
 
 // edge is used to represent an edge node
 type edge struct {
@@ -37,7 +77,8 @@ type node struct {
 	prefix string
 
 	// HTTP handler on the leaf node
-	handler http.Handler
+	// handler http.Handler
+	handlers methodHandlers
 
 	// Edges should be stored in-order for iteration,
 	// in groups of the node type.
@@ -45,7 +86,7 @@ type node struct {
 }
 
 func (n *node) isLeaf() bool {
-	return n.handler != nil
+	return n.handlers != nil
 }
 
 func (n *node) addEdge(e edge) {
@@ -68,7 +109,7 @@ func (n *node) addEdge(e edge) {
 	if p == 0 {
 		// Path starts with a wildcard
 
-		handler := e.node.handler
+		handlers := e.node.handlers
 		e.node.typ = ntyp
 
 		if ntyp == ntCatchAll {
@@ -83,15 +124,15 @@ func (n *node) addEdge(e edge) {
 
 		if p != len(search) {
 			// add edge for the remaining part, split the end.
-			e.node.handler = nil
+			e.node.handlers = nil
 
 			search = search[p:]
 			e2 := edge{
 				label: search[0], // this will always start with /
 				node: &node{
-					typ:     ntStatic,
-					prefix:  search,
-					handler: handler,
+					typ:      ntStatic,
+					prefix:   search,
+					handlers: handlers,
 				},
 			}
 			e.node.addEdge(e2)
@@ -101,10 +142,10 @@ func (n *node) addEdge(e edge) {
 		// Path has some wildcard
 
 		// starts with a static segment
-		handler := e.node.handler
+		handlers := e.node.handlers
 		e.node.typ = ntStatic
 		e.node.prefix = search[:p]
-		e.node.handler = nil
+		e.node.handlers = nil
 
 		// add the wild edge node
 		search = search[p:]
@@ -112,9 +153,9 @@ func (n *node) addEdge(e edge) {
 		e2 := edge{
 			label: search[0],
 			node: &node{
-				typ:     ntyp,
-				prefix:  search,
-				handler: handler,
+				typ:      ntyp,
+				prefix:   search,
+				handlers: handlers,
 			},
 		}
 		e.node.addEdge(e2)
@@ -184,7 +225,7 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
 // It's like searching through a three-dimensional radix trie.
-func (n *node) findNode(ctx *Context, path string) *node {
+func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
 	nn := n
 	search := path
 
@@ -237,23 +278,33 @@ func (n *node) findNode(ctx *Context, path string) *node {
 		}
 
 		// recursively find the next node..
-		fin := xn.findNode(ctx, xsearch)
+		fin := xn.findNode(ctx, method, xsearch)
 		if fin != nil {
 			// found a node, return it
 			return fin
 		}
 
 		// Did not found final handler, let's remove the param here if it was set
-		if xn.typ > ntStatic {
-			if xn.typ == ntCatchAll {
-				ctx.Params.Del("*")
-			} else {
-				ctx.Params.Del(xn.prefix[1:])
-			}
+		// TODO: can we do even better now though...?
+		if xn.typ > ntStatic && xn.typ < ntCatchAll {
+			ctx.Params.Del(xn.prefix[1:])
 		}
 	}
 
 	return nil
+}
+
+func (n *node) setHandler(method methodTyp, handler http.Handler) {
+	if n.handlers == nil {
+		n.handlers = make(methodHandlers, 0)
+	}
+	if method == mALL {
+		for _, m := range methodMap {
+			n.handlers[m] = handler
+		}
+	} else {
+		n.handlers[method] = handler
+	}
 }
 
 type edges []edge
@@ -272,7 +323,7 @@ type tree struct {
 	root *node
 }
 
-func (t *tree) Insert(pattern string, handler http.Handler) {
+func (t *tree) Insert(method methodTyp, pattern string, handler http.Handler) {
 	var parent *node
 	n := t.root
 	search := pattern
@@ -281,7 +332,8 @@ func (t *tree) Insert(pattern string, handler http.Handler) {
 		// Handle key exhaustion
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
-			n.handler = handler
+			// n.handler = handler
+			n.setHandler(method, handler)
 			return
 		}
 
@@ -294,10 +346,11 @@ func (t *tree) Insert(pattern string, handler http.Handler) {
 			e := edge{
 				label: search[0],
 				node: &node{
-					prefix:  search,
-					handler: handler,
+					prefix: search,
+					// handler: handler,
 				},
 			}
+			e.node.setHandler(method, handler)
 			parent.addEdge(e)
 			return
 		}
@@ -343,48 +396,53 @@ func (t *tree) Insert(pattern string, handler http.Handler) {
 		// If the new key is a subset, add to to this node
 		search = search[commonPrefix:]
 		if len(search) == 0 {
-			child.handler = handler
+			// child.handler = handler
+			child.setHandler(method, handler)
 			return
 		}
 
 		// Create a new edge for the node
-		child.addEdge(edge{
+		e := edge{
 			label: search[0],
 			node: &node{
-				typ:     ntStatic,
-				prefix:  search,
-				handler: handler,
+				typ:    ntStatic,
+				prefix: search,
+				// handler: handler,
 			},
-		})
+		}
+		e.node.setHandler(method, handler)
+		child.addEdge(e)
 		return
 	}
 }
 
-func (t *tree) Find(ctx *Context, path string) http.Handler {
-	node := t.root.findNode(ctx, path)
+func (t *tree) Find(ctx *Context, method methodTyp, path string) methodHandlers {
+	node := t.root.findNode(ctx, method, path)
 	if node == nil {
 		return nil
 	}
-	return node.handler
+	return node.handlers
 }
 
 // Walk is used to walk the tree
 func (t *tree) Walk(fn WalkFn) {
-	t.recursiveWalk(t.root, fn)
+	t.recursiveWalk(t.root.prefix, t.root, fn)
 }
 
 // recursiveWalk is used to do a pre-order walk of a node
 // recursively. Returns true if the walk should be aborted
-func (t *tree) recursiveWalk(n *node, fn WalkFn) bool {
+func (t *tree) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
+	pattern += n.prefix
+
 	// Visit the leaf values if any
-	if n.handler != nil && fn(n.prefix, n.handler) {
+	if n.handlers != nil && fn(pattern, n.handlers) {
 		return true
 	}
 
 	// Recurse on the children
 	for _, edges := range n.edges {
 		for _, e := range edges {
-			if t.recursiveWalk(e.node, fn) {
+			if t.recursiveWalk(pattern, e.node, fn) {
 				return true
 			}
 		}
@@ -406,48 +464,4 @@ func (t *tree) longestPrefix(k1, k2 string) int {
 		}
 	}
 	return i
-}
-
-type param struct {
-	Key, Value string
-}
-
-type params []param // TODO: change to map[string]string ?
-
-func (ps *params) Add(key string, value string) {
-	*ps = append(*ps, param{key, value})
-}
-
-func (ps params) Get(key string) string {
-	for _, p := range ps {
-		if p.Key == key {
-			return p.Value
-		}
-	}
-	return ""
-}
-
-func (ps *params) Set(key string, value string) {
-	idx := -1
-	for i, p := range *ps {
-		if p.Key == key {
-			idx = i
-			break
-		}
-	}
-	if idx < 0 {
-		(*ps).Add(key, value)
-	} else {
-		(*ps)[idx] = param{key, value}
-	}
-}
-
-func (ps *params) Del(key string) string {
-	for i, p := range *ps {
-		if p.Key == key {
-			*ps = append((*ps)[:i], (*ps)[i+1:]...)
-			return p.Value
-		}
-	}
-	return ""
 }

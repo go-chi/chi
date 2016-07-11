@@ -24,6 +24,7 @@ func (rs todosResource) Routes() chi.Router {
 			r.Get("/", rs.Get)       // GET /todos/:id - read a single todo by :id
 			r.Put("/", rs.Update)    // PUT /todos/:id - update a single todo by :id
 			r.Delete("/", rs.Delete) // DELETE /todos/:id - delete a single todo by :id
+			r.Get("/sync", rs.Sync)
 		})
 	})
 
@@ -48,4 +49,8 @@ func (rs todosResource) Update(w http.ResponseWriter, r *http.Request) {
 
 func (rs todosResource) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("todo delete"))
+}
+
+func (rs todosResource) Sync(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("todo sync"))
 }

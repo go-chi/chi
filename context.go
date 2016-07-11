@@ -21,6 +21,10 @@ type Context struct {
 
 	// Routing path override used by subrouters
 	RoutePath string
+
+	// Routing pattern that matches the request
+	// TODO: ..
+	RoutePattern string
 }
 
 // NewRouteContext returns a new routing context object.
@@ -63,13 +67,46 @@ func URLParamFromCtx(ctx context.Context, key string) string {
 	return ""
 }
 
-// contextKey is a value for use with context.WithValue. It's used as
-// a pointer so it fits in an interface{} without allocation. This technique
-// for defining context keys was copied from Go 1.7's new use of context in net/http.
-type contextKey struct {
-	name string
+type param struct {
+	Key, Value string
 }
 
-func (k *contextKey) String() string {
-	return "chi context value " + k.name
+type params []param
+
+func (ps *params) Add(key string, value string) {
+	*ps = append(*ps, param{key, value})
+}
+
+func (ps params) Get(key string) string {
+	for _, p := range ps {
+		if p.Key == key {
+			return p.Value
+		}
+	}
+	return ""
+}
+
+func (ps *params) Set(key string, value string) {
+	idx := -1
+	for i, p := range *ps {
+		if p.Key == key {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		(*ps).Add(key, value)
+	} else {
+		(*ps)[idx] = param{key, value}
+	}
+}
+
+func (ps *params) Del(key string) string {
+	for i, p := range *ps {
+		if p.Key == key {
+			*ps = append((*ps)[:i], (*ps)[i+1:]...)
+			return p.Value
+		}
+	}
+	return ""
 }

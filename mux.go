@@ -17,55 +17,41 @@ var _ Router = &Mux{}
 // for writing large REST API services that break a handler into many smaller
 // parts composed of middlewares and end handlers.
 type Mux struct {
+	// The radix trie router
+	router *tree
+
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
 
-	// The radix trie router
-	router *treeRouter
-
-	// The mux handler, chained middleware stack and tree router
+	// The computed mux handler made of the chained middleware stack and
+	// the tree router
 	handler http.Handler
 
+	// A reference to the parent mux used by subrouters when mounting
+	// to a parent mux
+	parent *Mux
+
+	// The mounting pattern used by subrouters used to build subsequent
+	// routes as other routers mount together
+	mountPattern string
+
 	// Controls the behaviour of middleware chain generation when a mux
-	// is registered as an inline group inside another mux.
+	// is registered as an inline group inside another mux
 	inline bool
 
 	// Routing context pool
 	pool sync.Pool
-}
 
-type methodTyp int
-
-const (
-	mCONNECT methodTyp = 1 << iota
-	mDELETE
-	mGET
-	mHEAD
-	mOPTIONS
-	mPATCH
-	mPOST
-	mPUT
-	mTRACE
-
-	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
-		mPATCH | mPOST | mPUT | mTRACE
-)
-
-var methodMap = map[string]methodTyp{
-	"CONNECT": mCONNECT,
-	"DELETE":  mDELETE,
-	"GET":     mGET,
-	"HEAD":    mHEAD,
-	"OPTIONS": mOPTIONS,
-	"PATCH":   mPATCH,
-	"POST":    mPOST,
-	"PUT":     mPUT,
-	"TRACE":   mTRACE,
+	// Custom route not found handler
+	notFoundHandler http.HandlerFunc
 }
 
 // NewMux returns a new Mux object with an optional parent context.
 func NewMux() *Mux {
-	mux := &Mux{router: newTreeRouter(), handler: nil}
+	mux := &Mux{
+		router:          &tree{root: &node{}},
+		notFoundHandler: http.NotFound,
+	}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext()
 	}
@@ -143,7 +129,94 @@ func (mx *Mux) Options(pattern string, handlerFn http.HandlerFunc) {
 
 // NotFound sets a custom http.HandlerFunc for missing routes on the treeRouter.
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
-	mx.router.notFoundHandler = &handlerFn
+	mx.notFoundHandler = handlerFn
+}
+
+// Group creates a new inline-Mux with a fresh middleware stack. It's useful
+// for a group of handlers along the same routing path that use the same
+// middleware(s). See _examples/ for an example usage.
+func (mx *Mux) Group(fn func(r Router)) Router {
+	// Similarly as in handle(), we must build the final mux handler from the tree
+	// and the middleware stack. Further middleware additions will be ignored,
+	// after this point.
+	if !mx.inline && mx.handler == nil {
+		mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+	}
+
+	// Make a new inline mux and run the router functions over it.
+	g := &Mux{inline: true, router: mx.router, handler: nil}
+	if fn != nil {
+		fn(g)
+	}
+	return g
+}
+
+// Route creates a new Mux with a fresh middleware stack and mounts it
+// along the `pattern` as a subrouter. This is very similar to Group, but attaches
+// the group along a new routing path. See _examples/ for example usage.
+func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
+	subrouter := NewRouter()
+	if fn != nil {
+		fn(subrouter)
+	}
+	mx.Mount(pattern, subrouter)
+	return subrouter
+}
+
+// Mount attaches another chi Router as a subrouter along a routing path. It's very
+// useful to split up a large API as many independent routers and compose them as
+// a single service using Mount. See _examples/ for example usage.
+func (mx *Mux) Mount(pattern string, subrouter Router) {
+
+	// TODO: this will panic, but we'll solve it right later.
+	smx, ok := subrouter.(*Mux)
+	if !ok {
+		panic("subrouter is not a Mux.")
+	}
+
+	// TODO: change mx.parent to type Router
+
+	// TODO: switch methods to strings ... okay...
+
+	// TODO: add Router method Handle(method, pattern, handler)
+
+	// XXX: FINALLY .... how do we set the damn parent....? and mountPattern ...?
+	// XXX: how do we get the parent and mountPattern ...?
+
+	// TODO: Routes() will let us walk a router..
+
+	// IDEA: is it possible to set the parent Mux, and mountingPattern in the actual
+	// tree, and get it back from walking...? or get the Mux from walking..?
+
+	smx.parent = mx
+	smx.mountPattern = pattern
+
+	rt := mx
+	if rt.parent != nil {
+		rt = mx.parent
+	}
+
+	if mx.mountPattern != "/" {
+		pattern = mx.mountPattern + pattern
+	}
+
+	// Re-inserting the routes from the passed router to our new sub router.
+	// The subrouter is already pointing at the base router to insert the routes.
+	smx.router.Walk(func(route string, handlers methodHandlers) bool {
+		if route == "/" {
+			route = pattern
+		} else if pattern[len(pattern)-1] == '/' && route[0] == '/' {
+			route = pattern + route[1:]
+		} else if pattern != "/" {
+			route = pattern + route
+		}
+
+		for m, h := range handlers {
+			rt.handle(m, route, chain(smx.middlewares, h))
+		}
+
+		return false
+	})
 }
 
 // FileServer conveniently sets up a http.FileServer handler to serve
@@ -162,94 +235,29 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
 
+	// TOOD: add a validation method to check the route and that params
+	// dont conflict.
+
 	// Build the single mux handler that is a chain of the middleware stack, as
 	// defined by calls to Use(), and the tree router (mux) itself. After this point,
 	// no other middlewares can be registered on this mux's stack. But you can still
 	// use inline middlewares via Group()'s and other routes that only execute after
 	// a matched pattern on the treeRouter.
 	if !mx.inline && mx.handler == nil {
-		// TODO: we may remove the treeRouter type and collapse it into the Mux{},
-		// at that point, we'd chain to just mx instead of mx.router, or consider
-		// some other ideas..
-		mx.handler = chain(mx.middlewares, mx.router)
+		mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
 	}
 
 	// Build endpoint handler with inline middlewares for the route
 	var endpoint http.Handler
 	if mx.inline {
-		mx.handler = mx.router // TODO: just mx ...?
+		mx.handler = http.HandlerFunc(mx.routeHTTP)
 		endpoint = chain(mx.middlewares, handler)
 	} else {
 		endpoint = handler
 	}
 
-	// Set the route for the respective HTTP methods
-	for _, mt := range methodMap {
-		m := method & mt
-		if m > 0 {
-			mx.router.routes[m].Insert(pattern, endpoint)
-		}
-	}
-}
-
-// Group creates a new inline-Mux with a fresh middleware stack. It's useful
-// for a group of handlers along the same routing path that use the same
-// middleware(s). See _examples/ for an example usage.
-func (mx *Mux) Group(fn func(r Router)) Router {
-	// Similarly as in handle(), we must build the mux handler once further
-	// middleware registration isn't allowed for this stack, like now.
-	if !mx.inline && mx.handler == nil {
-		mx.handler = chain(mx.middlewares, mx.router)
-	}
-
-	// Make a new inline mux and run the router functions over it.
-	g := &Mux{inline: true, router: mx.router, handler: nil}
-	if fn != nil {
-		fn(g)
-	}
-	return g
-}
-
-// Route creates a new Mux with a fresh middleware stack and mounts it
-// along the `pattern` as a subrouter. This is very similar to Group, but attaches
-// the group along a new routing path. See _examples/ for example usage.
-func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
-	subRouter := NewRouter()
-	mx.Mount(pattern, subRouter)
-	if fn != nil {
-		fn(subRouter)
-	}
-	return subRouter
-}
-
-func (mx *Mux) Add(rs ...Router) {
-	// mx.Join(rt)
-}
-
-// Mount attaches another chi Router as a subrouter along a routing path. It's very
-// useful to split up a large API as many independent routers and compose them as
-// a single service using Mount. See _examples/ for example usage.
-func (mx *Mux) Mount(path string, router Router) {
-	// Assign sub-Router's with the parent not found handler if not specified.
-	if sr, ok := router.(*Mux); ok {
-		if sr.router.notFoundHandler == nil && mx.router.notFoundHandler != nil {
-			sr.NotFound(*mx.router.notFoundHandler)
-		}
-	}
-
-	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
-	subHandler := func(w http.ResponseWriter, r *http.Request) {
-		rctx := RouteContext(r.Context())
-		rctx.RoutePath = "/" + rctx.Params.Del("*")
-		router.ServeHTTP(w, r)
-	}
-
-	if path == "" || path[len(path)-1] != '/' {
-		mx.HandleFunc(path, subHandler)
-		mx.HandleFunc(path+"/", mx.router.NotFoundHandler())
-		path += "/"
-	}
-	mx.HandleFunc(path+"*", subHandler)
+	// ... TODO: comment..
+	mx.router.Insert(method, pattern, endpoint)
 }
 
 // ServeHTTP is the single method of the http.Handler interface that makes
@@ -261,68 +269,20 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic("chi: attempting to route to a mux with no handlers.")
 	}
 
-	//ctx := mx.pool.Get().(*Context)
-	//r = r.WithContext(ctx)
-	//mx.routeHTTP(w, r)
-	//ctx.reset()
-	//mx.pool.Put(ctx)
-
-	// TODO: do we care about zero-alloc routing? test actual
-	// throughput, if not, switch the params to map[string]string
-
-	ctx := r.Context()
-	rctx, ok := ctx.(*Context)
-	if !ok || rctx == nil {
-		rctx, ok = ctx.Value(RouteCtxKey).(*Context)
-		if !ok {
-			//fmt.Println("We're making a new context!!")
-			rctx = NewRouteContext()
-			r = r.WithContext(rctx)
-		}
-	}
+	// Fetch a RouteContext object from the sync pool, and call the computed
+	// mx.handler that is comprised of mx.middlewares + mx.routeHTTP.
+	// Once the request is finsihed, reset the routing context and put it back
+	// into the pool for reuse from another request.
+	rctx := mx.pool.Get().(*Context)
+	r = r.WithContext(rctx)
 	mx.handler.ServeHTTP(w, r)
+	rctx.reset()
+	mx.pool.Put(rctx)
 }
 
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
-	mx.handler.ServeHTTP(w, r)
-}
-
-// A treeRouter manages a radix trie prefix-router for each HTTP method and passes
-// each request via its chi.Handler method.
-type treeRouter struct {
-	// Routing tree by method type
-	routes map[methodTyp]*tree
-
-	// Custom route not found handler
-	notFoundHandler *http.HandlerFunc
-}
-
-// newTreeRouter creates a new treeRouter object and initializes the trees for
-// each http method.
-func newTreeRouter() *treeRouter {
-	tr := &treeRouter{
-		routes:          make(map[methodTyp]*tree, len(methodMap)),
-		notFoundHandler: nil,
-	}
-	for _, v := range methodMap {
-		tr.routes[v] = &tree{root: &node{}}
-	}
-	return tr
-}
-
-// NotFoundHandlerFn returns the HandlerFunc setup on the tree.
-func (tr treeRouter) NotFoundHandler() http.HandlerFunc {
-	if tr.notFoundHandler != nil {
-		return *tr.notFoundHandler
-	}
-	return http.NotFound
-}
-
-// ServeHTTP is the main routing method for each request.
-func (tr treeRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
 	// Grab the root context object
+	ctx := r.Context()
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
 		rctx = ctx.Value(RouteCtxKey).(*Context)
@@ -341,14 +301,22 @@ func (tr treeRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the handler in the router
-	cxh := tr.routes[method].Find(rctx, routePath)
+	// Find the route
+	// TODO: any point in giving the method..? maybe later..
+	// TODO: if we switch method to string.. then, we can simplify this code..
+	hs := mx.router.Find(rctx, method, routePath)
 
-	if cxh == nil {
-		tr.NotFoundHandler().ServeHTTP(w, r)
+	if hs == nil {
+		mx.notFoundHandler(w, r)
 		return
 	}
 
-	// Serve it
-	cxh.ServeHTTP(w, r)
+	h, ok := hs[method]
+	if !ok {
+		methodNotAllowedHandler(w, r)
+		return
+	}
+
+	// Serve it up
+	h.ServeHTTP(w, r)
 }

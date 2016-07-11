@@ -219,7 +219,7 @@ func paginate(next http.Handler) http.Handler {
 }
 
 // A completely separate router for administrator routes
-func adminRouter() http.Handler { // or chi.Router {
+func adminRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Use(AdminOnly)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

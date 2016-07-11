@@ -19,13 +19,13 @@ func main() {
 		w.Write([]byte("."))
 	})
 
-	// r.Mount("/", usersResource{}.Routes()) // TODO: never gets seen...
-	// r.Mount("/", todosResource{}.Routes())
+	r.Mount("/", usersResource{}.Routes())
+	r.Mount("/", todosResource{}.Routes())
 
-	r.Append(
-		usersResource{}.Routes(),
-		todosResource{}.Routes(),
-	)
+	// r.Mount("/",
+	// 	usersResource{}.Routes(),
+	// 	todosResource{}.Routes(),
+	// )
 
 	// r.Mount(chi.Route("/users", router))
 
