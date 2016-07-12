@@ -58,9 +58,30 @@ func NewMux() *Mux {
 	return mux
 }
 
+// ServeHTTP is the single method of the http.Handler interface that makes
+// Mux interoperable with the standard library. It uses a sync.Pool to get and
+// reuse routing contexts for each request.
+func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Ensure the mux has some routes defined on the mux
+	if mx.handler == nil {
+		panic("chi: attempting to route to a mux with no handlers.")
+	}
+
+	// Fetch a RouteContext object from the sync pool, and call the computed
+	// mx.handler that is comprised of mx.middlewares + mx.routeHTTP.
+	// Once the request is finsihed, reset the routing context and put it back
+	// into the pool for reuse from another request.
+	rctx := mx.pool.Get().(*Context)
+	r = r.WithContext(rctx)
+	mx.handler.ServeHTTP(w, r)
+	rctx.reset()
+	mx.pool.Put(rctx)
+}
+
 // Use appends a middleware handler to the Mux middleware stack.
 func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
-	mx.middlewares = append(mx.middlewares, middlewares...)
+	// mx.middlewares = append(mx.middlewares, middlewares...)
+	mx.AppendMiddleware(middlewares...)
 }
 
 // Handle adds a route for all http methods that match the `pattern`
@@ -140,11 +161,12 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 	// and the middleware stack. Further middleware additions will be ignored,
 	// after this point.
 	if !mx.inline && mx.handler == nil {
-		mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+		// mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+		mx.buildRouteHandler(false)
 	}
 
 	// Make a new inline mux and run the router functions over it.
-	g := &Mux{inline: true, router: mx.router, handler: nil}
+	g := &Mux{inline: true, router: mx.router}
 	if fn != nil {
 		fn(g)
 	}
@@ -168,11 +190,8 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // a single service using Mount. See _examples/ for example usage.
 func (mx *Mux) Mount(pattern string, subrouter Router) {
 
-	// TODO: this will panic, but we'll solve it right later.
-	smx, ok := subrouter.(*Mux)
-	if !ok {
-		panic("subrouter is not a Mux.")
-	}
+	// TODO: .. is there a better way..?
+	smx := subrouter.GetMux()
 
 	// TODO: change mx.parent to type Router
 
@@ -188,6 +207,10 @@ func (mx *Mux) Mount(pattern string, subrouter Router) {
 	// IDEA: is it possible to set the parent Mux, and mountingPattern in the actual
 	// tree, and get it back from walking...? or get the Mux from walking..?
 
+	// TODO XXX XXX XXX ... is there a different way we can solve this....?
+	// instead of having to set any parent...?
+	// ie.. like in the tree...?
+
 	smx.parent = mx
 	smx.mountPattern = pattern
 
@@ -200,8 +223,9 @@ func (mx *Mux) Mount(pattern string, subrouter Router) {
 		pattern = mx.mountPattern + pattern
 	}
 
-	// Re-inserting the routes from the passed router to our new sub router.
-	// The subrouter is already pointing at the base router to insert the routes.
+	// TODO: can we join the routers better somehow...? the actual trees..?
+
+	// Inserting the routes from the subrouter onto the root router.
 	smx.router.Walk(func(route string, handlers methodHandlers) bool {
 		if route == "/" {
 			route = pattern
@@ -219,6 +243,10 @@ func (mx *Mux) Mount(pattern string, subrouter Router) {
 	})
 }
 
+func (mx *Mux) GetMux() *Mux {
+	return mx
+}
+
 // FileServer conveniently sets up a http.FileServer handler to serve
 // static files from a http.FileSystem.
 func (mx *Mux) FileServer(path string, root http.FileSystem) {
@@ -227,6 +255,22 @@ func (mx *Mux) FileServer(path string, root http.FileSystem) {
 		fs.ServeHTTP(w, r)
 	}))
 }
+
+func (mx *Mux) PrependMiddleware(middlewares ...func(http.Handler) http.Handler) {
+	mx.middlewares = append(middlewares, mx.middlewares...)
+}
+
+func (mx *Mux) AppendMiddleware(middlewares ...func(http.Handler) http.Handler) {
+	mx.middlewares = append(mx.middlewares, middlewares...)
+}
+
+func (mx *Mux) buildRouteHandler(update bool) {
+	if mx.handler == nil || update {
+		mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+	}
+}
+
+// TODO: should we rename this method to register() ?
 
 // handle creates a chi.Handler from a chain of middlewares and an end handler,
 // and then registers the route in the router.
@@ -244,40 +288,16 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	// use inline middlewares via Group()'s and other routes that only execute after
 	// a matched pattern on the treeRouter.
 	if !mx.inline && mx.handler == nil {
-		mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+		mx.buildRouteHandler(false)
 	}
 
-	// Build endpoint handler with inline middlewares for the route
-	var endpoint http.Handler
+	// For an inline mux, build the end handler comprised of the middlewares
 	if mx.inline {
-		mx.handler = http.HandlerFunc(mx.routeHTTP)
-		endpoint = chain(mx.middlewares, handler)
-	} else {
-		endpoint = handler
+		handler = chain(mx.middlewares, handler)
 	}
 
-	// ... TODO: comment..
-	mx.router.Insert(method, pattern, endpoint)
-}
-
-// ServeHTTP is the single method of the http.Handler interface that makes
-// Mux interoperable with the standard library. It uses a sync.Pool to get and
-// reuse routing contexts for each request.
-func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Ensure the mux has some routes defined on the mux
-	if mx.handler == nil {
-		panic("chi: attempting to route to a mux with no handlers.")
-	}
-
-	// Fetch a RouteContext object from the sync pool, and call the computed
-	// mx.handler that is comprised of mx.middlewares + mx.routeHTTP.
-	// Once the request is finsihed, reset the routing context and put it back
-	// into the pool for reuse from another request.
-	rctx := mx.pool.Get().(*Context)
-	r = r.WithContext(rctx)
-	mx.handler.ServeHTTP(w, r)
-	rctx.reset()
-	mx.pool.Put(rctx)
+	// Add the endpoint to the tree
+	mx.router.Insert(method, pattern, handler)
 }
 
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {

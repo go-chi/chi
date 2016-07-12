@@ -33,20 +33,5 @@ type Router interface {
 	Trace(pattern string, h http.HandlerFunc)
 	Options(pattern string, h http.HandlerFunc)
 
-	// GetMux() *Mux
-}
-
-type Middlewares []func(http.Handler) http.Handler
-
-func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
-	*ms = append(*ms, middlewares...)
-	return *ms
-}
-
-func (ms Middlewares) Handler(h http.HandlerFunc) http.HandlerFunc {
-	return chain(ms, h).ServeHTTP
-}
-
-func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
-	return Middlewares(middlewares)
+	GetMux() *Mux
 }

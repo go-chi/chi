@@ -692,7 +692,11 @@ func TestMuxBig(t *testing.T) {
 						w.Write([]byte(s))
 					})
 				})
-				r.Mount("/webhooks", sr3)
+				r.Mount("/webhooks", Use(func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "hook", true)))
+					})
+				}).Router(sr3))
 
 				r.Route("/posts", func(r Router) {
 					sr5 = r.(*Mux)
