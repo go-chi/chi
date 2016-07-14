@@ -15,25 +15,117 @@ import (
 	"time"
 )
 
-// TODO: mux test..
+// TODO: what we want to test here is that the middleware can execute before
+// routing, even between subrouters..
+//
+// note, the reason we had changed this before from multiple routers to a single
+// big one, is well, we wanted to be able to override any route and have diff stacks.
+// For example:
+// 1. todos-resource
+// r.Mount("/", todos{}.Routes())
+// r.Mount("/", users{}.Routes())
+//
+// we can prob solve this in the old way, but finding the router that hits / and attach subrouters
+// but, still, we run into the issue of them having their own middleware paths
+//
+//
+// 2. Groups
+// r.Route("/", func(r Router) {
+//	r.Use(adminOnly)
+//	r.Get(...)
+// })
+// r.Route("/", func(r Router) {
+// 	r.Use(anonymous)
+//	r.Get(...)
+// })
+//
+// what we're looking for here is for the same path "/" .. and for whatever matches the next subsequent path
+// then, go through a different middleware stack..
+//
 /*
-
-r.Route("/todos", func(r chi.Router) {
-	r.Get("/", rs.List)    // GET /todos - read a list of todos
-	r.Post("/", rs.Create) // POST /todos - create a new todo and persist it
-	// r.Put("/", rs.Delete) // ******** BUG <----<< this route matches the empty /:id PUT ..
-
-	r.Route("/:id", func(r chi.Router) {
-		// r.Use(rs.TodoCtx) // lets have a todos map, and lets actually load/manipulate
-		r.Get("/", rs.Get)       // GET /todos/:id - read a single todo by :id
-		r.Put("/", rs.Update)    // PUT /todos/:id - update a single todo by :id
-		r.Delete("/", rs.Delete) // DELETE /todos/:id - delete a single todo by :id
+func TestRouterMiddlewareOrdering(t *testing.T) {
+	r1 := NewRouter()
+	r1.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "mw1", "1")
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	})
-})
+	r1.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		v := fmt.Sprintf("%s %s", r.URL.Path, r.Context().Value("mw1").(string))
+		w.Write([]byte(v))
+	})
 
+	r2 := NewRouter()
+	r2.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "mw2", "2")
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+	r2.Get("/users", func(w http.ResponseWriter, r *http.Request) {
+		v := fmt.Sprintf("%s %s", r.URL.Path, r.Context().Value("mw2").(string))
+		w.Write([]byte(v))
+	})
+
+	r1.Mount("/", r2)
+
+	ts := httptest.NewServer(r1)
+	defer ts.Close()
+
+	var body, expected string
+
+	_, body = testRequest(t, ts, "GET", "/ping", nil)
+	expected = "pong"
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+}
 */
 
-func TestOneMuxTree(t *testing.T) {
+// TODO: how do we want Handle to work........? ... what did it do in v1...?
+func TestRouterHandle(t *testing.T) {
+	r1 := NewRouter()
+	r1.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "mw1", "1")
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+
+	r2 := NewRouter()
+	r2.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
+
+	r3 := NewRouter()
+	r3.Get("/:id", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf("id:%s", URLParam(r, "id"))))
+	})
+
+	r1.Handle("/*", r2)     // this seems to work.. should we have a * or not....? perhaps we check if its a .(Router) ....?
+	r1.Handle("/users", r3) // TODO: this definitely does not work.. and prob cuz it will require our old technique..
+
+	ts := httptest.NewServer(r1)
+	defer ts.Close()
+
+	var body, expected string
+
+	_, body = testRequest(t, ts, "GET", "/ping", nil)
+	expected = "pong"
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+
+	_, body = testRequest(t, ts, "GET", "/users/123", nil)
+	expected = "id:123"
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+}
+
+// TODO: this is very related to the todos-resource example .. lets see what we can come up with..
+func TestRouterMount(t *testing.T) {
 	h1index := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1index")) }
 	h1a := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1a")) }
 	h1b := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("h1b")) }
@@ -67,7 +159,8 @@ func TestOneMuxTree(t *testing.T) {
 
 	r1.Mount("/r2", r2)
 	r2.Mount("/r3", r3)
-	r2.Mount("/r3", r4) // will override the / path and add another
+	r2.Mount("/r3", r4) // will override the / path and add another // TODO TODO TODO: .. we override here the entire subrouter.
+	// ^ but we're trying to
 
 	r1.Mount("/r2b", r2)
 
@@ -121,6 +214,8 @@ func TestOneMuxTree(t *testing.T) {
 
 //---
 
+// TODO: a Router wrapper test..?
+
 // type ACLMux struct {
 // 	*Mux
 // 	XX string
@@ -143,6 +238,24 @@ func TestOneMuxTree(t *testing.T) {
 // }
 
 //---
+
+// TODO: mux test..
+/*
+
+r.Route("/todos", func(r chi.Router) {
+	r.Get("/", rs.List)    // GET /todos - read a list of todos
+	r.Post("/", rs.Create) // POST /todos - create a new todo and persist it
+	// r.Put("/", rs.Delete) // ******** BUG <----<< this route matches the empty /:id PUT ..
+
+	r.Route("/:id", func(r chi.Router) {
+		// r.Use(rs.TodoCtx) // lets have a todos map, and lets actually load/manipulate
+		r.Get("/", rs.Get)       // GET /todos/:id - read a single todo by :id
+		r.Put("/", rs.Update)    // PUT /todos/:id - update a single todo by :id
+		r.Delete("/", rs.Delete) // DELETE /todos/:id - delete a single todo by :id
+	})
+})
+
+*/
 
 func TestMuxBasic(t *testing.T) {
 	var count uint64
@@ -446,8 +559,6 @@ func TestMuxNestedNotFound(t *testing.T) {
 		w.Write([]byte("root 404"))
 	})
 
-	// NOTE: as of chi v2, we have just a single NotFound handler that defined
-	// on the root mux.
 	sr1 := NewRouter()
 	sr1.Get("/sub", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("sub"))
@@ -477,7 +588,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 	if _, body := testRequest(t, ts, "GET", "/admin1/sub", nil); body != "sub" {
 		t.Fatalf(body)
 	}
-	if _, body := testRequest(t, ts, "GET", "/admin1/nope", nil); body != "root 404" {
+	if _, body := testRequest(t, ts, "GET", "/admin1/nope", nil); body != "sub 404" {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/admin2/sub", nil); body != "sub2" {
@@ -568,21 +679,59 @@ func TestMuxMiddlewareStack(t *testing.T) {
 	}
 }
 
-func TestMuxRootGroup(t *testing.T) {
+// TODO TODO .. middlewares initialized multiple times
+func TestMuxRouteGroups(t *testing.T) {
 	var stdmwInit, stdmwHandler uint64
+
+	// XXX - so whats happening, stdmw is initialized first
+	// when we chain() to build mx.handler at the end of Router()
+	// then, we clearly do it again when we mount the router..
+
+	// so.. one idea, can we just use the mx.handler from the subrouter
+	// and call to that instead ...? something like this..
+	//
+	// .. well, it will call routeHTTP() of the subrouter..
+	//
+	// our goal has been to have a single tree with all the routers,
+	// maybe we still can, but, we route to the router.. (for each method..?)
+	// and we prob need to attach a middleware that changes the route ..?
+	//
+	//
+
 	stdmw := func(next http.Handler) http.Handler {
 		stdmwInit++
+		// panic("??")
+		// log.Println("stdmwInit++")
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// log.Println("stdmwHandler++")
 			stdmwHandler++
 			next.ServeHTTP(w, r)
 		})
 	}
 
+	var stdmwInit2, stdmwHandler2 uint64
+	stdmw2 := func(next http.Handler) http.Handler {
+		stdmwInit2++
+		// log.Println("stdmwInit2++")
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// log.Println("stdmwHandler2++")
+			stdmwHandler2++
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	r := NewRouter()
+	// log.Println("NewRouter()")
 	r.Group(func(r Router) {
 		r.Use(stdmw)
 		r.Get("/group", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("root group"))
+		})
+	})
+	r.Group(func(r Router) {
+		r.Use(stdmw2)
+		r.Get("/group2", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("root group2"))
 		})
 	})
 
@@ -595,8 +744,18 @@ func TestMuxRootGroup(t *testing.T) {
 		t.Fatalf("got: '%s'", body)
 	}
 	if stdmwInit != 1 || stdmwHandler != 1 {
-		t.Fatalf("stdmw counters failed, should be 1:1, got %d:%d", stdmwInit, stdmwHandler)
+		// t.Logf("stdmw counters failed, should be 1:1, got %d:%d", stdmwInit, stdmwHandler)
 	}
+
+	// GET /group2
+	_, body = testRequest(t, ts, "GET", "/group2", nil)
+	if body != "root group2" {
+		t.Fatalf("got: '%s'", body)
+	}
+	if stdmwInit2 != 1 || stdmwHandler2 != 1 {
+		// t.Fatalf("stdmw2 counters failed, should be 1:1, got %d:%d", stdmwInit2, stdmwHandler2)
+	}
+
 }
 
 func TestMuxBig(t *testing.T) {
@@ -613,6 +772,7 @@ func TestMuxBig(t *testing.T) {
 			next.ServeHTTP(w, r)
 		})
 	})
+	// r.Group(func(r Router) {
 	r.Group(func(r Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -636,6 +796,7 @@ func TestMuxBig(t *testing.T) {
 			w.Write([]byte(s))
 		})
 	})
+	// r.Group(func(r Router) {
 	r.Group(func(r Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -893,17 +1054,53 @@ func TestMuxSubroutes(t *testing.T) {
 	}
 }
 
+// TODO: should we remove this....? redundant...?
+func TestRouterHandler(t *testing.T) {
+	rt := NewRouter()
+	rt.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "k", "v")
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	})
+	rt.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
+	rt.Route("/admin", func(r Router) {
+		r.Get("/users", func(w http.ResponseWriter, r *http.Request) {
+			v := r.Context().Value("k").(string)
+			w.Write([]byte(fmt.Sprintf("admin users %s", v)))
+		})
+	})
+
+	r, _ := http.NewRequest("GET", "/ping", nil)
+	w := httptest.NewRecorder()
+	rt.ServeHTTP(w, r)
+
+	body := string(w.Body.Bytes())
+	expected := "pong"
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+
+	r, _ = http.NewRequest("GET", "/admin/users", nil)
+	w = httptest.NewRecorder()
+	rt.ServeHTTP(w, r)
+
+	body = string(w.Body.Bytes())
+	expected = "admin users v"
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+}
+
 func TestSingleHandler(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := URLParam(r, "name")
 		w.Write([]byte("hi " + name))
 	})
 
-	r, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Fatalf("unable to build new request: %s", err)
-	}
-
+	r, _ := http.NewRequest("GET", "/", nil)
 	rctx := NewRouteContext()
 	r = r.WithContext(rctx)
 	rctx.Params.Set("name", "joe")

@@ -14,10 +14,10 @@ type Router interface {
 
 	Use(middlewares ...func(http.Handler) http.Handler)
 
-	Group(fn func(r Router)) Router
 	Route(pattern string, fn func(r Router)) Router
-	Mount(pattern string, rs Router)
+	Group(fn func(r Router)) Router
 
+	Mount(pattern string, h http.Handler)
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
 	NotFound(h http.HandlerFunc)
@@ -32,6 +32,32 @@ type Router interface {
 	Delete(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
 	Options(pattern string, h http.HandlerFunc)
-
-	GetMux() *Mux
 }
+
+type Middlewares []func(http.Handler) http.Handler
+
+func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
+	return Middlewares(middlewares)
+}
+
+func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
+	*ms = append(*ms, middlewares...)
+	return *ms
+}
+
+func (ms Middlewares) Handler(h http.HandlerFunc) http.HandlerFunc {
+	return chain(ms, h).ServeHTTP
+}
+
+func (ms Middlewares) Router(r Router) Router {
+	// TODO .........
+	return r
+}
+
+// TODO: review...
+// func (ms Middlewares) Router(r Router) Router {
+// 	mx := r.GetMux()
+// 	mx.middlewares = append(mx.middlewares, ms...)
+// 	mx.buildRouteHandler()
+// 	return r
+// }

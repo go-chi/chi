@@ -13,28 +13,6 @@ func (k *contextKey) String() string {
 	return "chi context value " + k.name
 }
 
-type Middlewares []func(http.Handler) http.Handler
-
-func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
-	return Middlewares(middlewares)
-}
-
-func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
-	*ms = append(*ms, middlewares...)
-	return *ms
-}
-
-func (ms Middlewares) Handler(h http.HandlerFunc) http.HandlerFunc {
-	return chain(ms, h).ServeHTTP
-}
-
-func (ms Middlewares) Router(r Router) Router {
-	mx := r.GetMux() // TODO: is there a better way ....?
-	mx.AppendMiddleware(mx.middlewares...)
-	mx.buildRouteHandler(true)
-	return r
-}
-
 // chain builds a http.Handler composed of middlewares and endpoint handler in the
 // order they are passed.
 func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
