@@ -64,10 +64,6 @@ func TestStripSlashesInRoute(t *testing.T) {
 	})
 
 	r.Route("/accounts/:accountID", func(r chi.Router) {
-		// TODO: this is failing because subrouters search for a matching route
-		// before they execute the middleware stack because for a subrouter,
-		// the middlewares are chained and put onto the endpoint .. perhaps
-		// we can improve this later.
 		r.Use(StripSlashes)
 		r.Get("/query", func(w http.ResponseWriter, r *http.Request) {
 			accountID := chi.URLParam(r, "accountID")
@@ -87,10 +83,9 @@ func TestStripSlashesInRoute(t *testing.T) {
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query", nil); resp != "admin" {
 		t.Fatalf(resp)
 	}
-	// TODO: commented out for now related to the above issue.
-	// if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query/", nil); resp != "admin" {
-	// 	t.Fatalf(resp)
-	// }
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query/", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
 }
 
 func TestRedirectSlashes(t *testing.T) {
