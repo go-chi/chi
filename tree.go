@@ -64,33 +64,119 @@ type methodHandlers map[methodTyp]http.Handler
 // type WalkFn func(method string, pattern string, handler http.Handler) bool
 type WalkFn func(path string, handlers methodHandlers) bool
 
-// edge is used to represent an edge node
-type edge struct {
-	label byte
-	node  *node
-}
-
 type node struct {
 	typ nodeTyp
+
+	// first byte of the prefix
+	label byte
 
 	// prefix is the common prefix we ignore
 	prefix string
 
+	// TODO: param name..
+	// pname string
+
+	// TODO:
+	// subtree *tree
+
 	// HTTP handler on the leaf node
-	// handler http.Handler
 	handlers methodHandlers
 
-	// Edges should be stored in-order for iteration,
+	// Child nodes should be stored in-order for iteration,
 	// in groups of the node type.
-	edges [ntCatchAll + 1]edges
+	children [ntCatchAll + 1]nodes
+}
+
+func (n *node) Find(ctx *Context, method methodTyp, path string) methodHandlers {
+	rn := n.findNode(ctx, method, path)
+	if rn == nil {
+		return nil
+	}
+	return rn.handlers
+}
+
+func (n *node) Insert(method methodTyp, pattern string, handler http.Handler) {
+	var parent *node
+	search := pattern
+
+	for {
+		// Handle key exhaustion
+		if len(search) == 0 {
+			// Insert or update the node's leaf handler
+			n.setHandler(method, handler)
+			return
+		}
+
+		// Look for the edge
+		parent = n
+		n = n.getEdge(search[0])
+
+		// No edge, create one
+		if n == nil {
+			cn := &node{label: search[0], prefix: search}
+			cn.setHandler(method, handler)
+			parent.addChild(cn)
+			return
+		}
+
+		if n.typ > ntStatic {
+			// We found a wildcard node, meaning search path starts with
+			// a wild prefix. Trim off the wildcard search path and continue.
+			p := strings.Index(search, "/")
+			if p < 0 {
+				p = len(search)
+			}
+			search = search[p:]
+			continue
+		}
+
+		// Static nodes fall below here.
+		// Determine longest prefix of the search key on match.
+		commonPrefix := n.longestPrefix(search, n.prefix)
+		if commonPrefix == len(n.prefix) {
+			// the common prefix is as long as the current node's prefix we're attempting to insert.
+			// keep the search going.
+			search = search[commonPrefix:]
+			continue
+		}
+
+		// Split the node
+		child := &node{
+			typ:    ntStatic,
+			prefix: search[:commonPrefix],
+		}
+		parent.replaceChild(search[0], child)
+
+		// Restore the existing node
+		n.label = n.prefix[commonPrefix]
+		n.prefix = n.prefix[commonPrefix:]
+		child.addChild(n)
+
+		// If the new key is a subset, add to to this node
+		search = search[commonPrefix:]
+		if len(search) == 0 {
+			child.setHandler(method, handler)
+			return
+		}
+
+		// Create a new edge for the node
+		subchild := &node{
+			typ:    ntStatic,
+			label:  search[0],
+			prefix: search,
+		}
+		subchild.setHandler(method, handler)
+		child.addChild(subchild)
+		return
+	}
 }
 
 func (n *node) isLeaf() bool {
 	return n.handlers != nil
 }
 
-func (n *node) addEdge(e edge) {
-	search := e.node.prefix
+func (n *node) addChild(child *node) {
+	search := child.prefix
 
 	// Find any wildcard segments
 	p := strings.IndexAny(search, ":*")
@@ -109,8 +195,8 @@ func (n *node) addEdge(e edge) {
 	if p == 0 {
 		// Path starts with a wildcard
 
-		handlers := e.node.handlers
-		e.node.typ = ntyp
+		handlers := child.handlers
+		child.typ = ntyp
 
 		if ntyp == ntCatchAll {
 			p = -1
@@ -120,73 +206,69 @@ func (n *node) addEdge(e edge) {
 		if p < 0 {
 			p = len(search)
 		}
-		e.node.prefix = search[:p]
+		child.prefix = search[:p]
 
 		if p != len(search) {
 			// add edge for the remaining part, split the end.
-			e.node.handlers = nil
+			child.handlers = nil
 
 			search = search[p:]
-			e2 := edge{
-				label: search[0], // this will always start with /
-				node: &node{
-					typ:      ntStatic,
-					prefix:   search,
-					handlers: handlers,
-				},
-			}
-			e.node.addEdge(e2)
+
+			child.addChild(&node{
+				typ:      ntStatic,
+				label:    search[0], // this will always start with /
+				prefix:   search,
+				handlers: handlers,
+			})
 		}
 
 	} else if p > 0 {
 		// Path has some wildcard
 
 		// starts with a static segment
-		handlers := e.node.handlers
-		e.node.typ = ntStatic
-		e.node.prefix = search[:p]
-		e.node.handlers = nil
+		handlers := child.handlers
+		child.typ = ntStatic
+		child.prefix = search[:p]
+		child.handlers = nil
 
 		// add the wild edge node
 		search = search[p:]
 
-		e2 := edge{
-			label: search[0],
-			node: &node{
-				typ:      ntyp,
-				prefix:   search,
-				handlers: handlers,
-			},
-		}
-		e.node.addEdge(e2)
+		child.addChild(&node{
+			typ:      ntyp,
+			label:    search[0],
+			prefix:   search,
+			handlers: handlers,
+		})
 
 	} else {
 		// Path is all static
-		e.node.typ = ntyp
+		child.typ = ntyp
 
 	}
 
-	n.edges[e.node.typ] = append(n.edges[e.node.typ], e)
-	n.edges[e.node.typ].Sort()
+	n.children[child.typ] = append(n.children[child.typ], child)
+	n.children[child.typ].Sort()
 }
 
-func (n *node) replaceEdge(e edge) {
-	num := len(n.edges[e.node.typ])
-	for i := 0; i < num; i++ {
-		if n.edges[e.node.typ][i].label == e.label {
-			n.edges[e.node.typ][i].node = e.node
+func (n *node) replaceChild(label byte, child *node) {
+	for i := 0; i < len(n.children[child.typ]); i++ {
+		if n.children[child.typ][i].label == label {
+			n.children[child.typ][i] = child
+			n.children[child.typ][i].label = label
 			return
 		}
 	}
-	panic("chi: replacing missing edge")
+
+	panic("chi: replacing missing child")
 }
 
 func (n *node) getEdge(label byte) *node {
-	for _, edges := range n.edges {
-		num := len(edges)
+	for _, nds := range n.children {
+		num := len(nds)
 		for i := 0; i < num; i++ {
-			if edges[i].label == label {
-				return edges[i].node
+			if nds[i].label == label {
+				return nds[i]
 			}
 		}
 	}
@@ -194,8 +276,8 @@ func (n *node) getEdge(label byte) *node {
 }
 
 func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
-	subedges := n.edges[ntyp]
-	num := len(subedges)
+	nds := n.children[ntyp]
+	num := len(nds)
 	idx := 0
 
 	switch ntyp {
@@ -203,23 +285,23 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 		i, j := 0, num-1
 		for i <= j {
 			idx = i + (j-i)/2
-			if label > subedges[idx].label {
+			if label > nds[idx].label {
 				i = idx + 1
-			} else if label < subedges[idx].label {
+			} else if label < nds[idx].label {
 				j = idx - 1
 			} else {
 				i = num // breaks cond
 			}
 		}
-		if subedges[idx].label != label {
+		if nds[idx].label != label {
 			return nil
 		}
-		return subedges[idx].node
+		return nds[idx]
 
 	default: // wild nodes
 		// TODO: right now we match them all.. but regexp should
 		// run through regexp matcher
-		return subedges[idx].node
+		return nds[idx]
 	}
 }
 
@@ -229,9 +311,9 @@ func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
 	nn := n
 	search := path
 
-	for t, edges := range nn.edges {
+	for t, nds := range nn.children {
 		ntyp := nodeTyp(t)
-		if len(edges) == 0 {
+		if len(nds) == 0 {
 			continue
 		}
 
@@ -294,6 +376,22 @@ func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
 	return nil
 }
 
+// longestPrefix finds the length of the shared prefix
+// of two strings
+func (n *node) longestPrefix(k1, k2 string) int {
+	max := len(k1)
+	if l := len(k2); l < max {
+		max = l
+	}
+	var i int
+	for i = 0; i < max; i++ {
+		if k1[i] != k2[i] {
+			break
+		}
+	}
+	return i
+}
+
 func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	if n.handlers == nil {
 		n.handlers = make(methodHandlers, 0)
@@ -307,125 +405,16 @@ func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	}
 }
 
-type edges []edge
+type nodes []*node
 
-// Sort the list of edges by label
-func (e edges) Len() int           { return len(e) }
-func (e edges) Less(i, j int) bool { return e[i].label < e[j].label }
-func (e edges) Swap(i, j int)      { e[i], e[j] = e[j], e[i] }
-func (e edges) Sort()              { sort.Sort(e) }
-
-// Tree implements a radix tree. This can be treated as a
-// Dictionary abstract data type. The main advantage over
-// a standard hash map is prefix-based lookups and
-// ordered iteration.
-type tree struct {
-	root *node
-}
-
-func (t *tree) Insert(method methodTyp, pattern string, handler http.Handler) {
-	var parent *node
-	n := t.root
-	search := pattern
-
-	for {
-		// Handle key exhaustion
-		if len(search) == 0 {
-			// Insert or update the node's leaf handler
-			// n.handler = handler
-			n.setHandler(method, handler)
-			return
-		}
-
-		// Look for the edge
-		parent = n
-		n = n.getEdge(search[0])
-
-		// No edge, create one
-		if n == nil {
-			e := edge{
-				label: search[0],
-				node: &node{
-					prefix: search,
-					// handler: handler,
-				},
-			}
-			e.node.setHandler(method, handler)
-			parent.addEdge(e)
-			return
-		}
-
-		if n.typ > ntStatic {
-			// We found a wildcard node, meaning search path starts with
-			// a wild prefix. Trim off the wildcard search path and continue.
-			p := strings.Index(search, "/")
-			if p < 0 {
-				p = len(search)
-			}
-			search = search[p:]
-			continue
-		}
-
-		// Static node fall below here.
-		// Determine longest prefix of the search key on match.
-		commonPrefix := t.longestPrefix(search, n.prefix)
-		if commonPrefix == len(n.prefix) {
-			// the common prefix is as long as the current node's prefix we're attempting to insert.
-			// keep the search going.
-			search = search[commonPrefix:]
-			continue
-		}
-
-		// Split the node
-		child := &node{
-			typ:    ntStatic,
-			prefix: search[:commonPrefix],
-		}
-		parent.replaceEdge(edge{
-			label: search[0],
-			node:  child,
-		})
-
-		// Restore the existing node
-		child.addEdge(edge{
-			label: n.prefix[commonPrefix],
-			node:  n,
-		})
-		n.prefix = n.prefix[commonPrefix:]
-
-		// If the new key is a subset, add to to this node
-		search = search[commonPrefix:]
-		if len(search) == 0 {
-			// child.handler = handler
-			child.setHandler(method, handler)
-			return
-		}
-
-		// Create a new edge for the node
-		e := edge{
-			label: search[0],
-			node: &node{
-				typ:    ntStatic,
-				prefix: search,
-				// handler: handler,
-			},
-		}
-		e.node.setHandler(method, handler)
-		child.addEdge(e)
-		return
-	}
-}
-
-func (t *tree) Find(ctx *Context, method methodTyp, path string) methodHandlers {
-	node := t.root.findNode(ctx, method, path)
-	if node == nil {
-		return nil
-	}
-	return node.handlers
-}
+// Sort the list of nodes by label
+func (ns nodes) Len() int           { return len(ns) }
+func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
+func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
+func (ns nodes) Sort()              { sort.Sort(ns) }
 
 // Walk is used to walk the tree
-func (t *tree) Walk(fn WalkFn) {
+/*func (t *tree) Walk(fn WalkFn) {
 	t.recursiveWalk(t.root.prefix, t.root, fn)
 }
 
@@ -449,19 +438,4 @@ func (t *tree) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
 	}
 	return false
 }
-
-// longestPrefix finds the length of the shared prefix
-// of two strings
-func (t *tree) longestPrefix(k1, k2 string) int {
-	max := len(k1)
-	if l := len(k2); l < max {
-		max = l
-	}
-	var i int
-	for i = 0; i < max; i++ {
-		if k1[i] != k2[i] {
-			break
-		}
-	}
-	return i
-}
+*/

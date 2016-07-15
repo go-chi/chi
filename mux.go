@@ -18,11 +18,9 @@ var _ Router = &Mux{}
 // parts composed of middlewares and end handlers.
 type Mux struct {
 	// The radix trie router
-	router *tree
+	router *node
 
 	// The middleware stack
-	// TODO: middlewares Middlewares ?? ..
-	// and add methods Prepend() and Append() on it..?
 	middlewares []func(http.Handler) http.Handler
 
 	// The computed mux handler made of the chained middleware stack and
@@ -42,7 +40,7 @@ type Mux struct {
 
 // NewMux returns a new Mux object with an optional parent context.
 func NewMux() *Mux {
-	mux := &Mux{router: &tree{root: &node{}}}
+	mux := &Mux{router: &node{}}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext()
 	}
@@ -58,21 +56,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic("chi: attempting to route to a mux with no handlers.")
 	}
 
-	// TODO: some requests might hit a router directly..
-	// ie someone testing, or a Handle("/", subrouter)
-	// .. hmm, perhaps instead we have .Any("/*", subrouter)
-	// ? ... what would r.Any("/:blah", subrouter) mean..? -> /:blah/* with the :blah param..? okay.
-	// so, if http.Handler is a Router, then we attach it with a middleware, and add /*
-
-	ctx := r.Context()
-	rctx, _ := ctx.(*Context)
-	if rctx == nil {
-		// TODO: hopefully we can skip this step.. but, prob not ..
-		// perhaps we can find a better way, like extending Context interface..?
-		// and adding our own value to it..?
-		rctx, _ = ctx.Value(RouteCtxKey).(*Context)
-	}
-
+	rctx, _ := r.Context().Value(RouteCtxKey).(*Context)
 	if rctx != nil {
 		mx.handler.ServeHTTP(w, r)
 		return
@@ -186,10 +170,10 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 // the group along a new routing path. See _examples/ for example usage.
 func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 	subRouter := NewRouter()
-	mx.Mount(pattern, subRouter)
 	if fn != nil {
 		fn(subRouter)
 	}
+	mx.Mount(pattern, subRouter)
 	return subRouter
 }
 
@@ -198,11 +182,27 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // a single service using Mount. See _examples/ for example usage.
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Assign sub-Router's with the parent not found handler if not specified.
-	if sr, ok := handler.(*Mux); ok {
-		if sr.notFoundHandler == nil && mx.notFoundHandler != nil {
-			sr.NotFound(mx.notFoundHandler)
-		}
+	// TODO: is there a better way to get the mux() ?
+	sr, ok := handler.(*Mux)
+	if ok && sr.notFoundHandler == nil && mx.notFoundHandler != nil {
+		sr.NotFound(mx.notFoundHandler)
 	}
+
+	// TODO: perhaps search the tree mx and smx trees, and find the right path
+	// to mount this router on..?
+	//
+	// we could, always bubble up the first pattern that isn't a "/" from the mx or the subrouter..
+	if pattern == "/" {
+		// _, pattern = sr.router.split("/")
+		// log.Println("! after", sr.router.root.prefix, "+", sr.router.root.edges[0][0].node.prefix)
+		// sr.buildRouteHandler()
+	}
+
+	// log.Println("")
+	// sr.router.Walk(func(path string, handlers methodHandlers) bool {
+	// 	log.Println("pattern:", pattern, "walk:", path)
+	// 	return false
+	// })
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -213,7 +213,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 
 	if pattern == "" || pattern[len(pattern)-1] != '/' {
 		mx.HandleFunc(pattern, subHandler)
-		mx.HandleFunc(pattern+"/", mx.notFoundHandler) // TODO: good..?
+		mx.HandleFunc(pattern+"/", mx.notFoundHandler)
 		pattern += "/"
 	}
 	mx.HandleFunc(pattern+"*", subHandler)
@@ -267,6 +267,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Grab the root context object
+	// TODO: can we somehow avoid calling .Value() here again for the request..?
 	ctx := r.Context()
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {

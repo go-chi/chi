@@ -16,13 +16,10 @@ type Router interface {
 
 	Route(pattern string, fn func(r Router)) Router
 	Group(fn func(r Router)) Router
-
 	Mount(pattern string, h http.Handler)
+
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
-	NotFound(h http.HandlerFunc)
-
-	// Any(pattern string, h.HandlerFunc) // ???
 	Connect(pattern string, h http.HandlerFunc)
 	Head(pattern string, h http.HandlerFunc)
 	Get(pattern string, h http.HandlerFunc)
@@ -32,6 +29,8 @@ type Router interface {
 	Delete(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
 	Options(pattern string, h http.HandlerFunc)
+
+	NotFound(h http.HandlerFunc)
 }
 
 type Middlewares []func(http.Handler) http.Handler

@@ -34,7 +34,7 @@ func TestTree(t *testing.T) {
 	hHubView2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hHubView3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	tr := &tree{root: &node{}}
+	tr := &node{}
 
 	tr.Insert(mGET, "/", hIndex)
 	tr.Insert(mGET, "/favicon.ico", hFavicon)
@@ -183,7 +183,7 @@ func BenchmarkTreeGet(b *testing.B) {
 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	tr := &tree{root: &node{}}
+	tr := &node{}
 	tr.Insert(mGET, "/", h1)
 	tr.Insert(mGET, "/ping", h2)
 	tr.Insert(mGET, "/pingall", h2)

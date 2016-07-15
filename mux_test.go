@@ -83,44 +83,88 @@ func TestRouterMiddlewareOrdering(t *testing.T) {
 }
 */
 
-// TODO: how do we want Handle to work........? ... what did it do in v1...?
-func TestRouterHandle(t *testing.T) {
-	r1 := NewRouter()
-	r1.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "mw1", "1")
-			next.ServeHTTP(w, r.WithContext(ctx))
+func TestMMount(t *testing.T) {
+	hIndex := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("root")) }
+	tIndex := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("todos list")) }
+	tGet := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("todos get")) }
+	uIndex := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("users list")) }
+	uGet := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("users get")) }
+	pIndex := func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ping")) }
+
+	r := NewRouter()
+	r.Get("/", hIndex)
+
+	/*
+	   IDEA:
+	   .. we setup a nodeType that is a hint ..
+	   effectively, a copy, that doesn't remove it from the search path.
+	   it just calls the next handler, and boom.
+
+	   also, since trees are connected with a middleware and RouteContext()
+	   perhaps we can connect it to another node.. from another tree... is that possible?
+
+
+
+	*/
+
+	todos := NewRouter()
+	// todos.Use() // TODO: if we have middleware here.. then, what..?
+	// we prob just wrap it down..? inline each..?
+
+	//
+	// well, then, we also move it down to the next mux...
+
+	// todos.Get("/woot", XX) // HMM.. well, this might be okay..
+	// todos.Get("/", tt) // but this isn't.. it will overwrite the index .. which would happen in one-tree too tho..
+
+	todos.Route("/todos", func(r Router) {
+		r.Get("/", tIndex)
+		r.Route("/:id", func(r Router) {
+			r.Get("/", tGet)
 		})
 	})
 
-	r2 := NewRouter()
-	r2.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+	users := NewRouter()
+	users.Route("/users", func(r Router) {
+		r.Get("/", uIndex)
+		r.Route("/:id", func(r Router) {
+			r.Get("/", uGet)
+		})
 	})
 
-	r3 := NewRouter()
-	r3.Get("/:id", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("id:%s", URLParam(r, "id"))))
-	})
+	ping := NewRouter()
+	ping.Get("/ping", pIndex)
 
-	r1.Handle("/*", r2)     // this seems to work.. should we have a * or not....? perhaps we check if its a .(Router) ....?
-	r1.Handle("/users", r3) // TODO: this definitely does not work.. and prob cuz it will require our old technique..
+	r.Mount("/", todos)
+	r.Mount("/", users)
+	// r.Mount("/", ping)
 
-	ts := httptest.NewServer(r1)
+	// r.Get("/todos/x", x) // TODO: this should be mounted outside of the router. yes.
+	// TODO: what if we add a route that spans 2 routers..? guess that wouldnt happen..
+
+	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	var body, expected string
-
-	_, body = testRequest(t, ts, "GET", "/ping", nil)
-	expected = "pong"
-	if body != expected {
-		t.Fatalf("expected:%s got:%s", expected, body)
+	if _, body := testRequest(t, ts, "GET", "/", nil); body != "root" {
+		t.Fatalf(fmt.Sprintf("GET / got:%s", body))
 	}
 
-	_, body = testRequest(t, ts, "GET", "/users/123", nil)
-	expected = "id:123"
-	if body != expected {
-		t.Fatalf("expected:%s got:%s", expected, body)
+	if _, body := testRequest(t, ts, "GET", "/todos", nil); body != "todos list" {
+		t.Fatalf(fmt.Sprintf("GET /todos got:%s", body))
+	}
+	if _, body := testRequest(t, ts, "GET", "/todos/1", nil); body != "todos get" {
+		t.Fatalf(fmt.Sprintf("GET /todos/1 got:%s", body))
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/users", nil); body != "users list" {
+		t.Fatalf(fmt.Sprintf("GET /users got:%s", body))
+	}
+	if _, body := testRequest(t, ts, "GET", "/users/1", nil); body != "users get" {
+		t.Fatalf(fmt.Sprintf("GET /users/1 got:%s", body))
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/ping", nil); body != "ping" {
+		t.Fatalf(fmt.Sprintf("GET /ping got:%s", body))
 	}
 }
 
