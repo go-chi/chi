@@ -273,7 +273,7 @@ func (b *basicWriter) Unwrap() http.ResponseWriter {
 func (b *basicWriter) Duration() time.Duration {
 	if !b.hasDuration {
 		b.hasDuration = true
-		b.duration = time.Now().Sub(b.start)
+		b.duration = time.Since(b.start)
 	}
 	return b.duration
 }
