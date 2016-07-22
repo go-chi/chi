@@ -13,54 +13,107 @@ import (
 	"time"
 )
 
+// LogEntry is a composition of various informations from a request, such as its
+// execution time, its URL or the response status, for example.
+type LogEntry struct {
+	RequestID     string
+	Method        string
+	URL           string
+	RemoteAddr    string
+	Status        int
+	BytesWritten  int
+	ExecutionTime time.Duration
+}
+
+// LogAppender is a LogEntry receiver.
+type LogAppender interface {
+	Append(entry LogEntry)
+}
+
+// NewLogger return a middleware which will use the given appenders in order to
+// publish new log entry.
+func NewLogger(appenders ...LogAppender) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+
+		if len(appenders) == 0 {
+			return next
+		}
+
+		fn := func(w http.ResponseWriter, r *http.Request) {
+
+			var lw writerProxy
+			switch e := w.(type) {
+			case writerProxy:
+				// Reuse proxy in order to avoid a chaining of interceptor.
+				lw = e
+			default:
+				// We have to wrap the given http.ResponseWriter with a proxy
+				// in order to hook into various parts of the response process.
+				// TODO: There is an allocation here, remove me.
+				lw = wrapWriter(w, r)
+			}
+
+			next.ServeHTTP(lw, r)
+
+			delta := lw.Duration()
+			status := lw.Status()
+			length := lw.BytesWritten()
+			reqID := lw.RequestID()
+			url := getRequestURL(r)
+
+			for _, appender := range appenders {
+
+				if appender == nil {
+					continue
+				}
+
+				appender.Append(LogEntry{
+					RequestID:     reqID,
+					Method:        r.Method,
+					URL:           url,
+					RemoteAddr:    r.RemoteAddr,
+					Status:        status,
+					BytesWritten:  length,
+					ExecutionTime: delta,
+				})
+
+			}
+
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
+
 // Logger is a middleware that logs the start and end of each request, along
 // with some useful data about what was requested, what the response status was,
 // and how long it took to return. When standard output is a TTY, Logger will
 // print in color, otherwise it will print in black and white.
 //
 // Logger prints a request ID if one is provided.
-func Logger(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		reqID := GetReqID(r.Context())
-		prefix := requestPrefix(reqID, r)
-		lw := wrapWriter(w)
+var Logger = NewLogger(DefaultLogAppender)
 
-		t1 := time.Now()
-		defer func() {
-			t2 := time.Now()
-			printRequest(prefix, reqID, lw, t2.Sub(t1))
-		}()
+// DefaultLogAppender is the default LogAppender used by the Logger middleware.
+var DefaultLogAppender LogAppender = defaultLogAppender{}
 
-		next.ServeHTTP(lw, r)
-	}
+type defaultLogAppender struct{}
 
-	return http.HandlerFunc(fn)
-}
+func (l defaultLogAppender) Append(e LogEntry) {
 
-func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
 	buf := &bytes.Buffer{}
 
-	if reqID != "" {
-		cW(buf, nYellow, "[%s] ", reqID)
+	if e.RequestID != "" {
+		cW(buf, nYellow, "[%s] ", e.RequestID)
 	}
 	cW(buf, nCyan, "\"")
-	cW(buf, bMagenta, "%s ", r.Method)
-
-	if r.TLS == nil {
-		cW(buf, nCyan, "http://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
-	} else {
-		cW(buf, nCyan, "https://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
-	}
+	cW(buf, bMagenta, "%s ", e.Method)
+	cW(buf, nCyan, "%s\" ", e.URL)
 
 	buf.WriteString("from ")
-	buf.WriteString(r.RemoteAddr)
+	buf.WriteString(e.RemoteAddr)
 	buf.WriteString(" - ")
 
-	return buf
-}
-
-func printRequest(buf *bytes.Buffer, reqID string, w writerProxy, dt time.Duration) {
-	status := w.Status()
+	status := e.Status
 	if status == StatusClientClosedRequest {
 		cW(buf, bRed, "[disconnected]")
 	} else {
@@ -78,22 +131,48 @@ func printRequest(buf *bytes.Buffer, reqID string, w writerProxy, dt time.Durati
 		}
 	}
 
-	cW(buf, bBlue, " %dB", w.BytesWritten())
+	cW(buf, bBlue, " %dB", e.BytesWritten)
 
 	buf.WriteString(" in ")
-	if dt < 500*time.Millisecond {
-		cW(buf, nGreen, "%s", dt)
-	} else if dt < 5*time.Second {
-		cW(buf, nYellow, "%s", dt)
+	if e.ExecutionTime < 500*time.Millisecond {
+		cW(buf, nGreen, "%s", e.ExecutionTime)
+	} else if e.ExecutionTime < 5*time.Second {
+		cW(buf, nYellow, "%s", e.ExecutionTime)
 	} else {
-		cW(buf, nRed, "%s", dt)
+		cW(buf, nRed, "%s", e.ExecutionTime)
 	}
 
 	log.Print(buf.String())
 }
 
+var (
+	httpScheme      = "http://"
+	httpsScheme     = "https://"
+	xForwardedProto = http.CanonicalHeaderKey("X-Forwarded-Proto")
+)
+
+func getRequestURL(r *http.Request) string {
+
+	scheme := httpScheme
+
+	// Is HTTPS with TLS connection ?
+	if r.TLS != nil {
+		scheme = httpsScheme
+	}
+
+	// or with a reverse proxy ?
+	if xfp := r.Header.Get(xForwardedProto); xfp == httpsScheme {
+		scheme = httpsScheme
+	}
+
+	return scheme + r.Host + r.RequestURI
+}
+
 // writerProxy is a proxy around an http.ResponseWriter that allows you to hook
 // into various parts of the response process.
+//
+// NOTE: writerProxy MUST remains private, use LogAppender instead if you need
+// a hook for these informations.
 type writerProxy interface {
 	http.ResponseWriter
 	// Status returns the HTTP status of the request, or 0 if one has not
@@ -110,17 +189,27 @@ type writerProxy interface {
 	Tee(io.Writer)
 	// Unwrap returns the original proxied target.
 	Unwrap() http.ResponseWriter
+	// Duration returns the total execution time of the request.
+	Duration() time.Duration
+	// RequestID returns the request ID, or an empty string otherwise.
+	RequestID() string
 }
 
 // WrapWriter wraps an http.ResponseWriter, returning a proxy that allows you to
 // hook into various parts of the response process.
-func wrapWriter(w http.ResponseWriter) writerProxy {
+// TODO: When reqID allocation is removed, delete this "hack" to optimize allocs
+// by injecting the http.Request
+func wrapWriter(w http.ResponseWriter, r *http.Request) writerProxy {
 	_, cn := w.(http.CloseNotifier)
 	_, fl := w.(http.Flusher)
 	_, hj := w.(http.Hijacker)
 	_, rf := w.(io.ReaderFrom)
 
-	bw := basicWriter{ResponseWriter: w}
+	// TODO: There is an allocation here, remove me.
+	reqID := GetReqID(r.Context())
+
+	bw := basicWriter{ResponseWriter: w, reqID: reqID, start: time.Now()}
+
 	if cn && fl && hj && rf {
 		return &fancyWriter{bw}
 	}
@@ -134,10 +223,14 @@ func wrapWriter(w http.ResponseWriter) writerProxy {
 // http.ResponseWriter interface.
 type basicWriter struct {
 	http.ResponseWriter
-	wroteHeader bool
 	code        int
 	bytes       int
 	tee         io.Writer
+	reqID       string
+	start       time.Time
+	duration    time.Duration
+	hasDuration bool
+	wroteHeader bool
 }
 
 func (b *basicWriter) WriteHeader(code int) {
@@ -176,6 +269,16 @@ func (b *basicWriter) Tee(w io.Writer) {
 }
 func (b *basicWriter) Unwrap() http.ResponseWriter {
 	return b.ResponseWriter
+}
+func (b *basicWriter) Duration() time.Duration {
+	if !b.hasDuration {
+		b.hasDuration = true
+		b.duration = time.Since(b.start)
+	}
+	return b.duration
+}
+func (b *basicWriter) RequestID() string {
+	return b.reqID
 }
 
 // fancyWriter is a writer that additionally satisfies http.CloseNotifier,
