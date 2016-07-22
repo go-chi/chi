@@ -26,11 +26,11 @@ func Throttle(limit int) func(http.Handler) http.Handler {
 // pending requests.
 func ThrottleBacklog(limit int, backlogLimit int, backlogTimeout time.Duration) func(http.Handler) http.Handler {
 	if limit < 1 {
-		panic("middleware.Throttle expects limit > 0")
+		panic("chi/middleware: Throttle expects limit > 0")
 	}
 
 	if backlogLimit < 0 {
-		panic("middleware.Throttle expects backlogLimit to be positive")
+		panic("chi/middleware: Throttle expects backlogLimit to be positive")
 	}
 
 	t := throttler{

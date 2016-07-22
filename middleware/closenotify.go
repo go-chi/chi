@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"net/http"
 	"context"
+	"net/http"
 )
 
 // StatusClientClosedRequest represents a 499 Client Closed Request (Nginx) HTTP status.
@@ -16,7 +16,7 @@ func CloseNotify(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		cn, ok := w.(http.CloseNotifier)
 		if !ok {
-			panic("middleware.CloseNotify expects http.ResponseWriter to implement http.CloseNotifier interface")
+			panic("chi/middleware: CloseNotify expects http.ResponseWriter to implement http.CloseNotifier interface")
 		}
 		closeNotifyCh := cn.CloseNotify()
 

@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/pprof"
+
 	"github.com/pressly/chi"
 )
-
-// TODO: keep profiler here or move to goware/?
 
 // Profiler is a convenient subrouter used for mounting net/http/pprof. ie.
 //
