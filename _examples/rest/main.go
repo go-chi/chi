@@ -157,9 +157,9 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build your own responder, see the "./render" pacakge as a starting
-	// point for your own.
-	render.JSON(w, 200, article)
+	// You can use your own responder, see the "github.com/pressly/chi/render"
+	// package as a starting point for your own.
+	render.JSON(w, r, article)
 
 	// or..
 	// w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
@@ -190,7 +190,7 @@ func updateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.JSON(w, 200, uArticle)
+	render.JSON(w, r, uArticle)
 
 	// w.Write([]byte(fmt.Sprintf("updated article, title:%s", uArticle.Title)))
 }

@@ -6,57 +6,55 @@ import (
 	"strings"
 )
 
-// A ContentType is an enumeration of HTTP content types.
+var (
+	contentTypeCtxKey = &contextKey{"ContentType"}
+)
+
+// A ContentType is an enumeration of common HTTP content types.
 type ContentType int
 
 const (
 	ContentTypePlainText = iota
 	ContentTypeHTML
 	ContentTypeJSON
-	ContentTypeEventStream
 	ContentTypeXML
+	ContentTypeEventStream
 )
 
-type ctxKey int
-
-const ContentTypeCtxKey ctxKey = iota
-
-// TODO: is this middleware still useful? if render.Respond()
-// accepted the type somehow, then its less important.
-// perhaps we keep it, and pass ctx as first argument..?
-// or... make signature: render.Respond(w, r, status, data)
-
-func ParseContentType(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var contentType ContentType
-
-		// Parse request Accept header.
-		fields := strings.Split(r.Header.Get("Accept"), ",")
-		if len(fields) > 0 {
-			switch strings.TrimSpace(fields[0]) {
-			case "text/plain":
-				contentType = ContentTypePlainText
-			case "text/html", "application/xhtml+xml":
-				contentType = ContentTypeHTML
-			case "application/json", "text/javascript":
-				contentType = ContentTypeJSON
-			case "text/event-stream":
-				contentType = ContentTypeEventStream
-			case "text/xml":
-				contentType = ContentTypeXML
-			default:
-				contentType = ContentTypeJSON
-			}
+// SetContentType is a middleware that forces response Content-Type.
+func SetContentType(contentType ContentType) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), contentTypeCtxKey, contentType))
+			next.ServeHTTP(w, r)
 		}
+		return http.HandlerFunc(fn)
+	}
+}
 
-		// Explicitly requested stream.
-		if _, ok := r.URL.Query()["stream"]; ok {
-			contentType = ContentTypeEventStream
+// getContentType is a helper function that returns ContentType based on
+// context or request headers.
+func getResponseContentType(r *http.Request) ContentType {
+	if contentType, ok := r.Context().Value(contentTypeCtxKey).(ContentType); ok {
+		return contentType
+	}
+
+	// Parse request Accept header.
+	fields := strings.Split(r.Header.Get("Accept"), ",")
+	if len(fields) > 0 {
+		switch strings.TrimSpace(fields[0]) {
+		case "text/plain":
+			return ContentTypePlainText
+		case "text/html", "application/xhtml+xml":
+			return ContentTypeHTML
+		case "application/json", "text/javascript":
+			return ContentTypeJSON
+		case "text/xml", "application/xml":
+			return ContentTypeXML
+		case "text/event-stream":
+			return ContentTypeEventStream
 		}
+	}
 
-		ctx := context.WithValue(r.Context(), ContentTypeCtxKey, contentType)
-		r = r.WithContext(ctx)
-
-		next.ServeHTTP(w, r)
-	})
+	return ContentTypePlainText // Default ContentType.
 }
