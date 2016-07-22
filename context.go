@@ -16,15 +16,18 @@ var _ context.Context = &Context{}
 type Context struct {
 	context.Context
 
-	// URL parameter key and values
+	// URL parameter key and values.
 	Params params
 
-	// Routing path override used by subrouters
+	// Routing path override used by subrouters.
 	RoutePath string
 
-	// Routing pattern that matches the request
-	// TODO: ..
+	// Routing pattern matching the path.
 	RoutePattern string
+
+	// Routing patterns throughout the lifecycle of the request,
+	// across all connected routers.
+	RoutePatterns []string
 }
 
 // NewRouteContext returns a new routing context object.
@@ -39,6 +42,8 @@ func NewRouteContext() *Context {
 func (x *Context) reset() {
 	x.Params = x.Params[:0]
 	x.RoutePath = ""
+	x.RoutePattern = ""
+	x.RoutePatterns = x.RoutePatterns[:0]
 }
 
 // RouteContext returns chi's routing context object that holds url params

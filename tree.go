@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-// TODO: set the RoutePattern on the RouteContext
-
 type methodTyp int
 
 const (
@@ -50,21 +48,8 @@ const (
 	ntCatchAll                // /api/v1/*
 )
 
-// TODO: comment
-// TODO: if WalkFn is exported, this needs to be as well, which its better not to.
-// I have a few ideas, will massage it later.
-type methodHandlers map[methodTyp]http.Handler
-
-// WalkFn is used when walking the tree. Takes a
-// key and value, returning if iteration should
-// be terminated.
-
-// TODO: .. lets leave it like this for now..
-// but we could also just make it
-// type WalkFn func(method string, pattern string, handler http.Handler) bool
-type WalkFn func(path string, handlers methodHandlers) bool
-
 type node struct {
+	// node type
 	typ nodeTyp
 
 	// first byte of the prefix
@@ -72,9 +57,6 @@ type node struct {
 
 	// prefix is the common prefix we ignore
 	prefix string
-
-	// TODO: param name..
-	// pname string
 
 	// HTTP handler on the leaf node
 	handlers methodHandlers
@@ -85,12 +67,21 @@ type node struct {
 }
 
 func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
-	var routeNode *node
-	routeNode = n.findNode(rctx, path)
-	if routeNode == nil {
+	// Reset the context routing pattern
+	rctx.RoutePattern = ""
+
+	// Find the routing handlers for the path
+	rn := n.findRoute(rctx, path)
+	if rn == nil {
 		return nil
 	}
-	return routeNode.handlers
+
+	// Record the routing pattern in the request lifecycle
+	if rctx.RoutePattern != "" {
+		rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.RoutePattern)
+	}
+
+	return rn.handlers
 }
 
 func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
@@ -319,8 +310,7 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
 // It's like searching through a multi-dimensional radix trie.
-// TODO: rename to findRoute ? ...
-func (n *node) findNode(rctx *Context, path string) *node {
+func (n *node) findRoute(rctx *Context, path string) *node {
 	nn := n
 	search := path
 
@@ -335,8 +325,8 @@ func (n *node) findNode(rctx *Context, path string) *node {
 		if search != "" {
 			label = search[0]
 		}
-		xn := nn.findEdge(ntyp, label) // next node
 
+		xn := nn.findEdge(ntyp, label) // next node
 		if xn == nil {
 			continue
 		}
@@ -365,6 +355,9 @@ func (n *node) findNode(rctx *Context, path string) *node {
 			continue // no match
 		}
 
+		// Build the matching routing pattern
+		rctx.RoutePattern += xn.prefix
+
 		// did we find it yet?
 		if len(xsearch) == 0 {
 			if xn.isLeaf() {
@@ -373,16 +366,19 @@ func (n *node) findNode(rctx *Context, path string) *node {
 		}
 
 		// recursively find the next node..
-		fin := xn.findNode(rctx, xsearch)
+		fin := xn.findRoute(rctx, xsearch)
 		if fin != nil {
 			// found a node, return it
 			return fin
 		}
 
 		// Did not found final handler, let's remove the param here if it was set
-		// TODO: can we do even better now though...?
-		if xn.typ > ntStatic && xn.typ < ntCatchAll {
-			rctx.Params.Del(xn.prefix[1:])
+		if xn.typ > ntStatic {
+			if xn.typ == ntCatchAll {
+				rctx.Params.Del("*")
+			} else {
+				rctx.Params.Del(xn.prefix[1:])
+			}
 		}
 	}
 
@@ -427,22 +423,14 @@ func (n *node) isEmpty() bool {
 	return true
 }
 
-type nodes []*node
-
-// Sort the list of nodes by label
-func (ns nodes) Len() int           { return len(ns) }
-func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
-func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
-func (ns nodes) Sort()              { sort.Sort(ns) }
-
 // Walk is used to walk the tree
-func (t *node) Walk(fn WalkFn) {
+func (t *node) walk(fn walkFn) {
 	t.recursiveWalk(t.prefix, t, fn)
 }
 
 // recursiveWalk is used to do a pre-order walk of a node
 // recursively. Returns true if the walk should be aborted
-func (t *node) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
+func (t *node) recursiveWalk(pattern string, n *node, fn walkFn) bool {
 	pattern += n.prefix
 
 	// Visit the leaf values if any
@@ -460,3 +448,18 @@ func (t *node) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
 	}
 	return false
 }
+
+// methodHandlers is a mapping of http method constants to handlers
+// for a given route.
+type methodHandlers map[methodTyp]http.Handler
+
+// walkFn is used when walking the tree.
+type walkFn func(path string, handlers methodHandlers) bool
+
+type nodes []*node
+
+// Sort the list of nodes by label
+func (ns nodes) Len() int           { return len(ns) }
+func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
+func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
+func (ns nodes) Sort()              { sort.Sort(ns) }

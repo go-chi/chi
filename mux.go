@@ -67,9 +67,8 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Once the request is finsihed, reset the routing context and put it back
 	// into the pool for reuse from another request.
 	rctx = mx.pool.Get().(*Context)
-	r = r.WithContext(rctx)
-	mx.handler.ServeHTTP(w, r)
 	rctx.reset()
+	mx.handler.ServeHTTP(w, r.WithContext(rctx))
 	mx.pool.Put(rctx)
 }
 
@@ -182,7 +181,7 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // a single service using Mount. See _examples/ for example usage.
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Assign sub-Router's with the parent not found handler if not specified.
-	// TODO: is there a better way to get the mux() ?
+	// TODO: is there a better way to get the mux ?
 	sr, ok := handler.(*Mux)
 	if ok && sr.notFoundHandler == nil && mx.notFoundHandler != nil {
 		sr.NotFound(mx.notFoundHandler)
@@ -223,9 +222,6 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
-
-	// TOOD: add a validation method to check the route and that params
-	// dont conflict. or, add it in the tree code.
 
 	// Build the single mux handler that is a chain of the middleware stack, as
 	// defined by calls to Use(), and the tree router (mux) itself. After this point,

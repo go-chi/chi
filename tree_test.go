@@ -46,7 +46,7 @@ func TestTree(t *testing.T) {
 	tr.InsertRoute(mGET, "/article/", hArticleList) // redirect..?
 
 	tr.InsertRoute(mGET, "/article/near", hArticleNear)
-	// tr.InsertRoute("/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
+	// tr.InsertRoute("/article/:sup", hStub) // will get overwritten as :id param
 	tr.InsertRoute(mGET, "/article/:id", hStub)
 	tr.InsertRoute(mGET, "/article/:id", hArticleShow)
 	tr.InsertRoute(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
@@ -64,7 +64,7 @@ func TestTree(t *testing.T) {
 	tr.InsertRoute(mGET, "/admin/user/", hUserList)
 
 	tr.InsertRoute(mGET, "/admin/user//:id", hUserShow)
-	tr.InsertRoute(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+	tr.InsertRoute(mGET, "/admin/user/:id", hUserShow)
 
 	tr.InsertRoute(mGET, "/admin/apps/:id", hAdminAppShow)
 	tr.InsertRoute(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
