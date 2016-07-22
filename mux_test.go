@@ -769,7 +769,7 @@ func TestMuxSubroutes(t *testing.T) {
 
 	routePatterns := rctx.RoutePatterns
 	if len(rctx.RoutePatterns) != 3 {
-		t.Fatalf("expected 3 routing patterns, from 3 subrouters")
+		t.Fatalf("expected 3 routing patterns, got:%d", len(rctx.RoutePatterns))
 	}
 	expected = "/accounts/:accountID/*"
 	if routePatterns[0] != expected {

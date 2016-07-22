@@ -2,7 +2,7 @@ package chi
 
 // Radix tree implementation below is a based on the original work by
 // Armon Dadgar in https://github.com/armon/go-radix/blob/master/radix.go
-// (MIT licensed)
+// (MIT licensed). It's been heavily modified for use as a HTTP routing tree.
 
 import (
 	"net/http"
@@ -58,6 +58,9 @@ type node struct {
 	// prefix is the common prefix we ignore
 	prefix string
 
+	// pattern is the computed path of prefixes
+	pattern string
+
 	// HTTP handler on the leaf node
 	handlers methodHandlers
 
@@ -77,7 +80,8 @@ func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
 	}
 
 	// Record the routing pattern in the request lifecycle
-	if rctx.RoutePattern != "" {
+	if rn.pattern != "" {
+		rctx.RoutePattern = rn.pattern
 		rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.RoutePattern)
 	}
 
@@ -93,6 +97,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
 			n.setHandler(method, handler)
+			n.pattern = pattern
 			return n
 		}
 
@@ -102,9 +107,9 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 
 		// No edge, create one
 		if n == nil {
-			cn := &node{label: search[0], prefix: search}
+			cn := &node{label: search[0], prefix: search, pattern: pattern}
 			cn.setHandler(method, handler)
-			parent.addChild(cn)
+			parent.addChild(pattern, cn)
 			return cn
 		}
 
@@ -139,23 +144,25 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 		// Restore the existing node
 		n.label = n.prefix[commonPrefix]
 		n.prefix = n.prefix[commonPrefix:]
-		child.addChild(n)
+		child.addChild(pattern, n)
 
 		// If the new key is a subset, add to to this node
 		search = search[commonPrefix:]
 		if len(search) == 0 {
 			child.setHandler(method, handler)
+			child.pattern = pattern
 			return child
 		}
 
 		// Create a new edge for the node
 		subchild := &node{
-			typ:    ntStatic,
-			label:  search[0],
-			prefix: search,
+			typ:     ntStatic,
+			label:   search[0],
+			prefix:  search,
+			pattern: pattern,
 		}
 		subchild.setHandler(method, handler)
-		child.addChild(subchild)
+		child.addChild(pattern, subchild)
 		return subchild
 	}
 }
@@ -178,7 +185,7 @@ func (n *node) isLeaf() bool {
 	return n.handlers != nil
 }
 
-func (n *node) addChild(child *node) {
+func (n *node) addChild(pattern string, child *node) {
 	search := child.prefix
 
 	// Find any wildcard segments
@@ -217,10 +224,11 @@ func (n *node) addChild(child *node) {
 
 			search = search[p:]
 
-			child.addChild(&node{
+			child.addChild(pattern, &node{
 				typ:      ntStatic,
 				label:    search[0], // this will always start with /
 				prefix:   search,
+				pattern:  pattern,
 				handlers: handlers,
 			})
 		}
@@ -237,10 +245,11 @@ func (n *node) addChild(child *node) {
 		// add the wild edge node
 		search = search[p:]
 
-		child.addChild(&node{
+		child.addChild(pattern, &node{
 			typ:      ntyp,
 			label:    search[0],
 			prefix:   search,
+			pattern:  pattern,
 			handlers: handlers,
 		})
 
@@ -354,9 +363,6 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 		} else {
 			continue // no match
 		}
-
-		// Build the matching routing pattern
-		rctx.RoutePattern += xn.prefix
 
 		// did we find it yet?
 		if len(xsearch) == 0 {
