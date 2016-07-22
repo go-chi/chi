@@ -10,15 +10,15 @@ var (
 	contentTypeCtxKey = &contextKey{"ContentType"}
 )
 
-// A ContentType is an enumeration of HTTP content types.
+// A ContentType is an enumeration of common HTTP content types.
 type ContentType int
 
 const (
 	ContentTypePlainText = iota
 	ContentTypeHTML
 	ContentTypeJSON
-	ContentTypeEventStream
 	ContentTypeXML
+	ContentTypeEventStream
 )
 
 // SetContentType is a middleware that forces response Content-Type.
@@ -34,7 +34,7 @@ func SetContentType(contentType ContentType) func(next http.Handler) http.Handle
 
 // getContentType is a helper function that returns ContentType based on
 // context or request headers.
-func getContentType(r *http.Request) ContentType {
+func getResponseContentType(r *http.Request) ContentType {
 	if contentType, ok := r.Context().Value(contentTypeCtxKey).(ContentType); ok {
 		return contentType
 	}
@@ -49,10 +49,10 @@ func getContentType(r *http.Request) ContentType {
 			return ContentTypeHTML
 		case "application/json", "text/javascript":
 			return ContentTypeJSON
-		case "text/event-stream":
-			return ContentTypeEventStream
 		case "text/xml", "application/xml":
 			return ContentTypeXML
+		case "text/event-stream":
+			return ContentTypeEventStream
 		}
 	}
 
