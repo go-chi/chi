@@ -44,19 +44,10 @@ func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middl
 	return *ms
 }
 
-func (ms Middlewares) Handler(h http.HandlerFunc) http.HandlerFunc {
+func (ms Middlewares) Handler(h http.Handler) http.HandlerFunc {
 	return chain(ms, h).ServeHTTP
 }
 
-func (ms Middlewares) Router(r Router) Router {
-	// TODO .........
-	return r
+func (ms Middlewares) HandlerFunc(h http.HandlerFunc) http.HandlerFunc {
+	return chain(ms, h).ServeHTTP
 }
-
-// TODO: review...
-// func (ms Middlewares) Router(r Router) Router {
-// 	mx := r.GetMux()
-// 	mx.middlewares = append(mx.middlewares, ms...)
-// 	mx.buildRouteHandler()
-// 	return r
-// }

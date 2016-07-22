@@ -19,28 +19,8 @@ func main() {
 		w.Write([]byte("."))
 	})
 
-	r.Mount("/", usersResource{}.Routes())
-	r.Mount("/", todosResource{}.Routes())
-
-	// r.Mount("/",
-	// 	usersResource{}.Routes(),
-	// 	todosResource{}.Routes(),
-	// )
-
-	// r.Mount(chi.Route("/users", router))
-
-	// r.Route("/", chi.RouterFunc(usersResource{}.Routes()))
-
-	// r.Mount(usersResource{}.Routes())
-
-	// r.Mount("/",
-	// 	usersResource{}.Routes(),
-	// 	todosResource{}.Routes(),
-	// )
-
-	// hmmm.. perhaps r.Mount() will actually add to the existing tree..?
-	// instead of making a real subrouter and joining with a middleware......?
-	// effectively, joining 2 trees...
+	r.Mount("/users", usersResource{}.Routes())
+	r.Mount("/todos", todosResource{}.Routes())
 
 	http.ListenAndServe(":3333", r)
 }

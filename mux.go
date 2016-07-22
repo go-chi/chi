@@ -18,7 +18,7 @@ var _ Router = &Mux{}
 // parts composed of middlewares and end handlers.
 type Mux struct {
 	// The radix trie router
-	router *node
+	tree *node
 
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
@@ -40,7 +40,7 @@ type Mux struct {
 
 // NewMux returns a new Mux object with an optional parent context.
 func NewMux() *Mux {
-	mux := &Mux{router: &node{}}
+	mux := &Mux{tree: &node{}}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext()
 	}
@@ -158,7 +158,7 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 	}
 
 	// Make a new inline mux and run the router functions over it.
-	g := &Mux{inline: true, router: mx.router}
+	g := &Mux{inline: true, tree: mx.tree}
 	if fn != nil {
 		fn(g)
 	}
@@ -187,22 +187,6 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	if ok && sr.notFoundHandler == nil && mx.notFoundHandler != nil {
 		sr.NotFound(mx.notFoundHandler)
 	}
-
-	// TODO: perhaps search the tree mx and smx trees, and find the right path
-	// to mount this router on..?
-	//
-	// we could, always bubble up the first pattern that isn't a "/" from the mx or the subrouter..
-	if pattern == "/" {
-		// _, pattern = sr.router.split("/")
-		// log.Println("! after", sr.router.root.prefix, "+", sr.router.root.edges[0][0].node.prefix)
-		// sr.buildRouteHandler()
-	}
-
-	// log.Println("")
-	// sr.router.Walk(func(path string, handlers methodHandlers) bool {
-	// 	log.Println("pattern:", pattern, "walk:", path)
-	// 	return false
-	// })
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -241,7 +225,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	}
 
 	// TOOD: add a validation method to check the route and that params
-	// dont conflict.
+	// dont conflict. or, add it in the tree code.
 
 	// Build the single mux handler that is a chain of the middleware stack, as
 	// defined by calls to Use(), and the tree router (mux) itself. After this point,
@@ -262,19 +246,18 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	}
 
 	// Add the endpoint to the tree
-	mx.router.Insert(method, pattern, endpoint)
+	mx.tree.InsertRoute(method, pattern, endpoint)
 }
 
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Grab the root context object
-	// TODO: can we somehow avoid calling .Value() here again for the request..?
 	ctx := r.Context()
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
 		rctx = ctx.Value(RouteCtxKey).(*Context)
 	}
 
-	// The request path
+	// The request routing path
 	routePath := rctx.RoutePath
 	if routePath == "" {
 		routePath = r.URL.Path
@@ -288,9 +271,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the route
-	// TODO: any point in giving the method..? maybe later..
-	// TODO: if we switch method to string.. then, we can simplify this code..
-	hs := mx.router.Find(rctx, method, routePath)
+	hs := mx.tree.FindRoute(rctx, routePath)
 
 	if hs == nil {
 		if mx.notFoundHandler != nil {

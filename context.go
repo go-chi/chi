@@ -11,13 +11,6 @@ var (
 
 var _ context.Context = &Context{}
 
-// TODO:
-// or... do we make it a RouteContext interface ..?
-// and have a struct type routeContext ..
-// but, any call to context.WithValue(rctx, "k", "v")
-// will override.. id have to use chi.WithValue(rctx) to maintain ..
-// cuz it will return context.Context, and lose the type I think.. (check tho..)
-
 // A Context is the default routing context set on the root node of a
 // request context to track URL parameters and an optional routing path.
 type Context struct {

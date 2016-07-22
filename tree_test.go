@@ -2,6 +2,7 @@ package chi
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"reflect"
 	"testing"
@@ -36,58 +37,58 @@ func TestTree(t *testing.T) {
 
 	tr := &node{}
 
-	tr.Insert(mGET, "/", hIndex)
-	tr.Insert(mGET, "/favicon.ico", hFavicon)
+	tr.InsertRoute(mGET, "/", hIndex)
+	tr.InsertRoute(mGET, "/favicon.ico", hFavicon)
 
-	tr.Insert(mGET, "/pages/*", hStub)
+	tr.InsertRoute(mGET, "/pages/*", hStub)
 
-	tr.Insert(mGET, "/article", hArticleList)
-	tr.Insert(mGET, "/article/", hArticleList) // redirect..?
+	tr.InsertRoute(mGET, "/article", hArticleList)
+	tr.InsertRoute(mGET, "/article/", hArticleList) // redirect..?
 
-	tr.Insert(mGET, "/article/near", hArticleNear)
-	// tr.Insert("/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
-	tr.Insert(mGET, "/article/:id", hStub)
-	tr.Insert(mGET, "/article/:id", hArticleShow)
-	tr.Insert(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
-	tr.Insert(mGET, "/article/@:user", hArticleByUser)
+	tr.InsertRoute(mGET, "/article/near", hArticleNear)
+	// tr.InsertRoute("/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
+	tr.InsertRoute(mGET, "/article/:id", hStub)
+	tr.InsertRoute(mGET, "/article/:id", hArticleShow)
+	tr.InsertRoute(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
+	tr.InsertRoute(mGET, "/article/@:user", hArticleByUser)
 
-	tr.Insert(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
-	tr.Insert(mGET, "/article/:id/:opts", hArticleShowOpts)
+	tr.InsertRoute(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
+	tr.InsertRoute(mGET, "/article/:id/:opts", hArticleShowOpts)
 
-	tr.Insert(mGET, "/article/:iffd/edit", hStub)
-	tr.Insert(mGET, "/article/:id//related", hArticleShowRelated)
-	tr.Insert(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
+	tr.InsertRoute(mGET, "/article/:iffd/edit", hStub)
+	tr.InsertRoute(mGET, "/article/:id//related", hArticleShowRelated)
+	tr.InsertRoute(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	tr.Insert(mGET, "/admin/user", hUserList)
-	tr.Insert(mGET, "/admin/user/", hStub) // will get replaced by next route
-	tr.Insert(mGET, "/admin/user/", hUserList)
+	tr.InsertRoute(mGET, "/admin/user", hUserList)
+	tr.InsertRoute(mGET, "/admin/user/", hStub) // will get replaced by next route
+	tr.InsertRoute(mGET, "/admin/user/", hUserList)
 
-	tr.Insert(mGET, "/admin/user//:id", hUserShow)
-	tr.Insert(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+	tr.InsertRoute(mGET, "/admin/user//:id", hUserShow)
+	tr.InsertRoute(mGET, "/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
 
-	tr.Insert(mGET, "/admin/apps/:id", hAdminAppShow)
-	tr.Insert(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
+	tr.InsertRoute(mGET, "/admin/apps/:id", hAdminAppShow)
+	tr.InsertRoute(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
 
-	tr.Insert(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
-	tr.Insert(mGET, "/admin/*", hAdminCatchall)
+	tr.InsertRoute(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.InsertRoute(mGET, "/admin/*", hAdminCatchall)
 
-	tr.Insert(mGET, "/users/:userID/profile", hUserProfile)
-	tr.Insert(mGET, "/users/super/*", hUserSuper)
-	tr.Insert(mGET, "/users/*", hUserAll)
+	tr.InsertRoute(mGET, "/users/:userID/profile", hUserProfile)
+	tr.InsertRoute(mGET, "/users/super/*", hUserSuper)
+	tr.InsertRoute(mGET, "/users/*", hUserAll)
 
-	tr.Insert(mGET, "/hubs/:hubID/view", hHubView1)
-	tr.Insert(mGET, "/hubs/:hubID/view/*", hHubView2)
+	tr.InsertRoute(mGET, "/hubs/:hubID/view", hHubView1)
+	tr.InsertRoute(mGET, "/hubs/:hubID/view/*", hHubView2)
 	sr := NewRouter()
 	sr.Get("/users", hHubView3)
-	tr.Insert(mGET, "/hubs/:hubID/*", sr)
-	tr.Insert(mGET, "/hubs/:hubID/users", hHubView3)
+	tr.InsertRoute(mGET, "/hubs/:hubID/*", sr)
+	tr.InsertRoute(mGET, "/hubs/:hubID/users", hHubView3)
 
-	// tr.Insert("/debug*", hStub) // TODO: should we support this..?
+	// tr.InsertRoute("/debug*", hStub) // TODO: should we support this..?
 
-	// TODO: test bad inserts ie.
-	// tr.Insert("")
-	// tr.Insert("/admin/:/joe/:/*") //...?
-	// tr.Insert("------------")
+	// TODO: test bad InsertRoutes ie.
+	// tr.InsertRoute("")
+	// tr.InsertRoute("/admin/:/joe/:/*") //...?
+	// tr.InsertRoute("------------")
 
 	tests := []struct {
 		r string            // input request path
@@ -133,7 +134,7 @@ func TestTree(t *testing.T) {
 
 	// log.Println("~~~~~~~~~")
 	// log.Println("~~~~~~~~~")
-	// debugPrintTree(0, 0, tr.root, 0)
+	// debugPrintTree(0, 0, tr, 0)
 	// log.Println("~~~~~~~~~")
 	// log.Println("~~~~~~~~~")
 
@@ -141,7 +142,7 @@ func TestTree(t *testing.T) {
 		// params := make(map[string]string, 0)
 		rctx := NewRouteContext()
 
-		handlers := tr.Find(rctx, mGET, tt.r) //, params)
+		handlers := tr.FindRoute(rctx, tt.r) //, params)
 		handler, _ := handlers[mGET]
 
 		params := urlParams(rctx)
@@ -155,43 +156,43 @@ func TestTree(t *testing.T) {
 	}
 }
 
-// func debugPrintTree(parent int, i int, n *node, label byte) bool {
-// 	numEdges := 0
-// 	for _, edges := range n.edges {
-// 		numEdges += len(edges)
-// 	}
-//
-// 	if n.handler != nil {
-// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handler)
-// 	} else {
-// 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf())
-// 	}
-//
-// 	parent = i
-// 	for _, edges := range n.edges {
-// 		for _, e := range edges {
-// 			i++
-// 			if debugPrintTree(parent, i, e.node, e.label) {
-// 				return true
-// 			}
-// 		}
-// 	}
-// 	return false
-// }
+func debugPrintTree(parent int, i int, n *node, label byte) bool {
+	numEdges := 0
+	for _, nds := range n.children {
+		numEdges += len(nds)
+	}
+
+	if n.handlers != nil {
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handlers)
+	} else {
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf())
+	}
+
+	parent = i
+	for _, nds := range n.children {
+		for _, e := range nds {
+			i++
+			if debugPrintTree(parent, i, e, e.label) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func BenchmarkTreeGet(b *testing.B) {
 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &node{}
-	tr.Insert(mGET, "/", h1)
-	tr.Insert(mGET, "/ping", h2)
-	tr.Insert(mGET, "/pingall", h2)
-	tr.Insert(mGET, "/ping/:id", h2)
-	tr.Insert(mGET, "/ping/:id/woop", h2)
-	tr.Insert(mGET, "/ping/:id/:opt", h2)
-	tr.Insert(mGET, "/pinggggg", h2)
-	tr.Insert(mGET, "/hello", h1)
+	tr.InsertRoute(mGET, "/", h1)
+	tr.InsertRoute(mGET, "/ping", h2)
+	tr.InsertRoute(mGET, "/pingall", h2)
+	tr.InsertRoute(mGET, "/ping/:id", h2)
+	tr.InsertRoute(mGET, "/ping/:id/woop", h2)
+	tr.InsertRoute(mGET, "/ping/:id/:opt", h2)
+	tr.InsertRoute(mGET, "/pinggggg", h2)
+	tr.InsertRoute(mGET, "/hello", h1)
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -199,7 +200,7 @@ func BenchmarkTreeGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// params := map[string]string{}
 		mctx := NewRouteContext()
-		tr.Find(mctx, mGET, "/ping/123/456")
+		tr.FindRoute(mctx, "/ping/123/456")
 		// tr.Find("/pingggg", params)
 	}
 }

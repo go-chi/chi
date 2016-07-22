@@ -76,9 +76,6 @@ type node struct {
 	// TODO: param name..
 	// pname string
 
-	// TODO:
-	// subtree *tree
-
 	// HTTP handler on the leaf node
 	handlers methodHandlers
 
@@ -87,15 +84,16 @@ type node struct {
 	children [ntCatchAll + 1]nodes
 }
 
-func (n *node) Find(ctx *Context, method methodTyp, path string) methodHandlers {
-	rn := n.findNode(ctx, method, path)
-	if rn == nil {
+func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
+	var routeNode *node
+	routeNode = n.findNode(rctx, path)
+	if routeNode == nil {
 		return nil
 	}
-	return rn.handlers
+	return routeNode.handlers
 }
 
-func (n *node) Insert(method methodTyp, pattern string, handler http.Handler) {
+func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
 	var parent *node
 	search := pattern
 
@@ -104,7 +102,7 @@ func (n *node) Insert(method methodTyp, pattern string, handler http.Handler) {
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
 			n.setHandler(method, handler)
-			return
+			return n
 		}
 
 		// Look for the edge
@@ -116,7 +114,7 @@ func (n *node) Insert(method methodTyp, pattern string, handler http.Handler) {
 			cn := &node{label: search[0], prefix: search}
 			cn.setHandler(method, handler)
 			parent.addChild(cn)
-			return
+			return cn
 		}
 
 		if n.typ > ntStatic {
@@ -156,7 +154,7 @@ func (n *node) Insert(method methodTyp, pattern string, handler http.Handler) {
 		search = search[commonPrefix:]
 		if len(search) == 0 {
 			child.setHandler(method, handler)
-			return
+			return child
 		}
 
 		// Create a new edge for the node
@@ -167,8 +165,22 @@ func (n *node) Insert(method methodTyp, pattern string, handler http.Handler) {
 		}
 		subchild.setHandler(method, handler)
 		child.addChild(subchild)
-		return
+		return subchild
 	}
+}
+
+func (n *node) findPattern(pattern string) *node {
+	for {
+		if len(pattern) == 0 {
+			return n
+		}
+		n = n.getEdge(pattern[0])
+		if n == nil {
+			return nil // nothing
+		}
+		pattern = pattern[len(n.prefix):]
+	}
+	return nil
 }
 
 func (n *node) isLeaf() bool {
@@ -182,7 +194,7 @@ func (n *node) addChild(child *node) {
 	p := strings.IndexAny(search, ":*")
 
 	// Determine new node type
-	ntyp := ntStatic
+	ntyp := child.typ
 	if p >= 0 {
 		switch search[p] {
 		case ':':
@@ -306,8 +318,9 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
-// It's like searching through a three-dimensional radix trie.
-func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
+// It's like searching through a multi-dimensional radix trie.
+// TODO: rename to findRoute ? ...
+func (n *node) findNode(rctx *Context, path string) *node {
 	nn := n
 	search := path
 
@@ -340,9 +353,9 @@ func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
 			}
 
 			if xn.typ == ntCatchAll {
-				ctx.Params.Add("*", xsearch)
+				rctx.Params.Add("*", xsearch)
 			} else {
-				ctx.Params.Add(xn.prefix[1:], xsearch[:p])
+				rctx.Params.Add(xn.prefix[1:], xsearch[:p])
 			}
 
 			xsearch = xsearch[p:]
@@ -360,7 +373,7 @@ func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
 		}
 
 		// recursively find the next node..
-		fin := xn.findNode(ctx, method, xsearch)
+		fin := xn.findNode(rctx, xsearch)
 		if fin != nil {
 			// found a node, return it
 			return fin
@@ -369,7 +382,7 @@ func (n *node) findNode(ctx *Context, method methodTyp, path string) *node {
 		// Did not found final handler, let's remove the param here if it was set
 		// TODO: can we do even better now though...?
 		if xn.typ > ntStatic && xn.typ < ntCatchAll {
-			ctx.Params.Del(xn.prefix[1:])
+			rctx.Params.Del(xn.prefix[1:])
 		}
 	}
 
@@ -405,6 +418,15 @@ func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	}
 }
 
+func (n *node) isEmpty() bool {
+	for _, nds := range n.children {
+		if len(nds) > 0 {
+			return false
+		}
+	}
+	return true
+}
+
 type nodes []*node
 
 // Sort the list of nodes by label
@@ -414,13 +436,13 @@ func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
 func (ns nodes) Sort()              { sort.Sort(ns) }
 
 // Walk is used to walk the tree
-/*func (t *tree) Walk(fn WalkFn) {
-	t.recursiveWalk(t.root.prefix, t.root, fn)
+func (t *node) Walk(fn WalkFn) {
+	t.recursiveWalk(t.prefix, t, fn)
 }
 
 // recursiveWalk is used to do a pre-order walk of a node
 // recursively. Returns true if the walk should be aborted
-func (t *tree) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
+func (t *node) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
 	pattern += n.prefix
 
 	// Visit the leaf values if any
@@ -429,13 +451,12 @@ func (t *tree) recursiveWalk(pattern string, n *node, fn WalkFn) bool {
 	}
 
 	// Recurse on the children
-	for _, edges := range n.edges {
-		for _, e := range edges {
-			if t.recursiveWalk(pattern, e.node, fn) {
+	for _, nds := range n.children {
+		for _, n := range nds {
+			if t.recursiveWalk(pattern, n, fn) {
 				return true
 			}
 		}
 	}
 	return false
 }
-*/
