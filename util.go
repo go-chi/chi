@@ -15,7 +15,7 @@ func (k *contextKey) String() string {
 
 // chain builds a http.Handler composed of middlewares and endpoint handler in the
 // order they are passed.
-func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
+func Chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
 	// Return ahead of time if there aren't any middlewares for the chain
 	if middlewares == nil || len(middlewares) == 0 {
 		return endpoint

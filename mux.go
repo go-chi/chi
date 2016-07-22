@@ -212,7 +212,7 @@ func (mx *Mux) FileServer(path string, root http.FileSystem) {
 }
 
 func (mx *Mux) buildRouteHandler() {
-	mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+	mx.handler = Chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
 }
 
 // handle creates a chi.Handler from a chain of middlewares and an end handler,
@@ -236,7 +236,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 	var endpoint http.Handler
 	if mx.inline {
 		mx.handler = http.HandlerFunc(mx.routeHTTP)
-		endpoint = chain(mx.middlewares, handler)
+		endpoint = Chain(mx.middlewares, handler)
 	} else {
 		endpoint = handler
 	}

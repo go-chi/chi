@@ -45,9 +45,9 @@ func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middl
 }
 
 func (ms Middlewares) Handler(h http.Handler) http.HandlerFunc {
-	return chain(ms, h).ServeHTTP
+	return Chain(ms, h).ServeHTTP
 }
 
 func (ms Middlewares) HandlerFunc(h http.HandlerFunc) http.HandlerFunc {
-	return chain(ms, h).ServeHTTP
+	return Chain(ms, h).ServeHTTP
 }
