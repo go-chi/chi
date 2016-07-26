@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/pressly/chi"
-	"github.com/pressly/chi/_examples/render/data"
-	"github.com/pressly/chi/_examples/render/presenter/v1"
-	"github.com/pressly/chi/_examples/render/presenter/v2"
-	"github.com/pressly/chi/_examples/render/presenter/v3"
+	"github.com/pressly/chi/_examples/versions/data"
+	"github.com/pressly/chi/_examples/versions/presenter/v1"
+	"github.com/pressly/chi/_examples/versions/presenter/v2"
+	"github.com/pressly/chi/_examples/versions/presenter/v3"
 	"github.com/pressly/chi/middleware"
 	"github.com/pressly/chi/render"
 )

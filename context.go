@@ -16,7 +16,7 @@ var _ context.Context = &Context{}
 type Context struct {
 	context.Context
 
-	// URL parameter key and values.
+	// URL routing parameter key and values.
 	Params params
 
 	// Routing path override used by subrouters.
@@ -30,7 +30,7 @@ type Context struct {
 	RoutePatterns []string
 }
 
-// NewRouteContext returns a new routing context object.
+// NewRouteContext returns a new routing Context object.
 func NewRouteContext() *Context {
 	rctx := &Context{}
 	ctx := context.WithValue(context.Background(), RouteCtxKey, rctx)
@@ -46,8 +46,8 @@ func (x *Context) reset() {
 	x.RoutePatterns = x.RoutePatterns[:0]
 }
 
-// RouteContext returns chi's routing context object that holds url params
-// and a routing path for subrouters.
+// RouteContext returns chi's routing Context object from a
+// http.Request Context.
 func RouteContext(ctx context.Context) *Context {
 	rctx, _ := ctx.(*Context)
 	if rctx == nil {
@@ -56,7 +56,7 @@ func RouteContext(ctx context.Context) *Context {
 	return rctx
 }
 
-// URLParam returns the url parameter from an http.Request Context
+// URLParam returns the url parameter from a http.Request object.
 func URLParam(r *http.Request, key string) string {
 	if rctx := RouteContext(r.Context()); rctx != nil {
 		return rctx.Params.Get(key)
@@ -64,7 +64,7 @@ func URLParam(r *http.Request, key string) string {
 	return ""
 }
 
-// URLParamFromCtx returns a url parameter from the routing context.
+// URLParam returns the url parameter from a http.Request Context.
 func URLParamFromCtx(ctx context.Context, key string) string {
 	if rctx := RouteContext(ctx); rctx != nil {
 		return rctx.Params.Get(key)

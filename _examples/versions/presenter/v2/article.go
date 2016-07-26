@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/pressly/chi/_examples/render/presenter/v3"
+	"github.com/pressly/chi/_examples/versions/presenter/v3"
 	"github.com/pressly/chi/render"
 )
 

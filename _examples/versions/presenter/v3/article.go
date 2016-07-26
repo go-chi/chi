@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/pressly/chi/_examples/render/data"
+	"github.com/pressly/chi/_examples/versions/data"
 	"github.com/pressly/chi/render"
 )
 

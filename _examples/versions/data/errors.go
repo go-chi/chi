@@ -16,13 +16,13 @@ var (
 func PresentError(r *http.Request, err error) (*http.Request, interface{}) {
 	switch err {
 	case ErrUnauthorized:
-		r = render.Status(r, 401)
+		render.Status(r, 401)
 	case ErrForbidden:
-		r = render.Status(r, 403)
+		render.Status(r, 403)
 	case ErrNotFound:
-		r = render.Status(r, 404)
+		render.Status(r, 404)
 	default:
-		r = render.Status(r, 500)
+		render.Status(r, 500)
 	}
 	return r, map[string]string{"error": err.Error()}
 }

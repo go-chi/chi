@@ -13,8 +13,8 @@ func (k *contextKey) String() string {
 	return "chi context value " + k.name
 }
 
-// chain builds a http.Handler composed of middlewares and endpoint handler in the
-// order they are passed.
+// Chain builds a http.Handler composed of an inline middleware stack and endpoint
+// handler in the order they are passed.
 func Chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
 	// Return ahead of time if there aren't any middlewares for the chain
 	if middlewares == nil || len(middlewares) == 0 {
@@ -30,8 +30,8 @@ func Chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler)
 	return h
 }
 
-// Respond with just the allowed methods, as required by RFC2616 for
-// 405 Method not allowed.
+// methodNotAllowedHandler is a helper function to respond with a 405,
+// method not allowed.
 func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(405)
 	w.Write(nil)
