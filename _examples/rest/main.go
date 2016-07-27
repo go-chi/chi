@@ -1,6 +1,8 @@
 //
-// REST example
-// ............
+// REST
+// ====
+// This example demonstrates a HTTP REST web service with some fixture data.
+// Follow along the example and patterns.
 //
 // Boot the server:
 // ----------------

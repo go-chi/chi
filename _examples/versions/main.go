@@ -1,3 +1,10 @@
+//
+// Versions
+// ========
+// This example demonstrates the use of the render subpackage and its
+// render.Presenter interface to transform a handler response to easily
+// handle API versioning.
+//
 package main
 
 import (

@@ -1,3 +1,20 @@
+//
+// Limits
+// ======
+// This example demonstrates the use of Timeout, CloseNotify, and
+// Throttle middlewares.
+//
+// Timeout:
+//   cancel a request if processing takes longer than 2.5 seconds,
+//   server will respond with a http.StatusGatewayTimeout.
+//
+// CloseNotify:
+//   cancel a request if the client disconnects.
+//
+// Throttle:
+//   limit the number of in-flight requests along a particular
+//   routing path and backlog the others.
+//
 package main
 
 import (

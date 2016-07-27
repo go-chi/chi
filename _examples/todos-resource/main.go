@@ -1,3 +1,11 @@
+//
+// Todos Resource
+// ==============
+// This example demonstrates a project structure that defines a subrouter and its
+// handlers on a struct, and mounting them as subrouters to a parent router.
+// See also _examples/rest for an in-depth example of a REST service, and apply
+// those same patterns to this structure.
+//
 package main
 
 import (

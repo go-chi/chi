@@ -1,3 +1,32 @@
+//
+// chi is a small, idiomatic and composable router for building HTTP services.
+//
+// chi requires Go 1.7 or newer.
+//
+// Example:
+//  package main
+//
+//  import (
+//  	"net/http"
+//
+//  	"github.com/pressly/chi"
+//  	"github.com/pressly/chi/middleware"
+//  )
+//
+//  func main() {
+//  	r := chi.NewRouter()
+//  	r.Use(middleware.Logger)
+//  	r.Use(middleware.Recoverer)
+//
+//  	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+//  		w.Write([]byte("root."))
+//  	})
+//
+//  	http.ListenAndServe(":3333", r)
+//  }
+//
+// See github.com/pressly/chi/_examples/ for more in-depth examples.
+//
 package chi
 
 import "net/http"
@@ -12,23 +41,25 @@ func NewRouter() *Mux {
 type Router interface {
 	http.Handler
 
-	// TODO: comment
+	// Use appends one of more middlewares onto the Router stack.
 	Use(middlewares ...func(http.Handler) http.Handler)
 
-	// TODO: comment
+	// Route mounts a sub-Router along a `pattern`` string.
 	Route(pattern string, fn func(r Router)) Router
 
-	// TODO: comment
+	// Group adds a new inline-Router along the current routing
+	// path, with a fresh middleware stack for the inline-Router.
 	Group(fn func(r Router)) Router
 
-	// TODO: comment
+	// Mount attaches another http.Handler along ./pattern/*
 	Mount(pattern string, h http.Handler)
 
-	// TODO: comment
+	// Handle and HandleFunc adds routes for `pattern` that matches
+	// all HTTP methods.
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
 
-	// TODO: comment
+	// HTTP-method routing along `pattern`
 	Connect(pattern string, h http.HandlerFunc)
 	Head(pattern string, h http.HandlerFunc)
 	Get(pattern string, h http.HandlerFunc)
@@ -39,7 +70,8 @@ type Router interface {
 	Trace(pattern string, h http.HandlerFunc)
 	Options(pattern string, h http.HandlerFunc)
 
-	// TODO: comment
+	// NotFound defines a handler to respond whenever a route could
+	// not be found.
 	NotFound(h http.HandlerFunc)
 }
 
