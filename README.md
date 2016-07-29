@@ -3,16 +3,17 @@ chi
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
 
-`chi` is a small, fast and expressive router / mux for Go HTTP services built with net/context.
+`chi` is a small, idiomatic and composable router for building Go 1.7+ HTTP services. `chi` utilizes
+the new `context` package introduced in Go 1.7 to handle signaling, cancelation and request-scoped
+values across a handler chain.
 
-Chi encourages writing services by composing small handlers and middlewares with many or few routes.
-Each middleware is like a layer of an onion connected through a consistent interface (http.Handler or
-chi.Handler) and a context.Context argument that flows down the layers during a request's lifecycle.
+Chi encourages writing services by composing small handlers and middlewares constructed together
+from multiple sub-routers that make up the complete service API.
 
 In order to get the most out of this pattern, chi's routing methods (Get, Post, Handle, Mount, etc.)
-support inline middlewares, middleware groups, and mounting (composing) any chi router to another -
-a bushel of onions. We've designed the Pressly API (150+ routes/handlers) exactly like this and its
-scaled very well.
+support inline middlewares, middleware groups, and mounting (composing) any chi router to another.
+We've designed the Pressly API (150+ routes/handlers) exactly like this for the goals of productivity,
+maintainability and expression.
 
 ![alt tag](https://imgry.pressly.com/x/fetch?url=deeporigins-deeporiginsllc.netdna-ssl.com/wp-content/uploads/sites/4/2015/09/Tai_Chi2.jpg&size=800x)
 
@@ -21,7 +22,6 @@ scaled very well.
 
 * **Lightweight** - cloc'd in <1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
-* **Zero allocations** - no GC pressure during routing
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
 * **Context control** - built on new `context` package, providing value chaining, deadlines and timeouts
 * **Robust** - tested / used in production
@@ -33,50 +33,38 @@ Chi's router is based on a kind of [Patricia Radix trie](https://en.wikipedia.or
 Built on top of the tree is the `Router` interface:
 
 ```go
-// Register a middleware handler (or few) on the middleware stack
-Use(middlewares ...func(http.Handler) http.Handler
+// Use appends one of more middlewares onto the Router stack.
+Use(middlewares ...func(http.Handler) http.Handler)
 
-// Mount a sub-router along a pattern
+// Route mounts a sub-Router along a `pattern`` string.
 Route(pattern string, fn func(r Router)) Router
 
-// Register a new inline-Mux, which offers a fresh middleware stack
+// Group adds a new inline-Router along the current routing
+// path, with a fresh middleware stack for the inline-Router.
 Group(fn func(r Router)) Router
 
-// Mount a sub-router
-Mount(pattern string, subrouter Router)
+// Mount attaches another http.Handler along ./pattern/*
+Mount(pattern string, h http.Handler)
 
-// Register routing handler for all http methods
-Handle(pattern string, handler http.Handler)
+// Handle and HandleFunc adds routes for `pattern` that matches
+// all HTTP methods.
+Handle(pattern string, h http.Handler)
+HandleFunc(pattern string, h http.HandlerFunc)
 
-// Register routing handler func for all http methods
-HandleFunc(pattern string, handler http.HandlerFunc)
+// HTTP-method routing along `pattern`
+Connect(pattern string, h http.HandlerFunc)
+Head(pattern string, h http.HandlerFunc)
+Get(pattern string, h http.HandlerFunc)
+Post(pattern string, h http.HandlerFunc)
+Put(pattern string, h http.HandlerFunc)
+Patch(pattern string, h http.HandlerFunc)
+Delete(pattern string, h http.HandlerFunc)
+Trace(pattern string, h http.HandlerFunc)
+Options(pattern string, h http.HandlerFunc)
 
-// Register routing handler for CONNECT http method
-Connect(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for HEAD http method
-Head(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for GET http method
-Get(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for POST http method
-Post(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for PUT http method
-Put(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for PATCH http method
-Patch(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for DELETE http method
-Delete(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for TRACE http method
-Trace(pattern string, handler http.HandlerFunc)
-
-// Register routing handler for OPTIONS http method
-Options(pattern string, handler http.HandlerFunc)
+// NotFound defines a handler to respond whenever a route could
+// not be found.
+NotFound(h http.HandlerFunc)
 ```
 
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
@@ -88,10 +76,11 @@ The supported handlers are as follows..
 ### Middleware handlers
 
 ```go
-// HTTP middleware.
+// HTTP middleware setting a value on the request context
 func Middleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    next.ServeHTTP(w, r)
+    ctx := context.WithValue(r.Context(), "user", "123")
+    next.ServeHTTP(w, r.WithContext(ctx))
   })
 }
 ```
@@ -99,14 +88,15 @@ func Middleware(next http.Handler) http.Handler {
 ### Request handlers
 
 ```go
-// HTTP handler.
+// HTTP handler accessing data from the request context.
 func Handler(w http.ResponseWriter, r *http.Request) {
-  w.Write([]byte("hi"))
+  user := r.Context().Value("user").(string)
+  w.Write([]byte(fmt.Sprintf("hi %s", user)))
 }
 ```
 
 ```go
-// HTTP handler with use of request context.
+// HTTP handler accessing the url routing parameters.
 func CtxHandler(w http.ResponseWriter, r *http.Request) {
   userID := chi.URLParam(r, "userID") // from a route like /users/:userID
 
@@ -132,7 +122,6 @@ and..
 ## Examples
 
 Examples:
-* [simple](https://github.com/pressly/chi/blob/master/_examples/simple/main.go) - The power of handler composability
 * [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST apis made easy; includes a simple JSON responder
 
 Preview:
@@ -256,41 +245,12 @@ Other middlewares:
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi middleware
 
-
-## Future
-
-We're hoping that by Go 1.7 (in 2016), `net/context` will be in the Go stdlib and `net/http` will
-support `context.Context`. You'll notice that chi.Handler and http.Handler are very similar
-and the middleware signatures follow the same structure. One day chi.Handler will be deprecated
-and the router will live on just as it is without any dependencies beyond stdlib. And... then, we
-have infinitely more middlewares to compose from the community!!
-
-See discussions:
-* https://github.com/golang/go/issues/13021
-* https://groups.google.com/forum/#!topic/golang-dev/cQs1z9LrJDU
-
-
 ## Benchmarks
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 
 ```shell
-BenchmarkChi_Param            10000000         128 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_Param5            5000000         303 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_Param20           1000000        1064 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_ParamWrite       10000000         181 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GithubStatic     10000000         193 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GithubParam       5000000         344 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GithubAll           20000       63100 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GPlusStatic      20000000         124 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GPlusParam       10000000         172 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GPlus2Params      5000000         232 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_GPlusAll           500000        2684 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_ParseStatic      10000000         135 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_ParseParam       10000000         154 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_Parse2Params     10000000         192 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_ParseAll           300000        4637 ns/op         0 B/op        0 allocs/op
-BenchmarkChi_StaticAll           50000       37583 ns/op         0 B/op        0 allocs/op
+TODO.. will rerun.
 ```
 
 ## Credits
