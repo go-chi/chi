@@ -123,6 +123,7 @@ func (w *maybeCompressResponseWriter) WriteHeader(code int) {
 	if w.wroteHeader {
 		return
 	}
+	w.wroteHeader = true
 	defer w.ResponseWriter.WriteHeader(code)
 
 	// Already compressed data?
