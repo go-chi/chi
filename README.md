@@ -70,9 +70,6 @@ NotFound(h http.HandlerFunc)
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
 supports named params (ie. `/users/:userID`) and wildcards (ie. `/admin/*`).
 
-The supported handlers are as follows..
-
-
 ### Middleware handlers
 
 ```go
@@ -107,22 +104,14 @@ func CtxHandler(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-## context?
-
-`context` is a tiny pkg that provides simple interface to signal context across call stacks
-and goroutines. It was originally written by [Sameer Ajmani](https://github.com/Sajmani)
-and is available in stdlib since go1.7.
-
-Learn more at https://blog.golang.org/context
-
-and..
-* Docs: https://tip.golang.org/pkg/context
-* Source: https://github.com/golang/go/tree/master/src/context
-
 ## Examples
 
 Examples:
-* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST apis made easy; includes a simple JSON responder
+* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST apis made easy
+* [limits](https://github.com/pressly/chi/blob/master/_examples/limits/main.go) - Timeouts and throttling
+* [todos-resource](https://github.com/pressly/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
+* [versions](https://github.com/pressly/chi/blob/master/_examples/versions/main.go) - Demo of render subpkg
+
 
 Preview:
 
@@ -199,7 +188,7 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 }
 
 // A completely separate router for administrator routes
-func adminRouter() chi.Router {
+func adminRouter() http.Handler {
   r := chi.NewRouter()
   r.Use(AdminOnly)
   r.Get("/", adminIndex)
@@ -245,13 +234,49 @@ Other middlewares:
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi middleware
 
+
+## context?
+
+`context` is a tiny pkg that provides simple interface to signal context across call stacks
+and goroutines. It was originally written by [Sameer Ajmani](https://github.com/Sajmani)
+and is available in stdlib since go1.7.
+
+Learn more at https://blog.golang.org/context
+
+and..
+* Docs: https://tip.golang.org/pkg/context
+* Source: https://github.com/golang/go/tree/master/src/context
+
+
 ## Benchmarks
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
+Comparison with other routers (as of Aug 1/16): https://gist.github.com/pkieltyka/76a59d33492dd2732e691ad8c0b274a4
 
 ```shell
-TODO.. will rerun.
+BenchmarkChi_Param        	 5000000	       251 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_Param5       	 5000000	       393 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_Param20      	 1000000	      1012 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_ParamWrite   	 5000000	       301 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_GithubStatic 	 5000000	       287 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_GithubParam  	 3000000	       442 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_GithubAll    	   20000	     90855 ns/op	   48723 B/op	     203 allocs/op
+BenchmarkChi_GPlusStatic  	 5000000	       250 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_GPlusParam   	 5000000	       280 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_GPlus2Params 	 5000000	       337 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_GPlusAll     	  300000	      4128 ns/op	    3120 B/op	      13 allocs/op
+BenchmarkChi_ParseStatic  	 5000000	       250 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_ParseParam   	 5000000	       275 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_Parse2Params 	 5000000	       305 ns/op	     240 B/op	       1 allocs/op
+BenchmarkChi_ParseAll     	  200000	      7671 ns/op	    6240 B/op	      26 allocs/op
+BenchmarkChi_StaticAll    	   30000	     55497 ns/op	   37682 B/op	     157 allocs/op
 ```
+
+NOTE: the allocs in the benchmark above are from the calls to http.Request's
+`WithContext(context.Context)` method that clones the http.Request, sets the `Context()`
+on the duplicated (alloc'd) request and returns it the new request object. This is just
+how setting context on a request in Go 1.7 works. 
+
 
 ## Credits
 
