@@ -4,6 +4,7 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
-	"context"
 )
 
 // Key to use when setting the request ID.
