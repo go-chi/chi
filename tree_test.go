@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
-
-	"golang.org/x/net/context"
 )
 
 var (
@@ -15,86 +13,86 @@ var (
 )
 
 func TestTree(t *testing.T) {
-	hStub := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hIndex := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hFavicon := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleNear := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShowRelated := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleShowOpts := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleSlug := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hArticleByUser := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserList := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminAppShow := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hAdminAppShowCatchall := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserProfile := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserSuper := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hUserAll := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hHubView1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hHubView2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	hHubView3 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	hStub := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hIndex := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hFavicon := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleList := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleNear := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleShowRelated := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleShowOpts := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleSlug := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hArticleByUser := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserList := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserProfile := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserSuper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserAll := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hHubView1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hHubView2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hHubView3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	tr := &tree{root: &node{}}
+	tr := &node{}
 
-	tr.Insert("/", hIndex)
-	tr.Insert("/favicon.ico", hFavicon)
+	tr.InsertRoute(mGET, "/", hIndex)
+	tr.InsertRoute(mGET, "/favicon.ico", hFavicon)
 
-	tr.Insert("/pages/*", hStub)
+	tr.InsertRoute(mGET, "/pages/*", hStub)
 
-	tr.Insert("/article", hArticleList)
-	tr.Insert("/article/", hArticleList) // redirect..?
+	tr.InsertRoute(mGET, "/article", hArticleList)
+	tr.InsertRoute(mGET, "/article/", hArticleList) // redirect..?
 
-	tr.Insert("/article/near", hArticleNear)
-	// tr.Insert("/article/:sup", hStub) // will get overwritten as :id param TODO -- what does goji do..?
-	tr.Insert("/article/:id", hStub)
-	tr.Insert("/article/:id", hArticleShow)
-	tr.Insert("/article/:id", hArticleShow) // duplicate will have no effect
-	tr.Insert("/article/@:user", hArticleByUser)
+	tr.InsertRoute(mGET, "/article/near", hArticleNear)
+	// tr.InsertRoute("/article/:sup", hStub) // will get overwritten as :id param
+	tr.InsertRoute(mGET, "/article/:id", hStub)
+	tr.InsertRoute(mGET, "/article/:id", hArticleShow)
+	tr.InsertRoute(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
+	tr.InsertRoute(mGET, "/article/@:user", hArticleByUser)
 
-	tr.Insert("/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
-	tr.Insert("/article/:id/:opts", hArticleShowOpts)
+	tr.InsertRoute(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
+	tr.InsertRoute(mGET, "/article/:id/:opts", hArticleShowOpts)
 
-	tr.Insert("/article/:iffd/edit", hStub)
-	tr.Insert("/article/:id//related", hArticleShowRelated)
-	tr.Insert("/article/slug/:month/-/:day/:year", hArticleSlug)
+	tr.InsertRoute(mGET, "/article/:iffd/edit", hStub)
+	tr.InsertRoute(mGET, "/article/:id//related", hArticleShowRelated)
+	tr.InsertRoute(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	tr.Insert("/admin/user", hUserList)
-	tr.Insert("/admin/user/", hStub) // will get replaced by next route
-	tr.Insert("/admin/user/", hUserList)
+	tr.InsertRoute(mGET, "/admin/user", hUserList)
+	tr.InsertRoute(mGET, "/admin/user/", hStub) // will get replaced by next route
+	tr.InsertRoute(mGET, "/admin/user/", hUserList)
 
-	tr.Insert("/admin/user//:id", hUserShow)
-	tr.Insert("/admin/user/:id", hUserShow) // TODO: how does goji handle those segments?
+	tr.InsertRoute(mGET, "/admin/user//:id", hUserShow)
+	tr.InsertRoute(mGET, "/admin/user/:id", hUserShow)
 
-	tr.Insert("/admin/apps/:id", hAdminAppShow)
-	tr.Insert("/admin/apps/:id/*ff", hAdminAppShowCatchall)
+	tr.InsertRoute(mGET, "/admin/apps/:id", hAdminAppShow)
+	tr.InsertRoute(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
 
-	tr.Insert("/admin/*ff", hStub) // catchall segment will get replaced by next route
-	tr.Insert("/admin/*", hAdminCatchall)
+	tr.InsertRoute(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.InsertRoute(mGET, "/admin/*", hAdminCatchall)
 
-	tr.Insert("/users/:userID/profile", hUserProfile)
-	tr.Insert("/users/super/*", hUserSuper)
-	tr.Insert("/users/*", hUserAll)
+	tr.InsertRoute(mGET, "/users/:userID/profile", hUserProfile)
+	tr.InsertRoute(mGET, "/users/super/*", hUserSuper)
+	tr.InsertRoute(mGET, "/users/*", hUserAll)
 
-	tr.Insert("/hubs/:hubID/view", hHubView1)
-	tr.Insert("/hubs/:hubID/view/*", hHubView2)
+	tr.InsertRoute(mGET, "/hubs/:hubID/view", hHubView1)
+	tr.InsertRoute(mGET, "/hubs/:hubID/view/*", hHubView2)
 	sr := NewRouter()
 	sr.Get("/users", hHubView3)
-	tr.Insert("/hubs/:hubID/*", sr)
-	tr.Insert("/hubs/:hubID/users", hHubView3)
+	tr.InsertRoute(mGET, "/hubs/:hubID/*", sr)
+	tr.InsertRoute(mGET, "/hubs/:hubID/users", hHubView3)
 
-	// tr.Insert("/debug*", hStub) // TODO: should we support this..?
+	// tr.InsertRoute("/debug*", hStub) // TODO: should we support this..?
 
-	// TODO: test bad inserts ie.
-	// tr.Insert("")
-	// tr.Insert("/admin/:/joe/:/*") //...?
-	// tr.Insert("------------")
+	// TODO: test bad InsertRoutes ie.
+	// tr.InsertRoute("")
+	// tr.InsertRoute("/admin/:/joe/:/*") //...?
+	// tr.InsertRoute("------------")
 
 	tests := []struct {
 		r string            // input request path
-		h Handler           // output matched handler
+		h http.Handler      // output matched handler
 		p map[string]string // output params
 	}{
 		{r: "/", h: hIndex, p: emptyParams},
@@ -136,15 +134,19 @@ func TestTree(t *testing.T) {
 
 	// log.Println("~~~~~~~~~")
 	// log.Println("~~~~~~~~~")
-	// debugPrintTree(0, 0, tr.root, 0)
+	// debugPrintTree(0, 0, tr, 0)
 	// log.Println("~~~~~~~~~")
 	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
 		// params := make(map[string]string, 0)
-		rctx := NewContext()
-		handler := tr.Find(rctx, tt.r) //, params)
+		rctx := NewRouteContext()
+
+		handlers := tr.FindRoute(rctx, tt.r) //, params)
+		handler, _ := handlers[mGET]
+
 		params := urlParams(rctx)
+
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
 		}
@@ -156,21 +158,21 @@ func TestTree(t *testing.T) {
 
 func debugPrintTree(parent int, i int, n *node, label byte) bool {
 	numEdges := 0
-	for _, edges := range n.edges {
-		numEdges += len(edges)
+	for _, nds := range n.children {
+		numEdges += len(nds)
 	}
 
-	if n.handler != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handler)
+	if n.handlers != nil {
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf(), n.handlers)
 	} else {
 		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), numEdges, n.isLeaf())
 	}
 
 	parent = i
-	for _, edges := range n.edges {
-		for _, e := range edges {
+	for _, nds := range n.children {
+		for _, e := range nds {
 			i++
-			if debugPrintTree(parent, i, e.node, e.label) {
+			if debugPrintTree(parent, i, e, e.label) {
 				return true
 			}
 		}
@@ -179,34 +181,34 @@ func debugPrintTree(parent int, i int, n *node, label byte) bool {
 }
 
 func BenchmarkTreeGet(b *testing.B) {
-	h1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-	h2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	tr := &tree{root: &node{}}
-	tr.Insert("/", h1)
-	tr.Insert("/ping", h2)
-	tr.Insert("/pingall", h2)
-	tr.Insert("/ping/:id", h2)
-	tr.Insert("/ping/:id/woop", h2)
-	tr.Insert("/ping/:id/:opt", h2)
-	tr.Insert("/pinggggg", h2)
-	tr.Insert("/hello", h1)
+	tr := &node{}
+	tr.InsertRoute(mGET, "/", h1)
+	tr.InsertRoute(mGET, "/ping", h2)
+	tr.InsertRoute(mGET, "/pingall", h2)
+	tr.InsertRoute(mGET, "/ping/:id", h2)
+	tr.InsertRoute(mGET, "/ping/:id/woop", h2)
+	tr.InsertRoute(mGET, "/ping/:id/:opt", h2)
+	tr.InsertRoute(mGET, "/pinggggg", h2)
+	tr.InsertRoute(mGET, "/hello", h1)
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// params := map[string]string{}
-		mctx := NewContext()
-		tr.Find(mctx, "/ping/123/456")
+		mctx := NewRouteContext()
+		tr.FindRoute(mctx, "/ping/123/456")
 		// tr.Find("/pingggg", params)
 	}
 }
 
 // func BenchmarkMuxGet(b *testing.B) {
-// 	h1 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-// 	h2 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
-// 	h3 := HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {})
+// 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+// 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+// 	h3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 //
 // 	mx := NewRouter()
 // 	mx.Get("/", h1)

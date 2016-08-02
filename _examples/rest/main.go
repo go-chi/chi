@@ -1,17 +1,51 @@
+//
+// REST
+// ====
+// This example demonstrates a HTTP REST web service with some fixture data.
+// Follow along the example and patterns.
+//
+// Boot the server:
+// ----------------
+// $ go run main.go
+//
+// Client requests:
+// ----------------
+// $ curl http://localhost:3333/
+// root.
+//
+// $ curl http://localhost:3333/articles
+// [{"id":"1","title":"Hi"},{"id":"2","title":"sup"}]
+//
+// $ curl http://localhost:3333/articles/1
+// {"id":"1","title":"Hi"}
+//
+// $ curl -X DELETE http://localhost:3333/articles/1
+// {"id":"1","title":"Hi"}
+//
+// $ curl http://localhost:3333/articles/1
+// "Not Found"
+//
+// $ curl -X POST -d '{"id":"will-be-omitted","title":"awesomeness"}' http://localhost:3333/articles
+// {"id":"97","title":"awesomeness"}
+//
+// $ curl http://localhost:3333/articles/97
+// {"id":"97","title":"awesomeness"}
+//
+// $ curl http://localhost:3333/articles
+// [{"id":"2","title":"sup"},{"id":"97","title":"awesomeness"}]
+//
 package main
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"time"
 
 	"github.com/pressly/chi"
 	"github.com/pressly/chi/middleware"
 	"github.com/pressly/chi/render"
-	"golang.org/x/net/context"
 )
 
 func main() {
@@ -22,7 +56,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("..."))
+		w.Write([]byte("root."))
 	})
 
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -33,74 +67,21 @@ func main() {
 		panic("test")
 	})
 
-	// Slow handlers/operations.
-	r.Group(func(r chi.Router) {
-		// Stop processing when client disconnects.
-		r.Use(middleware.CloseNotify)
-
-		// Stop processing after 2.5 seconds.
-		r.Use(middleware.Timeout(2500 * time.Millisecond))
-
-		r.Get("/slow", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			rand.Seed(time.Now().Unix())
-
-			// Processing will take 1-5 seconds.
-			processTime := time.Duration(rand.Intn(4)+1) * time.Second
-
-			select {
-			case <-ctx.Done():
-				return
-
-			case <-time.After(processTime):
-				// The above channel simulates some hard work.
-			}
-
-			w.Write([]byte(fmt.Sprintf("Processed in %v seconds\n", processTime)))
-		})
-	})
-
-	// Throttle very expensive handlers/operations.
-	r.Group(func(r chi.Router) {
-		// Stop processing after 30 seconds.
-		r.Use(middleware.Timeout(30 * time.Second))
-
-		// Only one request will be processed at a time.
-		r.Use(middleware.Throttle(1))
-
-		r.Get("/throttled", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-			select {
-			case <-ctx.Done():
-				switch ctx.Err() {
-				case context.DeadlineExceeded:
-					w.WriteHeader(504)
-					w.Write([]byte("Processing too slow\n"))
-				default:
-					w.Write([]byte("Canceled\n"))
-				}
-				return
-
-			case <-time.After(5 * time.Second):
-				// The above channel simulates some hard work.
-			}
-
-			w.Write([]byte("Processed\n"))
-		})
-	})
-
 	// RESTy routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
-		r.Get("/", paginate, listArticles) // GET /articles
-		r.Post("/", createArticle)         // POST /articles
+		r.Get("/", chi.Use(paginate).HandlerFunc(ListArticles)) // GET /articles
+		r.Post("/", CreateArticle)                              // POST /articles
 
 		r.Route("/:articleID", func(r chi.Router) {
-			r.Use(ArticleCtx)
-			r.Get("/", getArticle)       // GET /articles/123
-			r.Put("/", updateArticle)    // PUT /articles/123
-			r.Delete("/", deleteArticle) // DELETE /articles/123
+			r.Use(ArticleCtx)            // Load the *Article on the request context
+			r.Get("/", GetArticle)       // GET /articles/123
+			r.Put("/", UpdateArticle)    // PUT /articles/123
+			r.Delete("/", DeleteArticle) // DELETE /articles/123
 		})
 	})
 
-	// Mount the admin sub-router
+	// Mount the admin sub-router, the same as a call to
+	// Route("/admin", func(r chi.Router) { with routes here })
 	r.Mount("/admin", adminRouter())
 
 	http.ListenAndServe(":3333", r)
@@ -111,115 +92,97 @@ type Article struct {
 	Title string `json:"title"`
 }
 
-func ArticleCtx(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		articleID := chi.URLParam(ctx, "articleID")
+// Article fixture data
+var articles = []*Article{
+	{ID: "1", Title: "Hi"},
+	{ID: "2", Title: "sup"},
+}
+
+func ArticleCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		articleID := chi.URLParam(r, "articleID")
 		article, err := dbGetArticle(articleID)
 		if err != nil {
-			http.Error(w, http.StatusText(404), 404)
+			render.Status(r, 404)
+			render.JSON(w, r, http.StatusText(404))
 			return
 		}
-		ctx = context.WithValue(ctx, "article", article)
-		next.ServeHTTPC(ctx, w, r)
+		ctx := context.WithValue(r.Context(), "article", article)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func listArticles(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("list of articles.."))
-	// or render.Data(w, 200, []byte("list of articles.."))
+func ListArticles(w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, articles)
 }
 
-func createArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	var article *Article
-
-	// btw, you could do this body reading / marhsalling in a nice bind middleware
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), 422)
-		return
-	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(data, &article); err != nil {
-		http.Error(w, err.Error(), 422)
-		return
-	}
-
-	// should really send back the json marshalled new article.
-	// build your own responder :)
-	w.Write([]byte(article.Title))
-}
-
-func getArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	article, ok := ctx.Value("article").(*Article)
-	if !ok {
-		http.Error(w, http.StatusText(422), 422)
-		return
-	}
-
-	// Build your own responder, see the "./render" pacakge as a starting
-	// point for your own.
-	render.JSON(w, 200, article)
-
-	// or..
-	// w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
-}
-
-func updateArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	article, ok := ctx.Value("article").(*Article)
-	if !ok {
-		http.Error(w, http.StatusText(404), 404)
-		return
-	}
-
-	// btw, you could do this body reading / marhsalling in a nice bind middleware
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), 422)
-		return
-	}
-	defer r.Body.Close()
-
-	uArticle := struct {
+func CreateArticle(w http.ResponseWriter, r *http.Request) {
+	var data struct {
 		*Article
-		_ interface{} `json:"id,omitempty"` // prevents 'id' from being overridden
+		OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
+	}
+	// ^ the above is a nifty trick for how to omit fields during json unmarshalling
+	// through struct composition
+
+	if err := render.Bind(r.Body, &data); err != nil {
+		render.JSON(w, r, err.Error())
+		return
+	}
+
+	article := data.Article
+	dbNewArticle(article)
+
+	render.JSON(w, r, article)
+}
+
+func GetArticle(w http.ResponseWriter, r *http.Request) {
+	// Assume if we've reach this far, we can access the article
+	// context because this handler is a child of the ArticleCtx
+	// middleware. The worst case, the recoverer middleware will save us.
+	article := r.Context().Value("article").(*Article)
+
+	// chi provides a basic companion subpackage "github.com/pressly/chi/render", however
+	// you can use any responder compatible with net/http.
+	render.JSON(w, r, article)
+}
+
+func UpdateArticle(w http.ResponseWriter, r *http.Request) {
+	article := r.Context().Value("article").(*Article)
+
+	data := struct {
+		*Article
+		OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being overridden
 	}{Article: article}
 
-	if err := json.Unmarshal(data, &uArticle); err != nil {
-		http.Error(w, err.Error(), 422)
+	if err := render.Bind(r.Body, &data); err != nil {
+		render.JSON(w, r, err)
+		return
+	}
+	article = data.Article
+
+	render.JSON(w, r, article)
+}
+
+func DeleteArticle(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	// Assume if we've reach this far, we can access the article
+	// context because this handler is a child of the ArticleCtx
+	// middleware. The worst case, the recoverer middleware will save us.
+	article := r.Context().Value("article").(*Article)
+
+	article, err = dbRemoveArticle(article.ID)
+	if err != nil {
+		render.JSON(w, r, err)
 		return
 	}
 
-	render.JSON(w, 200, uArticle)
-
-	// w.Write([]byte(fmt.Sprintf("updated article, title:%s", uArticle.Title)))
-}
-
-func deleteArticle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	article, ok := ctx.Value("article").(*Article)
-	if !ok {
-		http.Error(w, http.StatusText(422), 422)
-		return
-	}
-	_ = article // delete the article from the data store..
-	w.WriteHeader(204)
-}
-
-func dbGetArticle(id string) (*Article, error) {
-	//.. fetch the article from a data store of some kind..
-	return &Article{ID: id, Title: "Going all the way,"}, nil
-}
-
-func paginate(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		// just a stub.. some ideas are to look at URL query params for something like
-		// the page number, or the limit, and send a query cursor down the chain
-		next.ServeHTTPC(ctx, w, r)
-	})
+	// Respond with the deleted object, up to you.
+	render.JSON(w, r, article)
 }
 
 // A completely separate router for administrator routes
-func adminRouter() http.Handler { // or chi.Router {
+func adminRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Use(AdminOnly)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -228,19 +191,56 @@ func adminRouter() http.Handler { // or chi.Router {
 	r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("admin: list accounts.."))
 	})
-	r.Get("/users/:userId", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(ctx, "userId"))))
+	r.Get("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(r, "userId"))))
 	})
 	return r
 }
 
-func AdminOnly(next chi.Handler) chi.Handler {
-	return chi.HandlerFunc(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		isAdmin, ok := ctx.Value("acl.admin").(bool)
+func AdminOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		isAdmin, ok := r.Context().Value("acl.admin").(bool)
 		if !ok || !isAdmin {
 			http.Error(w, http.StatusText(403), 403)
 			return
 		}
-		next.ServeHTTPC(ctx, w, r)
+		next.ServeHTTP(w, r)
 	})
+}
+
+func paginate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// just a stub.. some ideas are to look at URL query params for something like
+		// the page number, or the limit, and send a query cursor down the chain
+		next.ServeHTTP(w, r)
+	})
+}
+
+//--
+
+// Below are a bunch of helper functions that mock some kind of storage
+
+func dbNewArticle(article *Article) (string, error) {
+	article.ID = fmt.Sprintf("%d", rand.Intn(100)+10)
+	articles = append(articles, article)
+	return article.ID, nil
+}
+
+func dbGetArticle(id string) (*Article, error) {
+	for _, a := range articles {
+		if a.ID == id {
+			return a, nil
+		}
+	}
+	return nil, errors.New("article not found.")
+}
+
+func dbRemoveArticle(id string) (*Article, error) {
+	for i, a := range articles {
+		if a.ID == id {
+			articles = append((articles)[:i], (articles)[i+1:]...)
+			return a, nil
+		}
+	}
+	return nil, errors.New("article not found.")
 }

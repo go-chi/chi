@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/pressly/chi"
-	"github.com/stretchr/testify/assert"
 )
 
 var testContent = []byte("Hello world!")
@@ -43,12 +42,12 @@ func TestThrottleBacklog(t *testing.T) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			assert.NoError(t, err)
+			assertNoError(t, err)
 
-			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assertEqual(t, http.StatusOK, res.StatusCode)
 			buf, err := ioutil.ReadAll(res.Body)
-			assert.NoError(t, err)
-			assert.Equal(t, testContent, buf)
+			assertNoError(t, err)
+			assertEqual(t, testContent, buf)
 		}(i)
 	}
 
@@ -81,7 +80,7 @@ func TestThrottleClientTimeout(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			_, err := client.Get(server.URL)
-			assert.Error(t, err)
+			assertError(t, err)
 		}(i)
 	}
 
@@ -116,8 +115,8 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			assert.NoError(t, err)
-			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assertNoError(t, err)
+			assertEqual(t, http.StatusOK, res.StatusCode)
 
 		}(i)
 	}
@@ -132,11 +131,11 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			assert.NoError(t, err)
+			assertNoError(t, err)
 
 			buf, err := ioutil.ReadAll(res.Body)
-			assert.Equal(t, http.StatusServiceUnavailable, res.StatusCode)
-			assert.Equal(t, errTimedOut, strings.TrimSpace(string(buf)))
+			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
+			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
 
 		}(i)
 	}
@@ -171,12 +170,12 @@ func TestThrottleMaximum(t *testing.T) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			assert.NoError(t, err)
-			assert.Equal(t, http.StatusOK, res.StatusCode)
+			assertNoError(t, err)
+			assertEqual(t, http.StatusOK, res.StatusCode)
 
 			buf, err := ioutil.ReadAll(res.Body)
-			assert.NoError(t, err)
-			assert.Equal(t, testContent, buf)
+			assertNoError(t, err)
+			assertEqual(t, testContent, buf)
 
 		}(i)
 	}
@@ -192,11 +191,11 @@ func TestThrottleMaximum(t *testing.T) {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
-			assert.NoError(t, err)
+			assertNoError(t, err)
 
 			buf, err := ioutil.ReadAll(res.Body)
-			assert.Equal(t, http.StatusServiceUnavailable, res.StatusCode)
-			assert.Equal(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
+			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
+			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
 
 		}(i)
 	}

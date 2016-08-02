@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -29,4 +30,22 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	defer resp.Body.Close()
 
 	return resp.StatusCode, string(respBody)
+}
+
+func assertNoError(t *testing.T, err error) {
+	if err != nil {
+		t.Fatalf("expecting no error")
+	}
+}
+
+func assertError(t *testing.T, err error) {
+	if err == nil {
+		t.Fatalf("expecting error")
+	}
+}
+
+func assertEqual(t *testing.T, a, b interface{}) {
+	if reflect.DeepEqual(a, b) == false {
+		t.Fatalf("expecting values to be equal but got: '%v' and '%v'", a, b)
+	}
 }

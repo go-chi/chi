@@ -1,81 +1,103 @@
+//
+// chi is a small, idiomatic and composable router for building HTTP services.
+//
+// chi requires Go 1.7 or newer.
+//
+// Example:
+//  package main
+//
+//  import (
+//  	"net/http"
+//
+//  	"github.com/pressly/chi"
+//  	"github.com/pressly/chi/middleware"
+//  )
+//
+//  func main() {
+//  	r := chi.NewRouter()
+//  	r.Use(middleware.Logger)
+//  	r.Use(middleware.Recoverer)
+//
+//  	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+//  		w.Write([]byte("root."))
+//  	})
+//
+//  	http.ListenAndServe(":3333", r)
+//  }
+//
+// See github.com/pressly/chi/_examples/ for more in-depth examples.
+//
 package chi
 
-import (
-	"net/http"
-
-	"golang.org/x/net/context"
-)
+import "net/http"
 
 // NewRouter returns a new Mux object that implements the Router interface.
-// It accepts an optional parent context.Context argument used by all
-// request contexts useful for signaling a server shutdown.
 func NewRouter() *Mux {
 	return NewMux()
 }
 
-// A Router consisting of the core routing methods used by chi's Mux.
-//
-// NOTE, the plan: hopefully once net/context makes it into the stdlib and
-// net/http supports a request context, we will remove the chi.Handler
-// interface, and the Router argument types will be http.Handler instead
-// of interface{}.
+// Router consisting of the core routing methods used by chi's Mux,
+// using only the standard net/http.
 type Router interface {
 	http.Handler
-	Handler
 
-	Use(middlewares ...interface{})
-	Group(fn func(r Router)) Router
+	// Use appends one of more middlewares onto the Router stack.
+	Use(middlewares ...func(http.Handler) http.Handler)
+
+	// Route mounts a sub-Router along a `pattern`` string.
 	Route(pattern string, fn func(r Router)) Router
-	Mount(pattern string, handlers ...interface{})
 
-	Handle(pattern string, handlers ...interface{})
-	NotFound(h HandlerFunc)
+	// Group adds a new inline-Router along the current routing
+	// path, with a fresh middleware stack for the inline-Router.
+	Group(fn func(r Router)) Router
 
-	Connect(pattern string, handlers ...interface{})
-	Head(pattern string, handlers ...interface{})
-	Get(pattern string, handlers ...interface{})
-	Post(pattern string, handlers ...interface{})
-	Put(pattern string, handlers ...interface{})
-	Patch(pattern string, handlers ...interface{})
-	Delete(pattern string, handlers ...interface{})
-	Trace(pattern string, handlers ...interface{})
-	Options(pattern string, handlers ...interface{})
+	// Mount attaches another http.Handler along ./pattern/*
+	Mount(pattern string, h http.Handler)
+
+	// Handle and HandleFunc adds routes for `pattern` that matches
+	// all HTTP methods.
+	Handle(pattern string, h http.Handler)
+	HandleFunc(pattern string, h http.HandlerFunc)
+
+	// HTTP-method routing along `pattern`
+	Connect(pattern string, h http.HandlerFunc)
+	Head(pattern string, h http.HandlerFunc)
+	Get(pattern string, h http.HandlerFunc)
+	Post(pattern string, h http.HandlerFunc)
+	Put(pattern string, h http.HandlerFunc)
+	Patch(pattern string, h http.HandlerFunc)
+	Delete(pattern string, h http.HandlerFunc)
+	Trace(pattern string, h http.HandlerFunc)
+	Options(pattern string, h http.HandlerFunc)
+
+	// NotFound defines a handler to respond whenever a route could
+	// not be found.
+	NotFound(h http.HandlerFunc)
 }
 
-// Handler is like net/http's http.Handler, but also includes a
-// mechanism for serving requests with a context.
-type Handler interface {
-	ServeHTTPC(context.Context, http.ResponseWriter, *http.Request)
+// Middlewares type is a slice of standard middleware handlers with methods
+// to compose middleware chains and http.Handler's.
+type Middlewares []func(http.Handler) http.Handler
+
+// Use returns a Middlewares slice.
+func Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
+	return Middlewares(middlewares)
 }
 
-// HandlerFunc is like net/http's http.HandlerFunc, but supports a context
-// object.
-type HandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
-
-// ServeHTTPC wraps ServeHTTP with a context parameter.
-func (h HandlerFunc) ServeHTTPC(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	h(ctx, w, r)
+// Use appends additional middleware handlers to the middlewares slice.
+func (ms *Middlewares) Use(middlewares ...func(http.Handler) http.Handler) Middlewares {
+	*ms = append(*ms, middlewares...)
+	return *ms
 }
 
-// ServeHTTP provides compatibility with http.Handler.
-func (h HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h(context.Background(), w, r)
+// Handler builds and returns a http.Handler from the chain of middlewares,
+// with `h http.Handler` as the final handler.
+func (ms Middlewares) Handler(h http.Handler) http.HandlerFunc {
+	return Chain(ms, h).ServeHTTP
 }
 
-// RouteContext returns chi's routing context object that holds url params
-// and a routing path for subrouters.
-func RouteContext(ctx context.Context) *Context {
-	rctx, _ := ctx.(*Context)
-	if rctx == nil {
-		rctx = ctx.Value(routeCtxKey).(*Context)
-	}
-	return rctx
-}
-
-// URLParam returns a url paramter from the routing context.
-func URLParam(ctx context.Context, key string) string {
-	if rctx := RouteContext(ctx); rctx != nil {
-		return rctx.Params.Get(key)
-	}
-	return ""
+// Handler builds and returns a http.HandlerFunc from the chain of middlewares,
+// with `h http.HandlerFunc` as the final handler.
+func (ms Middlewares) HandlerFunc(h http.HandlerFunc) http.HandlerFunc {
+	return Chain(ms, h).ServeHTTP
 }
