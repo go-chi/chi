@@ -251,6 +251,7 @@ and..
 ## Benchmarks
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
+
 Comparison with other routers (as of Aug 1/16): https://gist.github.com/pkieltyka/76a59d33492dd2732e691ad8c0b274a4
 
 ```shell
