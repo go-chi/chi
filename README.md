@@ -107,10 +107,10 @@ func CtxHandler(w http.ResponseWriter, r *http.Request) {
 ## Examples
 
 Examples:
-* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST apis made easy
-* [limits](https://github.com/pressly/chi/blob/master/_examples/limits/main.go) - Timeouts and throttling
+* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
+* [limits](https://github.com/pressly/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
 * [todos-resource](https://github.com/pressly/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
-* [versions](https://github.com/pressly/chi/blob/master/_examples/versions/main.go) - Demo of render subpkg
+* [versions](https://github.com/pressly/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
 
 
 Preview:
