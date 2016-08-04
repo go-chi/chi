@@ -57,3 +57,25 @@ func TestMiddlewareStack(t *testing.T) {
 		})
 	}
 }
+
+func TestMiddlewarePanicOnLateUse(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hello\n"))
+	}
+
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	r := NewRouter()
+	r.Get("/", handler)
+	r.Use(mw) // Too late to apply middleware, we're expecting panic().
+}
