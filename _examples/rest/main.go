@@ -71,7 +71,7 @@ func main() {
 	r.Route("/articles", func(r chi.Router) {
 		r.Get("/", chi.Use(paginate).HandlerFunc(ListArticles)) // GET /articles
 		r.Post("/", CreateArticle)                              // POST /articles
-		r.Get("/search", SearchArticles)
+		r.Get("/search", SearchArticles)                        // GET /articles/search
 
 		r.Route("/:articleID", func(r chi.Router) {
 			r.Use(ArticleCtx)            // Load the *Article on the request context

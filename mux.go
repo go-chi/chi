@@ -163,18 +163,21 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 // for a group of handlers along the same routing path that use an additional
 // set of middlewares. See _examples/.
 func (mx *Mux) Group(fn func(r Router)) Router {
-	if mx.inline {
-		panic("chi: nested Group()'s are currently not supported")
-	}
-
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
 		mx.buildRouteHandler()
 	}
 
+	// Copy middlewares for nested Group()'s
+	var mw Middlewares
+	if mx.inline {
+		mw = make(Middlewares, len(mx.middlewares))
+		copy(mw, mx.middlewares)
+	}
+
 	// Make a new inline mux and run the router functions over it.
-	g := &Mux{inline: true, tree: mx.tree}
+	g := &Mux{inline: true, tree: mx.tree, middlewares: mw}
 	if fn != nil {
 		fn(g)
 	}
