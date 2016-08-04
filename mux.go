@@ -1,6 +1,7 @@
 package chi
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sync"
@@ -57,21 +58,25 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic("chi: attempting to route to a mux with no handlers.")
 	}
 
-	// Check if a routing context already exists from a parent router.
+	// Check if a context already exists.
+	if rctx, ok := r.Context().Value(RouteCtxKey).(*Context); !ok {
+		// Fetch a RouteContext object from the sync pool, and call the computed
+		// mx.handler that is comprised of mx.middlewares + mx.routeHTTP.
+		// Once the request is finished, reset the routing context and put it back
+		// into the pool for reuse from another request.
+		rctx = mx.pool.Get().(*Context)
+		rctx.reset()
+		ctx := context.WithValue(r.Context(), RouteCtxKey, rctx)
+		mx.handler.ServeHTTP(w, r.WithContext(ctx))
+		mx.pool.Put(rctx)
+		return
+	}
+
 	rctx, _ := r.Context().Value(RouteCtxKey).(*Context)
 	if rctx != nil {
 		mx.handler.ServeHTTP(w, r)
 		return
 	}
-
-	// Fetch a RouteContext object from the sync pool, and call the computed
-	// mx.handler that is comprised of mx.middlewares + mx.routeHTTP.
-	// Once the request is finished, reset the routing context and put it back
-	// into the pool for reuse from another request.
-	rctx = mx.pool.Get().(*Context)
-	rctx.reset()
-	mx.handler.ServeHTTP(w, r.WithContext(rctx))
-	mx.pool.Put(rctx)
 }
 
 // Use appends a middleware handler to the Mux middleware stack.
