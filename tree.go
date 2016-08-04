@@ -168,15 +168,23 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 }
 
 func (n *node) findPattern(pattern string) *node {
-	for {
-		if len(pattern) == 0 {
+	nn := n
+	for _, nds := range nn.children {
+		if len(nds) == 0 {
+			continue
+		}
+
+		n = nn.getEdge(pattern[0])
+		if n == nil {
+			continue
+		}
+
+		xpattern := pattern[n.longestPrefix(pattern, n.prefix):]
+		if len(xpattern) == 0 {
 			return n
 		}
-		n = n.getEdge(pattern[0])
-		if n == nil {
-			return nil // nothing
-		}
-		pattern = pattern[len(n.prefix):]
+
+		return n.findPattern(xpattern)
 	}
 	return nil
 }

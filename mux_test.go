@@ -830,6 +830,43 @@ func TestSingleHandler(t *testing.T) {
 // 	r.Mount("/", r2)
 // }
 
+func TestMiddlewarePanicOnLateUse(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hello\n"))
+	}
+
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	r := NewRouter()
+	r.Get("/", handler)
+	r.Use(mw) // Too late to apply middleware, we're expecting panic().
+}
+
+func TestMountingExistingPath(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	r := NewRouter()
+	r.Get("/", handler)
+	r.Mount("/hi", http.HandlerFunc(handler))
+	r.Mount("/hi", http.HandlerFunc(handler))
+}
+
 func TestMuxFileServer(t *testing.T) {
 	fixtures := map[string]http.File{
 		"index.html": &testFile{"index.html", []byte("index\n")},
