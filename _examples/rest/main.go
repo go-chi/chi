@@ -71,6 +71,7 @@ func main() {
 	r.Route("/articles", func(r chi.Router) {
 		r.Get("/", chi.Use(paginate).HandlerFunc(ListArticles)) // GET /articles
 		r.Post("/", CreateArticle)                              // POST /articles
+		r.Get("/search", SearchArticles)
 
 		r.Route("/:articleID", func(r chi.Router) {
 			r.Use(ArticleCtx)            // Load the *Article on the request context
@@ -110,6 +111,11 @@ func ArticleCtx(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), "article", article)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func SearchArticles(w http.ResponseWriter, r *http.Request) {
+	// Filter by query param, and search...
+	render.JSON(w, r, articles)
 }
 
 func ListArticles(w http.ResponseWriter, r *http.Request) {
