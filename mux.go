@@ -81,6 +81,9 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // change the course of the request execution, or set request-scoped values for
 // the next http.Handler.
 func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
+	if mx.handler != nil {
+		panic("chi: all middlewares must be defined before routes on a mux")
+	}
 	mx.middlewares = append(mx.middlewares, middlewares...)
 }
 
@@ -160,6 +163,10 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 // for a group of handlers along the same routing path that use an additional
 // set of middlewares. See _examples/.
 func (mx *Mux) Group(fn func(r Router)) Router {
+	if mx.inline {
+		panic("chi: nested Group()'s are currently not supported")
+	}
+
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
@@ -189,7 +196,17 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // Mount attaches another http.Handler or chi Router as a subrouter along a routing
 // path. It's very useful to split up a large API as many independent routers and
 // compose them as a single service using Mount. See _examples/.
+//
+// Note that Mount() simply sets a wildcard along the `pattern` that will continue
+// routing at the `handler`, which in most cases is another chi.Router. As a result,
+// if you define two Mount() routes on the exact same pattern the mount will panic.
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
+	// Provide runtime safety for ensuring a pattern isn't mounted on an existing
+	// routing pattern.
+	if mx.tree.findPattern(pattern+"*") != nil || mx.tree.findPattern(pattern+"/*") != nil {
+		panic(fmt.Sprintf("chi: attempting to Mount() a handler on an existing path, '%s'", pattern))
+	}
+
 	// Assign sub-Router's with the parent not found handler if not specified.
 	sr, ok := handler.(*Mux)
 	if ok && sr.notFoundHandler == nil && mx.notFoundHandler != nil {
