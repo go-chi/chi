@@ -25,7 +25,7 @@ maintainability and expression.
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
 * **Context control** - built on new `context` package, providing value chaining, deadlines and timeouts
 * **Robust** - tested / used in production
-* **No external dependencies** - plain ol' Go 1.7+ stdlib
+* **No external dependencies** - plain ol' Go 1.7+ stdlib + net/http
 
 ## Router design
 
@@ -33,38 +33,42 @@ Chi's router is based on a kind of [Patricia Radix trie](https://en.wikipedia.or
 Built on top of the tree is the `Router` interface:
 
 ```go
-// Use appends one of more middlewares onto the Router stack.
-Use(middlewares ...func(http.Handler) http.Handler)
+type Router interface {
+	http.Handler
 
-// Route mounts a sub-Router along a `pattern`` string.
-Route(pattern string, fn func(r Router)) Router
+	// Use appends one of more middlewares onto the Router stack.
+	Use(middlewares ...func(http.Handler) http.Handler)
 
-// Group adds a new inline-Router along the current routing
-// path, with a fresh middleware stack for the inline-Router.
-Group(fn func(r Router)) Router
+	// Route mounts a sub-Router along a `pattern`` string.
+	Route(pattern string, fn func(r Router)) Router
 
-// Mount attaches another http.Handler along ./pattern/*
-Mount(pattern string, h http.Handler)
+	// Group adds a new inline-Router along the current routing
+	// path, with a fresh middleware stack for the inline-Router.
+	Group(fn func(r Router)) Router
 
-// Handle and HandleFunc adds routes for `pattern` that matches
-// all HTTP methods.
-Handle(pattern string, h http.Handler)
-HandleFunc(pattern string, h http.HandlerFunc)
+	// Mount attaches another http.Handler along ./pattern/*
+	Mount(pattern string, h http.Handler)
 
-// HTTP-method routing along `pattern`
-Connect(pattern string, h http.HandlerFunc)
-Head(pattern string, h http.HandlerFunc)
-Get(pattern string, h http.HandlerFunc)
-Post(pattern string, h http.HandlerFunc)
-Put(pattern string, h http.HandlerFunc)
-Patch(pattern string, h http.HandlerFunc)
-Delete(pattern string, h http.HandlerFunc)
-Trace(pattern string, h http.HandlerFunc)
-Options(pattern string, h http.HandlerFunc)
+	// Handle and HandleFunc adds routes for `pattern` that matches
+	// all HTTP methods.
+	Handle(pattern string, h http.Handler)
+	HandleFunc(pattern string, h http.HandlerFunc)
 
-// NotFound defines a handler to respond whenever a route could
-// not be found.
-NotFound(h http.HandlerFunc)
+	// HTTP-method routing along `pattern`
+	Connect(pattern string, h http.HandlerFunc)
+	Head(pattern string, h http.HandlerFunc)
+	Get(pattern string, h http.HandlerFunc)
+	Post(pattern string, h http.HandlerFunc)
+	Put(pattern string, h http.HandlerFunc)
+	Patch(pattern string, h http.HandlerFunc)
+	Delete(pattern string, h http.HandlerFunc)
+	Trace(pattern string, h http.HandlerFunc)
+	Options(pattern string, h http.HandlerFunc)
+
+	// NotFound defines a handler to respond whenever a route could
+	// not be found.
+	NotFound(h http.HandlerFunc)
+}
 ```
 
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
