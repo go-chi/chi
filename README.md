@@ -153,6 +153,7 @@ func main() {
   r.Group("/articles", func(r chi.Router) {
     r.Get("/", paginate, listArticles)  // GET /articles
     r.Post("/", createArticle)          // POST /articles
+    r.Get("/search", searchArticles)    // GET /articles/search
 
     r.Group("/:articleID", func(r chi.Router) {
       r.Use(ArticleCtx)
