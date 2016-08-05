@@ -830,6 +830,62 @@ func TestSingleHandler(t *testing.T) {
 // 	r.Mount("/", r2)
 // }
 
+func TestServeHTTPExistingContext(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		s, _ := r.Context().Value("testCtx").(string)
+		w.Write([]byte(s))
+	})
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		s, _ := r.Context().Value("testCtx").(string)
+		w.WriteHeader(404)
+		w.Write([]byte(s))
+	})
+
+	testcases := []struct {
+		Method         string
+		Path           string
+		Ctx            context.Context
+		ExpectedStatus int
+		ExpectedBody   string
+	}{
+		{
+			Method:         "GET",
+			Path:           "/hi",
+			Ctx:            context.WithValue(context.Background(), "testCtx", "hi ctx"),
+			ExpectedStatus: 200,
+			ExpectedBody:   "hi ctx",
+		},
+		{
+			Method:         "GET",
+			Path:           "/hello",
+			Ctx:            context.WithValue(context.Background(), "testCtx", "nothing here ctx"),
+			ExpectedStatus: 404,
+			ExpectedBody:   "nothing here ctx",
+		},
+	}
+
+	for _, tc := range testcases {
+		resp := httptest.NewRecorder()
+		req, err := http.NewRequest(tc.Method, tc.Path, nil)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		req = req.WithContext(tc.Ctx)
+		r.ServeHTTP(resp, req)
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("%v", err)
+		}
+		if resp.Code != tc.ExpectedStatus {
+			t.Fatalf("%v != %v", tc.ExpectedStatus, resp.Code)
+		}
+		if string(b) != tc.ExpectedBody {
+			t.Fatalf("%s != %s", tc.ExpectedBody, b)
+		}
+	}
+}
+
 func TestNestedGroups(t *testing.T) {
 	handlerPrintCounter := func(w http.ResponseWriter, r *http.Request) {
 		counter, _ := r.Context().Value("counter").(int)

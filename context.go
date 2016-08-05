@@ -3,6 +3,7 @@ package chi
 import (
 	"context"
 	"net/http"
+	"time"
 )
 
 var (
@@ -11,10 +12,11 @@ var (
 
 var _ context.Context = &Context{}
 
-// A Context is the default routing context set on the root node of a
+// Context is the default routing context set on the root node of a
 // request context to track URL parameters and an optional routing path.
 type Context struct {
-	context.Context
+	// Parent context
+	parent context.Context
 
 	// URL routing parameter key and values.
 	Params params
@@ -32,28 +34,41 @@ type Context struct {
 
 // NewRouteContext returns a new routing Context object.
 func NewRouteContext() *Context {
-	rctx := &Context{}
-	ctx := context.WithValue(context.Background(), RouteCtxKey, rctx)
-	rctx.Context = ctx
-	return rctx
+	return &Context{}
 }
 
 // reset a routing context to its initial state.
 func (x *Context) reset() {
+	x.parent = nil
 	x.Params = x.Params[:0]
 	x.RoutePath = ""
 	x.RoutePattern = ""
 	x.RoutePatterns = x.RoutePatterns[:0]
 }
 
+func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
+	return ctx.parent.Deadline()
+}
+
+func (ctx *Context) Done() <-chan struct{} {
+	return ctx.parent.Done()
+}
+
+func (ctx *Context) Err() error {
+	return ctx.parent.Err()
+}
+
+func (ctx *Context) Value(key interface{}) interface{} {
+	if key == RouteCtxKey {
+		return ctx
+	}
+	return ctx.parent.Value(key)
+}
+
 // RouteContext returns chi's routing Context object from a
 // http.Request Context.
 func RouteContext(ctx context.Context) *Context {
-	rctx, _ := ctx.(*Context)
-	if rctx == nil {
-		rctx = ctx.Value(RouteCtxKey).(*Context)
-	}
-	return rctx
+	return ctx.Value(RouteCtxKey).(*Context)
 }
 
 // URLParam returns the url parameter from a http.Request object.

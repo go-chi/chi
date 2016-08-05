@@ -70,6 +70,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// into the pool for reuse from another request.
 	rctx = mx.pool.Get().(*Context)
 	rctx.reset()
+	rctx.parent = r.Context()
 	mx.handler.ServeHTTP(w, r.WithContext(rctx))
 	mx.pool.Put(rctx)
 }
@@ -286,12 +287,8 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 // routeHTTP routes a http.Request through the Mux routing tree to serve
 // the matching handler for a particular http method.
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Grab the root context object
-	ctx := r.Context()
-	rctx, _ := ctx.(*Context)
-	if rctx == nil {
-		rctx = ctx.Value(RouteCtxKey).(*Context)
-	}
+	// Grab the route context object
+	rctx := r.Context().Value(RouteCtxKey).(*Context)
 
 	// The request routing path
 	routePath := rctx.RoutePath
