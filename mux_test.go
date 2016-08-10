@@ -582,11 +582,24 @@ func TestMuxBig(t *testing.T) {
 						w.Write([]byte(s))
 					})
 				})
+
+				// TODO: /webooks is not coming up as a subrouter here...
+				// we kind of want to wrap a Router... ?
+				// perhaps add .Router() to the middleware inline thing..
+				// and use that always.. or, can detect in that method..
 				r.Mount("/webhooks", Use(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "hook", true)))
 					})
 				}).Handler(sr3))
+
+				// HMMMM.. only let Mount() for just a Router..?
+				// r.Mount("/webhooks", Use(...).Router(sr3))
+				// ... could this work even....?
+
+				// HMMMMMMMMMMMMMMMMMMMMMMMM...
+				// even if Mount() were to record all subhandlers mounted, we still couldn't get at the
+				// routes
 
 				r.Route("/posts", func(r Router) {
 					sr5 = r.(*Mux)
@@ -725,6 +738,7 @@ func TestMuxSubroutes(t *testing.T) {
 	defer ts.Close()
 
 	var body, expected string
+	var resp *http.Response
 
 	_, body = testRequest(t, ts, "GET", "/hubs/123/view", nil)
 	expected = "hub1"
@@ -739,6 +753,11 @@ func TestMuxSubroutes(t *testing.T) {
 	_, body = testRequest(t, ts, "GET", "/hubs/123/users", nil)
 	expected = "hub3"
 	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+	resp, body = testRequest(t, ts, "GET", "/hubs/123/users/", nil)
+	expected = "404 page not found\n"
+	if resp.StatusCode != 404 || body != expected {
 		t.Fatalf("expected:%s got:%s", expected, body)
 	}
 	_, body = testRequest(t, ts, "GET", "/accounts/44", nil)

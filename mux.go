@@ -23,13 +23,13 @@ type Mux struct {
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
 
-	// The computed mux handler made of the chained middleware stack and
-	// the tree router
-	handler http.Handler
-
 	// Controls the behaviour of middleware chain generation when a mux
 	// is registered as an inline group inside another mux.
 	inline bool
+
+	// The computed mux handler made of the chained middleware stack and
+	// the tree router
+	handler http.Handler
 
 	// Routing context pool
 	pool sync.Pool
@@ -212,24 +212,41 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	}
 
 	// Assign sub-Router's with the parent not found handler if not specified.
-	sr, ok := handler.(*Mux)
-	if ok && sr.notFoundHandler == nil && mx.notFoundHandler != nil {
-		sr.NotFound(mx.notFoundHandler)
+	subr, ok := handler.(*Mux)
+	if ok && subr.notFoundHandler == nil && mx.notFoundHandler != nil {
+		subr.NotFound(mx.notFoundHandler)
 	}
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
-	subHandler := func(w http.ResponseWriter, r *http.Request) {
+	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
 		rctx.RoutePath = "/" + rctx.Params.Del("*")
 		handler.ServeHTTP(w, r)
-	}
+	})
 
 	if pattern == "" || pattern[len(pattern)-1] != '/' {
-		mx.HandleFunc(pattern, subHandler)
-		mx.HandleFunc(pattern+"/", mx.NotFoundHandler())
+		mx.handle(mALL|mSTUB, pattern, subHandler)
+		mx.handle(mALL|mSTUB, pattern+"/", mx.NotFoundHandler())
 		pattern += "/"
 	}
-	mx.HandleFunc(pattern+"*", subHandler)
+
+	method := mALL
+	if subr != nil {
+		method |= mSTUB
+	}
+	n := mx.handle(method, pattern+"*", subHandler)
+
+	if subr != nil {
+		n.subrouter = subr
+	}
+}
+
+func (mx *Mux) Middlewares() Middlewares {
+	return mx.middlewares
+}
+
+func (mx *Mux) Routes() Routes {
+	return mx.tree.routes()
 }
 
 // FileServer conveniently sets up a http.FileServer handler to serve
@@ -261,7 +278,7 @@ func (mx *Mux) buildRouteHandler() {
 
 // handle registers a http.Handler in the routing tree for a particular http method
 // and routing pattern.
-func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
+func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *node {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
@@ -280,8 +297,8 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) {
 		endpoint = handler
 	}
 
-	// Add the endpoint to the tree
-	mx.tree.InsertRoute(method, pattern, endpoint)
+	// Add the endpoint to the tree and return the node
+	return mx.tree.InsertRoute(method, pattern, endpoint)
 }
 
 // routeHTTP routes a http.Request through the Mux routing tree to serve
