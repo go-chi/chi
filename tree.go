@@ -22,6 +22,7 @@ const (
 	mPOST
 	mPUT
 	mTRACE
+	mSTUB
 
 	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
 		mPATCH | mPOST | mPUT | mTRACE
@@ -63,6 +64,9 @@ type node struct {
 
 	// HTTP handler on the leaf node
 	handlers methodHandlers
+
+	// chi subrouter on the leaf node
+	subrouter Router
 
 	// Child nodes should be stored in-order for iteration,
 	// in groups of the node type.
@@ -419,7 +423,13 @@ func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	if n.handlers == nil {
 		n.handlers = make(methodHandlers, 0)
 	}
-	if method == mALL {
+	if method&mSTUB == mSTUB {
+		n.handlers[mSTUB] = handler
+	} else {
+		n.handlers[mSTUB] = nil
+	}
+	if method&mALL == mALL {
+		n.handlers[mALL] = handler
 		for _, m := range methodMap {
 			n.handlers[m] = handler
 		}
@@ -437,25 +447,52 @@ func (n *node) isEmpty() bool {
 	return true
 }
 
-// Walk is used to walk the tree
-func (t *node) walk(fn walkFn) {
-	t.recursiveWalk(t.prefix, t, fn)
+func (t *node) routes() Routes {
+	rts := Routes{}
+
+	t.walkRoutes(t.prefix, t, func(pattern string, handlers methodHandlers, subrouter Router) bool {
+		if handlers[mSTUB] != nil && subrouter == nil {
+			return false
+		}
+		if subrouter != nil {
+			pattern = pattern[:len(pattern)-2]
+		}
+
+		var hs = make(map[string]http.Handler, 0)
+		if handlers[mALL] != nil {
+			hs["*"] = handlers[mALL]
+		}
+		for mt, h := range handlers {
+			if h == nil {
+				continue
+			}
+			m := methodTypString(mt)
+			if m == "" {
+				continue
+			}
+			hs[m] = h
+		}
+
+		rt := Route{pattern, hs, subrouter}
+		rts = append(rts, rt)
+		return false
+	})
+
+	return rts
 }
 
-// recursiveWalk is used to do a pre-order walk of a node
-// recursively. Returns true if the walk should be aborted
-func (t *node) recursiveWalk(pattern string, n *node, fn walkFn) bool {
-	pattern += n.prefix
+func (t *node) walkRoutes(pattern string, n *node, fn func(pattern string, handlers methodHandlers, router Router) bool) bool {
+	pattern = n.pattern
 
 	// Visit the leaf values if any
-	if n.handlers != nil && fn(pattern, n.handlers) {
+	if (n.handlers != nil || n.subrouter != nil) && fn(pattern, n.handlers, n.subrouter) {
 		return true
 	}
 
 	// Recurse on the children
 	for _, nds := range n.children {
 		for _, n := range nds {
-			if t.recursiveWalk(pattern, n, fn) {
+			if t.walkRoutes(pattern, n, fn) {
 				return true
 			}
 		}
@@ -463,12 +500,18 @@ func (t *node) recursiveWalk(pattern string, n *node, fn walkFn) bool {
 	return false
 }
 
+func methodTypString(method methodTyp) string {
+	for s, t := range methodMap {
+		if method == t {
+			return s
+		}
+	}
+	return ""
+}
+
 // methodHandlers is a mapping of http method constants to handlers
 // for a given route.
 type methodHandlers map[methodTyp]http.Handler
-
-// walkFn is used when walking the tree.
-type walkFn func(path string, handlers methodHandlers) bool
 
 type nodes []*node
 
@@ -477,3 +520,14 @@ func (ns nodes) Len() int           { return len(ns) }
 func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
 func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
 func (ns nodes) Sort()              { sort.Sort(ns) }
+
+type Route struct {
+	Pattern   string
+	Handlers  map[string]http.Handler
+	SubRouter Router
+}
+
+// TODO: perhaps put a method to Subroutes()
+// or something...?
+
+type Routes []Route

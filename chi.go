@@ -73,6 +73,12 @@ type Router interface {
 	// NotFound defines a handler to respond whenever a route could
 	// not be found.
 	NotFound(h http.HandlerFunc)
+
+	// Routes returns the routing tree in an easily traversable structure.
+	Routes() Routes
+
+	// Middlewares returns the list of middlewares in use by the router.
+	Middlewares() Middlewares
 }
 
 // Middlewares type is a slice of standard middleware handlers with methods
