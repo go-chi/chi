@@ -3,6 +3,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -235,8 +236,19 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 // FileServer conveniently sets up a http.FileServer handler to serve
 // static files from a http.FileSystem.
 func (mx *Mux) FileServer(path string, root http.FileSystem) {
+	if strings.ContainsAny(path, ":*") {
+		panic("chi: FileServer does not permit URL parameters.")
+	}
+
 	fs := http.StripPrefix(path, http.FileServer(root))
-	mx.Get(path+"*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+	if path != "/" && path[len(path)-1] != '/' {
+		mx.Get(path, http.RedirectHandler(path+"/", 301).ServeHTTP)
+		path += "/"
+	}
+	path += "*"
+
+	mx.Get(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
 	}))
 }
