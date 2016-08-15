@@ -150,12 +150,12 @@ func main() {
   })
 
   // RESTy routes for "articles" resource
-  r.Group("/articles", func(r chi.Router) {
-    r.Get("/", paginate, listArticles)  // GET /articles
+  r.Route("/articles", func(r chi.Router) {
+    r.Get("/", listArticles)  // GET /articles
     r.Post("/", createArticle)          // POST /articles
     r.Get("/search", searchArticles)    // GET /articles/search
 
-    r.Group("/:articleID", func(r chi.Router) {
+    r.Route("/:articleID", func(r chi.Router) {
       r.Use(ArticleCtx)
       r.Get("/", getArticle)            // GET /articles/123
       r.Put("/", updateArticle)         // PUT /articles/123
