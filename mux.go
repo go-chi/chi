@@ -169,11 +169,7 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	mx.notFoundHandler = handlerFn
 }
 
-// TODO: .. add a test case.. copy middlewares from parent inline mux..?
 func (mx *Mux) Chain(middlewares ...func(http.Handler) http.Handler) Router {
-	// TODO: prob want to check if parent mux is inline..
-	// and if so, we should copy the stuff.. etc..
-
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
@@ -196,29 +192,7 @@ func (mx *Mux) Chain(middlewares ...func(http.Handler) http.Handler) Router {
 // for a group of handlers along the same routing path that use an additional
 // set of middlewares. See _examples/.
 func (mx *Mux) Group(fn func(r Router)) Router {
-	// Similarly as in handle(), we must build the mux handler once further
-	// middleware registration isn't allowed for this stack, like now.
-	// if !mx.inline && mx.handler == nil {
-	// 	mx.buildRouteHandler()
-	// }
-
-	//---------
 	im := mx.Chain().(*Mux)
-
-	/*
-		// Copy middlewares for parent inline mux
-		var mws Middlewares
-		if mx.inline {
-			mws = make(Middlewares, len(mx.middlewares))
-			copy(mws, mx.middlewares)
-		}
-
-		// Make a new inline mux and run the router functions over it.
-		im := &Mux{inline: true, tree: mx.tree, middlewares: mws}
-	*/
-
-	//-----------
-
 	if fn != nil {
 		fn(im)
 	}
