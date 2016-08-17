@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 )
@@ -1048,6 +1049,41 @@ func TestMuxFileServer(t *testing.T) {
 	// if _, body := testRequest(t, ts, "GET", "/mounted/", nil); body != "index\n" {
 	// 	t.Fatalf(body)
 	// }
+}
+
+func TestMuxContextIsThreadSafe(t *testing.T) {
+	router := NewRouter()
+	router.Get("/:id", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 1*time.Millisecond)
+		defer cancel()
+
+		<-ctx.Done()
+	})
+
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 100; j++ {
+				w := httptest.NewRecorder()
+				r, err := http.NewRequest("GET", "/ok", nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				ctx, cancel := context.WithCancel(r.Context())
+				r = r.WithContext(ctx)
+
+				go func() {
+					cancel()
+				}()
+				router.ServeHTTP(w, r)
+			}
+		}()
+	}
+	wg.Wait()
 }
 
 func urlParams(ctx context.Context) map[string]string {
