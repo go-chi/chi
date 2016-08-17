@@ -360,9 +360,9 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 			}
 
 			if xn.typ == ntCatchAll {
-				rctx.Params.Add("*", xsearch)
+				rctx.URLParams.Add("*", xsearch)
 			} else {
-				rctx.Params.Add(xn.prefix[1:], xsearch[:p])
+				rctx.URLParams.Add(xn.prefix[1:], xsearch[:p])
 			}
 
 			xsearch = xsearch[p:]
@@ -389,9 +389,9 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 		// Did not found final handler, let's remove the param here if it was set
 		if xn.typ > ntStatic {
 			if xn.typ == ntCatchAll {
-				rctx.Params.Del("*")
+				rctx.URLParams.Del("*")
 			} else {
-				rctx.Params.Del(xn.prefix[1:])
+				rctx.URLParams.Del(xn.prefix[1:])
 			}
 		}
 	}

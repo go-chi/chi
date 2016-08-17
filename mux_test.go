@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"testing"
 	"time"
 )
@@ -755,8 +756,9 @@ func TestMuxSubroutes(t *testing.T) {
 	// Test that we're building the routingPatterns properly
 	router := r
 	req, _ := http.NewRequest("GET", "/accounts/44/hi", nil)
+
 	rctx := NewRouteContext()
-	req = req.WithContext(rctx)
+	req = req.WithContext(context.WithValue(req.Context(), RouteCtxKey, rctx))
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
@@ -794,8 +796,8 @@ func TestSingleHandler(t *testing.T) {
 
 	r, _ := http.NewRequest("GET", "/", nil)
 	rctx := NewRouteContext()
-	r = r.WithContext(rctx)
-	rctx.Params.Set("name", "joe")
+	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
+	rctx.URLParams.Set("name", "joe")
 
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -971,6 +973,41 @@ func TestMountingExistingPath(t *testing.T) {
 	r.Mount("/hi", http.HandlerFunc(handler))
 }
 
+func TestMuxContextIsThreadSafe(t *testing.T) {
+	router := NewRouter()
+	router.Get("/:id", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 1*time.Millisecond)
+		defer cancel()
+
+		<-ctx.Done()
+	})
+
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 10000; j++ {
+				w := httptest.NewRecorder()
+				r, err := http.NewRequest("GET", "/ok", nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				ctx, cancel := context.WithCancel(r.Context())
+				r = r.WithContext(ctx)
+
+				go func() {
+					cancel()
+				}()
+				router.ServeHTTP(w, r)
+			}
+		}()
+	}
+	wg.Wait()
+}
+
 func TestMuxFileServer(t *testing.T) {
 	fixtures := map[string]http.File{
 		"index.html": &testFile{"index.html", []byte("index\n")},
@@ -1050,15 +1087,12 @@ func TestMuxFileServer(t *testing.T) {
 	// }
 }
 
-func urlParams(ctx context.Context) map[string]string {
-	if rctx := RouteContext(ctx); rctx != nil {
-		m := make(map[string]string, 0)
-		for _, p := range rctx.Params {
-			m[p.Key] = p.Value
-		}
-		return m
+func urlParams(rctx *Context) map[string]string {
+	m := make(map[string]string, 0)
+	for _, p := range rctx.URLParams {
+		m[p.Key] = p.Value
 	}
-	return nil
+	return m
 }
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
