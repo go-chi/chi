@@ -28,16 +28,16 @@ type DocRoute struct {
 type DocRoutes map[string]DocRoute // Pattern : DocRoute
 
 type DocHandler struct {
-	Method      string        `json:"method"`
-	Description string        `json:"description,omitempty"`
-	Middlewares DocMiddleware `json:"middlewares,omitempty"`
-	Endpoint    string        `json:"endpoint"`
-	SourcePath  string        `json:"sourcePath"`
+	Method      string          `json:"method"`
+	Description string          `json:"description,omitempty"`
+	Middlewares []DocMiddleware `json:"middlewares"`
+	Endpoint    string          `json:"endpoint"`
+	SourcePath  string          `json:"sourcePath"`
 }
 
 type DocHandlers map[string]DocHandler // Method : DocHandler
 
-func JSONRoutesDoc(r chi.Router) string {
+func JSONRoutesDoc(r chi.Routes) string {
 	doc, _ := BuildDoc(r)
 	v, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {

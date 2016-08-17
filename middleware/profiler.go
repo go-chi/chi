@@ -25,19 +25,19 @@ func Profiler() http.Handler {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.RequestURI+"/pprof/", 301)
 	})
-	r.HandleFunc("/pprof", func(w http.ResponseWriter, r *http.Request) {
+	r.Any("/pprof", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, r.RequestURI+"/", 301)
 	})
 
-	r.HandleFunc("/pprof/", pprof.Index)
-	r.HandleFunc("/pprof/cmdline", pprof.Cmdline)
-	r.HandleFunc("/pprof/profile", pprof.Profile)
-	r.HandleFunc("/pprof/symbol", pprof.Symbol)
-	r.Handle("/pprof/block", pprof.Handler("block"))
-	r.Handle("/pprof/heap", pprof.Handler("heap"))
-	r.Handle("/pprof/goroutine", pprof.Handler("goroutine"))
-	r.Handle("/pprof/threadcreate", pprof.Handler("threadcreate"))
-	r.HandleFunc("/vars", expVars)
+	r.HandleFunc(chi.ANY, "/pprof/", pprof.Index)
+	r.HandleFunc(chi.ANY, "/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc(chi.ANY, "/pprof/profile", pprof.Profile)
+	r.HandleFunc(chi.ANY, "/pprof/symbol", pprof.Symbol)
+	r.Handle(chi.ANY, "/pprof/block", pprof.Handler("block"))
+	r.Handle(chi.ANY, "/pprof/heap", pprof.Handler("heap"))
+	r.Handle(chi.ANY, "/pprof/goroutine", pprof.Handler("goroutine"))
+	r.Handle(chi.ANY, "/pprof/threadcreate", pprof.Handler("threadcreate"))
+	r.HandleFunc(chi.ANY, "/vars", expVars)
 
 	return r
 }

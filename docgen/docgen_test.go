@@ -10,49 +10,25 @@ import (
 	"github.com/pressly/chi/docgen"
 )
 
-// func HiThere(w http.ResponseWriter, r *http.Request) {
-// }
+func RequestID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), "requestID", "1")
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
 
-// func GetFunctionName(i interface{}) string {
-// 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
-// }
-
-// func TestSup(t *testing.T) {
-// 	countermw := func(next http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			next.ServeHTTP(w, r)
-// 		})
-// 	}
-
-// 	h := func(w http.ResponseWriter, r *http.Request) {
-// 	}
-
-// 	r := NewRouter()
-
-// 	a := reflect.TypeOf(countermw)
-// 	b := reflect.TypeOf(r)
-// 	c := reflect.TypeOf(h)
-// 	// d := reflect.TypeOf(HiThere)
-
-// 	log.Println(a)
-// 	log.Println(b)
-// 	log.Println(c)
-// 	log.Println(GetFunctionName(HiThere))
-// 	log.Println(GetFunctionName(h))
-// 	log.Println(GetFunctionName(r))
-// 	log.Println(GetFunctionName(countermw))
-// }
+func hubIndexHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
+		chi.URLParam(r, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
+	w.Write([]byte(s))
+}
 
 // Generate docs for the MuxBig from chi/mux_test.go
 func TestMuxBig(t *testing.T) {
 	var r, sr1, sr2, sr3, sr4, sr5, sr6 *chi.Mux
 	r = chi.NewRouter()
-	r.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "requestID", "1")
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	})
+	r.Use(RequestID)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r)
@@ -113,12 +89,7 @@ func TestMuxBig(t *testing.T) {
 			})
 			r.Route("/:hubID", func(r chi.Router) {
 				sr2 = r.(*chi.Mux)
-				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-					ctx := r.Context()
-					s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
-						chi.URLParam(r, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
-					w.Write([]byte(s))
-				})
+				r.Get("/", hubIndexHandler)
 				r.Get("/touch", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
 					s := fmt.Sprintf("/hubs/%s/touch reqid:%s session:%s", chi.URLParam(r, "hubID"),
@@ -147,7 +118,7 @@ func TestMuxBig(t *testing.T) {
 				// we kind of want to wrap a Router... ?
 				// perhaps add .Router() to the middleware inline thing..
 				// and use that always.. or, can detect in that method..
-				r.Mount("/webhooks", chi.Use(func(next http.Handler) http.Handler {
+				r.Mount("/webhooks", chi.Chain(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "hook", true)))
 					})
@@ -186,6 +157,14 @@ func TestMuxBig(t *testing.T) {
 				s := fmt.Sprintf("/folders/public reqid:%s session:%s",
 					ctx.Value("requestID"), ctx.Value("session.user"))
 				w.Write([]byte(s))
+			})
+
+			r.Chain(func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "search", true)))
+				})
+			}).Get("/search", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("searching.."))
 			})
 		})
 	})
