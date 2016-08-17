@@ -1,6 +1,7 @@
 package chi
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -71,8 +72,8 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// into the pool for reuse from another request.
 	rctx = mx.pool.Get().(*Context)
 	rctx.reset()
-	rctx.parent = r.Context()
-	mx.handler.ServeHTTP(w, r.WithContext(rctx))
+	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
+	mx.handler.ServeHTTP(w, r)
 	mx.pool.Put(rctx)
 }
 
@@ -221,7 +222,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
-		rctx.RoutePath = "/" + rctx.Params.Del("*")
+		rctx.RoutePath = "/" + rctx.URLParams.Del("*")
 		handler.ServeHTTP(w, r)
 	}
 

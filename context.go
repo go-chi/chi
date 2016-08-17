@@ -3,23 +3,17 @@ package chi
 import (
 	"context"
 	"net/http"
-	"time"
 )
 
 var (
 	RouteCtxKey = &contextKey{"RouteContext"}
 )
 
-var _ context.Context = &Context{}
-
 // Context is the default routing context set on the root node of a
 // request context to track URL parameters and an optional routing path.
 type Context struct {
-	// Parent context
-	parent context.Context
-
 	// URL routing parameter key and values.
-	Params params
+	URLParams params
 
 	// Routing path override used by subrouters.
 	RoutePath string
@@ -39,30 +33,10 @@ func NewRouteContext() *Context {
 
 // reset a routing context to its initial state.
 func (x *Context) reset() {
-	x.parent = nil
-	x.Params = x.Params[:0]
+	x.URLParams = x.URLParams[:0]
 	x.RoutePath = ""
 	x.RoutePattern = ""
 	x.RoutePatterns = x.RoutePatterns[:0]
-}
-
-func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
-	return ctx.parent.Deadline()
-}
-
-func (ctx *Context) Done() <-chan struct{} {
-	return ctx.parent.Done()
-}
-
-func (ctx *Context) Err() error {
-	return ctx.parent.Err()
-}
-
-func (ctx *Context) Value(key interface{}) interface{} {
-	if key == RouteCtxKey {
-		return ctx
-	}
-	return ctx.parent.Value(key)
 }
 
 // RouteContext returns chi's routing Context object from a
@@ -74,7 +48,7 @@ func RouteContext(ctx context.Context) *Context {
 // URLParam returns the url parameter from a http.Request object.
 func URLParam(r *http.Request, key string) string {
 	if rctx := RouteContext(r.Context()); rctx != nil {
-		return rctx.Params.Get(key)
+		return rctx.URLParams.Get(key)
 	}
 	return ""
 }
@@ -82,7 +56,7 @@ func URLParam(r *http.Request, key string) string {
 // URLParam returns the url parameter from a http.Request Context.
 func URLParamFromCtx(ctx context.Context, key string) string {
 	if rctx := RouteContext(ctx); rctx != nil {
-		return rctx.Params.Get(key)
+		return rctx.URLParams.Get(key)
 	}
 	return ""
 }
