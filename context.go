@@ -37,15 +37,6 @@ func NewRouteContext() *Context {
 	return &Context{}
 }
 
-// reset a routing context to its initial state.
-func (x *Context) reset() {
-	x.parent = nil
-	x.Params = x.Params[:0]
-	x.RoutePath = ""
-	x.RoutePattern = ""
-	x.RoutePatterns = x.RoutePatterns[:0]
-}
-
 func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
 	return ctx.parent.Deadline()
 }
