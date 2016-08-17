@@ -10,34 +10,34 @@ import (
 	"strings"
 )
 
-type methodTyp int
+type Method int
 
 const (
-	mCONNECT methodTyp = 1 << iota
-	mDELETE
-	mGET
-	mHEAD
-	mOPTIONS
-	mPATCH
-	mPOST
-	mPUT
-	mTRACE
-	mSTUB
+	CONNECT Method = 1 << iota
+	DELETE
+	GET
+	HEAD
+	OPTIONS
+	PATCH
+	POST
+	PUT
+	TRACE
+	_STUB
 
-	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
-		mPATCH | mPOST | mPUT | mTRACE
+	ANY Method = CONNECT | DELETE | GET | HEAD | OPTIONS |
+		PATCH | POST | PUT | TRACE
 )
 
-var methodMap = map[string]methodTyp{
-	"CONNECT": mCONNECT,
-	"DELETE":  mDELETE,
-	"GET":     mGET,
-	"HEAD":    mHEAD,
-	"OPTIONS": mOPTIONS,
-	"PATCH":   mPATCH,
-	"POST":    mPOST,
-	"PUT":     mPUT,
-	"TRACE":   mTRACE,
+var MethodMap = map[string]Method{
+	"CONNECT": CONNECT,
+	"DELETE":  DELETE,
+	"GET":     GET,
+	"HEAD":    HEAD,
+	"OPTIONS": OPTIONS,
+	"PATCH":   PATCH,
+	"POST":    POST,
+	"PUT":     PUT,
+	"TRACE":   TRACE,
 }
 
 type nodeTyp uint8
@@ -92,7 +92,7 @@ func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
 	return rn.handlers
 }
 
-func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
+func (n *node) InsertRoute(method Method, pattern string, handler http.Handler) *node {
 	var parent *node
 	search := pattern
 
@@ -419,18 +419,18 @@ func (n *node) longestPrefix(k1, k2 string) int {
 	return i
 }
 
-func (n *node) setHandler(method methodTyp, handler http.Handler) {
+func (n *node) setHandler(method Method, handler http.Handler) {
 	if n.handlers == nil {
 		n.handlers = make(methodHandlers, 0)
 	}
-	if method&mSTUB == mSTUB {
-		n.handlers[mSTUB] = handler
+	if method&_STUB == _STUB {
+		n.handlers[_STUB] = handler
 	} else {
-		n.handlers[mSTUB] = nil
+		n.handlers[_STUB] = nil
 	}
-	if method&mALL == mALL {
-		n.handlers[mALL] = handler
-		for _, m := range methodMap {
+	if method&ANY == ANY {
+		n.handlers[ANY] = handler
+		for _, m := range MethodMap {
 			n.handlers[m] = handler
 		}
 	} else {
@@ -447,11 +447,11 @@ func (n *node) isEmpty() bool {
 	return true
 }
 
-func (t *node) routes() Routes {
-	rts := Routes{}
+func (t *node) routes() []Route {
+	rts := []Route{}
 
 	t.walkRoutes(t.prefix, t, func(pattern string, handlers methodHandlers, subrouter Router) bool {
-		if handlers[mSTUB] != nil && subrouter == nil {
+		if handlers[_STUB] != nil && subrouter == nil {
 			return false
 		}
 		if subrouter != nil {
@@ -459,8 +459,8 @@ func (t *node) routes() Routes {
 		}
 
 		var hs = make(map[string]http.Handler, 0)
-		if handlers[mALL] != nil {
-			hs["*"] = handlers[mALL]
+		if handlers[ANY] != nil {
+			hs["*"] = handlers[ANY]
 		}
 		for mt, h := range handlers {
 			if h == nil {
@@ -481,7 +481,7 @@ func (t *node) routes() Routes {
 	return rts
 }
 
-func (t *node) walkRoutes(pattern string, n *node, fn func(pattern string, handlers methodHandlers, router Router) bool) bool {
+func (t *node) walkRoutes(pattern string, n *node, fn walkFn) bool {
 	pattern = n.pattern
 
 	// Visit the leaf values if any
@@ -500,8 +500,8 @@ func (t *node) walkRoutes(pattern string, n *node, fn func(pattern string, handl
 	return false
 }
 
-func methodTypString(method methodTyp) string {
-	for s, t := range methodMap {
+func methodTypString(method Method) string {
+	for s, t := range MethodMap {
 		if method == t {
 			return s
 		}
@@ -509,9 +509,11 @@ func methodTypString(method methodTyp) string {
 	return ""
 }
 
+type walkFn func(pattern string, handlers methodHandlers, subrouter Router) bool
+
 // methodHandlers is a mapping of http method constants to handlers
 // for a given route.
-type methodHandlers map[methodTyp]http.Handler
+type methodHandlers map[Method]http.Handler
 
 type nodes []*node
 
@@ -525,9 +527,8 @@ type Route struct {
 	Pattern   string
 	Handlers  map[string]http.Handler
 	SubRouter Router
+
+	// HMMMMMMMMMMMMMMMMMMM..........
+	// we could put the Middlewares here.. and have SubRoutes []Route
+	// if we wanted .......
 }
-
-// TODO: perhaps put a method to Subroutes()
-// or something...?
-
-type Routes []Route

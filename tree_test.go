@@ -37,51 +37,51 @@ func TestTree(t *testing.T) {
 
 	tr := &node{}
 
-	tr.InsertRoute(mGET, "/", hIndex)
-	tr.InsertRoute(mGET, "/favicon.ico", hFavicon)
+	tr.InsertRoute(GET, "/", hIndex)
+	tr.InsertRoute(GET, "/favicon.ico", hFavicon)
 
-	tr.InsertRoute(mGET, "/pages/*", hStub)
+	tr.InsertRoute(GET, "/pages/*", hStub)
 
-	tr.InsertRoute(mGET, "/article", hArticleList)
-	tr.InsertRoute(mGET, "/article/", hArticleList) // redirect..?
+	tr.InsertRoute(GET, "/article", hArticleList)
+	tr.InsertRoute(GET, "/article/", hArticleList) // redirect..?
 
-	tr.InsertRoute(mGET, "/article/near", hArticleNear)
+	tr.InsertRoute(GET, "/article/near", hArticleNear)
 	// tr.InsertRoute("/article/:sup", hStub) // will get overwritten as :id param
-	tr.InsertRoute(mGET, "/article/:id", hStub)
-	tr.InsertRoute(mGET, "/article/:id", hArticleShow)
-	tr.InsertRoute(mGET, "/article/:id", hArticleShow) // duplicate will have no effect
-	tr.InsertRoute(mGET, "/article/@:user", hArticleByUser)
+	tr.InsertRoute(GET, "/article/:id", hStub)
+	tr.InsertRoute(GET, "/article/:id", hArticleShow)
+	tr.InsertRoute(GET, "/article/:id", hArticleShow) // duplicate will have no effect
+	tr.InsertRoute(GET, "/article/@:user", hArticleByUser)
 
-	tr.InsertRoute(mGET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
-	tr.InsertRoute(mGET, "/article/:id/:opts", hArticleShowOpts)
+	tr.InsertRoute(GET, "/article/:sup/:opts", hArticleShowOpts) // TODO: and what if someone adds this?
+	tr.InsertRoute(GET, "/article/:id/:opts", hArticleShowOpts)
 
-	tr.InsertRoute(mGET, "/article/:iffd/edit", hStub)
-	tr.InsertRoute(mGET, "/article/:id//related", hArticleShowRelated)
-	tr.InsertRoute(mGET, "/article/slug/:month/-/:day/:year", hArticleSlug)
+	tr.InsertRoute(GET, "/article/:iffd/edit", hStub)
+	tr.InsertRoute(GET, "/article/:id//related", hArticleShowRelated)
+	tr.InsertRoute(GET, "/article/slug/:month/-/:day/:year", hArticleSlug)
 
-	tr.InsertRoute(mGET, "/admin/user", hUserList)
-	tr.InsertRoute(mGET, "/admin/user/", hStub) // will get replaced by next route
-	tr.InsertRoute(mGET, "/admin/user/", hUserList)
+	tr.InsertRoute(GET, "/admin/user", hUserList)
+	tr.InsertRoute(GET, "/admin/user/", hStub) // will get replaced by next route
+	tr.InsertRoute(GET, "/admin/user/", hUserList)
 
-	tr.InsertRoute(mGET, "/admin/user//:id", hUserShow)
-	tr.InsertRoute(mGET, "/admin/user/:id", hUserShow)
+	tr.InsertRoute(GET, "/admin/user//:id", hUserShow)
+	tr.InsertRoute(GET, "/admin/user/:id", hUserShow)
 
-	tr.InsertRoute(mGET, "/admin/apps/:id", hAdminAppShow)
-	tr.InsertRoute(mGET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
+	tr.InsertRoute(GET, "/admin/apps/:id", hAdminAppShow)
+	tr.InsertRoute(GET, "/admin/apps/:id/*ff", hAdminAppShowCatchall)
 
-	tr.InsertRoute(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
-	tr.InsertRoute(mGET, "/admin/*", hAdminCatchall)
+	tr.InsertRoute(GET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.InsertRoute(GET, "/admin/*", hAdminCatchall)
 
-	tr.InsertRoute(mGET, "/users/:userID/profile", hUserProfile)
-	tr.InsertRoute(mGET, "/users/super/*", hUserSuper)
-	tr.InsertRoute(mGET, "/users/*", hUserAll)
+	tr.InsertRoute(GET, "/users/:userID/profile", hUserProfile)
+	tr.InsertRoute(GET, "/users/super/*", hUserSuper)
+	tr.InsertRoute(GET, "/users/*", hUserAll)
 
-	tr.InsertRoute(mGET, "/hubs/:hubID/view", hHubView1)
-	tr.InsertRoute(mGET, "/hubs/:hubID/view/*", hHubView2)
+	tr.InsertRoute(GET, "/hubs/:hubID/view", hHubView1)
+	tr.InsertRoute(GET, "/hubs/:hubID/view/*", hHubView2)
 	sr := NewRouter()
 	sr.Get("/users", hHubView3)
-	tr.InsertRoute(mGET, "/hubs/:hubID/*", sr)
-	tr.InsertRoute(mGET, "/hubs/:hubID/users", hHubView3)
+	tr.InsertRoute(GET, "/hubs/:hubID/*", sr)
+	tr.InsertRoute(GET, "/hubs/:hubID/users", hHubView3)
 
 	// tr.InsertRoute("/debug*", hStub) // TODO: should we support this..?
 
@@ -143,7 +143,7 @@ func TestTree(t *testing.T) {
 		rctx := NewRouteContext()
 
 		handlers := tr.FindRoute(rctx, tt.r) //, params)
-		handler, _ := handlers[mGET]
+		handler, _ := handlers[GET]
 
 		params := urlParams(rctx)
 
@@ -185,14 +185,14 @@ func BenchmarkTreeGet(b *testing.B) {
 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &node{}
-	tr.InsertRoute(mGET, "/", h1)
-	tr.InsertRoute(mGET, "/ping", h2)
-	tr.InsertRoute(mGET, "/pingall", h2)
-	tr.InsertRoute(mGET, "/ping/:id", h2)
-	tr.InsertRoute(mGET, "/ping/:id/woop", h2)
-	tr.InsertRoute(mGET, "/ping/:id/:opt", h2)
-	tr.InsertRoute(mGET, "/pinggggg", h2)
-	tr.InsertRoute(mGET, "/hello", h1)
+	tr.InsertRoute(GET, "/", h1)
+	tr.InsertRoute(GET, "/ping", h2)
+	tr.InsertRoute(GET, "/pingall", h2)
+	tr.InsertRoute(GET, "/ping/:id", h2)
+	tr.InsertRoute(GET, "/ping/:id/woop", h2)
+	tr.InsertRoute(GET, "/ping/:id/:opt", h2)
+	tr.InsertRoute(GET, "/pinggggg", h2)
+	tr.InsertRoute(GET, "/hello", h1)
 
 	b.ReportAllocs()
 	b.ResetTimer()

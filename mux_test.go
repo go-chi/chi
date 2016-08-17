@@ -120,7 +120,7 @@ func TestMuxBasic(t *testing.T) {
 	m.Get("/ping/:id", pingWoop)
 	m.Get("/ping/:id", pingOne) // should overwrite.. and just be 1
 	m.Get("/ping/:id/woop", pingWoop)
-	m.HandleFunc("/admin/*", catchAll)
+	m.Any("/admin/*", catchAll)
 	// m.Post("/admin/*", catchAll)
 
 	ts := httptest.NewServer(m)
@@ -240,7 +240,9 @@ func TestMuxEmptyRoutes(t *testing.T) {
 	apiRouter := NewRouter()
 	// oops, we forgot to declare any route handlers
 
-	mux.Handle("/api*", apiRouter)
+	// mux.Handle("/api*", apiRouter)
+	// mux.Any("/api*", apiRouter)
+	mux.Handle(ANY, "/api*", apiRouter)
 
 	if _, body := testHandler(t, mux, "GET", "/", nil); body != "404 page not found\n" {
 		t.Fatalf(body)
@@ -405,12 +407,12 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	var handlerCount uint64
 
-	r.Get("/", Use(inCtxmw).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.Chain(inCtxmw).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		handlerCount++
 		ctx := r.Context()
 		ctxmwHandlerCount := ctx.Value("count.ctxmwHandler").(uint64)
 		w.Write([]byte(fmt.Sprintf("inits:%d reqs:%d ctxValue:%d", ctxmwInit, handlerCount, ctxmwHandlerCount)))
-	}))
+	})
 
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("wooot"))
@@ -588,7 +590,7 @@ func TestMuxBig(t *testing.T) {
 				// we kind of want to wrap a Router... ?
 				// perhaps add .Router() to the middleware inline thing..
 				// and use that always.. or, can detect in that method..
-				r.Mount("/webhooks", Use(func(next http.Handler) http.Handler {
+				r.Mount("/webhooks", Chain(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "hook", true)))
 					})
@@ -929,18 +931,26 @@ func TestNestedGroups(t *testing.T) {
 	r.Group(func(r Router) {
 		r.Use(mwIncreaseCounter) // counter == 1
 		r.Get("/1", handlerPrintCounter)
-		r.Get("/2", Use(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+
+		// r.Handle(GET, "/2", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+		r.Chain(mwIncreaseCounter).Get("/2", handlerPrintCounter)
+
 		r.Group(func(r Router) {
 			r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 3
 			r.Get("/3", handlerPrintCounter)
 		})
 		r.Route("/", func(r Router) {
 			r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 3
-			r.Get("/4", Use(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+
+			// r.Handle(GET, "/4", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+			r.Chain(mwIncreaseCounter).Get("/4", handlerPrintCounter)
+
 			r.Group(func(r Router) {
 				r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 5
 				r.Get("/5", handlerPrintCounter)
-				r.Get("/6", Use(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+				// r.Handle(GET, "/6", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+				r.Chain(mwIncreaseCounter).Get("/6", handlerPrintCounter)
+
 			})
 		})
 	})
