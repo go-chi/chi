@@ -45,7 +45,7 @@ type Router interface {
 	Use(middlewares ...func(http.Handler) http.Handler)
 
 	// Yep..
-	Chain(middlewares ...func(http.Handler) http.Handler) Router
+	With(middlewares ...func(http.Handler) http.Handler) Router
 
 	// Group adds a new inline-Router along the current routing
 	// path, with a fresh middleware stack for the inline-Router.

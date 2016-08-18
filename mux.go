@@ -171,7 +171,7 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	mx.notFoundHandler = handlerFn
 }
 
-func (mx *Mux) Chain(middlewares ...func(http.Handler) http.Handler) Router {
+func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
@@ -194,7 +194,7 @@ func (mx *Mux) Chain(middlewares ...func(http.Handler) http.Handler) Router {
 // for a group of handlers along the same routing path that use an additional
 // set of middlewares. See _examples/.
 func (mx *Mux) Group(fn func(r Router)) Router {
-	im := mx.Chain().(*Mux)
+	im := mx.With().(*Mux)
 	if fn != nil {
 		fn(im)
 	}

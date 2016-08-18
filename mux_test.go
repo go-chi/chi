@@ -407,7 +407,7 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	var handlerCount uint64
 
-	r.Chain(inCtxmw).Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.With(inCtxmw).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		handlerCount++
 		ctx := r.Context()
 		ctxmwHandlerCount := ctx.Value("count.ctxmwHandler").(uint64)
@@ -933,7 +933,7 @@ func TestNestedGroups(t *testing.T) {
 		r.Get("/1", handlerPrintCounter)
 
 		// r.Handle(GET, "/2", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
-		r.Chain(mwIncreaseCounter).Get("/2", handlerPrintCounter)
+		r.With(mwIncreaseCounter).Get("/2", handlerPrintCounter)
 
 		r.Group(func(r Router) {
 			r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 3
@@ -943,13 +943,13 @@ func TestNestedGroups(t *testing.T) {
 			r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 3
 
 			// r.Handle(GET, "/4", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
-			r.Chain(mwIncreaseCounter).Get("/4", handlerPrintCounter)
+			r.With(mwIncreaseCounter).Get("/4", handlerPrintCounter)
 
 			r.Group(func(r Router) {
 				r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 5
 				r.Get("/5", handlerPrintCounter)
 				// r.Handle(GET, "/6", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
-				r.Chain(mwIncreaseCounter).Get("/6", handlerPrintCounter)
+				r.With(mwIncreaseCounter).Get("/6", handlerPrintCounter)
 
 			})
 		})

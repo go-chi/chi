@@ -159,7 +159,7 @@ func TestMuxBig(t *testing.T) {
 				w.Write([]byte(s))
 			})
 
-			r.Chain(func(next http.Handler) http.Handler {
+			r.With(func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "search", true)))
 				})

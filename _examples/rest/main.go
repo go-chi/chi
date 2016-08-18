@@ -69,7 +69,7 @@ func main() {
 
 	// RESTy routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
-		r.Chain(paginate).Get("/", ListArticles)
+		r.With(paginate).Get("/", ListArticles)
 		r.Post("/", CreateArticle)       // POST /articles
 		r.Get("/search", SearchArticles) // GET /articles/search
 
