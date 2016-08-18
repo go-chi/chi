@@ -12,14 +12,10 @@ The focus of the project has been to seek out an elegant and comfortable design 
 REST API servers, written during the development of the Pressly API service that powers our
 network of services.
 
-The key considerations of chi's design were: project structure, maintainability, standard http
+The key considerations of chi's design are: project structure, maintainability, standard http
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
 parts. The core router `github.com/pressly/chi` is quite small (less than 1000 LOC), but we've also
 included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope it helps you too!
-
-Looking ahead from the common REST convention for writing HTTP services, I also recommend newer works
-in the field coming from gRPC, go-kit and graphql. They're all maturing nicely, each with their
-own unique approaches and benefits.
 
 
 ## Features
@@ -301,6 +297,14 @@ how setting context on a request in Go 1.7 works.
 * Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
 
 We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
+
+
+## Related works
+
+Looking ahead from the common REST convention for writing HTTP services, I also recommend newer works
+in the field coming from gRPC, go-kit and graphql. They're all maturing nicely, each with their
+own unique approaches and benefits.
+
 
 ## License
 
