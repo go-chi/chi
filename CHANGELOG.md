@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0 (2016-07-26)
+## v2.0.0rc1 (2016-07-26)
 
 - Huge update! chi v2 is a large refactor targetting Go 1.7+. As of Go 1.7, the popular
 community `"net/context"` package has been included in the standard library as `"context"` and

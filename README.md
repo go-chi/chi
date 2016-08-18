@@ -3,17 +3,23 @@
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
 
-`chi` is a small, idiomatic and composable router for building Go 1.7+ HTTP services. `chi` utilizes
-the new `context` package introduced in Go 1.7 to handle signaling, cancelation and request-scoped
-values across a handler chain.
+`chi` is a lightweight, idiomatic and composable router for building Go 1.7+ HTTP services. It's
+especially good at helping you write large REST API services that are kept maintainable as your
+project grows and changes. `chi` is built on the new `context` package introduced in Go 1.7 to
+handle signaling, cancelation and request-scoped values across a handler chain.
 
-Chi encourages writing services by composing small handlers and middlewares constructed together
-from multiple sub-routers that make up the complete service API.
+The focus of the project has been to seek out an elegant and comfortable design for writing
+REST API servers, written during the development of the Pressly API service that powers our
+network of services.
 
-In order to get the most out of this pattern, chi's routing methods (Get, Post, Handle, Mount, etc.)
-support inline middlewares, middleware groups, and mounting (composing) any chi router to another.
-We've designed the Pressly API (150+ routes/handlers) exactly like this for the goals of productivity,
-maintainability and expression.
+The key considerations of chi's design were: project structure, maintainability, standard http
+handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
+parts. The core router `github.com/pressly/chi` is quite small (less than 1000 LOC), but we've also
+included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope it helps you too!
+
+Looking ahead from the common REST convention for writing HTTP services, I also recommend newer works
+in the field coming from gRPC, go-kit and graphql. They're all maturing nicely, each with their
+own unique approaches and benefits.
 
 
 ## Features

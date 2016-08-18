@@ -2,7 +2,7 @@ package chi
 
 import "net/http"
 
-// Chain returns a Middlewares slice.
+// Chain returns a Middlewares type from a slice of middleware handlers.
 func Chain(middlewares ...func(http.Handler) http.Handler) Middlewares {
 	return Middlewares(middlewares)
 }
