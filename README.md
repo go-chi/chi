@@ -253,7 +253,7 @@ and is available in stdlib since go1.7.
 Learn more at https://blog.golang.org/context
 
 and..
-* Docs: https://tip.golang.org/pkg/context
+* Docs: https://golang.org/pkg/context
 * Source: https://github.com/golang/go/tree/master/src/context
 
 

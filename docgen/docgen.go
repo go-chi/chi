@@ -4,8 +4,7 @@ import "github.com/pressly/chi"
 import "encoding/json"
 
 type Doc struct {
-	ProjectPath string    `json:"projectPath"`
-	Router      DocRouter `json:"router"`
+	Router DocRouter `json:"router"`
 }
 
 type DocRouter struct {
@@ -14,9 +13,7 @@ type DocRouter struct {
 }
 
 type DocMiddleware struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	SourcePath  string `json:"sourcePath"`
+	FuncInfo
 }
 
 type DocRoute struct {
@@ -28,14 +25,23 @@ type DocRoute struct {
 type DocRoutes map[string]DocRoute // Pattern : DocRoute
 
 type DocHandler struct {
-	Method      string          `json:"method"`
-	Description string          `json:"description,omitempty"`
 	Middlewares []DocMiddleware `json:"middlewares"`
-	Endpoint    string          `json:"endpoint"`
-	SourcePath  string          `json:"sourcePath"`
+	Method      string          `json:"method"`
+	FuncInfo
 }
 
 type DocHandlers map[string]DocHandler // Method : DocHandler
+
+type FuncInfo struct {
+	Pkg       string `json:"pkg"`
+	Func      string `json:"func"`
+	Comment   string `json:"comment"`
+	Anonymous bool   `json:"anonymous"`
+	File      string `json:"file,omitempty"`
+	Line      int    `json:"line,omitempty"`
+
+	// TODO: another field called, Unresolvable bool ?
+}
 
 func JSONRoutesDoc(r chi.Routes) string {
 	doc, _ := BuildDoc(r)

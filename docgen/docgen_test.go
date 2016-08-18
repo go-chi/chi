@@ -10,6 +10,7 @@ import (
 	"github.com/pressly/chi/docgen"
 )
 
+// RequestID comment goes here.
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), "requestID", "1")
@@ -29,6 +30,9 @@ func TestMuxBig(t *testing.T) {
 	var r, sr1, sr2, sr3, sr4, sr5, sr6 *chi.Mux
 	r = chi.NewRouter()
 	r.Use(RequestID)
+
+	// Some inline middleware, 1
+	// We just love Go's ast tools
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r)
@@ -158,6 +162,7 @@ func TestMuxBig(t *testing.T) {
 					ctx.Value("requestID"), ctx.Value("session.user"))
 				w.Write([]byte(s))
 			})
+			r.Get("/in", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}).ServeHTTP)
 
 			r.With(func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

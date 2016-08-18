@@ -1,14 +1,23 @@
 package docgen
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/pressly/chi"
 )
 
 func BuildDoc(r chi.Routes) (Doc, error) {
 	d := Doc{}
+
+	goPath := os.Getenv("GOPATH")
+	if goPath == "" {
+		return d, errors.New("docgen: unable to determine your $GOPATH")
+	}
+
+	// Walk and generate the router docs
 	d.Router = buildDocRouter(r)
 	return d, nil
 }
@@ -22,11 +31,8 @@ func buildDocRouter(r chi.Routes) DocRouter {
 	dr.Routes = drts
 
 	for _, mw := range rts.Middlewares() {
-		srcFile, srcLine := getFuncFileLine(mw)
 		dmw := DocMiddleware{
-			Name:        getFuncName(mw),
-			Description: "TODO",
-			SourcePath:  fmt.Sprintf("%s %d", srcFile, srcLine),
+			FuncInfo: getFuncInfo(mw),
 		}
 		dr.Middlewares = append(dr.Middlewares, dmw)
 	}
@@ -53,30 +59,15 @@ func buildDocRouter(r chi.Routes) DocRouter {
 
 				if chain != nil {
 					for _, mw := range chain.Middlewares {
-						srcFile, srcLine := getFuncFileLine(mw)
 						dh.Middlewares = append(dh.Middlewares, DocMiddleware{
-							Name:        getFuncName(mw),
-							Description: "Inline MW, TODO",
-							SourcePath:  fmt.Sprintf("%s %d", srcFile, srcLine),
+							FuncInfo: getFuncInfo(mw),
 						})
 					}
 					endpoint = chain.Endpoint
 				} else {
 					endpoint = h
 				}
-
-				// TODO: should we detect if the endpoint handler is in stdlib, and skip it or something..?
-
-				dh.Endpoint = getFuncName(endpoint)
-
-				srcFile, srcLine := getFuncFileLine(endpoint)
-				dh.SourcePath = fmt.Sprintf("%s %d", srcFile, srcLine)
-
-				// dh := DocHandler{
-				// 	Method:     method,
-				// 	Endpoint:   getFuncName(h),
-				// 	SourcePath: fmt.Sprintf("%s %d", srcFile, srcLine),
-				// }
+				dh.FuncInfo = getFuncInfo(endpoint)
 
 				drt.Handlers[method] = dh
 			}
