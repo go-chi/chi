@@ -301,8 +301,9 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 ## Related works
 
-Looking ahead from the common REST convention for writing HTTP services, I also recommend newer works
-in the field coming from gRPC, go-kit and graphql. They're all maturing nicely, each with their
+Looking ahead from the common REST convention for writing HTTP services, I also recommend newer ideas
+in the field coming from [gRPC](https://github.com/grpc/grpc-go), [go-kit](https://github.com/go-kit/kit)
+and [graphql](https://github.com/graphql-go/graphql). They're all maturing nicely, each with their
 own unique approaches and benefits.
 
 
