@@ -405,12 +405,12 @@ func TestMuxMiddlewareStack(t *testing.T) {
 
 	var handlerCount uint64
 
-	r.Get("/", Use(inCtxmw).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.With(inCtxmw).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		handlerCount++
 		ctx := r.Context()
 		ctxmwHandlerCount := ctx.Value("count.ctxmwHandler").(uint64)
 		w.Write([]byte(fmt.Sprintf("inits:%d reqs:%d ctxValue:%d", ctxmwInit, handlerCount, ctxmwHandlerCount)))
-	}))
+	})
 
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("wooot"))
@@ -583,11 +583,24 @@ func TestMuxBig(t *testing.T) {
 						w.Write([]byte(s))
 					})
 				})
-				r.Mount("/webhooks", Use(func(next http.Handler) http.Handler {
+
+				// TODO: /webooks is not coming up as a subrouter here...
+				// we kind of want to wrap a Router... ?
+				// perhaps add .Router() to the middleware inline thing..
+				// and use that always.. or, can detect in that method..
+				r.Mount("/webhooks", Chain(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "hook", true)))
 					})
 				}).Handler(sr3))
+
+				// HMMMM.. only let Mount() for just a Router..?
+				// r.Mount("/webhooks", Use(...).Router(sr3))
+				// ... could this work even....?
+
+				// HMMMMMMMMMMMMMMMMMMMMMMMM...
+				// even if Mount() were to record all subhandlers mounted, we still couldn't get at the
+				// routes
 
 				r.Route("/posts", func(r Router) {
 					sr5 = r.(*Mux)
@@ -726,6 +739,7 @@ func TestMuxSubroutes(t *testing.T) {
 	defer ts.Close()
 
 	var body, expected string
+	var resp *http.Response
 
 	_, body = testRequest(t, ts, "GET", "/hubs/123/view", nil)
 	expected = "hub1"
@@ -740,6 +754,11 @@ func TestMuxSubroutes(t *testing.T) {
 	_, body = testRequest(t, ts, "GET", "/hubs/123/users", nil)
 	expected = "hub3"
 	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
+	resp, body = testRequest(t, ts, "GET", "/hubs/123/users/", nil)
+	expected = "404 page not found\n"
+	if resp.StatusCode != 404 || body != expected {
 		t.Fatalf("expected:%s got:%s", expected, body)
 	}
 	_, body = testRequest(t, ts, "GET", "/accounts/44", nil)
@@ -910,18 +929,26 @@ func TestNestedGroups(t *testing.T) {
 	r.Group(func(r Router) {
 		r.Use(mwIncreaseCounter) // counter == 1
 		r.Get("/1", handlerPrintCounter)
-		r.Get("/2", Use(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+
+		// r.Handle(GET, "/2", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+		r.With(mwIncreaseCounter).Get("/2", handlerPrintCounter)
+
 		r.Group(func(r Router) {
 			r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 3
 			r.Get("/3", handlerPrintCounter)
 		})
 		r.Route("/", func(r Router) {
 			r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 3
-			r.Get("/4", Use(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+
+			// r.Handle(GET, "/4", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+			r.With(mwIncreaseCounter).Get("/4", handlerPrintCounter)
+
 			r.Group(func(r Router) {
 				r.Use(mwIncreaseCounter, mwIncreaseCounter) // counter == 5
 				r.Get("/5", handlerPrintCounter)
-				r.Get("/6", Use(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+				// r.Handle(GET, "/6", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
+				r.With(mwIncreaseCounter).Get("/6", handlerPrintCounter)
+
 			})
 		})
 	})
