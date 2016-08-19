@@ -92,74 +92,68 @@ func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
 
 // Handle adds the route `pattern` that matches any http method to
 // execute the `handler` http.Handler.
-func (mx *Mux) Handle(method Method, pattern string, handler http.Handler) {
-	mx.handle(method, pattern, handler)
+func (mx *Mux) Handle(pattern string, handler http.Handler) {
+	mx.handle(mALL, pattern, handler)
 }
 
 // HandleFunc adds the route `pattern` that matches any http method to
 // execute the `handlerFn` http.HandlerFunc.
-func (mx *Mux) HandleFunc(method Method, pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(method, pattern, handlerFn)
-}
-
-// Any adds the route `pattern` that matches any http methods to
-// execute the `handlerFn` http.HandlerFunc.
-func (mx *Mux) Any(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(ANY, pattern, handlerFn)
+func (mx *Mux) HandleFunc(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mALL, pattern, handlerFn)
 }
 
 // Connect adds the route `pattern` that matches a CONNECT http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Connect(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(CONNECT, pattern, handlerFn)
+	mx.handle(mCONNECT, pattern, handlerFn)
 }
 
 // Delete adds the route `pattern` that matches a DELETE http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Delete(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(DELETE, pattern, handlerFn)
+	mx.handle(mDELETE, pattern, handlerFn)
 }
 
 // Get adds the route `pattern` that matches a GET http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Get(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(GET, pattern, handlerFn)
+	mx.handle(mGET, pattern, handlerFn)
 }
 
 // Head adds the route `pattern` that matches a HEAD http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Head(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(HEAD, pattern, handlerFn)
+	mx.handle(mHEAD, pattern, handlerFn)
 }
 
 // Options adds the route `pattern` that matches a OPTIONS http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Options(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(OPTIONS, pattern, handlerFn)
+	mx.handle(mOPTIONS, pattern, handlerFn)
 }
 
 // Patch adds the route `pattern` that matches a PATCH http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Patch(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(PATCH, pattern, handlerFn)
+	mx.handle(mPATCH, pattern, handlerFn)
 }
 
 // Post adds the route `pattern` that matches a POST http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Post(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(POST, pattern, handlerFn)
+	mx.handle(mPOST, pattern, handlerFn)
 }
 
 // Put adds the route `pattern` that matches a PUT http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Put(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(PUT, pattern, handlerFn)
+	mx.handle(mPUT, pattern, handlerFn)
 }
 
 // Trace adds the route `pattern` that matches a TRACE http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
-	mx.handle(TRACE, pattern, handlerFn)
+	mx.handle(mTRACE, pattern, handlerFn)
 }
 
 // NotFound sets a custom http.HandlerFunc for routing paths that could
@@ -239,15 +233,15 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	})
 
 	if pattern == "" || pattern[len(pattern)-1] != '/' {
-		mx.handle(ANY|_STUB, pattern, subHandler)
-		mx.handle(ANY|_STUB, pattern+"/", mx.NotFoundHandler())
+		mx.handle(mALL|mSTUB, pattern, subHandler)
+		mx.handle(mALL|mSTUB, pattern+"/", mx.NotFoundHandler())
 		pattern += "/"
 	}
 
-	method := ANY
+	method := mALL
 	subroutes, _ := handler.(Routes)
 	if subroutes != nil {
-		method |= _STUB
+		method |= mSTUB
 	}
 	n := mx.handle(method, pattern+"*", subHandler)
 
@@ -304,7 +298,7 @@ func (mx *Mux) buildRouteHandler() {
 
 // handle registers a http.Handler in the routing tree for a particular http method
 // and routing pattern.
-func (mx *Mux) handle(method Method, pattern string, handler http.Handler) *node {
+func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *node {
 	if len(pattern) == 0 || pattern[0] != '/' {
 		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
@@ -340,7 +334,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if method is supported by chi
-	method, ok := MethodMap[r.Method]
+	method, ok := methodMap[r.Method]
 	if !ok {
 		methodNotAllowedHandler(w, r)
 		return

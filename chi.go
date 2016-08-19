@@ -60,9 +60,8 @@ type Router interface {
 
 	// Handle and HandleFunc adds routes for `pattern` that matches
 	// all HTTP methods.
-	Handle(method Method, pattern string, h http.Handler)
-	HandleFunc(method Method, pattern string, h http.HandlerFunc)
-	Any(pattern string, h http.HandlerFunc)
+	Handle(pattern string, h http.Handler)
+	HandleFunc(pattern string, h http.HandlerFunc)
 
 	// HTTP-method routing along `pattern`
 	Connect(pattern string, h http.HandlerFunc)

@@ -120,7 +120,7 @@ func TestMuxBasic(t *testing.T) {
 	m.Get("/ping/:id", pingWoop)
 	m.Get("/ping/:id", pingOne) // should overwrite.. and just be 1
 	m.Get("/ping/:id/woop", pingWoop)
-	m.Any("/admin/*", catchAll)
+	m.HandleFunc("/admin/*", catchAll)
 	// m.Post("/admin/*", catchAll)
 
 	ts := httptest.NewServer(m)
@@ -240,9 +240,7 @@ func TestMuxEmptyRoutes(t *testing.T) {
 	apiRouter := NewRouter()
 	// oops, we forgot to declare any route handlers
 
-	// mux.Handle("/api*", apiRouter)
-	// mux.Any("/api*", apiRouter)
-	mux.Handle(ANY, "/api*", apiRouter)
+	mux.Handle("/api*", apiRouter)
 
 	if _, body := testHandler(t, mux, "GET", "/", nil); body != "404 page not found\n" {
 		t.Fatalf(body)
