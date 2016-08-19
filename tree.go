@@ -65,8 +65,8 @@ type node struct {
 	// HTTP handler on the leaf node
 	handlers methodHandlers
 
-	// chi subrouter on the leaf node
-	subrouter Routes
+	// chi subroutes on the leaf node
+	subroutes Routes
 
 	// Child nodes should be stored in-order for iteration,
 	// in groups of the node type.
@@ -450,17 +450,13 @@ func (n *node) isEmpty() bool {
 func (t *node) routes() []Route {
 	rts := []Route{}
 
-	t.walkRoutes(t.prefix, t, func(pattern string, handlers methodHandlers, subrouter Routes) bool {
-		if handlers[_STUB] != nil && subrouter == nil {
+	t.walkRoutes(t.prefix, t, func(pattern string, handlers methodHandlers, subroutes Routes) bool {
+		if handlers[_STUB] != nil && subroutes == nil {
 			return false
 		}
-		if subrouter != nil {
-			x := len(pattern) - 2
-			if x < 0 {
-				// TODO: why does this happen though?
-				x = 0
-			}
-			pattern = pattern[:x]
+
+		if subroutes != nil && len(pattern) > 2 {
+			pattern = pattern[:len(pattern)-2]
 		}
 
 		var hs = make(map[string]http.Handler, 0)
@@ -478,7 +474,6 @@ func (t *node) routes() []Route {
 			hs[m] = h
 		}
 
-		subroutes, _ := subrouter.(Routes)
 		rt := Route{pattern, hs, subroutes}
 		rts = append(rts, rt)
 		return false
@@ -491,7 +486,7 @@ func (t *node) walkRoutes(pattern string, n *node, fn walkFn) bool {
 	pattern = n.pattern
 
 	// Visit the leaf values if any
-	if (n.handlers != nil || n.subrouter != nil) && fn(pattern, n.handlers, n.subrouter) {
+	if (n.handlers != nil || n.subroutes != nil) && fn(pattern, n.handlers, n.subroutes) {
 		return true
 	}
 
@@ -515,7 +510,7 @@ func methodTypString(method Method) string {
 	return ""
 }
 
-type walkFn func(pattern string, handlers methodHandlers, subrouter Routes) bool
+type walkFn func(pattern string, handlers methodHandlers, subroutes Routes) bool
 
 // methodHandlers is a mapping of http method constants to handlers
 // for a given route.
@@ -532,5 +527,5 @@ func (ns nodes) Sort()              { sort.Sort(ns) }
 type Route struct {
 	Pattern   string
 	Handlers  map[string]http.Handler
-	SubRouter Routes
+	SubRoutes Routes
 }

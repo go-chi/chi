@@ -15,7 +15,7 @@ network of services.
 The key considerations of chi's design are: project structure, maintainability, standard http
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
 parts. The core router `github.com/pressly/chi` is quite small (less than 1000 LOC), but we've also
-included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope it helps you too!
+included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope you enjoy it too!
 
 
 ## Features
@@ -23,8 +23,9 @@ included some useful/optional subpackages: `middleware`, `render` and `docgen`. 
 * **Lightweight** - cloc'd in <1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
-* **Context control** - built on new `context` package, providing value chaining, deadlines and timeouts
-* **Robust** - tested / used in production
+* **Context control** - built on new `context` package, providing value chaining, cancelations and timeouts
+* **Robust** - tested / used in production at Pressly.com, and many others
+* **Doc generation** - `docgen` auto-generates routing documentation from your source
 * **No external dependencies** - plain ol' Go 1.7+ stdlib + net/http
 
 
@@ -35,7 +36,7 @@ Examples:
 * [limits](https://github.com/pressly/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
 * [todos-resource](https://github.com/pressly/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
 * [versions](https://github.com/pressly/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
-
+* [fileserver](https://github.com/pressly/chi/blob/master/_examples/fileserver/main.go) - Easily serve static files
 
 Preview:
 
@@ -71,15 +72,15 @@ func main() {
 
   // RESTy routes for "articles" resource
   r.Route("/articles", func(r chi.Router) {
-    r.Get("/", listArticles)  // GET /articles
-    r.Post("/", createArticle)          // POST /articles
-    r.Get("/search", searchArticles)    // GET /articles/search
+    r.With(paginate).Get("/", listArticles)  // GET /articles
+    r.Post("/", createArticle)               // POST /articles
+    r.Get("/search", searchArticles)         // GET /articles/search
 
     r.Route("/:articleID", func(r chi.Router) {
       r.Use(ArticleCtx)
-      r.Get("/", getArticle)            // GET /articles/123
-      r.Put("/", updateArticle)         // PUT /articles/123
-      r.Delete("/", deleteArticle)      // DELETE /articles/123
+      r.Get("/", getArticle)                 // GET /articles/123
+      r.Put("/", updateArticle)              // PUT /articles/123
+      r.Delete("/", deleteArticle)           // DELETE /articles/123
     })
   })
 
@@ -141,41 +142,58 @@ Chi's router is based on a kind of [Patricia Radix trie](https://en.wikipedia.or
 Built on top of the tree is the `Router` interface:
 
 ```go
+// Router consisting of the core routing methods used by chi's Mux,
+// using only the standard net/http.
 type Router interface {
 	http.Handler
+	Routes
 
 	// Use appends one of more middlewares onto the Router stack.
 	Use(middlewares ...func(http.Handler) http.Handler)
 
-	// Route mounts a sub-Router along a `pattern`` string.
-	Route(pattern string, fn func(r Router)) Router
+	// With adds inline middlewares for an endpoint handler.
+	With(middlewares ...func(http.Handler) http.Handler) Router
 
 	// Group adds a new inline-Router along the current routing
 	// path, with a fresh middleware stack for the inline-Router.
 	Group(fn func(r Router)) Router
+
+	// Route mounts a sub-Router along a `pattern`` string.
+	Route(pattern string, fn func(r Router)) Router
 
 	// Mount attaches another http.Handler along ./pattern/*
 	Mount(pattern string, h http.Handler)
 
 	// Handle and HandleFunc adds routes for `pattern` that matches
 	// all HTTP methods.
-	Handle(pattern string, h http.Handler)
-	HandleFunc(pattern string, h http.HandlerFunc)
+	Handle(method Method, pattern string, h http.Handler)
+	HandleFunc(method Method, pattern string, h http.HandlerFunc)
+	Any(pattern string, h http.HandlerFunc)
 
 	// HTTP-method routing along `pattern`
 	Connect(pattern string, h http.HandlerFunc)
-	Head(pattern string, h http.HandlerFunc)
+	Delete(pattern string, h http.HandlerFunc)
 	Get(pattern string, h http.HandlerFunc)
+	Head(pattern string, h http.HandlerFunc)
+	Options(pattern string, h http.HandlerFunc)
+	Patch(pattern string, h http.HandlerFunc)
 	Post(pattern string, h http.HandlerFunc)
 	Put(pattern string, h http.HandlerFunc)
-	Patch(pattern string, h http.HandlerFunc)
-	Delete(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
-	Options(pattern string, h http.HandlerFunc)
 
 	// NotFound defines a handler to respond whenever a route could
 	// not be found.
 	NotFound(h http.HandlerFunc)
+}
+
+// Routes interface adds two methods for router traversal, which is also
+// used by the `docgen` subpackage to generation documentation for Routers.
+type Routes interface {
+	// Routes returns the routing tree in an easily traversable structure.
+	Routes() []Route
+
+	// Middlewares returns the list of middlewares in use by the router.
+	Middlewares() Middlewares
 }
 ```
 
@@ -223,22 +241,26 @@ func CtxHandler(w http.ResponseWriter, r *http.Request) {
 
 Chi comes equipped with an optional `middleware` package, providing:
 
--------------------------------------------------------------------------------------------------
-| Middleware  | Description                                                                     |
-|:------------|:---------------------------------------------------------------------------------
-| RequestID   | Injects a request ID into the context of each request.                          |
-| RealIP      | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
-| Logger      | Logs the start and end of each request with the elapsed processing time.        |
-| Recoverer   | Gracefully absorb panics and prints the stack trace.                            |
-| NoCache     | Sets response headers to prevent clients from caching.                          |
-| CloseNotify | Signals to the request context when a client has closed their connection.       |
-| Timeout     | Signals to the request context when the timeout deadline is reached.            |
-| Throttle    | Puts a ceiling on the number of concurrent requests.                            |
--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+| Middleware   | Description                                                                     |
+|:-------------|:---------------------------------------------------------------------------------
+| RequestID    | Injects a request ID into the context of each request.                          |
+| RealIP       | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
+| Logger       | Logs the start and end of each request with the elapsed processing time.        |
+| Recoverer    | Gracefully absorb panics and prints the stack trace.                            |
+| NoCache      | Sets response headers to prevent clients from caching.                          |
+| CloseNotify  | Signals to the request context when a client has closed their connection.       |
+| Timeout      | Signals to the request context when the timeout deadline is reached.            |
+| Throttle     | Puts a ceiling on the number of concurrent requests.                            |
+| Compress     | Gzip compression for clients that accept compressed responses.                  |
+| Profiler     | Easily attach net/http/pprof to your routers.                                   |
+| Slashes      | Strip and redirect slashes on routing paths.                                    |
+| WithValue    | Short-hand middleware to set a key/value on the request context.                |
+--------------------------------------------------------------------------------------------------
 
 Other middlewares:
 
-* [httpcoala](https://github.com/goware/httpcoala) - request coalescer
+* [httpcoala](https://github.com/goware/httpcoala) - Request coalescer
 * [jwtauth](https://github.com/goware/jwtauth) - JWT authenticator
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi middleware
@@ -301,9 +323,9 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 ## Related works
 
-Looking ahead from the common REST convention for writing HTTP services, I also recommend newer ideas
-in the field coming from [gRPC](https://github.com/grpc/grpc-go), [go-kit](https://github.com/go-kit/kit)
-and [graphql](https://github.com/graphql-go/graphql). They're all maturing nicely, each with their
+Looking ahead beyond REST, I also recommend these newer ideas in the field coming from
+[gRPC](https://github.com/grpc/grpc-go), [go-kit](https://github.com/go-kit/kit) and
+[graphql](https://github.com/graphql-go/graphql). They're all pretty cool with their
 own unique approaches and benefits.
 
 

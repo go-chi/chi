@@ -22,9 +22,6 @@ func getCallerFrame(i interface{}) *runtime.Frame {
 
 func getPkgName(file string) string {
 	fset := token.NewFileSet()
-
-	// TODO: can we get the full pkg path...?
-
 	astFile, err := parser.ParseFile(fset, file, nil, parser.PackageClauseOnly)
 	if err != nil {
 		return ""

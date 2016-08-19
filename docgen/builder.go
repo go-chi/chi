@@ -40,8 +40,8 @@ func buildDocRouter(r chi.Routes) DocRouter {
 	for _, rt := range rts.Routes() {
 		drt := DocRoute{Pattern: rt.Pattern, Handlers: DocHandlers{}}
 
-		if rt.SubRouter != nil {
-			subRoutes := rt.SubRouter
+		if rt.SubRoutes != nil {
+			subRoutes := rt.SubRoutes
 			subDrts := buildDocRouter(subRoutes)
 			drt.Router = &subDrts
 
@@ -90,17 +90,18 @@ func buildFuncInfo(i interface{}) FuncInfo {
 		return fi
 	}
 
-	pkg := getPkgName(frame.File)
-	if pkg == "chi" {
+	pkgName := getPkgName(frame.File)
+	if pkgName == "chi" {
 		fi.Unresolvable = true
 	}
+	funcPath := frame.Func.Name()
 
-	fi.Pkg = pkg
-
-	fi.Func = frame.Func.Name()
-	idx := strings.Index(fi.Func, "/"+fi.Pkg)
+	idx := strings.Index(funcPath, "/"+pkgName)
 	if idx > 0 {
-		fi.Func = fi.Func[idx+len(fi.Pkg)+2:]
+		fi.Pkg = funcPath[:idx+1+len(pkgName)]
+		fi.Func = funcPath[idx+2+len(pkgName):]
+	} else {
+		fi.Func = funcPath
 	}
 
 	if strings.Index(fi.Func, ".func") > 0 {
@@ -114,7 +115,7 @@ func buildFuncInfo(i interface{}) FuncInfo {
 	}
 
 	// Check if file info is unresolvable
-	if strings.Index(frame.Func.Name(), fi.Pkg) < 0 {
+	if strings.Index(funcPath, pkgName) < 0 {
 		fi.Unresolvable = true
 	}
 
@@ -128,12 +129,12 @@ func buildFuncInfo(i interface{}) FuncInfo {
 func PrintRoutes(prefix string, parentPattern string, r chi.Routes) {
 	rts := r.Routes()
 	for _, rt := range rts {
-		if rt.SubRouter == nil {
+		if rt.SubRoutes == nil {
 			fmt.Println(prefix, parentPattern+rt.Pattern)
 		} else {
 			pat := rt.Pattern
 
-			subRoutes := rt.SubRouter
+			subRoutes := rt.SubRoutes
 			PrintRoutes("=="+prefix, parentPattern+pat, subRoutes)
 		}
 	}

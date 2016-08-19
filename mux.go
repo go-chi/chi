@@ -245,13 +245,14 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	}
 
 	method := ANY
-	if subr != nil {
+	subroutes, _ := handler.(Routes)
+	if subroutes != nil {
 		method |= _STUB
 	}
 	n := mx.handle(method, pattern+"*", subHandler)
 
-	if subroutes, ok := handler.(Routes); ok {
-		n.subrouter = subroutes
+	if subroutes != nil {
+		n.subroutes = subroutes
 	}
 }
 
