@@ -8,10 +8,7 @@ import (
 	"sync"
 )
 
-var (
-	_ Router = &Mux{}
-	_ Routes = &Mux{}
-)
+var _ Router = &Mux{}
 
 // Mux is a simple HTTP route multiplexer that parses a request path,
 // records any URL params, and executes an end handler. It implements
@@ -171,6 +168,7 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	mx.notFoundHandler = handlerFn
 }
 
+// With adds inline middlewares for an endpoint handler.
 func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	// Similarly as in handle(), we must build the mux handler once further
 	// middleware registration isn't allowed for this stack, like now.
@@ -252,8 +250,8 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	}
 	n := mx.handle(method, pattern+"*", subHandler)
 
-	if subr != nil {
-		n.subrouter = subr
+	if subroutes, ok := handler.(Routes); ok {
+		n.subrouter = subroutes
 	}
 }
 

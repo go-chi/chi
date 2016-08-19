@@ -33,14 +33,13 @@ type DocHandler struct {
 type DocHandlers map[string]DocHandler // Method : DocHandler
 
 type FuncInfo struct {
-	Pkg       string `json:"pkg"`
-	Func      string `json:"func"`
-	Comment   string `json:"comment"`
-	Anonymous bool   `json:"anonymous"`
-	File      string `json:"file,omitempty"`
-	Line      int    `json:"line,omitempty"`
-
-	// TODO: another field called, Unresolvable bool ?
+	Pkg          string `json:"pkg"`
+	Func         string `json:"func"`
+	Comment      string `json:"comment"`
+	File         string `json:"file,omitempty"`
+	Line         int    `json:"line,omitempty"`
+	Anonymous    bool   `json:"anonymous,omitempty"`
+	Unresolvable bool   `json:"unresolvable,omitempty"`
 }
 
 func JSONRoutesDoc(r chi.Routes) string {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/pressly/chi"
 )
@@ -23,16 +25,14 @@ func BuildDoc(r chi.Routes) (Doc, error) {
 }
 
 func buildDocRouter(r chi.Routes) DocRouter {
-	// rts := r.(chi.Routes)
 	rts := r
-
 	dr := DocRouter{Middlewares: []DocMiddleware{}}
 	drts := DocRoutes{}
 	dr.Routes = drts
 
 	for _, mw := range rts.Middlewares() {
 		dmw := DocMiddleware{
-			FuncInfo: getFuncInfo(mw),
+			FuncInfo: buildFuncInfo(mw),
 		}
 		dr.Middlewares = append(dr.Middlewares, dmw)
 	}
@@ -41,7 +41,7 @@ func buildDocRouter(r chi.Routes) DocRouter {
 		drt := DocRoute{Pattern: rt.Pattern, Handlers: DocHandlers{}}
 
 		if rt.SubRouter != nil {
-			subRoutes := rt.SubRouter.(chi.Routes)
+			subRoutes := rt.SubRouter
 			subDrts := buildDocRouter(subRoutes)
 			drt.Router = &subDrts
 
@@ -60,14 +60,15 @@ func buildDocRouter(r chi.Routes) DocRouter {
 				if chain != nil {
 					for _, mw := range chain.Middlewares {
 						dh.Middlewares = append(dh.Middlewares, DocMiddleware{
-							FuncInfo: getFuncInfo(mw),
+							FuncInfo: buildFuncInfo(mw),
 						})
 					}
 					endpoint = chain.Endpoint
 				} else {
 					endpoint = h
 				}
-				dh.FuncInfo = getFuncInfo(endpoint)
+
+				dh.FuncInfo = buildFuncInfo(endpoint)
 
 				drt.Handlers[method] = dh
 			}
@@ -79,8 +80,52 @@ func buildDocRouter(r chi.Routes) DocRouter {
 	return dr
 }
 
-func PrintRoutes(prefix string, parentPattern string, r chi.Routes) { //chi.Router) {
-	// rts := r.(chi.Routes).Routes()
+func buildFuncInfo(i interface{}) FuncInfo {
+	fi := FuncInfo{}
+	frame := getCallerFrame(i)
+	goPathSrc := filepath.Join(os.Getenv("GOPATH"), "src")
+
+	if frame == nil {
+		fi.Unresolvable = true
+		return fi
+	}
+
+	pkg := getPkgName(frame.File)
+	if pkg == "chi" {
+		fi.Unresolvable = true
+	}
+
+	fi.Pkg = pkg
+
+	fi.Func = frame.Func.Name()
+	idx := strings.Index(fi.Func, "/"+fi.Pkg)
+	if idx > 0 {
+		fi.Func = fi.Func[idx+len(fi.Pkg)+2:]
+	}
+
+	if strings.Index(fi.Func, ".func") > 0 {
+		fi.Anonymous = true
+	}
+
+	fi.File = frame.File
+	fi.Line = frame.Line
+	if filepath.HasPrefix(fi.File, goPathSrc) {
+		fi.File = fi.File[len(goPathSrc)+1:]
+	}
+
+	// Check if file info is unresolvable
+	if strings.Index(frame.Func.Name(), fi.Pkg) < 0 {
+		fi.Unresolvable = true
+	}
+
+	if !fi.Unresolvable {
+		fi.Comment = getFuncComment(frame.File, frame.Line)
+	}
+
+	return fi
+}
+
+func PrintRoutes(prefix string, parentPattern string, r chi.Routes) {
 	rts := r.Routes()
 	for _, rt := range rts {
 		if rt.SubRouter == nil {
@@ -88,7 +133,7 @@ func PrintRoutes(prefix string, parentPattern string, r chi.Routes) { //chi.Rout
 		} else {
 			pat := rt.Pattern
 
-			subRoutes := rt.SubRouter.(chi.Routes)
+			subRoutes := rt.SubRouter
 			PrintRoutes("=="+prefix, parentPattern+pat, subRoutes)
 		}
 	}

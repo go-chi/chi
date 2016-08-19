@@ -40,11 +40,12 @@ func NewRouter() *Mux {
 // using only the standard net/http.
 type Router interface {
 	http.Handler
+	Routes
 
 	// Use appends one of more middlewares onto the Router stack.
 	Use(middlewares ...func(http.Handler) http.Handler)
 
-	// Yep..
+	// With adds inline middlewares for an endpoint handler.
 	With(middlewares ...func(http.Handler) http.Handler) Router
 
 	// Group adds a new inline-Router along the current routing

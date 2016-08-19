@@ -66,7 +66,7 @@ type node struct {
 	handlers methodHandlers
 
 	// chi subrouter on the leaf node
-	subrouter Router
+	subrouter Routes
 
 	// Child nodes should be stored in-order for iteration,
 	// in groups of the node type.
@@ -450,12 +450,17 @@ func (n *node) isEmpty() bool {
 func (t *node) routes() []Route {
 	rts := []Route{}
 
-	t.walkRoutes(t.prefix, t, func(pattern string, handlers methodHandlers, subrouter Router) bool {
+	t.walkRoutes(t.prefix, t, func(pattern string, handlers methodHandlers, subrouter Routes) bool {
 		if handlers[_STUB] != nil && subrouter == nil {
 			return false
 		}
 		if subrouter != nil {
-			pattern = pattern[:len(pattern)-2]
+			x := len(pattern) - 2
+			if x < 0 {
+				// TODO: why does this happen though?
+				x = 0
+			}
+			pattern = pattern[:x]
 		}
 
 		var hs = make(map[string]http.Handler, 0)
@@ -473,7 +478,8 @@ func (t *node) routes() []Route {
 			hs[m] = h
 		}
 
-		rt := Route{pattern, hs, subrouter}
+		subroutes, _ := subrouter.(Routes)
+		rt := Route{pattern, hs, subroutes}
 		rts = append(rts, rt)
 		return false
 	})
@@ -509,7 +515,7 @@ func methodTypString(method Method) string {
 	return ""
 }
 
-type walkFn func(pattern string, handlers methodHandlers, subrouter Router) bool
+type walkFn func(pattern string, handlers methodHandlers, subrouter Routes) bool
 
 // methodHandlers is a mapping of http method constants to handlers
 // for a given route.
@@ -526,9 +532,5 @@ func (ns nodes) Sort()              { sort.Sort(ns) }
 type Route struct {
 	Pattern   string
 	Handlers  map[string]http.Handler
-	SubRouter Router
-
-	// HMMMMMMMMMMMMMMMMMMM..........
-	// we could put the Middlewares here.. and have SubRoutes []Route
-	// if we wanted .......
+	SubRouter Routes
 }
