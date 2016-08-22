@@ -1,0 +1,224 @@
+{
+  "router": {
+    "middlewares": [
+      {
+        "pkg": "github.com/pressly/chi/middleware",
+        "func": "RequestID",
+        "comment": "RequestID is a middleware that injects a request ID into the context of each\nrequest. A request ID is a string of the form \"host.example.com/random-0001\",\nwhere \"random\" is a base62 random string that uniquely identifies this go\nprocess, and where the last number is an atomically incremented request\ncounter.\n",
+        "file": "github.com/pressly/chi/middleware/request_id.go",
+        "line": 63
+      },
+      {
+        "pkg": "github.com/pressly/chi/middleware",
+        "func": "Logger",
+        "comment": "Logger is a middleware that logs the start and end of each request, along\nwith some useful data about what was requested, what the response status was,\nand how long it took to return. When standard output is a TTY, Logger will\nprint in color, otherwise it will print in black and white.\n\nLogger prints a request ID if one is provided.\n",
+        "file": "github.com/pressly/chi/middleware/logger.go",
+        "line": 22
+      },
+      {
+        "pkg": "github.com/pressly/chi/middleware",
+        "func": "Recoverer",
+        "comment": "Recoverer is a middleware that recovers from panics, logs the panic (and a\nbacktrace), and returns a HTTP 500 (Internal Server Error) status if\npossible.\n\nRecoverer prints a request ID if one is provided.\n",
+        "file": "github.com/pressly/chi/middleware/recoverer.go",
+        "line": 18
+      }
+    ],
+    "routes": {
+      "/": {
+        "handlers": {
+          "GET": {
+            "middlewares": [],
+            "method": "GET",
+            "pkg": "",
+            "func": "main.main.func1",
+            "comment": "",
+            "file": "github.com/pressly/chi/_examples/rest/main.go",
+            "line": 64,
+            "anonymous": true
+          }
+        }
+      },
+      "/admin": {
+        "router": {
+          "middlewares": [
+            {
+              "pkg": "",
+              "func": "main.AdminOnly",
+              "comment": "",
+              "file": "github.com/pressly/chi/_examples/rest/main.go",
+              "line": 219
+            }
+          ],
+          "routes": {
+            "/": {
+              "handlers": {
+                "GET": {
+                  "middlewares": [],
+                  "method": "GET",
+                  "pkg": "",
+                  "func": "main.adminRouter.func1",
+                  "comment": "",
+                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "line": 207,
+                  "anonymous": true
+                }
+              }
+            },
+            "/accounts": {
+              "handlers": {
+                "GET": {
+                  "middlewares": [],
+                  "method": "GET",
+                  "pkg": "",
+                  "func": "main.adminRouter.func2",
+                  "comment": "",
+                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "line": 210,
+                  "anonymous": true
+                }
+              }
+            },
+            "/users/:userId": {
+              "handlers": {
+                "GET": {
+                  "middlewares": [],
+                  "method": "GET",
+                  "pkg": "",
+                  "func": "main.adminRouter.func3",
+                  "comment": "",
+                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "line": 213,
+                  "anonymous": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "/articles": {
+        "router": {
+          "middlewares": [],
+          "routes": {
+            "/": {
+              "handlers": {
+                "GET": {
+                  "middlewares": [
+                    {
+                      "pkg": "",
+                      "func": "main.paginate",
+                      "comment": "",
+                      "file": "github.com/pressly/chi/_examples/rest/main.go",
+                      "line": 230
+                    }
+                  ],
+                  "method": "GET",
+                  "pkg": "",
+                  "func": "main.ListArticles",
+                  "comment": "",
+                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "line": 134
+                },
+                "POST": {
+                  "middlewares": [],
+                  "method": "POST",
+                  "pkg": "",
+                  "func": "main.CreateArticle",
+                  "comment": "",
+                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "line": 138
+                }
+              }
+            },
+            "/:articleID": {
+              "router": {
+                "middlewares": [
+                  {
+                    "pkg": "",
+                    "func": "main.ArticleCtx",
+                    "comment": "",
+                    "file": "github.com/pressly/chi/_examples/rest/main.go",
+                    "line": 115
+                  }
+                ],
+                "routes": {
+                  "/": {
+                    "handlers": {
+                      "DELETE": {
+                        "middlewares": [],
+                        "method": "DELETE",
+                        "pkg": "",
+                        "func": "main.DeleteArticle",
+                        "comment": "",
+                        "file": "github.com/pressly/chi/_examples/rest/main.go",
+                        "line": 185
+                      },
+                      "GET": {
+                        "middlewares": [],
+                        "method": "GET",
+                        "pkg": "",
+                        "func": "main.GetArticle",
+                        "comment": "",
+                        "file": "github.com/pressly/chi/_examples/rest/main.go",
+                        "line": 157
+                      },
+                      "PUT": {
+                        "middlewares": [],
+                        "method": "PUT",
+                        "pkg": "",
+                        "func": "main.UpdateArticle",
+                        "comment": "",
+                        "file": "github.com/pressly/chi/_examples/rest/main.go",
+                        "line": 168
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/search": {
+              "handlers": {
+                "GET": {
+                  "middlewares": [],
+                  "method": "GET",
+                  "pkg": "",
+                  "func": "main.SearchArticles",
+                  "comment": "",
+                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "line": 129
+                }
+              }
+            }
+          }
+        }
+      },
+      "/panic": {
+        "handlers": {
+          "GET": {
+            "middlewares": [],
+            "method": "GET",
+            "pkg": "",
+            "func": "main.main.func3",
+            "comment": "",
+            "file": "github.com/pressly/chi/_examples/rest/main.go",
+            "line": 72,
+            "anonymous": true
+          }
+        }
+      },
+      "/ping": {
+        "handlers": {
+          "GET": {
+            "middlewares": [],
+            "method": "GET",
+            "pkg": "",
+            "func": "main.main.func2",
+            "comment": "",
+            "file": "github.com/pressly/chi/_examples/rest/main.go",
+            "line": 68,
+            "anonymous": true
+          }
+        }
+      }
+    }
+  }
+}

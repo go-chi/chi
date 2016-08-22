@@ -4,6 +4,8 @@
 // This example demonstrates a HTTP REST web service with some fixture data.
 // Follow along the example and patterns.
 //
+// Also check routes.json for the generated docs from passing the -routes flag
+//
 // Boot the server:
 // ----------------
 // $ go run main.go
@@ -39,16 +41,22 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"math/rand"
 	"net/http"
 
 	"github.com/pressly/chi"
+	"github.com/pressly/chi/docgen"
 	"github.com/pressly/chi/middleware"
 	"github.com/pressly/chi/render"
 )
 
+var routes = flag.Bool("routes", false, "Generate router documentation")
+
 func main() {
+	flag.Parse()
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -84,6 +92,14 @@ func main() {
 	// Mount the admin sub-router, the same as a call to
 	// Route("/admin", func(r chi.Router) { with routes here })
 	r.Mount("/admin", adminRouter())
+
+	// Passing -routes to the program will generate docs for the above
+	// router definition. See the `routes.json` file in this folder for
+	// the output.
+	if *routes {
+		fmt.Println(docgen.JSONRoutesDoc(r))
+		return
+	}
 
 	http.ListenAndServe(":3333", r)
 }
