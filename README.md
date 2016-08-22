@@ -40,6 +40,9 @@ Examples:
 
 Preview:
 
+Here is a little preview of how routing looks like with chi. And also take a look at the generated docs
+file [routes.json](https://github.com/pressly/chi/blob/master/_examples/rest/routes.json).
+
 ```go
 import (
   //...
