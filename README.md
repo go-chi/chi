@@ -1,4 +1,4 @@
-![chi](/_examples/chi.svg)
+<img alt="chi" src="https://raw.githubusercontent.com/pressly/chi/master/_examples/chi.svg" width="220" />
 ===
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
