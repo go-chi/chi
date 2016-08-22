@@ -1,4 +1,4 @@
-![chi](/_examples/chi.png)
+![chi](/_examples/chi.svg)
 ===
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]

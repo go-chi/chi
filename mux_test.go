@@ -358,6 +358,59 @@ func TestMuxNestedNotFound(t *testing.T) {
 	}
 }
 
+func TestMuxWith(t *testing.T) {
+	var cmwInit1, cmwHandler1 uint64
+	var cmwInit2, cmwHandler2 uint64
+	mw1 := func(next http.Handler) http.Handler {
+		cmwInit1++
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cmwHandler1++
+			r = r.WithContext(context.WithValue(r.Context(), "inline1", "yes"))
+			next.ServeHTTP(w, r)
+		})
+	}
+	mw2 := func(next http.Handler) http.Handler {
+		cmwInit2++
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cmwHandler2++
+			r = r.WithContext(context.WithValue(r.Context(), "inline2", "yes"))
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	r := NewRouter()
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bye"))
+	})
+	r.With(mw1).With(mw2).Get("/inline", func(w http.ResponseWriter, r *http.Request) {
+		v1 := r.Context().Value("inline1").(string)
+		v2 := r.Context().Value("inline2").(string)
+		w.Write([]byte(fmt.Sprintf("inline %s %s", v1, v2)))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/inline", nil); body != "inline yes yes" {
+		t.Fatalf(body)
+	}
+	if cmwInit1 != 1 {
+		t.Fatalf("expecting cmwInit1 to be 1, got %d", cmwInit1)
+	}
+	if cmwHandler1 != 1 {
+		t.Fatalf("expecting cmwHandler1 to be 1, got %d", cmwHandler1)
+	}
+	if cmwInit2 != 1 {
+		t.Fatalf("expecting cmwInit2 to be 1, got %d", cmwInit2)
+	}
+	if cmwHandler2 != 1 {
+		t.Fatalf("expecting cmwHandler2 to be 1, got %d", cmwHandler2)
+	}
+}
+
 func TestMuxMiddlewareStack(t *testing.T) {
 	var stdmwInit, stdmwHandler uint64
 	stdmw := func(next http.Handler) http.Handler {
