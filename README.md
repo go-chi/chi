@@ -323,12 +323,21 @@ how setting context on a request in Go 1.7 works.
 We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 
-## Related works
+## Beyond REST
 
-Looking ahead beyond REST, I also recommend these newer ideas in the field coming from
-[gRPC](https://github.com/grpc/grpc-go), [go-kit](https://github.com/go-kit/kit) and
-[graphql](https://github.com/graphql-go/graphql). They're all pretty cool with their
-own unique approaches and benefits.
+chi is just a http router that lets you decompose request handling into many smaller layers.
+Many companies including Pressly.com (of course) use chi to write REST services for their public
+APIs. But, REST is just a convention for managing state via HTTP, and there's a lot of other pieces
+required to write a complete client-server system.
+
+Looking ahead beyond REST, I also recommend some newer ideas in the field coming from
+[gRPC](https://github.com/grpc/grpc-go), [nats](https://nats.io), [go-kit](https://github.com/go-kit/kit)
+and even [graphql](https://github.com/graphql-go/graphql). They're all pretty cool with their
+own unique approaches and benefits. Specifically, I'd look at gRPC since it makes service-to-service
+communication feel like a single program on a single computer, no need to hand-write a client library
+and the request/response payloads are like static contracts. NATS is pretty amazing too as a super
+fast and lightweight pub-sub transport that can speak protobufs, with excellent service discovery - 
+an excellent combination with gRPC.
 
 
 ## License
