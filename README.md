@@ -328,7 +328,7 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 chi is just a http router that lets you decompose request handling into many smaller layers.
 Many companies including Pressly.com (of course) use chi to write REST services for their public
 APIs. But, REST is just a convention for managing state via HTTP, and there's a lot of other pieces
-required to write a complete client-server system.
+required to write a complete client-server system or network of microservices.
 
 Looking ahead beyond REST, I also recommend some newer ideas in the field coming from
 [gRPC](https://github.com/grpc/grpc-go), [nats](https://nats.io), [go-kit](https://github.com/go-kit/kit)
