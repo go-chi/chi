@@ -10,7 +10,7 @@ handle signaling, cancelation and request-scoped values across a handler chain.
 
 The focus of the project has been to seek out an elegant and comfortable design for writing
 REST API servers, written during the development of the Pressly API service that powers our
-network of services.
+public API service and all of our client-side applications.
 
 The key considerations of chi's design are: project structure, maintainability, standard http
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
