@@ -332,12 +332,12 @@ APIs. But, REST is just a convention for managing state via HTTP, and there's a 
 required to write a complete client-server system or network of microservices.
 
 Looking ahead beyond REST, I also recommend some newer works in the field coming from
-[gRPC](https://github.com/grpc/grpc-go), [nats](https://nats.io), [go-kit](https://github.com/go-kit/kit)
+[gRPC](https://github.com/grpc/grpc-go), [NATS](https://nats.io), [go-kit](https://github.com/go-kit/kit)
 and even [graphql](https://github.com/graphql-go/graphql). They're all pretty cool with their
 own unique approaches and benefits. Specifically, I'd look at gRPC since it makes client-server
 communication feel like a single program on a single computer, no need to hand-write a client library
-and the request/response payloads are like static contracts. NATS is pretty amazing too as a super
-fast and lightweight pub-sub transport that can speak protobufs, with excellent service discovery - 
+and the request/response payloads are typed contracts. NATS is pretty amazing too as a super
+fast and lightweight pub-sub transport that can speak protobufs, with nice service discovery - 
 an excellent combination with gRPC.
 
 
