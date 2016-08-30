@@ -262,8 +262,9 @@ Chi comes equipped with an optional `middleware` package, providing:
 
 Other middlewares:
 
-* [httpcoala](https://github.com/goware/httpcoala) - Request coalescer
 * [jwtauth](https://github.com/goware/jwtauth) - JWT authenticator
+* [cors](https://github.com/goware/cors) - CORS middleware
+* [httpcoala](https://github.com/goware/httpcoala) - Request coalescer
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi middleware
 
