@@ -12,6 +12,8 @@ import (
 
 type methodTyp int
 
+// TODO: support ntParam as :x and :x/
+
 const (
 	mCONNECT methodTyp = 1 << iota
 	mDELETE
