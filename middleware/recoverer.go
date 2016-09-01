@@ -23,7 +23,7 @@ func Recoverer(next http.Handler) http.Handler {
 				prefix := requestPrefix(reqID, r)
 				printPanic(prefix, reqID, err)
 				debug.PrintStack()
-				http.Error(w, http.StatusText(500), 500)
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
 
