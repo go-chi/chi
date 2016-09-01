@@ -120,8 +120,8 @@ func ArticleCtx(next http.Handler) http.Handler {
 		articleID := chi.URLParam(r, "articleID")
 		article, err := dbGetArticle(articleID)
 		if err != nil {
-			render.Status(r, 404)
-			render.JSON(w, r, http.StatusText(404))
+			render.Status(r, http.StatusNotFound)
+			render.JSON(w, r, http.StatusText(http.StatusNotFound))
 			return
 		}
 		ctx := context.WithValue(r.Context(), "article", article)
@@ -223,7 +223,7 @@ func AdminOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isAdmin, ok := r.Context().Value("acl.admin").(bool)
 		if !ok || !isAdmin {
-			http.Error(w, http.StatusText(403), 403)
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)
