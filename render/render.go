@@ -45,6 +45,14 @@ func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 	w.Write([]byte(v))
 }
 
+func Data(w http.ResponseWriter, r *http.Request, v []byte) {
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+		w.WriteHeader(status)
+	}
+	w.Write(v)
+}
+
 func HTML(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
