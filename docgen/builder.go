@@ -125,17 +125,3 @@ func buildFuncInfo(i interface{}) FuncInfo {
 
 	return fi
 }
-
-func PrintRoutes(prefix string, parentPattern string, r chi.Routes) {
-	rts := r.Routes()
-	for _, rt := range rts {
-		if rt.SubRoutes == nil {
-			fmt.Println(prefix, parentPattern+rt.Pattern)
-		} else {
-			pat := rt.Pattern
-
-			subRoutes := rt.SubRoutes
-			PrintRoutes("=="+prefix, parentPattern+pat, subRoutes)
-		}
-	}
-}

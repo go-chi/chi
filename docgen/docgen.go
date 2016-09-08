@@ -1,8 +1,5 @@
 package docgen
 
-import "github.com/pressly/chi"
-import "encoding/json"
-
 type Doc struct {
 	Router DocRouter `json:"router"`
 }
@@ -40,18 +37,4 @@ type FuncInfo struct {
 	Line         int    `json:"line,omitempty"`
 	Anonymous    bool   `json:"anonymous,omitempty"`
 	Unresolvable bool   `json:"unresolvable,omitempty"`
-}
-
-func JSONRoutesDoc(r chi.Routes) string {
-	doc, _ := BuildDoc(r)
-	v, err := json.MarshalIndent(doc, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	return string(v)
-}
-
-func MarkdownRoutesDoc(r chi.Router) string {
-	// TODO ...
-	return ""
 }
