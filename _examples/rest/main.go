@@ -78,8 +78,8 @@ func main() {
 	// RESTy routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
 		r.With(paginate).Get("/", ListArticles)
-		r.Post("/", CreateArticle)       // POST /articles
-		r.Get("/search", SearchArticles) // GET /articles/search
+		r.With(render.Bind2(ArticleKey, ArticleRequest{})).Post("/", CreateArticle) // POST /articles
+		r.Get("/search", SearchArticles)                                            // GET /articles/search
 
 		r.Route("/:articleID", func(r chi.Router) {
 			r.Use(ArticleCtx)            // Load the *Article on the request context
@@ -89,8 +89,8 @@ func main() {
 		})
 	})
 
-	// Mount the admin sub-router, the same as a call to
-	// Route("/admin", func(r chi.Router) { with routes here })
+	// Mount the admin sub-router, which btw is the same as:
+	// r.Route("/admin", func(r chi.Router) { admin routes here })
 	r.Mount("/admin", adminRouter())
 
 	// Passing -routes to the program will generate docs for the above
@@ -167,6 +167,32 @@ func CreateArticle(w http.ResponseWriter, r *http.Request) {
 	dbNewArticle(article)
 
 	render.JSON(w, r, article)
+}
+
+// HMM... instead of r.Context().Value("x")
+// perhaps its better to have a ApiContext()
+// and then grab an Article off it..?
+// or, r.Context().Value(ArticleCtxKey)
+
+type contextKey struct {
+	name string
+}
+
+func (k *contextKey) String() string {
+	return "context value " + k.name
+}
+
+var (
+	ArticleKey = &contextKey{"Article"}
+)
+
+type ArticleRequest struct {
+	*Article
+	OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
+}
+
+type ArticleResponse struct {
+	*Article
 }
 
 // GetArticle returns the specific Article. You'll notice it just
@@ -262,6 +288,12 @@ func paginate(next http.Handler) http.Handler {
 //--
 
 // Below are a bunch of helper functions that mock some kind of storage
+
+// Article fixture data
+var articles = []*Article{
+	{ID: "1", Title: "Hi"},
+	{ID: "2", Title: "sup"},
+}
 
 func dbNewArticle(article *Article) (string, error) {
 	article.ID = fmt.Sprintf("%d", rand.Intn(100)+10)
