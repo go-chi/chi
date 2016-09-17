@@ -77,7 +77,6 @@ func (p *presenter) Present(r *http.Request, from interface{}) (*http.Request, i
 		}
 		obj = resp[0].Interface()
 	}
-	panic("unreachable")
 }
 
 func (p *presenter) presentSlice(r *http.Request, from interface{}) interface{} {

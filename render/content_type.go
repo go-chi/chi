@@ -13,6 +13,7 @@ var (
 // A ContentType is an enumeration of common HTTP content types.
 type ContentType int
 
+// ContentTypes handled by this package.
 const (
 	ContentTypePlainText = iota
 	ContentTypeHTML
