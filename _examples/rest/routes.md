@@ -5,16 +5,16 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 ## Routes
 
 <details>
-<summary>/admin/users/:userId</summary>
+<summary>/admin/</summary>
 
 - [RequestID]()
 - [Logger]()
 - [Recoverer]()
 - **/admin**
 	- [main.AdminOnly]()
-	- **/users/:userId**
+	- **/**
 		- _GET_
-			- [main.adminRouter.func3]()
+			- [main.adminRouter.func1]()
 
 </details>
 <details>
@@ -25,11 +25,46 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 - [Recoverer]()
 - **/articles**
 	- **/**
-		- _POST_
-			- [main.CreateArticle]()
 		- _GET_
 			- [main.paginate]()
 			- [main.ListArticles]()
+		- _POST_
+			- [main.CreateArticle]()
+
+</details>
+<details>
+<summary>/panic</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/panic**
+	- _GET_
+		- [main.main.func3]()
+
+</details>
+<details>
+<summary>/</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/**
+	- _GET_
+		- [main.main.func1]()
+
+</details>
+<details>
+<summary>/admin/users/:userId</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/admin**
+	- [main.AdminOnly]()
+	- **/users/:userId**
+		- _GET_
+			- [main.adminRouter.func3]()
 
 </details>
 <details>
@@ -45,14 +80,32 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 
 </details>
 <details>
-<summary>/panic</summary>
+<summary>/articles/:articleID/</summary>
 
 - [RequestID]()
 - [Logger]()
 - [Recoverer]()
-- **/panic**
+- **/articles**
+	- **/:articleID**
+		- [main.ArticleCtx]()
+		- **/**
+			- _GET_
+				- [main.GetArticle]()
+			- _PUT_
+				- [main.UpdateArticle]()
+			- _DELETE_
+				- [main.DeleteArticle]()
+
+</details>
+<details>
+<summary>/ping</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/ping**
 	- _GET_
-		- [main.main.func3]()
+		- [main.main.func2]()
 
 </details>
 <details>
@@ -68,57 +121,6 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 			- [main.adminRouter.func2]()
 
 </details>
-<details>
-<summary>/admin/</summary>
 
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/admin**
-	- [main.AdminOnly]()
-	- **/**
-		- _GET_
-			- [main.adminRouter.func1]()
-
-</details>
-<details>
-<summary>/articles/:articleID/</summary>
-
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/articles**
-	- **/:articleID**
-		- [main.ArticleCtx]()
-		- **/**
-			- _PUT_
-				- [main.UpdateArticle]()
-			- _DELETE_
-				- [main.DeleteArticle]()
-			- _GET_
-				- [main.GetArticle]()
-
-</details>
-<details>
-<summary>/ping</summary>
-
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/ping**
-	- _GET_
-		- [main.main.func2]()
-
-</details>
-<details>
-<summary>/</summary>
-
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/**
-	- _GET_
-		- [main.main.func1]()
-
-</details>
+Total # of routes: 9
 

@@ -148,4 +148,9 @@ func (md *MarkdownDoc) WriteRoutes() {
 		md.buf.WriteString(fmt.Sprintf("\n"))
 		md.buf.WriteString(fmt.Sprintf("</details>\n"))
 	}
+
+	md.buf.WriteString(fmt.Sprintf("\n"))
+	md.buf.WriteString(fmt.Sprintf("Total # of routes: %d\n", len(md.Routes)))
+
+	// TODO: total number of handlers..
 }
