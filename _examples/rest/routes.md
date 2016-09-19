@@ -5,6 +5,17 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 ## Routes
 
 <details>
+<summary>/</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/**
+	- _GET_
+		- [main.main.func1]()
+
+</details>
+<details>
 <summary>/admin/</summary>
 
 - [RequestID]()
@@ -18,40 +29,16 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 
 </details>
 <details>
-<summary>/articles/</summary>
+<summary>/admin/accounts</summary>
 
 - [RequestID]()
 - [Logger]()
 - [Recoverer]()
-- **/articles**
-	- **/**
+- **/admin**
+	- [main.AdminOnly]()
+	- **/accounts**
 		- _GET_
-			- [main.paginate]()
-			- [main.ListArticles]()
-		- _POST_
-			- [main.CreateArticle]()
-
-</details>
-<details>
-<summary>/panic</summary>
-
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/panic**
-	- _GET_
-		- [main.main.func3]()
-
-</details>
-<details>
-<summary>/</summary>
-
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/**
-	- _GET_
-		- [main.main.func1]()
+			- [main.adminRouter.func2]()
 
 </details>
 <details>
@@ -68,15 +55,18 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 
 </details>
 <details>
-<summary>/articles/search</summary>
+<summary>/articles/</summary>
 
 - [RequestID]()
 - [Logger]()
 - [Recoverer]()
 - **/articles**
-	- **/search**
+	- **/**
+		- _POST_
+			- [main.CreateArticle]()
 		- _GET_
-			- [main.SearchArticles]()
+			- [main.paginate]()
+			- [main.ListArticles]()
 
 </details>
 <details>
@@ -98,6 +88,29 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 
 </details>
 <details>
+<summary>/articles/search</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/articles**
+	- **/search**
+		- _GET_
+			- [main.SearchArticles]()
+
+</details>
+<details>
+<summary>/panic</summary>
+
+- [RequestID]()
+- [Logger]()
+- [Recoverer]()
+- **/panic**
+	- _GET_
+		- [main.main.func3]()
+
+</details>
+<details>
 <summary>/ping</summary>
 
 - [RequestID]()
@@ -106,19 +119,6 @@ Routing docs generated with chi/docgen. Run xx to regenerate the docs.
 - **/ping**
 	- _GET_
 		- [main.main.func2]()
-
-</details>
-<details>
-<summary>/admin/accounts</summary>
-
-- [RequestID]()
-- [Logger]()
-- [Recoverer]()
-- **/admin**
-	- [main.AdminOnly]()
-	- **/accounts**
-		- _GET_
-			- [main.adminRouter.func2]()
 
 </details>
 

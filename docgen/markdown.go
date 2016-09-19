@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"sort"
 
 	"github.com/pressly/chi"
 )
@@ -140,7 +141,14 @@ func (md *MarkdownDoc) WriteRoutes() {
 		}
 	}
 
-	for pat, dr := range md.Routes {
+	routePaths := []string{}
+	for pat, _ := range md.Routes {
+		routePaths = append(routePaths, pat)
+	}
+	sort.Strings(routePaths)
+
+	for _, pat := range routePaths {
+		dr := md.Routes[pat]
 		md.buf.WriteString(fmt.Sprintf("<details>\n"))
 		md.buf.WriteString(fmt.Sprintf("<summary>%s</summary>\n", pat))
 		md.buf.WriteString(fmt.Sprintf("\n"))
