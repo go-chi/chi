@@ -116,7 +116,7 @@ func (md *MarkdownDoc) WriteRoutes() {
 
 		// Middlewares
 		for _, mw := range dr.Middlewares {
-			md.buf.WriteString(fmt.Sprintf("%s- [%s](%s)\n", tabs, mw.Func, "middleware/recoverer.go#L18"))
+			md.buf.WriteString(fmt.Sprintf("%s- [%s](%s)\n", tabs, mw.Func, "/middleware/recoverer.go#L18"))
 		}
 
 		// Routes
