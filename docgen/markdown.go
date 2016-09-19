@@ -143,7 +143,9 @@ func (md *MarkdownDoc) WriteRoutes() {
 	for pat, dr := range md.Routes {
 		md.buf.WriteString(fmt.Sprintf("<details>\n"))
 		md.buf.WriteString(fmt.Sprintf("<summary>%s</summary>\n", pat))
+		md.buf.WriteString(fmt.Sprintf("\n"))
 		printRouter(0, dr)
+		md.buf.WriteString(fmt.Sprintf("\n"))
 		md.buf.WriteString(fmt.Sprintf("</details>\n"))
 	}
 }
