@@ -1,6 +1,16 @@
 package docgen
 
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/pressly/chi"
+)
+
 type Doc struct {
+	// TODO: should we take some kind of package name?
+	// or the base pkg path...?
+	// ^ we could confirm it..
 	Router DocRouter `json:"router"`
 }
 
@@ -37,4 +47,31 @@ type FuncInfo struct {
 	Line         int    `json:"line,omitempty"`
 	Anonymous    bool   `json:"anonymous,omitempty"`
 	Unresolvable bool   `json:"unresolvable,omitempty"`
+}
+
+func PrintRoutes(r chi.Routes) {
+	var printRoutes func(parentPattern string, r chi.Routes)
+	printRoutes = func(parentPattern string, r chi.Routes) {
+		rts := r.Routes()
+		for _, rt := range rts {
+			if rt.SubRoutes == nil {
+				fmt.Println(parentPattern + rt.Pattern)
+			} else {
+				pat := rt.Pattern
+
+				subRoutes := rt.SubRoutes
+				printRoutes(parentPattern+pat, subRoutes)
+			}
+		}
+	}
+	printRoutes("", r)
+}
+
+func JSONRoutesDoc(r chi.Routes) string {
+	doc, _ := BuildDoc(r)
+	v, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(v)
 }

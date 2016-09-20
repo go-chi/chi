@@ -44,9 +44,9 @@
             {
               "pkg": "",
               "func": "main.AdminOnly",
-              "comment": "",
+              "comment": "AdminOnly middleware restricts access to just administrators.\n",
               "file": "github.com/pressly/chi/_examples/rest/main.go",
-              "line": 222
+              "line": 238
             }
           ],
           "routes": {
@@ -59,7 +59,7 @@
                   "func": "main.adminRouter.func1",
                   "comment": "",
                   "file": "github.com/pressly/chi/_examples/rest/main.go",
-                  "line": 210,
+                  "line": 225,
                   "anonymous": true
                 }
               }
@@ -73,7 +73,7 @@
                   "func": "main.adminRouter.func2",
                   "comment": "",
                   "file": "github.com/pressly/chi/_examples/rest/main.go",
-                  "line": 213,
+                  "line": 228,
                   "anonymous": true
                 }
               }
@@ -87,7 +87,7 @@
                   "func": "main.adminRouter.func3",
                   "comment": "",
                   "file": "github.com/pressly/chi/_examples/rest/main.go",
-                  "line": 216,
+                  "line": 231,
                   "anonymous": true
                 }
               }
@@ -106,26 +106,26 @@
                     {
                       "pkg": "",
                       "func": "main.paginate",
-                      "comment": "",
+                      "comment": "paginate is a stub, but very possible to implement middleware logic\nto handle the request params for handling a paginated request.\n",
                       "file": "github.com/pressly/chi/_examples/rest/main.go",
-                      "line": 233
+                      "line": 251
                     }
                   ],
                   "method": "GET",
                   "pkg": "",
                   "func": "main.ListArticles",
-                  "comment": "",
+                  "comment": "ListArticles returns an array of Articles.\n",
                   "file": "github.com/pressly/chi/_examples/rest/main.go",
-                  "line": 137
+                  "line": 144
                 },
                 "POST": {
                   "middlewares": [],
                   "method": "POST",
                   "pkg": "",
                   "func": "main.CreateArticle",
-                  "comment": "",
+                  "comment": "CreateArticle persists the posted Article and returns it\nback to the client as an acknowledgement.\n",
                   "file": "github.com/pressly/chi/_examples/rest/main.go",
-                  "line": 141
+                  "line": 150
                 }
               }
             },
@@ -135,9 +135,9 @@
                   {
                     "pkg": "",
                     "func": "main.ArticleCtx",
-                    "comment": "",
+                    "comment": "ArticleCtx middleware is used to load an Article object from\nthe URL parameters passed through as the request. In case\nthe Article could not be found, we stop here and return a 404.\n",
                     "file": "github.com/pressly/chi/_examples/rest/main.go",
-                    "line": 118
+                    "line": 122
                   }
                 ],
                 "routes": {
@@ -148,27 +148,27 @@
                         "method": "DELETE",
                         "pkg": "",
                         "func": "main.DeleteArticle",
-                        "comment": "",
+                        "comment": "DeleteArticle removes an existing Article from our persistent store.\n",
                         "file": "github.com/pressly/chi/_examples/rest/main.go",
-                        "line": 188
+                        "line": 203
                       },
                       "GET": {
                         "middlewares": [],
                         "method": "GET",
                         "pkg": "",
                         "func": "main.GetArticle",
-                        "comment": "",
+                        "comment": "GetArticle returns the specific Article. You'll notice it just\nfetches the Article right off the context, as its understood that\nif we made it this far, the Article must be on the context. In case\nits not due to a bug, then it will panic, and our Recoverer will save us.\n",
                         "file": "github.com/pressly/chi/_examples/rest/main.go",
-                        "line": 160
+                        "line": 173
                       },
                       "PUT": {
                         "middlewares": [],
                         "method": "PUT",
                         "pkg": "",
                         "func": "main.UpdateArticle",
-                        "comment": "",
+                        "comment": "UpdateArticle updates an existing Article in our persistent store.\n",
                         "file": "github.com/pressly/chi/_examples/rest/main.go",
-                        "line": 171
+                        "line": 185
                       }
                     }
                   }
@@ -182,9 +182,9 @@
                   "method": "GET",
                   "pkg": "",
                   "func": "main.SearchArticles",
-                  "comment": "",
+                  "comment": "SearchArticles searches the Articles data for a matching article.\nIt's just a stub, but you get the idea.\n",
                   "file": "github.com/pressly/chi/_examples/rest/main.go",
-                  "line": 132
+                  "line": 138
                 }
               }
             }
