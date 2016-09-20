@@ -98,7 +98,10 @@ func main() {
 	// the output.
 	if *routes {
 		// fmt.Println(docgen.JSONRoutesDoc(r))
-		fmt.Println(docgen.MarkdownRoutesDoc(r))
+		fmt.Println(docgen.MarkdownRoutesDoc(r, docgen.MarkdownOpts{
+			ProjectPath: "github.com/pressly/chi",
+			Intro:       "Welcome to the chi/_examples/rest generated docs.",
+		}))
 		return
 	}
 

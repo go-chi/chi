@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/pressly/chi"
 )
 
 type MarkdownDoc struct {
+	Opts   MarkdownOpts
 	Router chi.Router
 	Doc    Doc
 	Routes map[string]DocRouter // Pattern : DocRouter
@@ -17,8 +19,13 @@ type MarkdownDoc struct {
 	buf *bytes.Buffer
 }
 
-func MarkdownRoutesDoc(r chi.Router) string {
-	md := &MarkdownDoc{Router: r}
+type MarkdownOpts struct {
+	ProjectPath string
+	Intro       string
+}
+
+func MarkdownRoutesDoc(r chi.Router, opts MarkdownOpts) string {
+	md := &MarkdownDoc{Router: r, Opts: opts}
 	if err := md.Generate(); err != nil {
 		return fmt.Sprintf("ERROR: %s\n", err.Error())
 	}
@@ -50,11 +57,10 @@ func (md *MarkdownDoc) Generate() error {
 }
 
 func (md *MarkdownDoc) WriteIntro() {
-	// TODO: get real name
-	pkgName := "github.com/pressly/chi/_examples/rest"
+	pkgName := md.Opts.ProjectPath
 	md.buf.WriteString(fmt.Sprintf("# %s\n\n", pkgName))
 
-	intro := "Routing docs generated with chi/docgen. Run xx to regenerate the docs."
+	intro := md.Opts.Intro
 	md.buf.WriteString(fmt.Sprintf("%s\n\n", intro))
 }
 
@@ -116,7 +122,7 @@ func (md *MarkdownDoc) WriteRoutes() {
 
 		// Middlewares
 		for _, mw := range dr.Middlewares {
-			md.buf.WriteString(fmt.Sprintf("%s- [%s](%s)\n", tabs, mw.Func, "/middleware/recoverer.go#L18"))
+			md.buf.WriteString(fmt.Sprintf("%s- [%s](%s)\n", tabs, mw.Func, md.githubSourceURL(mw.File, mw.Line)))
 		}
 
 		// Routes
@@ -131,11 +137,11 @@ func (md *MarkdownDoc) WriteRoutes() {
 
 					// Handler middlewares
 					for _, mw := range dh.Middlewares {
-						md.buf.WriteString(fmt.Sprintf("%s\t\t- [%s]()\n", tabs, mw.Func))
+						md.buf.WriteString(fmt.Sprintf("%s\t\t- [%s](%s)\n", tabs, mw.Func, md.githubSourceURL(mw.File, mw.Line)))
 					}
 
 					// Handler endpoint
-					md.buf.WriteString(fmt.Sprintf("%s\t\t- [%s]()\n", tabs, dh.Func))
+					md.buf.WriteString(fmt.Sprintf("%s\t\t- [%s](%s)\n", tabs, dh.Func, md.githubSourceURL(dh.File, dh.Line)))
 				}
 			}
 		}
@@ -161,4 +167,22 @@ func (md *MarkdownDoc) WriteRoutes() {
 	md.buf.WriteString(fmt.Sprintf("Total # of routes: %d\n", len(md.Routes)))
 
 	// TODO: total number of handlers..
+}
+
+func (md *MarkdownDoc) githubSourceURL(file string, line int) string {
+	// Currently, we only link to source for github projects
+	if strings.Index(file, "github.com/") != 0 {
+		return ""
+	}
+	if md.Opts.ProjectPath == "" {
+		return ""
+	}
+	if idx := strings.Index(file, md.Opts.ProjectPath); idx >= 0 {
+		// relative
+		pos := idx + len(md.Opts.ProjectPath)
+		return fmt.Sprintf("%s#L%d", file[pos:], line)
+	} else {
+		// absolute
+		return fmt.Sprintf("https://%s#L%d", file, line)
+	}
 }
