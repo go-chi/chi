@@ -25,7 +25,7 @@ included some useful/optional subpackages: `middleware`, `render` and `docgen`. 
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
 * **Context control** - built on new `context` package, providing value chaining, cancelations and timeouts
 * **Robust** - tested / used in production at Pressly.com, and many others
-* **Doc generation** - `docgen` auto-generates routing documentation from your source
+* **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
 * **No external dependencies** - plain ol' Go 1.7+ stdlib + net/http
 
 
@@ -40,8 +40,9 @@ Examples:
 
 Preview:
 
-Here is a little preview of how routing looks like with chi. And also take a look at the generated docs
-file [routes.json](https://github.com/pressly/chi/blob/master/_examples/rest/routes.json).
+Here is a little preview of how routing looks like with chi. Also take a look at the generated routing docs
+in JSON ([routes.json](https://github.com/pressly/chi/blob/master/_examples/rest/routes.json)) and in
+Markdown ([routes.md](https://github.com/pressly/chi/blob/master/_examples/rest/routes.md)).
 
 ```go
 import (
