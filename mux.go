@@ -283,9 +283,8 @@ func (mx *Mux) FileServer(path string, root http.FileSystem) {
 func (mx *Mux) NotFoundHandler() http.HandlerFunc {
 	if mx.notFoundHandler != nil {
 		return mx.notFoundHandler
-	} else {
-		return http.NotFound
 	}
+	return http.NotFound
 }
 
 // buildRouteHandler builds the single mux handler that is a chain of the middleware

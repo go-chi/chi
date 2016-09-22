@@ -148,7 +148,7 @@ func (md *MarkdownDoc) WriteRoutes() {
 	}
 
 	routePaths := []string{}
-	for pat, _ := range md.Routes {
+	for pat := range md.Routes {
 		routePaths = append(routePaths, pat)
 	}
 	sort.Strings(routePaths)
@@ -181,8 +181,7 @@ func (md *MarkdownDoc) githubSourceURL(file string, line int) string {
 		// relative
 		pos := idx + len(md.Opts.ProjectPath)
 		return fmt.Sprintf("%s#L%d", file[pos:], line)
-	} else {
-		// absolute
-		return fmt.Sprintf("https://%s#L%d", file, line)
 	}
+	// absolute
+	return fmt.Sprintf("https://%s#L%d", file, line)
 }
