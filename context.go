@@ -53,7 +53,7 @@ func URLParam(r *http.Request, key string) string {
 	return ""
 }
 
-// URLParam returns the url parameter from a http.Request Context.
+// URLParamFromCtx returns the url parameter from a http.Request Context.
 func URLParamFromCtx(ctx context.Context, key string) string {
 	if rctx := RouteContext(ctx); rctx != nil {
 		return rctx.URLParams.Get(key)

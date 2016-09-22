@@ -13,7 +13,7 @@ func (mws Middlewares) Handler(h http.Handler) http.Handler {
 	return &ChainHandler{mws, h, chain(mws, h)}
 }
 
-// Handler builds and returns a http.Handler from the chain of middlewares,
+// HandlerFunc builds and returns a http.Handler from the chain of middlewares,
 // with `h http.Handler` as the final handler.
 func (mws Middlewares) HandlerFunc(h http.HandlerFunc) http.Handler {
 	return &ChainHandler{mws, h, chain(mws, h)}
