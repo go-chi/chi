@@ -1,33 +1,17 @@
 package raml_test
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/pressly/chi"
+	"github.com/pressly/chi/_examples/versions/web"
 	"github.com/pressly/chi/docgen/raml"
 	yaml "gopkg.in/yaml.v2"
 )
 
-// requestID middleware comment goes here.
-func requestID(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), "requestID", "1")
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// hubIndexHandler serves Hub Index page.
-func hubIndexHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
-		URLParam(r, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
-	w.Write([]byte(s))
-}
-
 func TestWalkerRAML(t *testing.T) {
-	r := chi.MuxBig()
+	r := web.Router()
 
 	ramlDocs := &raml.RAML{
 		Title:     "Big Mux",
@@ -36,8 +20,10 @@ func TestWalkerRAML(t *testing.T) {
 		MediaType: "application/json",
 	}
 
-	if err := Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		err := ramlDocs.Add(method, route, raml.Record{Description: desc})
+	if err := chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		handlerInfo := chi.GetFuncInfo(handler)
+
+		err := ramlDocs.Add(method, route, raml.Record{Description: handlerInfo.Comment})
 		if err != nil {
 			return err
 		}
