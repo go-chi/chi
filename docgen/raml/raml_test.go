@@ -37,16 +37,7 @@ func TestWalkerRAML(t *testing.T) {
 	}
 
 	if err := Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		info := GetFuncInfo(handler)
-		desc := info.Comment
-		if desc == "" {
-			desc = info.Func
-		}
-
-		record := raml.Record{
-			Description: desc,
-		}
-		err := ramlDocs.Add(method, route, record)
+		err := ramlDocs.Add(method, route, raml.Record{Description: desc})
 		if err != nil {
 			return err
 		}
@@ -56,9 +47,8 @@ func TestWalkerRAML(t *testing.T) {
 		t.Error(err)
 	}
 
-	b, err := yaml.Marshal(ramlDocs)
+	_, err := yaml.Marshal(ramlDocs)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Printf("%s%s", raml.Header, b)
 }

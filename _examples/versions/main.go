@@ -8,11 +8,14 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/pressly/chi"
+	"github.com/pressly/chi/docgen/raml"
 	"github.com/pressly/chi/middleware"
 	"github.com/pressly/chi/render"
 
@@ -24,10 +27,20 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "docs" {
+		docs, err := raml.Docs(router())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v", err)
+			os.Exit(1)
+		}
+		fmt.Println(docs)
+		return
+	}
+
 	http.ListenAndServe(":3333", router())
 }
 
-func router() http.Handler {
+func router() chi.Router {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
