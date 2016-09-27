@@ -9,6 +9,8 @@ import (
 	"reflect"
 )
 
+// Respond handles streaming JSON and XML responses, automatically setting the
+// Content-Type based on request headers. It will default to a JSON response.
 func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// Present the object.
 	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
@@ -37,6 +39,8 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 }
 
+// PlainText writes a string to the response, setting the Content-Type as
+// text/plain.
 func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
@@ -45,6 +49,8 @@ func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 	w.Write([]byte(v))
 }
 
+// Data writes raw bytes to the response, setting the Content-Type as
+// application/octet-stream.
 func Data(w http.ResponseWriter, r *http.Request, v []byte) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
@@ -53,6 +59,7 @@ func Data(w http.ResponseWriter, r *http.Request, v []byte) {
 	w.Write(v)
 }
 
+// HTML writes a string to the response, setting the Content-Type as text/html.
 func HTML(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
@@ -61,6 +68,8 @@ func HTML(w http.ResponseWriter, r *http.Request, v string) {
 	w.Write([]byte(v))
 }
 
+// JSON marshals 'v' to JSON, automatically escaping HTML and setting the
+// Content-Type as application/json.
 func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
@@ -75,6 +84,9 @@ func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 }
 
+// XML marshals 'v' to JSON, setting the Content-Type as application/xml. It
+// will automatically prepend a generic XML header (see encoding/xml.Header) if
+// one is not found in the first 100 bytes of 'v'.
 func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	b, err := xml.Marshal(v)
 	if err != nil {
@@ -100,6 +112,7 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	w.Write(b)
 }
 
+// NoContent returns a HTTP 204 "No Content" response.
 func NoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(204)
 }
@@ -183,7 +196,6 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, from interface{}) 
 			to = append(to, v)
 		}
 	}
-	panic("unreachable")
 }
 
 // contextKey is a value for use with context.WithValue. It's used as
