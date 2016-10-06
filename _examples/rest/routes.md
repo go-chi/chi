@@ -5,7 +5,7 @@ Welcome to the chi/_examples/rest generated docs.
 ## Routes
 
 <details>
-<summary>``</summary>
+<summary>`/`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -79,12 +79,12 @@ Welcome to the chi/_examples/rest generated docs.
 	- **/:articleID**
 		- [main.ArticleCtx](/_examples/rest/main.go#L125)
 		- **/**
+			- _GET_
+				- [main.GetArticle](/_examples/rest/main.go#L176)
 			- _PUT_
 				- [main.UpdateArticle](/_examples/rest/main.go#L188)
 			- _DELETE_
 				- [main.DeleteArticle](/_examples/rest/main.go#L206)
-			- _GET_
-				- [main.GetArticle](/_examples/rest/main.go#L176)
 
 </details>
 <details>

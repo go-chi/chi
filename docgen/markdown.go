@@ -95,7 +95,7 @@ func (md *MarkdownDoc) WriteRoutes() {
 
 				// Remove the trailing slash if the handler is a subroute for "/"
 				routeKey := pattern
-				if pat == "/" {
+				if pat == "/" && len(routeKey) > 1 {
 					routeKey = routeKey[:len(routeKey)-1]
 				}
 				md.Routes[routeKey] = copyDocRouter(*ar)
