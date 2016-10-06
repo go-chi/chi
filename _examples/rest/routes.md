@@ -5,7 +5,7 @@ Welcome to the chi/_examples/rest generated docs.
 ## Routes
 
 <details>
-<summary>/</summary>
+<summary>``</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -16,7 +16,7 @@ Welcome to the chi/_examples/rest generated docs.
 
 </details>
 <details>
-<summary>/admin/</summary>
+<summary>`/admin`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -29,7 +29,7 @@ Welcome to the chi/_examples/rest generated docs.
 
 </details>
 <details>
-<summary>/admin/accounts</summary>
+<summary>`/admin/accounts`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -42,7 +42,7 @@ Welcome to the chi/_examples/rest generated docs.
 
 </details>
 <details>
-<summary>/admin/users/:userId</summary>
+<summary>`/admin/users/:userId`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -55,22 +55,22 @@ Welcome to the chi/_examples/rest generated docs.
 
 </details>
 <details>
-<summary>/articles/</summary>
+<summary>`/articles`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
 - [Recoverer](/middleware/recoverer.go#L18)
 - **/articles**
 	- **/**
-		- _POST_
-			- [main.CreateArticle](/_examples/rest/main.go#L153)
 		- _GET_
 			- [main.paginate](/_examples/rest/main.go#L254)
 			- [main.ListArticles](/_examples/rest/main.go#L147)
+		- _POST_
+			- [main.CreateArticle](/_examples/rest/main.go#L153)
 
 </details>
 <details>
-<summary>/articles/:articleID/</summary>
+<summary>`/articles/:articleID`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -79,16 +79,16 @@ Welcome to the chi/_examples/rest generated docs.
 	- **/:articleID**
 		- [main.ArticleCtx](/_examples/rest/main.go#L125)
 		- **/**
-			- _GET_
-				- [main.GetArticle](/_examples/rest/main.go#L176)
 			- _PUT_
 				- [main.UpdateArticle](/_examples/rest/main.go#L188)
 			- _DELETE_
 				- [main.DeleteArticle](/_examples/rest/main.go#L206)
+			- _GET_
+				- [main.GetArticle](/_examples/rest/main.go#L176)
 
 </details>
 <details>
-<summary>/articles/search</summary>
+<summary>`/articles/search`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -100,7 +100,7 @@ Welcome to the chi/_examples/rest generated docs.
 
 </details>
 <details>
-<summary>/panic</summary>
+<summary>`/panic`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)
@@ -111,7 +111,7 @@ Welcome to the chi/_examples/rest generated docs.
 
 </details>
 <details>
-<summary>/ping</summary>
+<summary>`/ping`</summary>
 
 - [RequestID](/middleware/request_id.go#L63)
 - [Logger](/middleware/logger.go#L22)

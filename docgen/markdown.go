@@ -93,8 +93,12 @@ func (md *MarkdownDoc) WriteRoutes() {
 					Router:   nil,
 				}
 
-				// TODO: remove trailing slash if handler is "/"
-				md.Routes[pattern] = copyDocRouter(*ar)
+				// Remove the trailing slash if the handler is a subroute for "/"
+				routeKey := pattern
+				if pat == "/" {
+					routeKey = routeKey[:len(routeKey)-1]
+				}
+				md.Routes[routeKey] = copyDocRouter(*ar)
 
 			} else {
 				panic("not possible")
@@ -156,7 +160,7 @@ func (md *MarkdownDoc) WriteRoutes() {
 	for _, pat := range routePaths {
 		dr := md.Routes[pat]
 		md.buf.WriteString(fmt.Sprintf("<details>\n"))
-		md.buf.WriteString(fmt.Sprintf("<summary>%s</summary>\n", pat))
+		md.buf.WriteString(fmt.Sprintf("<summary>`%s`</summary>\n", pat))
 		md.buf.WriteString(fmt.Sprintf("\n"))
 		printRouter(0, dr)
 		md.buf.WriteString(fmt.Sprintf("\n"))
