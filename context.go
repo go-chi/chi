@@ -2,6 +2,7 @@ package chi
 
 import (
 	"context"
+	"net"
 	"net/http"
 )
 
@@ -103,6 +104,25 @@ func (ps *params) Del(key string) string {
 		}
 	}
 	return ""
+}
+
+// WithBaseContext wraps an http.Handler to set the request context to the
+// `baseCtx`.
+func WithBaseContext(h http.Handler, baseCtx context.Context) http.Handler {
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Copy over default net/http server context keys
+		if v, ok := ctx.Value(http.ServerContextKey).(*http.Server); ok {
+			baseCtx = context.WithValue(baseCtx, http.ServerContextKey, v)
+		}
+		if v, ok := ctx.Value(http.LocalAddrContextKey).(net.Addr); ok {
+			baseCtx = context.WithValue(baseCtx, http.LocalAddrContextKey, v)
+		}
+
+		h.ServeHTTP(w, r.WithContext(baseCtx))
+	})
+	return fn
 }
 
 // contextKey is a value for use with context.WithValue. It's used as
