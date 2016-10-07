@@ -37,6 +37,7 @@ Examples:
 * [todos-resource](https://github.com/pressly/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
 * [versions](https://github.com/pressly/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
 * [fileserver](https://github.com/pressly/chi/blob/master/_examples/fileserver/main.go) - Easily serve static files
+* [graceful](https://github.com/pressly/chi/blob/master/_examples/graceful/main.go) - Graceful context signaling and server shutdown
 
 Preview:
 
@@ -259,6 +260,7 @@ Chi comes equipped with an optional `middleware` package, providing:
 | Profiler     | Easily attach net/http/pprof to your routers.                                   |
 | Slashes      | Strip and redirect slashes on routing paths.                                    |
 | WithValue    | Short-hand middleware to set a key/value on the request context.                |
+| Heartbeat    | Monitoring endpoint to check the servers pulse.                                 |
 --------------------------------------------------------------------------------------------------
 
 Other middlewares:
