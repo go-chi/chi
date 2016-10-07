@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -1165,6 +1166,29 @@ func TestMuxFileServer(t *testing.T) {
 	// if _, body := testRequest(t, ts, "GET", "/mounted/", nil); body != "index\n" {
 	// 	t.Fatalf(body)
 	// }
+}
+
+func TestServerBaseContext(t *testing.T) {
+	r := NewRouter()
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		baseYes := r.Context().Value("base").(string)
+		if _, ok := r.Context().Value(http.ServerContextKey).(*http.Server); !ok {
+			panic("missing server context")
+		}
+		if _, ok := r.Context().Value(http.LocalAddrContextKey).(net.Addr); !ok {
+			panic("missing local addr context")
+		}
+		w.Write([]byte(baseYes))
+	})
+
+	// Setup http Server with a base context
+	ctx := context.WithValue(context.Background(), "base", "yes")
+	ts := httptest.NewServer(ServerBaseContext(r, ctx))
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/", nil); body != "yes" {
+		t.Fatalf(body)
+	}
 }
 
 func urlParams(rctx *Context) map[string]string {
