@@ -17,7 +17,7 @@ func main() {
 	// Our graceful valve shut-off package to manage code preemption and
 	// shutdown signaling.
 	valv := valve.New()
-	baseCtx := valv.ContextLever()
+	baseCtx := valv.Context()
 
 	// Example of a long running background worker thing..
 	go func(ctx context.Context) {
@@ -25,8 +25,8 @@ func main() {
 			<-time.After(1 * time.Second)
 
 			func() {
-				valve.Context(ctx).Open()
-				defer valve.Context(ctx).Close()
+				valve.Lever(ctx).Open()
+				defer valve.Lever(ctx).Close()
 
 				// actual code doing stuff..
 				fmt.Println("tick..")
@@ -35,7 +35,7 @@ func main() {
 
 				// signal control..
 				select {
-				case <-valve.Context(ctx).Stop():
+				case <-valve.Lever(ctx).Stop():
 					fmt.Println("valve is closed")
 					return
 
@@ -62,11 +62,11 @@ func main() {
 
 	r.Get("/slow", func(w http.ResponseWriter, r *http.Request) {
 
-		valve.Context(r.Context()).Open()
-		defer valve.Context(r.Context()).Close()
+		valve.Lever(r.Context()).Open()
+		defer valve.Lever(r.Context()).Close()
 
 		select {
-		case <-valve.Context(r.Context()).Stop():
+		case <-valve.Lever(r.Context()).Stop():
 			fmt.Println("valve is closed. finish up..")
 
 		case <-time.After(5 * time.Second):
@@ -103,6 +103,7 @@ func main() {
 		if err != nil {
 			fmt.Println("Shutdown error -", err)
 		}
+
 		// the app code has stopped here now, and so this would be a good place
 		// to close up any db and other service connections, etc.
 		return true
