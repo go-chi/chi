@@ -91,11 +91,11 @@ func main() {
 	// 		os.Exit(1)
 	// 	}
 	// }()
-	// http.ListenAndServe(":3333", chi.WithBaseContext(r, baseCtx))
+	// http.ListenAndServe(":3333", chi.ServerBaseContext(r, baseCtx))
 
 	srv := &graceful.Server{
 		Timeout: 20 * time.Second,
-		Server:  &http.Server{Addr: ":3333", Handler: chi.WithBaseContext(r, baseCtx)},
+		Server:  &http.Server{Addr: ":3333", Handler: chi.ServerBaseContext(r, baseCtx)},
 	}
 	srv.BeforeShutdown = func() bool {
 		fmt.Println("shutting down..")

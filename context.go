@@ -106,9 +106,9 @@ func (ps *params) Del(key string) string {
 	return ""
 }
 
-// WithBaseContext wraps an http.Handler to set the request context to the
+// ServerBaseContext wraps an http.Handler to set the request context to the
 // `baseCtx`.
-func WithBaseContext(h http.Handler, baseCtx context.Context) http.Handler {
+func ServerBaseContext(h http.Handler, baseCtx context.Context) http.Handler {
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 

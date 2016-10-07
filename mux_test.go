@@ -1168,7 +1168,7 @@ func TestMuxFileServer(t *testing.T) {
 	// }
 }
 
-func TestBaseContext(t *testing.T) {
+func TestServerBaseContext(t *testing.T) {
 	r := NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		baseYes := r.Context().Value("base").(string)
@@ -1183,7 +1183,7 @@ func TestBaseContext(t *testing.T) {
 
 	// Setup http Server with a base context
 	ctx := context.WithValue(context.Background(), "base", "yes")
-	ts := httptest.NewServer(WithBaseContext(r, ctx))
+	ts := httptest.NewServer(ServerBaseContext(r, ctx))
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "yes" {
