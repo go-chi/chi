@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	contentTypeCtxKey = &contextKey{"ContentType"}
+	ContentTypeCtxKey = &contextKey{"ContentType"}
 )
 
 // A ContentType is an enumeration of common HTTP content types.
@@ -26,7 +26,7 @@ const (
 func SetContentType(contentType ContentType) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			r = r.WithContext(context.WithValue(r.Context(), contentTypeCtxKey, contentType))
+			r = r.WithContext(context.WithValue(r.Context(), ContentTypeCtxKey, contentType))
 			next.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)
@@ -36,7 +36,7 @@ func SetContentType(contentType ContentType) func(next http.Handler) http.Handle
 // getContentType is a helper function that returns ContentType based on
 // context or request headers.
 func getResponseContentType(r *http.Request) ContentType {
-	if contentType, ok := r.Context().Value(contentTypeCtxKey).(ContentType); ok {
+	if contentType, ok := r.Context().Value(ContentTypeCtxKey).(ContentType); ok {
 		return contentType
 	}
 

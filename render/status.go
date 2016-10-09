@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-var statusCtxKey = &contextKey{"Status"}
+var StatusCtxKey = &contextKey{"Status"}
 
 // Status sets status into request context.
 func Status(r *http.Request, status int) {
-	*r = *r.WithContext(context.WithValue(r.Context(), statusCtxKey, status))
+	*r = *r.WithContext(context.WithValue(r.Context(), StatusCtxKey, status))
 }

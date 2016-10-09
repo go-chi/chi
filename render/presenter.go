@@ -103,7 +103,7 @@ func (p *presenter) presentSlice(r *http.Request, from interface{}) interface{} 
 func (p *presenter) register(conversionFunc interface{}) error {
 	if catchAllFn, ok := conversionFunc.(func(r *http.Request, from interface{}) (*http.Request, interface{})); ok {
 		if p.fnCatchAll != nil {
-			return fmt.Errorf("duplicate catch-all conversion function of type %T", conversionFunc)
+			return fmt.Errorf("render: duplicate catch-all conversion function of type %T", conversionFunc)
 		}
 		p.fnCatchAll = catchAllFn
 		return nil
@@ -111,25 +111,25 @@ func (p *presenter) register(conversionFunc interface{}) error {
 
 	fnType := reflect.TypeOf(conversionFunc)
 	if fnType.Kind() != reflect.Func {
-		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
+		return fmt.Errorf("render: expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	if fnType.NumIn() != 2 {
-		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
+		return fmt.Errorf("render: expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	if fnType.NumOut() != 2 {
-		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
+		return fmt.Errorf("render: expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	var requestZeroValue *http.Request
 	if fnType.In(0) != reflect.TypeOf(&requestZeroValue).Elem() {
-		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
+		return fmt.Errorf("render: expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 	var errorZeroValue error
 	if !fnType.Out(1).Implements(reflect.TypeOf(&errorZeroValue).Elem()) {
-		return fmt.Errorf("expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
+		return fmt.Errorf("render: expected func(r *http.Request, from FromType) (ToType, error), got %v", fnType)
 	}
 
 	if _, ok := p.fnStore[fnType.In(1)]; ok {
-		return fmt.Errorf("duplicate conversion function for type %v", fnType.In(1))
+		return fmt.Errorf("render: duplicate conversion function for type %v", fnType.In(1))
 	}
 
 	p.fnStore[fnType.In(1)] = reflect.ValueOf(conversionFunc)
@@ -146,5 +146,5 @@ func (p *presenter) register(conversionFunc interface{}) error {
 
 	// Conversion loop was detected. Clean up and error out:
 	delete(p.fnStore, fnType.In(1))
-	return fmt.Errorf("conversion loop for type %v", typ)
+	return fmt.Errorf("render: conversion loop for type %v", typ)
 }

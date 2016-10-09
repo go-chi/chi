@@ -43,7 +43,7 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 // text/plain.
 func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
 	}
 	w.Write([]byte(v))
@@ -53,7 +53,7 @@ func PlainText(w http.ResponseWriter, r *http.Request, v string) {
 // application/octet-stream.
 func Data(w http.ResponseWriter, r *http.Request, v []byte) {
 	w.Header().Set("Content-Type", "application/octet-stream")
-	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
 	}
 	w.Write(v)
@@ -62,7 +62,7 @@ func Data(w http.ResponseWriter, r *http.Request, v []byte) {
 // HTML writes a string to the response, setting the Content-Type as text/html.
 func HTML(w http.ResponseWriter, r *http.Request, v string) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
 	}
 	w.Write([]byte(v))
@@ -72,7 +72,7 @@ func HTML(w http.ResponseWriter, r *http.Request, v string) {
 // Content-Type as application/json.
 func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
 	}
 
@@ -95,7 +95,7 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
-	if status, ok := r.Context().Value(statusCtxKey).(int); ok {
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
 	}
 
@@ -119,7 +119,7 @@ func NoContent(w http.ResponseWriter, r *http.Request) {
 
 func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 	if reflect.TypeOf(v).Kind() != reflect.Chan {
-		panic(fmt.Sprintf("render.EventStream() expects channel, not %v", reflect.TypeOf(v).Kind()))
+		panic(fmt.Sprintf("render: event stream expects a channel, not %v", reflect.TypeOf(v).Kind()))
 	}
 
 	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
