@@ -78,8 +78,9 @@ func main() {
 	// RESTy routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
 		r.With(paginate).Get("/", ListArticles)
-		r.With(render.Bind2(ArticleKey, ArticleRequest{})).Post("/", CreateArticle) // POST /articles
-		r.Get("/search", SearchArticles)                                            // GET /articles/search
+		r.Post("/", CreateArticle) // POST /articles
+		r.With(render.Bind(&ArticleRequest{})).Post("/bind", CreateArticle2)
+		r.Get("/search", SearchArticles) // GET /articles/search
 
 		r.Route("/:articleID", func(r chi.Router) {
 			r.Use(ArticleCtx)            // Load the *Article on the request context
@@ -113,10 +114,13 @@ type Article struct {
 	Title string `json:"title"`
 }
 
-// Article fixture data
-var articles = []*Article{
-	{ID: "1", Title: "Hi"},
-	{ID: "2", Title: "sup"},
+type ArticleRequest struct {
+	*Article
+	OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
+}
+
+type ArticleResponse struct {
+	*Article
 }
 
 // ArticleCtx middleware is used to load an Article object from
@@ -128,7 +132,7 @@ func ArticleCtx(next http.Handler) http.Handler {
 		article, err := dbGetArticle(articleID)
 		if err != nil {
 			render.Status(r, http.StatusNotFound)
-			render.JSON(w, r, http.StatusText(http.StatusNotFound))
+			render.Respond(w, r, http.StatusText(http.StatusNotFound))
 			return
 		}
 		ctx := context.WithValue(r.Context(), "article", article)
@@ -140,59 +144,40 @@ func ArticleCtx(next http.Handler) http.Handler {
 // It's just a stub, but you get the idea.
 func SearchArticles(w http.ResponseWriter, r *http.Request) {
 	// Filter by query param, and search...
-	render.JSON(w, r, articles)
+	render.Respond(w, r, articles)
 }
 
 // ListArticles returns an array of Articles.
 func ListArticles(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, articles)
+	render.Respond(w, r, articles)
 }
 
 // CreateArticle persists the posted Article and returns it
 // back to the client as an acknowledgement.
 func CreateArticle(w http.ResponseWriter, r *http.Request) {
-	var data struct {
-		*Article
-		OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
-	}
-	// ^ the above is a nifty trick for how to omit fields during json unmarshalling
-	// through struct composition
-
-	if err := render.Bind(r.Body, &data); err != nil {
-		render.JSON(w, r, err.Error())
+	data := &ArticleRequest{}
+	if err := render.Decode(r, &data); err != nil {
+		render.Respond(w, r, err.Error())
 		return
 	}
 
 	article := data.Article
 	dbNewArticle(article)
 
-	render.JSON(w, r, article)
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, article)
 }
 
-// HMM... instead of r.Context().Value("x")
-// perhaps its better to have a ApiContext()
-// and then grab an Article off it..?
-// or, r.Context().Value(ArticleCtxKey)
+// Experiment using render.Bind() that automatically decodes the request
+// body and makes a new object.
+func CreateArticle2(w http.ResponseWriter, r *http.Request) {
+	data := render.RequestBody(r.Context()).(*ArticleRequest)
 
-type contextKey struct {
-	name string
-}
+	article := data.Article
+	dbNewArticle(article)
 
-func (k *contextKey) String() string {
-	return "context value " + k.name
-}
-
-var (
-	ArticleKey = &contextKey{"Article"}
-)
-
-type ArticleRequest struct {
-	*Article
-	OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
-}
-
-type ArticleResponse struct {
-	*Article
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, article)
 }
 
 // GetArticle returns the specific Article. You'll notice it just
@@ -207,25 +192,21 @@ func GetArticle(w http.ResponseWriter, r *http.Request) {
 
 	// chi provides a basic companion subpackage "github.com/pressly/chi/render", however
 	// you can use any responder compatible with net/http.
-	render.JSON(w, r, article)
+	render.Respond(w, r, article)
 }
 
 // UpdateArticle updates an existing Article in our persistent store.
 func UpdateArticle(w http.ResponseWriter, r *http.Request) {
 	article := r.Context().Value("article").(*Article)
 
-	data := struct {
-		*Article
-		OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being overridden
-	}{Article: article}
-
-	if err := render.Bind(r.Body, &data); err != nil {
-		render.JSON(w, r, err)
+	data := &ArticleRequest{Article: article}
+	if err := render.Decode(r, &data); err != nil {
+		render.Respond(w, r, err)
 		return
 	}
 	article = data.Article
 
-	render.JSON(w, r, article)
+	render.Respond(w, r, article)
 }
 
 // DeleteArticle removes an existing Article from our persistent store.
@@ -239,12 +220,12 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 
 	article, err = dbRemoveArticle(article.ID)
 	if err != nil {
-		render.JSON(w, r, err)
+		render.Respond(w, r, err)
 		return
 	}
 
 	// Respond with the deleted object, up to you.
-	render.JSON(w, r, article)
+	render.Respond(w, r, article)
 }
 
 // A completely separate router for administrator routes

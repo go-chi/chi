@@ -9,6 +9,9 @@ import (
 	"reflect"
 )
 
+// TODO: make it easy for respond to support other serialization formats
+// with some kind of content-type / responder registry
+
 // Respond handles streaming JSON and XML responses, automatically setting the
 // Content-Type based on request headers. It will default to a JSON response.
 func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
@@ -19,7 +22,7 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 	switch reflect.TypeOf(v).Kind() {
 	case reflect.Chan:
-		switch getResponseContentType(r) {
+		switch GetAcceptedContentType(r) {
 		case ContentTypeEventStream:
 			channelEventStream(w, r, v)
 			return
@@ -29,7 +32,7 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 	}
 
 	// Format data based on Content-Type.
-	switch getResponseContentType(r) {
+	switch GetAcceptedContentType(r) {
 	case ContentTypeJSON:
 		JSON(w, r, v)
 	case ContentTypeXML:
