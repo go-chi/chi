@@ -122,7 +122,7 @@ type Article struct {
 // you the opportunity to transform data on input or output, for example
 // on request, we'd like to protect certain fields and on output perhaps
 // we'd like to include a computed field based on other values that aren't
-// in the data model. Check out this awesome blog post on struct composition:
+// in the data model. Also, check out this awesome blog post on struct composition:
 // http://attilaolah.eu/2014/09/10/json-and-struct-composition-in-go/
 type ArticleRequest struct {
 	*Article
@@ -201,11 +201,10 @@ func GetArticle(w http.ResponseWriter, r *http.Request) {
 	// middleware. The worst case, the recoverer middleware will save us.
 	article := r.Context().Value("article").(*Article)
 
-	// TODO: respond with ArticleResponse{}
-
 	// chi provides a basic companion subpackage "github.com/pressly/chi/render", however
 	// you can use any responder compatible with net/http.
-	render.Respond(w, r, article)
+	payload := render.Build(article, &ArticleResponse{})
+	render.Respond(w, r, payload)
 }
 
 // UpdateArticle updates an existing Article in our persistent store.
