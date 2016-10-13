@@ -78,8 +78,7 @@ func main() {
 	// RESTy routes for "articles" resource
 	r.Route("/articles", func(r chi.Router) {
 		r.With(paginate).Get("/", ListArticles)
-		r.Post("/", CreateArticle) // POST /articles
-		r.With(render.Bind(&ArticleRequest{})).Post("/bind", CreateArticle2)
+		r.Post("/", CreateArticle)       // POST /articles
 		r.Get("/search", SearchArticles) // GET /articles/search
 
 		r.Route("/:articleID", func(r chi.Router) {
@@ -109,16 +108,29 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
+// Article data model. I suggest looking at https://upper.io for an easy
+// and powerful data persistence adapter.
 type Article struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
 }
 
+// ArticleRequest is the request payload for Article data model.
+//
+// NOTE: It's good practice to have well defined request and response payloads
+// so you can manage the specific inputs and outputs for clients, and also gives
+// you the opportunity to transform data on input or output, for example
+// on request, we'd like to protect certain fields and on output perhaps
+// we'd like to include a computed field based on other values that aren't
+// in the data model. Check out this awesome blog post on struct composition:
+// http://attilaolah.eu/2014/09/10/json-and-struct-composition-in-go/
 type ArticleRequest struct {
 	*Article
 	OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
 }
 
+// ArticleResponse is the response payload for the Article data model.
+// See NOTE above in ArticleRequest too.
 type ArticleResponse struct {
 	*Article
 }
@@ -144,11 +156,19 @@ func ArticleCtx(next http.Handler) http.Handler {
 // It's just a stub, but you get the idea.
 func SearchArticles(w http.ResponseWriter, r *http.Request) {
 	// Filter by query param, and search...
+
+	// TODO: responder, I should be able to pass a slice, and wrap it
+	// etc.. in the struct type...
+	// we should be presenting []ArticleResponse{} here
+
 	render.Respond(w, r, articles)
 }
 
 // ListArticles returns an array of Articles.
 func ListArticles(w http.ResponseWriter, r *http.Request) {
+
+	// TODO: return []ArticleResponse{}
+
 	render.Respond(w, r, articles)
 }
 
@@ -157,24 +177,15 @@ func ListArticles(w http.ResponseWriter, r *http.Request) {
 func CreateArticle(w http.ResponseWriter, r *http.Request) {
 	data := &ArticleRequest{}
 	if err := render.Decode(r, &data); err != nil {
-		render.Respond(w, r, err.Error())
+		render.Status(r, 422)
+		render.Respond(w, r, err)
 		return
 	}
 
 	article := data.Article
 	dbNewArticle(article)
 
-	render.Status(r, http.StatusCreated)
-	render.Respond(w, r, article)
-}
-
-// Experiment using render.Bind() that automatically decodes the request
-// body and makes a new object.
-func CreateArticle2(w http.ResponseWriter, r *http.Request) {
-	data := render.RequestBody(r.Context()).(*ArticleRequest)
-
-	article := data.Article
-	dbNewArticle(article)
+	// TODO: respond with ArticleResponse{}
 
 	render.Status(r, http.StatusCreated)
 	render.Respond(w, r, article)
@@ -189,6 +200,8 @@ func GetArticle(w http.ResponseWriter, r *http.Request) {
 	// context because this handler is a child of the ArticleCtx
 	// middleware. The worst case, the recoverer middleware will save us.
 	article := r.Context().Value("article").(*Article)
+
+	// TODO: respond with ArticleResponse{}
 
 	// chi provides a basic companion subpackage "github.com/pressly/chi/render", however
 	// you can use any responder compatible with net/http.
@@ -205,6 +218,8 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	article = data.Article
+
+	// TODO: respond with ArticleResponse{}
 
 	render.Respond(w, r, article)
 }
@@ -223,6 +238,8 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 		render.Respond(w, r, err)
 		return
 	}
+
+	// TODO: respond with ArticleResponse{}
 
 	// Respond with the deleted object, up to you.
 	render.Respond(w, r, article)
@@ -264,6 +281,31 @@ func paginate(next http.Handler) http.Handler {
 		// the page number, or the limit, and send a query cursor down the chain
 		next.ServeHTTP(w, r)
 	})
+}
+
+// This is entirely optional, but I wanted to demonstrate how you could easily
+// add your own logic to the render.Respond method.
+func init() {
+	render.Respond = func(w http.ResponseWriter, r *http.Request, v interface{}) {
+		if err, ok := v.(error); ok {
+
+			// We set a default error status response code if one hasn't been set.
+			if _, ok := r.Context().Value(render.StatusCtxKey).(int); !ok {
+				w.WriteHeader(400)
+			}
+
+			// We log the error
+			fmt.Printf("Logging err: %s\n", err.Error())
+
+			// We change the response to not reveal the actual error message,
+			// instead we can transform the message something more friendly or mapped
+			// to some code / language, etc.
+			render.Responder(w, r, render.M{"code": 123, "msg": "something bad happened"})
+			return
+		}
+
+		render.Responder(w, r, v)
+	}
 }
 
 //--

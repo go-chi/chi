@@ -9,12 +9,21 @@ import (
 	"reflect"
 )
 
-// TODO: make it easy for respond to support other serialization formats
-// with some kind of content-type / responder registry
+// Respond is a package-level variable set to our default Responder. We do this
+// because it allows you to set render.Respond to another function with the
+// same function signature, while also utilizing the render.Responder() function
+// itself. Effectively, allowing you to easily add your own logic to the package
+// defaults. For example, maybe you want to test if v is an error and respond
+// differently, or log something before you respond.
+var Respond = Responder
+
+// M is a convenience alias for quickly building a map structure that is going
+// out to a responder. Just a short-hand.
+type M map[string]interface{}
 
 // Respond handles streaming JSON and XML responses, automatically setting the
 // Content-Type based on request headers. It will default to a JSON response.
-func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
+func Responder(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// Present the object.
 	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
 		r, v = presenter.Present(r, v)
@@ -31,7 +40,7 @@ func Respond(w http.ResponseWriter, r *http.Request, v interface{}) {
 		}
 	}
 
-	// Format data based on Content-Type.
+	// Format response based on request Accept header.
 	switch GetAcceptedContentType(r) {
 	case ContentTypeJSON:
 		JSON(w, r, v)
@@ -211,3 +220,6 @@ type contextKey struct {
 func (k *contextKey) String() string {
 	return "chi render context value " + k.name
 }
+
+// IDEA/TODO: make it easy for respond to support other serialization formats
+// with some kind of content-type / responder registry

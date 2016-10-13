@@ -11,6 +11,9 @@ var (
 	presenterCtxKey = &contextKey{"Presenter"}
 )
 
+// Presenter is an experimental, but powerful, interface that makes it easy to
+// transform data from one structure to another for the purposes of building
+// an API responder to handle many versions and variations of output.
 type Presenter interface {
 	Present(r *http.Request, from interface{}) (*http.Request, interface{})
 }
