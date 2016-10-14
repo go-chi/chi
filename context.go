@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strconv"
 )
 
 var (
@@ -52,6 +53,30 @@ func URLParam(r *http.Request, key string) string {
 		return rctx.URLParams.Get(key)
 	}
 	return ""
+}
+
+// URLParamInt returns the url parameter from a http.Request object converted to int64.
+func URLParamInt(r *http.Request, key string) int64 {
+	v, _ := strconv.ParseInt(URLParam(r, key), 10, 64)
+	return v
+}
+
+// URLParamUint returns the url parameter from a http.Request object converted to uint64.
+func URLParamUint(r *http.Request, key string) uint64 {
+	v, _ := strconv.ParseUint(URLParam(r, key), 10, 64)
+	return v
+}
+
+// URLParamBool returns the url parameter from a http.Request object converted to boolean.
+func URLParamBool(r *http.Request, key string) bool {
+	v, _ := strconv.ParseBool(URLParam(r, key))
+	return v
+}
+
+// URLParamFloat returns the url parameter from a http.Request object converted to float64.
+func URLParamFloat(r *http.Request, key string) float64 {
+	v, _ := strconv.ParseFloat(URLParam(r, key), 64)
+	return v
 }
 
 // URLParamFromCtx returns the url parameter from a http.Request Context.
