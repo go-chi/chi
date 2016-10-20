@@ -134,6 +134,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			assertNoError(t, err)
 
 			buf, err := ioutil.ReadAll(res.Body)
+			assertNoError(t, err)
 			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
 			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
 
@@ -194,6 +195,7 @@ func TestThrottleMaximum(t *testing.T) {
 			assertNoError(t, err)
 
 			buf, err := ioutil.ReadAll(res.Body)
+			assertNoError(t, err)
 			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
 			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
 

@@ -473,9 +473,9 @@ func TestMuxMiddlewareStack(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
+	testRequest(t, ts, "GET", "/", nil)
+	testRequest(t, ts, "GET", "/", nil)
 	var body string
-	_, body = testRequest(t, ts, "GET", "/", nil)
-	_, body = testRequest(t, ts, "GET", "/", nil)
 	_, body = testRequest(t, ts, "GET", "/", nil)
 	if body != "inits:1 reqs:3 ctxValue:3" {
 		t.Fatalf("got: '%s'", body)
