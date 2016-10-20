@@ -104,7 +104,7 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	if findHeaderUntil > 100 {
 		findHeaderUntil = 100
 	}
-	if bytes.Index(b[:findHeaderUntil], []byte("<?xml")) == -1 {
+	if !bytes.Contains(b[:findHeaderUntil], []byte("<?xml")) {
 		// No header found. Print it out first.
 		w.Write([]byte(xml.Header))
 	}
