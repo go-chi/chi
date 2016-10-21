@@ -32,7 +32,6 @@ included some useful/optional subpackages: `middleware`, `render` and `docgen`. 
 
 ## Examples
 
-Examples:
 * [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
 * [limits](https://github.com/pressly/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
 * [todos-resource](https://github.com/pressly/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
@@ -235,15 +234,16 @@ supports named params (ie. `/users/:userID`) and wildcards (ie. `/admin/*`).
 
 chi's middlewares are just stdlib net/http middleware handlers. There is nothing special
 about them, which means the router and all the tooling is designed to be compatible and
-friendly with any handler in the community. This offers much better extensibility and reuse
-of packages and is the heart of chi's purpose.
+friendly with any middleware in the community. This offers much better extensibility and reuse
+of packages and is at the heart of chi's purpose.
 
 Here is an example of a standard net/http middleware handler using the new request context
-available in Go 1.7+. This middleware sets 
+available in Go 1.7+. This middleware sets a hypothetical user identifier on the request
+context and calls the next handler in the chain.
 
 ```go
 // HTTP middleware setting a value on the request context
-func Middleware(next http.Handler) http.Handler {
+func MyMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := context.WithValue(r.Context(), "user", "123")
     next.ServeHTTP(w, r.WithContext(ctx))
@@ -254,18 +254,20 @@ func Middleware(next http.Handler) http.Handler {
 
 ### Request handlers
 
-chi uses std net/http handlers. This little snippet is an example of a std net/http
-handler that reads a user identifier from the request context - hypothetically, identifying
+chi uses standard net/http request handlers. This little snippet is an example of a http.Handler
+func that reads a user identifier from the request context - hypothetically, identifying
 the user sending an authenticated request, validated+set by a previous middleware handler.
 
 ```go
 // HTTP handler accessing data from the request context.
-func Handler(w http.ResponseWriter, r *http.Request) {
+func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
   user := r.Context().Value("user").(string)
   w.Write([]byte(fmt.Sprintf("hi %s", user)))
 }
 ```
 
+
+### URL parameters
 
 chi's router parses and stores URL parameters right onto the request context. Here is
 an example of how to access URL params in your net/http handlers. And of course, middlewares
@@ -273,7 +275,7 @@ are able to access the same information.
 
 ```go
 // HTTP handler accessing the url routing parameters.
-func CtxHandler(w http.ResponseWriter, r *http.Request) {
+func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
   userID := chi.URLParam(r, "userID") // from a route like /users/:userID
 
   ctx := r.Context()
