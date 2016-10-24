@@ -4,7 +4,6 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
-	"log"
 	"net/http"
 	"runtime/debug"
 )
@@ -23,9 +22,8 @@ func FormattedRecoverer(f LogFormatter, next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				// populate the request details
-				buf := f.FormatRequest(r)
-				cW(buf, bRed, "%+v", err)
-				log.Print(buf.String())
+				ctx := f.FormatRequest(r)
+				ctx.Recover(err.(error))
 
 				debug.PrintStack()
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -36,4 +34,9 @@ func FormattedRecoverer(f LogFormatter, next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+func (ctx *DefaultLogFormatter) Recover(err error) {
+	cW(&ctx.buf, bRed, "%+v", err)
+	ctx.Log()
 }
