@@ -5,7 +5,6 @@ package middleware
 
 import (
 	"net/http"
-	"runtime/debug"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a
@@ -21,11 +20,7 @@ func FormattedRecoverer(f LogFormatter, next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				// populate the request details
-				ctx := f.FormatRequest(r)
-				ctx.Recover(err.(error))
-
-				debug.PrintStack()
+				f.FormatLog(r, -1, -1, -1, err.(error))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
@@ -34,9 +29,4 @@ func FormattedRecoverer(f LogFormatter, next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
-}
-
-func (ctx *DefaultLogFormatter) Recover(err error) {
-	cW(&ctx.buf, bRed, "%+v", err)
-	ctx.Log()
 }
