@@ -115,7 +115,7 @@ func buildFuncInfo(i interface{}) FuncInfo {
 	}
 
 	// Check if file info is unresolvable
-	if strings.Index(funcPath, pkgName) < 0 {
+	if !strings.Contains(funcPath, pkgName) {
 		fi.Unresolvable = true
 	}
 

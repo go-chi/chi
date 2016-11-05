@@ -45,7 +45,7 @@ func assertError(t *testing.T, err error) {
 }
 
 func assertEqual(t *testing.T, a, b interface{}) {
-	if reflect.DeepEqual(a, b) == false {
+	if !reflect.DeepEqual(a, b) {
 		t.Fatalf("expecting values to be equal but got: '%v' and '%v'", a, b)
 	}
 }

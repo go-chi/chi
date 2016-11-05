@@ -4,8 +4,8 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -52,12 +52,12 @@ func init() {
 }
 
 // colorWrite
-func cW(buf *bytes.Buffer, color []byte, s string, args ...interface{}) {
+func cW(w io.Writer, color []byte, s string, args ...interface{}) {
 	if isTTY {
-		buf.Write(color)
+		w.Write(color)
 	}
-	fmt.Fprintf(buf, s, args...)
+	fmt.Fprintf(w, s, args...)
 	if isTTY {
-		buf.Write(reset)
+		w.Write(reset)
 	}
 }
