@@ -19,9 +19,15 @@ type MarkdownDoc struct {
 	buf *bytes.Buffer
 }
 
+// URLMap allows specifying a map of packages to their link sources
+// Used for mapping vendored dependencies to their upstream sources
+// For example:
+// map[string]string{"github.com/my/package/vendor/pressly/chi/": "https://github.com/pressly/chi/blob/master/"}
 type MarkdownOpts struct {
-	ProjectPath string
-	Intro       string
+	ProjectPath        string
+	Intro              string
+	ForceRelativeLinks bool // Force links to be relative even if they're not on github
+	URLMap             map[string]string
 }
 
 func MarkdownRoutesDoc(r chi.Router, opts MarkdownOpts) string {
@@ -174,12 +180,20 @@ func (md *MarkdownDoc) WriteRoutes() {
 }
 
 func (md *MarkdownDoc) githubSourceURL(file string, line int) string {
-	// Currently, we only link to source for github projects
-	if strings.Index(file, "github.com/") != 0 {
+	// Currently, we only automatically link to source for github projects
+	if strings.Index(file, "github.com/") != 0 && !md.Opts.ForceRelativeLinks {
 		return ""
 	}
 	if md.Opts.ProjectPath == "" {
 		return ""
+	}
+	for pkg, url := range md.Opts.URLMap {
+		if idx := strings.Index(file, pkg); idx >= 0 {
+			pos := idx + len(pkg)
+			url = strings.TrimRight(url, "/")
+			filepath := strings.TrimLeft(file[pos:], "/")
+			return fmt.Sprintf("%s/%s#L%d", url, filepath, line)
+		}
 	}
 	if idx := strings.Index(file, md.Opts.ProjectPath); idx >= 0 {
 		// relative
