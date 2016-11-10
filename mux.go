@@ -38,6 +38,9 @@ type Mux struct {
 
 	// Custom route not found handler
 	notFoundHandler http.HandlerFunc
+
+	// Custom method not allowed handler
+	methodNotAllowedHandler http.HandlerFunc
 }
 
 // NewMux returns a newly initialized Mux object that implements the Router
@@ -160,6 +163,12 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 // not be found. The default 404 handler is `http.NotFound`.
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	mx.notFoundHandler = handlerFn
+}
+
+// MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the
+// method is unresolved. The default handler returns a 405 with an empty body.
+func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {
+	mx.methodNotAllowedHandler = handlerFn
 }
 
 // With adds inline middlewares for an endpoint handler.
@@ -287,6 +296,16 @@ func (mx *Mux) NotFoundHandler() http.HandlerFunc {
 	return http.NotFound
 }
 
+// MethodNotAllowedHandler returns the default Mux 405 responder whenever
+// a method cannot be resolved for a route.
+func (mx *Mux) MethodNotAllowedHandler() http.HandlerFunc {
+	if mx.methodNotAllowedHandler != nil {
+		return mx.methodNotAllowedHandler
+	}
+	return methodNotAllowedHandler
+}
+
+
 // buildRouteHandler builds the single mux handler that is a chain of the middleware
 // stack, as defined by calls to Use(), and the tree router (Mux) itself. After this
 // point, no other middlewares can be registered on this Mux's stack. But you can still
@@ -335,7 +354,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check if method is supported by chi
 	method, ok := methodMap[r.Method]
 	if !ok {
-		methodNotAllowedHandler(w, r)
+		mx.MethodNotAllowedHandler().ServeHTTP(w, r)
 		return
 	}
 
@@ -348,7 +367,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	h, ok := hs[method]
 	if !ok {
-		methodNotAllowedHandler(w, r)
+		mx.MethodNotAllowedHandler().ServeHTTP(w, r)
 		return
 	}
 
