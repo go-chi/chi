@@ -93,6 +93,16 @@ func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
 	mx.middlewares = append(mx.middlewares, middlewares...)
 }
 
+// UseFunc appends one of more middleware functions onto the Router stack.
+func (mx *Mux) UseFunc(fns ...MiddlewareFunc) {
+	if mx.handler != nil {
+		panic("chi: all middlewares must be defined before routes on a mux")
+	}
+	for _, f := range fns {
+		mx.middlewares = append(mx.middlewares, MiddlewareFunc(f).ServeHTTP)
+	}
+}
+
 // Handle adds the route `pattern` that matches any http method to
 // execute the `handler` http.Handler.
 func (mx *Mux) Handle(pattern string, handler http.Handler) {
@@ -189,6 +199,15 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 
 	im := &Mux{inline: true, tree: mx.tree, middlewares: mws}
 	return im
+}
+
+// WithFunc adds inline middleware functions for an endpoint handler.
+func (mx *Mux) WithFunc(fns ...MiddlewareFunc) Router {
+	mws := make([]func(http.Handler) http.Handler, 0, len(fns))
+	for _, f := range fns {
+		mws = append(mws, MiddlewareFunc(f).ServeHTTP)
+	}
+	return mx.With(mws...)
 }
 
 // Group creates a new inline-Mux with a fresh middleware stack. It's useful
@@ -304,7 +323,6 @@ func (mx *Mux) MethodNotAllowedHandler() http.HandlerFunc {
 	}
 	return methodNotAllowedHandler
 }
-
 
 // buildRouteHandler builds the single mux handler that is a chain of the middleware
 // stack, as defined by calls to Use(), and the tree router (Mux) itself. After this
