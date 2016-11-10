@@ -1,5 +1,5 @@
 //
-// Package chi is a small, idiomatic and composable router for building HTTP services.
+// chi is a small, idiomatic and composable router for building HTTP services.
 //
 // chi requires Go 1.7 or newer.
 //
@@ -45,8 +45,14 @@ type Router interface {
 	// Use appends one of more middlewares onto the Router stack.
 	Use(middlewares ...func(http.Handler) http.Handler)
 
+	// UseFunc appends one of more middleware functions onto the Router stack.
+	UseFunc(fns ...MiddlewareFunc)
+
 	// With adds inline middlewares for an endpoint handler.
 	With(middlewares ...func(http.Handler) http.Handler) Router
+
+	// WithFunc adds inline middleware functions for an endpoint handler.
+	WithFunc(fns ...MiddlewareFunc) Router
 
 	// Group adds a new inline-Router along the current routing
 	// path, with a fresh middleware stack for the inline-Router.
@@ -89,6 +95,21 @@ type Routes interface {
 	Middlewares() Middlewares
 }
 
-// Middlewares type is a slice of standard middleware handlers with methods
+// Middleware type represents a middleware handler signature.
+type Middleware func(http.Handler) http.Handler
+
+// Middlewares type is a slice of middleware handlers with methods
 // to compose middleware chains and http.Handler's.
 type Middlewares []func(http.Handler) http.Handler
+
+// MiddlewareFunc type is an adapter to allow the use of ordinary
+// functions as middleware handlers. If f is a function with the
+// appropriate signature, MiddlewareFunc(f) is a Handler that calls f.
+type MiddlewareFunc func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc)
+
+// ServeHTTP implements http.Handler interface.
+func (f MiddlewareFunc) ServeHTTP(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		f(w, r, next.ServeHTTP)
+	})
+}
