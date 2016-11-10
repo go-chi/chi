@@ -19,14 +19,20 @@ type MarkdownDoc struct {
 	buf *bytes.Buffer
 }
 
-// URLMap allows specifying a map of packages to their link sources
-// Used for mapping vendored dependencies to their upstream sources
-// For example:
-// map[string]string{"github.com/my/package/vendor/pressly/chi/": "https://github.com/pressly/chi/blob/master/"}
 type MarkdownOpts struct {
+	// ProjectPath is the base Go import path of the project 
 	ProjectPath        string
+
+	// Intro text included at the top of the generated markdown file.
 	Intro              string
-	ForceRelativeLinks bool // Force links to be relative even if they're not on github
+
+	// ForceRelativeLinks to be relative even if they're not on github
+	ForceRelativeLinks bool
+
+	// URLMap allows specifying a map of package import paths to their link sources
+	// Used for mapping vendored dependencies to their upstream sources
+	// For example:
+	// map[string]string{"github.com/my/package/vendor/pressly/chi/": "https://github.com/pressly/chi/blob/master/"}
 	URLMap             map[string]string
 }
 
