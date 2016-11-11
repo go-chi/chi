@@ -305,7 +305,6 @@ func (mx *Mux) MethodNotAllowedHandler() http.HandlerFunc {
 	return methodNotAllowedHandler
 }
 
-
 // buildRouteHandler builds the single mux handler that is a chain of the middleware
 // stack, as defined by calls to Use(), and the tree router (Mux) itself. After this
 // point, no other middlewares can be registered on this Mux's stack. But you can still
