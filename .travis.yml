@@ -2,6 +2,7 @@ language: go
 
 go:
   - 1.7
+  - tip
 
 install:
   - go get -u golang.org/x/tools/cmd/goimports
@@ -9,6 +10,5 @@ install:
 script:
   - go get -d -t ./...
   - go test ./...
-  - for i in ./_examples/*/main.go; do go build $i; done
   - >
     goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :
