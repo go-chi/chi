@@ -359,6 +359,58 @@ func TestMuxNestedNotFound(t *testing.T) {
 	}
 }
 
+func TestMuxComplicatedNotFound(t *testing.T) {
+	// sub router with groups
+	sub := NewRouter()
+	sub.Route("/resource", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("private get"))
+		})
+	})
+
+	// Root router with groups
+	r := NewRouter()
+	r.Get("/auth", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("auth get"))
+	})
+	r.Route("/public", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("public get"))
+		})
+	})
+	r.Mount("/private", sub)
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("custom not-found"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// check that we didn't broke correct routes
+	if _, body := testRequest(t, ts, "GET", "/auth", nil); body != "auth get" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/public", nil); body != "public get" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/private/resource", nil); body != "private get" {
+		t.Fatalf(body)
+	}
+	// check custom not-found on all levels
+	if _, body := testRequest(t, ts, "GET", "/nope", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/public/nope", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/private/nope", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/private/resource/nope", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxWith(t *testing.T) {
 	var cmwInit1, cmwHandler1 uint64
 	var cmwInit2, cmwHandler2 uint64
