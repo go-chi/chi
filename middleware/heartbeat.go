@@ -9,7 +9,7 @@ import (
 // `/ping` that load balancers or uptime testing external services
 // can make a request before hitting any routes. It's also convenient
 // to place this above ACL middlewares as well.
-func Route(endpoint string) func(http.Handler) http.Handler {
+func Heartbeat(endpoint string) func(http.Handler) http.Handler {
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" && strings.EqualFold(r.URL.Path, endpoint) {
