@@ -164,22 +164,23 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	mx.notFoundHandler = handlerFn
 
-	// Recursively update not found handlers down the tree
-	for _, r := range mx.tree.routes() {
-		smx, ok := r.SubRoutes.(*Mux)
-		if !ok {
-			continue
+	mx.updateSubRoutes(func(subMux *Mux) {
+		if subMux.notFoundHandler == nil {
+			subMux.NotFound(handlerFn)
 		}
-		if smx.notFoundHandler == nil {
-			smx.NotFound(handlerFn)
-		}
-	}
+	})
 }
 
 // MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the
 // method is unresolved. The default handler returns a 405 with an empty body.
 func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {
 	mx.methodNotAllowedHandler = handlerFn
+
+	mx.updateSubRoutes(func(subMux *Mux) {
+		if subMux.methodNotAllowedHandler == nil {
+			subMux.MethodNotAllowed(handlerFn)
+		}
+	})
 }
 
 // With adds inline middlewares for an endpoint handler.
@@ -383,6 +384,17 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Serve it up
 	h.ServeHTTP(w, r)
+}
+
+// Recursively update data on child routers.
+func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
+	for _, r := range mx.tree.routes() {
+		subMux, ok := r.SubRoutes.(*Mux)
+		if !ok {
+			continue
+		}
+		fn(subMux)
+	}
 }
 
 // methodNotAllowedHandler is a helper function to respond with a 405,
