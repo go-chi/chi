@@ -163,7 +163,17 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 // not be found. The default 404 handler is `http.NotFound`.
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	mx.notFoundHandler = handlerFn
-	updateSubroutesWithNotFound(mx, handlerFn)
+
+	// Recursively update not found handlers down the tree
+	for _, r := range mx.tree.routes() {
+		smx, ok := r.SubRoutes.(*Mux)
+		if !ok {
+			continue
+		}
+		if smx.notFoundHandler == nil {
+			smx.NotFound(handlerFn)
+		}
+	}
 }
 
 // MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the
@@ -380,17 +390,4 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(405)
 	w.Write(nil)
-}
-
-func updateSubroutesWithNotFound(mux *Mux, handlerFn http.HandlerFunc) {
-	for _, r := range mux.tree.routes() {
-		subMux, ok := r.SubRoutes.(*Mux)
-		if !ok {
-			continue
-		}
-		if subMux.notFoundHandler == nil {
-			subMux.notFoundHandler = handlerFn
-		}
-		updateSubroutesWithNotFound(subMux, handlerFn)
-	}
 }
