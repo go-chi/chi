@@ -4,10 +4,7 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
-	"bytes"
-	"log"
 	"net/http"
-	"runtime/debug"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a
@@ -16,13 +13,14 @@ import (
 //
 // Recoverer prints a request ID if one is provided.
 func Recoverer(next http.Handler) http.Handler {
+	return FormattedRecoverer(defaultLogFormatter, next)
+}
+
+func FormattedRecoverer(f LogFormatter, next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				reqID := GetReqID(r.Context())
-				prefix := requestPrefix(reqID, r)
-				printPanic(prefix, reqID, err)
-				debug.PrintStack()
+				f.FormatLog(r, -1, -1, -1, err.(error))
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
@@ -31,9 +29,4 @@ func Recoverer(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
-}
-
-func printPanic(buf *bytes.Buffer, reqID string, err interface{}) {
-	cW(buf, bRed, "panic: %+v", err)
-	log.Print(buf.String())
 }

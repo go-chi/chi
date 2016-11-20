@@ -10,8 +10,19 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"runtime/debug"
 	"time"
 )
+
+// DefaultLogFormatter exists so we have somewhere to attach the default log formatting logic
+type DefaultLogFormatter struct{}
+
+// LogFormatter allows you to customize this middleware's (and Recoverer's) output format.
+type LogFormatter interface {
+	FormatLog(r *http.Request, status, nbytes int, elapsed time.Duration, err error)
+}
+
+var defaultLogFormatter *DefaultLogFormatter
 
 // Logger is a middleware that logs the start and end of each request, along
 // with some useful data about what was requested, what the response status was,
@@ -20,15 +31,19 @@ import (
 //
 // Logger prints a request ID if one is provided.
 func Logger(next http.Handler) http.Handler {
+	return FormattedLogger(defaultLogFormatter, next)
+}
+
+// FormattedLogger is a middleware that allows you to customize what is logged
+// for each request/response.
+func FormattedLogger(f LogFormatter, next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		reqID := GetReqID(r.Context())
-		prefix := requestPrefix(reqID, r)
 		lw := wrapWriter(w)
 
 		t1 := time.Now()
 		defer func() {
 			t2 := time.Now()
-			printRequest(prefix, reqID, lw, t2.Sub(t1))
+			f.FormatLog(r, lw.Status(), lw.BytesWritten(), t2.Sub(t1), nil)
 		}()
 
 		next.ServeHTTP(lw, r)
@@ -37,59 +52,64 @@ func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
-	buf := &bytes.Buffer{}
+// FormatLog writes out a formatted log entry
+func (l *DefaultLogFormatter) FormatLog(r *http.Request, status, nbytes int, elapsed time.Duration, err error) {
+	var buf *bytes.Buffer = &bytes.Buffer{}
 
+	reqID := GetReqID(r.Context())
 	if reqID != "" {
 		cW(buf, nYellow, "[%s] ", reqID)
 	}
 	cW(buf, nCyan, "\"")
 	cW(buf, bMagenta, "%s ", r.Method)
 
-	if r.TLS == nil {
-		cW(buf, nCyan, "http://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
-	} else {
-		cW(buf, nCyan, "https://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
 	}
+	cW(buf, nCyan, "%s://%s%s %s\" ", scheme, r.Host, r.RequestURI, r.Proto)
 
 	buf.WriteString("from ")
 	buf.WriteString(r.RemoteAddr)
 	buf.WriteString(" - ")
 
-	return buf
-}
-
-func printRequest(buf *bytes.Buffer, reqID string, w writerProxy, dt time.Duration) {
-	status := w.Status()
-	if status == StatusClientClosedRequest {
-		cW(buf, bRed, "[disconnected]")
-	} else {
-		switch {
-		case status < 200:
-			cW(buf, bBlue, "%03d", status)
-		case status < 300:
-			cW(buf, bGreen, "%03d", status)
-		case status < 400:
-			cW(buf, bCyan, "%03d", status)
-		case status < 500:
-			cW(buf, bYellow, "%03d", status)
-		default:
-			cW(buf, bRed, "%03d", status)
+	if err == nil {
+		if status == StatusClientClosedRequest {
+			cW(buf, bRed, "[disconnected]")
+		} else {
+			switch {
+			case status < 200:
+				cW(buf, bBlue, "%03d", status)
+			case status < 300:
+				cW(buf, bGreen, "%03d", status)
+			case status < 400:
+				cW(buf, bCyan, "%03d", status)
+			case status < 500:
+				cW(buf, bYellow, "%03d", status)
+			default:
+				cW(buf, bRed, "%03d", status)
+			}
 		}
-	}
 
-	cW(buf, bBlue, " %dB", w.BytesWritten())
+		cW(buf, bBlue, " %dB", nbytes)
 
-	buf.WriteString(" in ")
-	if dt < 500*time.Millisecond {
-		cW(buf, nGreen, "%s", dt)
-	} else if dt < 5*time.Second {
-		cW(buf, nYellow, "%s", dt)
+		buf.WriteString(" in ")
+		if elapsed < 500*time.Millisecond {
+			cW(buf, nGreen, "%s", elapsed)
+		} else if elapsed < 5*time.Second {
+			cW(buf, nYellow, "%s", elapsed)
+		} else {
+			cW(buf, nRed, "%s", elapsed)
+		}
 	} else {
-		cW(buf, nRed, "%s", dt)
+		cW(buf, bRed, "%+v", err)
 	}
 
 	log.Print(buf.String())
+
+	if err != nil {
+		debug.PrintStack()
+	}
 }
 
 // writerProxy is a proxy around an http.ResponseWriter that allows you to hook
