@@ -139,7 +139,7 @@ type ArticleResponse struct {
 	Elapsed int64 `json:"elapsed"`
 }
 
-func (r ArticleResponse) Build(ctx context.Context) (interface{}, error) {
+func (r ArticleResponse) Render(ctx context.Context) (interface{}, error) {
 	r.Elapsed = 10 // arbitrary additional data for demo purposes
 	return r, nil
 }
@@ -150,10 +150,14 @@ type ArticlesResponse struct {
 	Articles []*Article
 }
 
-func (rs ArticlesResponse) Build(ctx context.Context) (interface{}, error) {
+func (rs ArticlesResponse) Render(ctx context.Context) (interface{}, error) {
 	resp := []interface{}{}
 	for _, r := range rs.Articles {
-		resp = append(resp, ArticleResponse{Article: r})
+		v, err := ArticleResponse{Article: r}.Render(ctx)
+		if err != nil {
+			v = err
+		}
+		resp = append(resp, v)
 	}
 	return resp, nil
 }
