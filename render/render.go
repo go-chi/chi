@@ -1,9 +1,9 @@
 package render
 
-import "context"
+import "net/http"
 
 type Renderer interface {
-	Render(ctx context.Context) (interface{}, error)
+	Render(r *http.Request) (interface{}, error)
 }
 
 // contextKey is a value for use with context.WithValue. It's used as

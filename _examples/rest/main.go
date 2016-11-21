@@ -139,9 +139,9 @@ type ArticleResponse struct {
 	Elapsed int64 `json:"elapsed"`
 }
 
-func (r ArticleResponse) Render(ctx context.Context) (interface{}, error) {
-	r.Elapsed = 10 // arbitrary additional data for demo purposes
-	return r, nil
+func (rd ArticleResponse) Render(r *http.Request) (interface{}, error) {
+	rd.Elapsed = 10 // arbitrary additional data for demo purposes
+	return rd, nil
 }
 
 // TODO: write a helper method to offer a short-hand version for this,
@@ -150,10 +150,10 @@ type ArticlesResponse struct {
 	Articles []*Article
 }
 
-func (rs ArticlesResponse) Render(ctx context.Context) (interface{}, error) {
+func (rds ArticlesResponse) Render(r *http.Request) (interface{}, error) {
 	resp := []interface{}{}
-	for _, r := range rs.Articles {
-		v, err := ArticleResponse{Article: r}.Render(ctx)
+	for _, rd := range rds.Articles {
+		v, err := ArticleResponse{Article: rd}.Render(r)
 		if err != nil {
 			v = err
 		}

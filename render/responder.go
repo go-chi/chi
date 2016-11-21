@@ -26,7 +26,7 @@ type M map[string]interface{}
 func Responder(w http.ResponseWriter, r *http.Request, v interface{}) {
 	// Render the object if it has a Renderer interface
 	if renderer, ok := v.(Renderer); ok {
-		vv, err := renderer.Render(r.Context())
+		vv, err := renderer.Render(r)
 		if err != nil {
 			v = err
 		} else {
@@ -163,7 +163,7 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 
 			// Build each channel item.
 			if renderer, ok := v.(Renderer); ok {
-				vv, err := renderer.Render(r.Context())
+				vv, err := renderer.Render(r)
 				if err != nil {
 					v = err
 				} else {
@@ -212,7 +212,7 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, from interface{}) 
 
 			// Render each channel item.
 			if renderer, ok := v.(Renderer); ok {
-				vv, err := renderer.Render(r.Context())
+				vv, err := renderer.Render(r)
 				if err != nil {
 					v = err
 				} else {
