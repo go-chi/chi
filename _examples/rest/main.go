@@ -130,9 +130,32 @@ type ArticleRequest struct {
 }
 
 // ArticleResponse is the response payload for the Article data model.
-// See NOTE above in ArticleRequest too.
+// See NOTE above in ArticleRequest as well.
 type ArticleResponse struct {
 	*Article
+
+	// We add an additional field to the response here.. such as this
+	// elapsed computed property
+	Elapsed int64 `json:"elapsed"`
+}
+
+func (r ArticleResponse) Build(ctx context.Context) (interface{}, error) {
+	r.Elapsed = 10 // arbitrary additional data for demo purposes
+	return r, nil
+}
+
+// TODO: write a helper method to offer a short-hand version for this,
+// but of course this is a viable option too if someone doesn't want reflection
+type ArticlesResponse struct {
+	Articles []*Article
+}
+
+func (rs ArticlesResponse) Build(ctx context.Context) (interface{}, error) {
+	resp := []interface{}{}
+	for _, r := range rs.Articles {
+		resp = append(resp, ArticleResponse{Article: r})
+	}
+	return resp, nil
 }
 
 // ArticleCtx middleware is used to load an Article object from
@@ -156,20 +179,12 @@ func ArticleCtx(next http.Handler) http.Handler {
 // It's just a stub, but you get the idea.
 func SearchArticles(w http.ResponseWriter, r *http.Request) {
 	// Filter by query param, and search...
-
-	// TODO: responder, I should be able to pass a slice, and wrap it
-	// etc.. in the struct type...
-	// we should be presenting []ArticleResponse{} here
-
-	render.Respond(w, r, articles)
+	render.Respond(w, r, ArticlesResponse{Articles: articles})
 }
 
 // ListArticles returns an array of Articles.
 func ListArticles(w http.ResponseWriter, r *http.Request) {
-
-	// TODO: return []ArticleResponse{}
-
-	render.Respond(w, r, articles)
+	render.Respond(w, r, ArticlesResponse{Articles: articles})
 }
 
 // CreateArticle persists the posted Article and returns it
@@ -185,10 +200,8 @@ func CreateArticle(w http.ResponseWriter, r *http.Request) {
 	article := data.Article
 	dbNewArticle(article)
 
-	// TODO: respond with ArticleResponse{}
-
 	render.Status(r, http.StatusCreated)
-	render.Respond(w, r, article)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // GetArticle returns the specific Article. You'll notice it just
@@ -201,10 +214,7 @@ func GetArticle(w http.ResponseWriter, r *http.Request) {
 	// middleware. The worst case, the recoverer middleware will save us.
 	article := r.Context().Value("article").(*Article)
 
-	// chi provides a basic companion subpackage "github.com/pressly/chi/render", however
-	// you can use any responder compatible with net/http.
-	payload := render.Build(article, &ArticleResponse{})
-	render.Respond(w, r, payload)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // UpdateArticle updates an existing Article in our persistent store.
@@ -217,10 +227,9 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	article = data.Article
+	dbUpdateArticle(article.ID, article)
 
-	// TODO: respond with ArticleResponse{}
-
-	render.Respond(w, r, article)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // DeleteArticle removes an existing Article from our persistent store.
@@ -238,10 +247,8 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: respond with ArticleResponse{}
-
-	// Respond with the deleted object, up to you.
-	render.Respond(w, r, article)
+	// Respond with the deleted object (up to you)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // A completely separate router for administrator routes
@@ -327,6 +334,16 @@ func dbGetArticle(id string) (*Article, error) {
 	for _, a := range articles {
 		if a.ID == id {
 			return a, nil
+		}
+	}
+	return nil, errors.New("article not found.")
+}
+
+func dbUpdateArticle(id string, article *Article) (*Article, error) {
+	for i, a := range articles {
+		if a.ID == id {
+			articles[i] = article
+			return article, nil
 		}
 	}
 	return nil, errors.New("article not found.")

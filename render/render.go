@@ -24,9 +24,14 @@ type M map[string]interface{}
 // Respond handles streaming JSON and XML responses, automatically setting the
 // Content-Type based on request headers. It will default to a JSON response.
 func Responder(w http.ResponseWriter, r *http.Request, v interface{}) {
-	// Present the object.
-	if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
-		r, v = presenter.Present(r, v)
+	// Build the object if it has a builder interface
+	if builder, ok := v.(Builder); ok {
+		vv, err := builder.Build(r.Context())
+		if err != nil {
+			v = err
+		} else {
+			v = vv
+		}
 	}
 
 	switch reflect.TypeOf(v).Kind() {
@@ -156,9 +161,14 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 			}
 			v := recv.Interface()
 
-			// Present each channel item.
-			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
-				r, v = presenter.Present(r, v)
+			// Build each channel item.
+			if builder, ok := v.(Builder); ok {
+				vv, err := builder.Build(r.Context())
+				if err != nil {
+					v = err
+				} else {
+					v = vv
+				}
 			}
 
 			// TODO: Can't use json Encoder - it panics on bufio.Flush(). Why?!
@@ -200,9 +210,14 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, from interface{}) 
 			}
 			v := recv.Interface()
 
-			// Present each channel item.
-			if presenter, ok := r.Context().Value(presenterCtxKey).(Presenter); ok {
-				r, v = presenter.Present(r, v)
+			// Build each channel item.
+			if builder, ok := v.(Builder); ok {
+				vv, err := builder.Build(r.Context())
+				if err != nil {
+					v = err
+				} else {
+					v = vv
+				}
 			}
 
 			to = append(to, v)
