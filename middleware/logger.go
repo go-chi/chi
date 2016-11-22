@@ -5,7 +5,6 @@ package middleware
 
 import (
 	"bytes"
-	"context"
 	"log"
 	"net/http"
 	"time"
@@ -21,11 +20,7 @@ func Logger(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		reqID := GetReqID(r.Context())
 		prefix := requestPrefix(reqID, r)
-
-		// Create a new WrapResponseWriter and set it on the context for other
-		// handlers to make us of the status code, or other features of the wrapWriter.
 		ww := NewWrapResponseWriter(w)
-		r = r.WithContext(context.WithValue(r.Context(), WrapResponseWriterCtxKey, ww))
 
 		t1 := time.Now()
 		defer func() {
