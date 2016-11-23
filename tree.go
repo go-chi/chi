@@ -183,9 +183,10 @@ func (n *node) findPattern(pattern string) *node {
 			continue
 		}
 
-		xpattern := pattern[n.longestPrefix(pattern, n.prefix):]
-		if len(xpattern) == 0 {
-			return n
+		idx := n.longestPrefix(pattern, n.prefix)
+		xpattern := pattern[idx:]
+		if xpattern[0] == '/' && idx < len(n.prefix) {
+			continue
 		}
 
 		return n.findPattern(xpattern)
@@ -406,6 +407,20 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 // longestPrefix finds the length of the shared prefix
 // of two strings
 func (n *node) longestPrefix(k1, k2 string) int {
+	max := len(k1)
+	if l := len(k2); l < max {
+		max = l
+	}
+	var i int
+	for i = 0; i < max; i++ {
+		if k1[i] != k2[i] {
+			break
+		}
+	}
+	return i
+}
+
+func longestPrefix(k1, k2 string) int {
 	max := len(k1)
 	if l := len(k2); l < max {
 		max = l
