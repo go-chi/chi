@@ -420,20 +420,6 @@ func (n *node) longestPrefix(k1, k2 string) int {
 	return i
 }
 
-func longestPrefix(k1, k2 string) int {
-	max := len(k1)
-	if l := len(k2); l < max {
-		max = l
-	}
-	var i int
-	for i = 0; i < max; i++ {
-		if k1[i] != k2[i] {
-			break
-		}
-	}
-	return i
-}
-
 func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	if n.handlers == nil {
 		n.handlers = make(methodHandlers, 0)
