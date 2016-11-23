@@ -185,7 +185,10 @@ func (n *node) findPattern(pattern string) *node {
 
 		idx := n.longestPrefix(pattern, n.prefix)
 		xpattern := pattern[idx:]
-		if xpattern[0] == '/' && idx < len(n.prefix) {
+
+		if len(xpattern) == 0 {
+			return n
+		} else if xpattern[0] == '/' && idx < len(n.prefix) {
 			continue
 		}
 
