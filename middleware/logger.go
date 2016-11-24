@@ -1,13 +1,21 @@
 package middleware
 
-// Ported from Goji's middleware, source:
+// The original work was derived from Goji's middleware, source:
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
 	"bytes"
+	"context"
 	"log"
 	"net/http"
+	"os"
 	"time"
+)
+
+var (
+	DefaultLogger = RequestLogger(&defaultLogger{logger: log.New(os.Stdout, "", 0)})
+
+	LogEntryCtxKey = &contextKey{"LogEntry"}
 )
 
 // Logger is a middleware that logs the start and end of each request, along
@@ -17,74 +25,114 @@ import (
 //
 // Logger prints a request ID if one is provided.
 func Logger(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		reqID := GetReqID(r.Context())
-		prefix := requestPrefix(reqID, r)
-		ww := NewWrapResponseWriter(w)
-
-		t1 := time.Now()
-		defer func() {
-			t2 := time.Now()
-			printRequest(prefix, reqID, ww, t2.Sub(t1))
-		}()
-
-		next.ServeHTTP(ww, r)
-	}
-
-	return http.HandlerFunc(fn)
+	return DefaultLogger(next)
 }
 
-func requestPrefix(reqID string, r *http.Request) *bytes.Buffer {
-	buf := &bytes.Buffer{}
+func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			entry := f.NewLogEntry(r)
+			ww := NewWrapResponseWriter(w)
 
+			t1 := time.Now()
+			defer func() {
+				t2 := time.Now()
+				entry.Write(ww.Status(), ww.BytesWritten(), t2.Sub(t1))
+			}()
+
+			r = r.WithContext(context.WithValue(r.Context(), LogEntryCtxKey, entry))
+			next.ServeHTTP(ww, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+type LogFormatter interface {
+	NewLogEntry(r *http.Request) LogEntry
+}
+
+type LogEntry interface {
+	Write(status, bytes int, elapsed time.Duration)
+	Panic(v interface{}, stack []byte)
+}
+
+func GetLogEntry(r *http.Request) LogEntry {
+	entry, _ := r.Context().Value(LogEntryCtxKey).(LogEntry)
+	return entry
+}
+
+type defaultLogger struct {
+	logger *log.Logger
+}
+
+func (l *defaultLogger) NewLogEntry(r *http.Request) LogEntry {
+	entry := &defaultLoggerEntry{
+		defaultLogger: l,
+		request:       r,
+		buf:           &bytes.Buffer{},
+	}
+
+	reqID := GetReqID(r.Context())
 	if reqID != "" {
-		cW(buf, nYellow, "[%s] ", reqID)
+		cW(entry.buf, nYellow, "[%s] ", reqID)
 	}
-	cW(buf, nCyan, "\"")
-	cW(buf, bMagenta, "%s ", r.Method)
+	cW(entry.buf, nCyan, "\"")
+	cW(entry.buf, bMagenta, "%s ", r.Method)
 
-	if r.TLS == nil {
-		cW(buf, nCyan, "http://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
-	} else {
-		cW(buf, nCyan, "https://%s%s %s\" ", r.Host, r.RequestURI, r.Proto)
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
 	}
+	cW(entry.buf, nCyan, "%s://%s%s %s\" ", scheme, r.Host, r.RequestURI, r.Proto)
 
-	buf.WriteString("from ")
-	buf.WriteString(r.RemoteAddr)
-	buf.WriteString(" - ")
+	entry.buf.WriteString("from ")
+	entry.buf.WriteString(r.RemoteAddr)
+	entry.buf.WriteString(" - ")
 
-	return buf
+	return entry
 }
 
-func printRequest(buf *bytes.Buffer, reqID string, w WrapResponseWriter, dt time.Duration) {
-	status := w.Status()
+type defaultLoggerEntry struct {
+	*defaultLogger
+	request *http.Request
+	buf     *bytes.Buffer
+}
+
+func (l *defaultLoggerEntry) Write(status, bytes int, elapsed time.Duration) {
 	if status == StatusClientClosedRequest {
-		cW(buf, bRed, "[disconnected]")
+		cW(l.buf, bRed, "[disconnected]")
 	} else {
 		switch {
 		case status < 200:
-			cW(buf, bBlue, "%03d", status)
+			cW(l.buf, bBlue, "%03d", status)
 		case status < 300:
-			cW(buf, bGreen, "%03d", status)
+			cW(l.buf, bGreen, "%03d", status)
 		case status < 400:
-			cW(buf, bCyan, "%03d", status)
+			cW(l.buf, bCyan, "%03d", status)
 		case status < 500:
-			cW(buf, bYellow, "%03d", status)
+			cW(l.buf, bYellow, "%03d", status)
 		default:
-			cW(buf, bRed, "%03d", status)
+			cW(l.buf, bRed, "%03d", status)
 		}
 	}
 
-	cW(buf, bBlue, " %dB", w.BytesWritten())
+	cW(l.buf, bBlue, " %dB", bytes)
 
-	buf.WriteString(" in ")
-	if dt < 500*time.Millisecond {
-		cW(buf, nGreen, "%s", dt)
-	} else if dt < 5*time.Second {
-		cW(buf, nYellow, "%s", dt)
+	l.buf.WriteString(" in ")
+	if elapsed < 500*time.Millisecond {
+		cW(l.buf, nGreen, "%s", elapsed)
+	} else if elapsed < 5*time.Second {
+		cW(l.buf, nYellow, "%s", elapsed)
 	} else {
-		cW(buf, nRed, "%s", dt)
+		cW(l.buf, nRed, "%s", elapsed)
 	}
 
-	log.Print(buf.String())
+	l.logger.Print(l.buf.String())
+}
+
+func (l *defaultLoggerEntry) Panic(v interface{}, stack []byte) {
+	panicEntry := l.NewLogEntry(l.request).(*defaultLoggerEntry)
+	cW(panicEntry.buf, bRed, "panic: %+v", v)
+	l.logger.Print(panicEntry.buf.String())
+	l.logger.Print(string(stack))
 }

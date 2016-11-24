@@ -1,11 +1,9 @@
 package middleware
 
-// Ported from Goji's middleware, source:
+// The original work was derived from Goji's middleware, source:
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
-	"bytes"
-	"log"
 	"net/http"
 	"runtime/debug"
 )
@@ -18,11 +16,15 @@ import (
 func Recoverer(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
-			if err := recover(); err != nil {
-				reqID := GetReqID(r.Context())
-				prefix := requestPrefix(reqID, r)
-				printPanic(prefix, reqID, err)
-				debug.PrintStack()
+			if rvr := recover(); rvr != nil {
+
+				logEntry := GetLogEntry(r)
+				if logEntry != nil {
+					logEntry.Panic(rvr, debug.Stack())
+				} else {
+					debug.PrintStack()
+				}
+
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 		}()
@@ -31,9 +33,4 @@ func Recoverer(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
-}
-
-func printPanic(buf *bytes.Buffer, reqID string, err interface{}) {
-	cW(buf, bRed, "panic: %+v", err)
-	log.Print(buf.String())
 }
