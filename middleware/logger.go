@@ -40,8 +40,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 				entry.Write(ww.Status(), ww.BytesWritten(), t2.Sub(t1))
 			}()
 
-			r = r.WithContext(context.WithValue(r.Context(), LogEntryCtxKey, entry))
-			next.ServeHTTP(ww, r)
+			next.ServeHTTP(ww, WithLogEntry(r, entry))
 		}
 		return http.HandlerFunc(fn)
 	}
@@ -59,6 +58,11 @@ type LogEntry interface {
 func GetLogEntry(r *http.Request) LogEntry {
 	entry, _ := r.Context().Value(LogEntryCtxKey).(LogEntry)
 	return entry
+}
+
+func WithLogEntry(r *http.Request, entry LogEntry) *http.Request {
+	r = r.WithContext(context.WithValue(r.Context(), LogEntryCtxKey, entry))
+	return r
 }
 
 type defaultLogger struct {
