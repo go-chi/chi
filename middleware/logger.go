@@ -70,7 +70,7 @@ type defaultLogFormatter struct {
 }
 
 func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
-	entry := &defaultLoggerEntry{
+	entry := &defaultLogEntry{
 		defaultLogFormatter: l,
 		request:             r,
 		buf:                 &bytes.Buffer{},
@@ -96,13 +96,13 @@ func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 	return entry
 }
 
-type defaultLoggerEntry struct {
+type defaultLogEntry struct {
 	*defaultLogFormatter
 	request *http.Request
 	buf     *bytes.Buffer
 }
 
-func (l *defaultLoggerEntry) Write(status, bytes int, elapsed time.Duration) {
+func (l *defaultLogEntry) Write(status, bytes int, elapsed time.Duration) {
 	if status == StatusClientClosedRequest {
 		cW(l.buf, bRed, "[disconnected]")
 	} else {
@@ -134,8 +134,8 @@ func (l *defaultLoggerEntry) Write(status, bytes int, elapsed time.Duration) {
 	l.logger.Print(l.buf.String())
 }
 
-func (l *defaultLoggerEntry) Panic(v interface{}, stack []byte) {
-	panicEntry := l.NewLogEntry(l.request).(*defaultLoggerEntry)
+func (l *defaultLogEntry) Panic(v interface{}, stack []byte) {
+	panicEntry := l.NewLogEntry(l.request).(*defaultLogEntry)
 	cW(panicEntry.buf, bRed, "panic: %+v", v)
 	l.logger.Print(panicEntry.buf.String())
 	l.logger.Print(string(stack))
