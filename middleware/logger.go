@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	DefaultLogger = RequestLogger(&defaultLogger{logger: log.New(os.Stdout, "", 0)})
-
 	LogEntryCtxKey = &contextKey{"LogEntry"}
+
+	defaultLogger = RequestLogger(&defaultLogFormatter{logger: log.New(os.Stdout, "", 0)})
 )
 
 // Logger is a middleware that logs the start and end of each request, along
@@ -25,7 +25,7 @@ var (
 //
 // Logger prints a request ID if one is provided.
 func Logger(next http.Handler) http.Handler {
-	return DefaultLogger(next)
+	return defaultLogger(next)
 }
 
 func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
@@ -65,15 +65,15 @@ func WithLogEntry(r *http.Request, entry LogEntry) *http.Request {
 	return r
 }
 
-type defaultLogger struct {
+type defaultLogFormatter struct {
 	logger *log.Logger
 }
 
-func (l *defaultLogger) NewLogEntry(r *http.Request) LogEntry {
+func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 	entry := &defaultLoggerEntry{
-		defaultLogger: l,
-		request:       r,
-		buf:           &bytes.Buffer{},
+		defaultLogFormatter: l,
+		request:             r,
+		buf:                 &bytes.Buffer{},
 	}
 
 	reqID := GetReqID(r.Context())
@@ -97,7 +97,7 @@ func (l *defaultLogger) NewLogEntry(r *http.Request) LogEntry {
 }
 
 type defaultLoggerEntry struct {
-	*defaultLogger
+	*defaultLogFormatter
 	request *http.Request
 	buf     *bytes.Buffer
 }
