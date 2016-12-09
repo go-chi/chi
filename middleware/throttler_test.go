@@ -26,6 +26,7 @@ func TestThrottleBacklog(t *testing.T) {
 	})
 
 	server := httptest.NewServer(r)
+	defer server.Close()
 
 	client := http.Client{
 		Timeout: time.Second * 5, // Maximum waiting time.
@@ -52,8 +53,6 @@ func TestThrottleBacklog(t *testing.T) {
 	}
 
 	wg.Wait()
-
-	server.Close()
 }
 
 func TestThrottleClientTimeout(t *testing.T) {
@@ -68,6 +67,7 @@ func TestThrottleClientTimeout(t *testing.T) {
 	})
 
 	server := httptest.NewServer(r)
+	defer server.Close()
 
 	client := http.Client{
 		Timeout: time.Second * 3, // Maximum waiting time.
@@ -85,8 +85,6 @@ func TestThrottleClientTimeout(t *testing.T) {
 	}
 
 	wg.Wait()
-
-	server.Close()
 }
 
 func TestThrottleTriggerGatewayTimeout(t *testing.T) {
@@ -101,6 +99,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	})
 
 	server := httptest.NewServer(r)
+	defer server.Close()
 
 	client := http.Client{
 		Timeout: time.Second * 60, // Maximum waiting time.
@@ -142,8 +141,6 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	}
 
 	wg.Wait()
-
-	server.Close()
 }
 
 func TestThrottleMaximum(t *testing.T) {
@@ -158,6 +155,7 @@ func TestThrottleMaximum(t *testing.T) {
 	})
 
 	server := httptest.NewServer(r)
+	defer server.Close()
 
 	client := http.Client{
 		Timeout: time.Second * 60, // Maximum waiting time.
@@ -203,6 +201,4 @@ func TestThrottleMaximum(t *testing.T) {
 	}
 
 	wg.Wait()
-
-	server.Close()
 }
