@@ -16,10 +16,10 @@ var (
 )
 
 // Logger is a middleware that logs the start and end of each request, along
-// with some useful data about what was requested, what the response status was,
-// and how long it took to return. When standard output is a TTY, Logger will
-// print in color, otherwise it will print in black and white.
-//
+// with some useful data about what was requested, when the request in, what
+// the response status was, and how long it took to return. When standard
+// output is a TTY, Logger will print in color, otherwise it will print in
+// black and white.
 // Logger prints a request ID if one is provided.
 func Logger(next http.Handler) http.Handler {
 	return defaultLogger(next)
@@ -72,6 +72,9 @@ func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 		request:             r,
 		buf:                 &bytes.Buffer{},
 	}
+
+	currentTime := time.Now().Format("2006/01/02 - 15:04:05")
+	entry.buf.WriteString(currentTime + " ")
 
 	reqID := GetReqID(r.Context())
 	if reqID != "" {
