@@ -65,15 +65,14 @@ func RequestID(next http.Handler) http.Handler {
 		myid := atomic.AddUint64(&reqid, 1)
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, RequestIDKey, fmt.Sprintf("%s-%06d", prefix, myid))
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
 }
 
-// GetReqID returns a request ID from the given context if one is present.
+// GetRequestID returns a request ID from the given context if one is present.
 // Returns the empty string if a request ID cannot be found.
-func GetReqID(ctx context.Context) string {
+func GetRequestID(ctx context.Context) string {
 	if ctx == nil {
 		return ""
 	}

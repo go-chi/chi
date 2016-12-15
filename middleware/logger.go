@@ -12,7 +12,7 @@ import (
 var (
 	LogEntryCtxKey = &contextKey{"LogEntry"}
 
-	defaultLogger = RequestLogger(&defaultLogFormatter{logger: log.New(os.Stdout, "", 0)})
+	defaultLogger = RequestLogger(&defaultLogFormatter{logger: log.New(os.Stdout, "", log.LstdFlags)})
 )
 
 // Logger is a middleware that logs the start and end of each request, along
@@ -73,7 +73,7 @@ func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 		buf:                 &bytes.Buffer{},
 	}
 
-	reqID := GetReqID(r.Context())
+	reqID := GetRequestID(r.Context())
 	if reqID != "" {
 		cW(entry.buf, nYellow, "[%s] ", reqID)
 	}
