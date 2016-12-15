@@ -73,8 +73,8 @@ func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 		buf:                 &bytes.Buffer{},
 	}
 
-	currentTime := time.Now().Format("2006/01/02 - 15:04:05")
-	entry.buf.WriteString(currentTime + " ")
+	currentTime := time.Now().Format("2006/01/02 - 15:04:05 ")
+	entry.buf.WriteString(currentTime)
 
 	reqID := GetReqID(r.Context())
 	if reqID != "" {
