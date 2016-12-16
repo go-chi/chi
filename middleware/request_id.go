@@ -70,9 +70,9 @@ func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-// GetRequestID returns a request ID from the given context if one is present.
+// GetReqID returns a request ID from the given context if one is present.
 // Returns the empty string if a request ID cannot be found.
-func GetRequestID(ctx context.Context) string {
+func GetReqID(ctx context.Context) string {
 	if ctx == nil {
 		return ""
 	}

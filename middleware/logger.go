@@ -73,7 +73,7 @@ func (l *defaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 		buf:                 &bytes.Buffer{},
 	}
 
-	reqID := GetRequestID(r.Context())
+	reqID := GetReqID(r.Context())
 	if reqID != "" {
 		cW(entry.buf, nYellow, "[%s] ", reqID)
 	}
