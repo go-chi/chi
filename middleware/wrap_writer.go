@@ -32,24 +32,6 @@ type WrapResponseWriter interface {
 	Unwrap() http.ResponseWriter
 }
 
-// NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
-// hook into various parts of the response process.
-func NewWrapResponseWriter(w http.ResponseWriter) WrapResponseWriter {
-	_, cn := w.(http.CloseNotifier)
-	_, fl := w.(http.Flusher)
-	_, hj := w.(http.Hijacker)
-	_, rf := w.(io.ReaderFrom)
-
-	bw := basicWriter{ResponseWriter: w}
-	if cn && fl && hj && rf {
-		return &fancyWriter{bw}
-	}
-	if fl {
-		return &flushWriter{bw}
-	}
-	return &bw
-}
-
 // basicWriter wraps a http.ResponseWriter that implements the minimal
 // http.ResponseWriter interface.
 type basicWriter struct {
@@ -98,27 +80,27 @@ func (b *basicWriter) Unwrap() http.ResponseWriter {
 	return b.ResponseWriter
 }
 
-// fancyWriter is a writer that additionally satisfies http.CloseNotifier,
+// httpFancyWriter is a writer that additionally satisfies http.CloseNotifier,
 // http.Flusher, http.Hijacker, and io.ReaderFrom. It exists for the common case
 // of wrapping the http.ResponseWriter that package http gives you, in order to
 // make the proxied object support the full method set of the proxied object.
-type fancyWriter struct {
+type httpFancyWriter struct {
 	basicWriter
 }
 
-func (f *fancyWriter) CloseNotify() <-chan bool {
+func (f *httpFancyWriter) CloseNotify() <-chan bool {
 	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
 	return cn.CloseNotify()
 }
-func (f *fancyWriter) Flush() {
+func (f *httpFancyWriter) Flush() {
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
-func (f *fancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (f *httpFancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj := f.basicWriter.ResponseWriter.(http.Hijacker)
 	return hj.Hijack()
 }
-func (f *fancyWriter) ReadFrom(r io.Reader) (int64, error) {
+func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	if f.basicWriter.tee != nil {
 		return io.Copy(&f.basicWriter, r)
 	}
@@ -127,10 +109,10 @@ func (f *fancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	return rf.ReadFrom(r)
 }
 
-var _ http.CloseNotifier = &fancyWriter{}
-var _ http.Flusher = &fancyWriter{}
-var _ http.Hijacker = &fancyWriter{}
-var _ io.ReaderFrom = &fancyWriter{}
+var _ http.CloseNotifier = &httpFancyWriter{}
+var _ http.Flusher = &httpFancyWriter{}
+var _ http.Hijacker = &httpFancyWriter{}
+var _ io.ReaderFrom = &httpFancyWriter{}
 
 type flushWriter struct {
 	basicWriter
