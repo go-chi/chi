@@ -89,8 +89,8 @@ func main() {
 		})
 	})
 
-	// Mount the admin sub-router, the same as a call to
-	// Route("/admin", func(r chi.Router) { with routes here })
+	// Mount the admin sub-router, which btw is the same as:
+	// r.Route("/admin", func(r chi.Router) { admin routes here })
 	r.Mount("/admin", adminRouter())
 
 	// Passing -routes to the program will generate docs for the above
@@ -108,15 +108,58 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
+// Article data model. I suggest looking at https://upper.io for an easy
+// and powerful data persistence adapter.
 type Article struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
 }
 
-// Article fixture data
-var articles = []*Article{
-	{ID: "1", Title: "Hi"},
-	{ID: "2", Title: "sup"},
+// ArticleRequest is the request payload for Article data model.
+//
+// NOTE: It's good practice to have well defined request and response payloads
+// so you can manage the specific inputs and outputs for clients, and also gives
+// you the opportunity to transform data on input or output, for example
+// on request, we'd like to protect certain fields and on output perhaps
+// we'd like to include a computed field based on other values that aren't
+// in the data model. Also, check out this awesome blog post on struct composition:
+// http://attilaolah.eu/2014/09/10/json-and-struct-composition-in-go/
+type ArticleRequest struct {
+	*Article
+	OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
+}
+
+// ArticleResponse is the response payload for the Article data model.
+// See NOTE above in ArticleRequest as well.
+type ArticleResponse struct {
+	*Article
+
+	// We add an additional field to the response here.. such as this
+	// elapsed computed property
+	Elapsed int64 `json:"elapsed"`
+}
+
+func (rd ArticleResponse) Render(r *http.Request) (interface{}, error) {
+	rd.Elapsed = 10 // arbitrary additional data for demo purposes
+	return rd, nil
+}
+
+// TODO: write a helper method to offer a short-hand version for this,
+// but of course this is a viable option too if someone doesn't want reflection
+type ArticlesResponse struct {
+	Articles []*Article
+}
+
+func (rds ArticlesResponse) Render(r *http.Request) (interface{}, error) {
+	resp := []interface{}{}
+	for _, rd := range rds.Articles {
+		v, err := ArticleResponse{Article: rd}.Render(r)
+		if err != nil {
+			v = err
+		}
+		resp = append(resp, v)
+	}
+	return resp, nil
 }
 
 // ArticleCtx middleware is used to load an Article object from
@@ -128,7 +171,7 @@ func ArticleCtx(next http.Handler) http.Handler {
 		article, err := dbGetArticle(articleID)
 		if err != nil {
 			render.Status(r, http.StatusNotFound)
-			render.JSON(w, r, http.StatusText(http.StatusNotFound))
+			render.Respond(w, r, http.StatusText(http.StatusNotFound))
 			return
 		}
 		ctx := context.WithValue(r.Context(), "article", article)
@@ -140,33 +183,29 @@ func ArticleCtx(next http.Handler) http.Handler {
 // It's just a stub, but you get the idea.
 func SearchArticles(w http.ResponseWriter, r *http.Request) {
 	// Filter by query param, and search...
-	render.JSON(w, r, articles)
+	render.Respond(w, r, ArticlesResponse{Articles: articles})
 }
 
 // ListArticles returns an array of Articles.
 func ListArticles(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, articles)
+	render.Respond(w, r, ArticlesResponse{Articles: articles})
 }
 
 // CreateArticle persists the posted Article and returns it
 // back to the client as an acknowledgement.
 func CreateArticle(w http.ResponseWriter, r *http.Request) {
-	var data struct {
-		*Article
-		OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being set
-	}
-	// ^ the above is a nifty trick for how to omit fields during json unmarshalling
-	// through struct composition
-
-	if err := render.Bind(r.Body, &data); err != nil {
-		render.JSON(w, r, err.Error())
+	data := &ArticleRequest{}
+	if err := render.Decode(r, &data); err != nil {
+		render.Status(r, 422)
+		render.Respond(w, r, err)
 		return
 	}
 
 	article := data.Article
 	dbNewArticle(article)
 
-	render.JSON(w, r, article)
+	render.Status(r, http.StatusCreated)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // GetArticle returns the specific Article. You'll notice it just
@@ -179,27 +218,22 @@ func GetArticle(w http.ResponseWriter, r *http.Request) {
 	// middleware. The worst case, the recoverer middleware will save us.
 	article := r.Context().Value("article").(*Article)
 
-	// chi provides a basic companion subpackage "github.com/pressly/chi/render", however
-	// you can use any responder compatible with net/http.
-	render.JSON(w, r, article)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // UpdateArticle updates an existing Article in our persistent store.
 func UpdateArticle(w http.ResponseWriter, r *http.Request) {
 	article := r.Context().Value("article").(*Article)
 
-	data := struct {
-		*Article
-		OmitID interface{} `json:"id,omitempty"` // prevents 'id' from being overridden
-	}{Article: article}
-
-	if err := render.Bind(r.Body, &data); err != nil {
-		render.JSON(w, r, err)
+	data := &ArticleRequest{Article: article}
+	if err := render.Decode(r, &data); err != nil {
+		render.Respond(w, r, err)
 		return
 	}
 	article = data.Article
+	dbUpdateArticle(article.ID, article)
 
-	render.JSON(w, r, article)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // DeleteArticle removes an existing Article from our persistent store.
@@ -213,12 +247,12 @@ func DeleteArticle(w http.ResponseWriter, r *http.Request) {
 
 	article, err = dbRemoveArticle(article.ID)
 	if err != nil {
-		render.JSON(w, r, err)
+		render.Respond(w, r, err)
 		return
 	}
 
-	// Respond with the deleted object, up to you.
-	render.JSON(w, r, article)
+	// Respond with the deleted object (up to you)
+	render.Respond(w, r, ArticleResponse{Article: article})
 }
 
 // A completely separate router for administrator routes
@@ -259,9 +293,40 @@ func paginate(next http.Handler) http.Handler {
 	})
 }
 
+// This is entirely optional, but I wanted to demonstrate how you could easily
+// add your own logic to the render.Respond method.
+func init() {
+	render.Respond = func(w http.ResponseWriter, r *http.Request, v interface{}) {
+		if err, ok := v.(error); ok {
+
+			// We set a default error status response code if one hasn't been set.
+			if _, ok := r.Context().Value(render.StatusCtxKey).(int); !ok {
+				w.WriteHeader(400)
+			}
+
+			// We log the error
+			fmt.Printf("Logging err: %s\n", err.Error())
+
+			// We change the response to not reveal the actual error message,
+			// instead we can transform the message something more friendly or mapped
+			// to some code / language, etc.
+			render.Responder(w, r, render.M{"code": 123, "msg": "something bad happened"})
+			return
+		}
+
+		render.Responder(w, r, v)
+	}
+}
+
 //--
 
 // Below are a bunch of helper functions that mock some kind of storage
+
+// Article fixture data
+var articles = []*Article{
+	{ID: "1", Title: "Hi"},
+	{ID: "2", Title: "sup"},
+}
 
 func dbNewArticle(article *Article) (string, error) {
 	article.ID = fmt.Sprintf("%d", rand.Intn(100)+10)
@@ -273,6 +338,16 @@ func dbGetArticle(id string) (*Article, error) {
 	for _, a := range articles {
 		if a.ID == id {
 			return a, nil
+		}
+	}
+	return nil, errors.New("article not found.")
+}
+
+func dbUpdateArticle(id string, article *Article) (*Article, error) {
+	for i, a := range articles {
+		if a.ID == id {
+			articles[i] = article
+			return article, nil
 		}
 	}
 	return nil, errors.New("article not found.")
