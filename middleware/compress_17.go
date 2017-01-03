@@ -7,11 +7,12 @@ import (
 	"net/http"
 )
 
-func mkGenericWrapper(orig http.ResponseWriter, wrapper responseWriterWrapper) http.ResponseWriter {
-	_, cn := wrapper.(http.CloseNotifier)
-	_, fl := wrapper.(http.Flusher)
-	_, hj := wrapper.(http.Hijacker)
-	_, rf := wrapper.(io.ReaderFrom)
+func mkGenericWrapper(wrapper responseWriterWrapper) http.ResponseWriter {
+	orig := wrapper.Unwrap()
+	_, cn := orig.(http.CloseNotifier)
+	_, fl := orig.(http.Flusher)
+	_, hj := orig.(http.Hijacker)
+	_, rf := orig.(io.ReaderFrom)
 
 	gw := genericWrapper{wrapper}
 	if cn && fl && hj && rf && !ps {

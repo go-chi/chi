@@ -62,7 +62,7 @@ func Compress(level int, types ...string) func(next http.Handler) http.Handler {
 			}
 			defer mcw.Close()
 
-			next.ServeHTTP(mkGenericWrapper(w, mcw), r)
+			next.ServeHTTP(mkGenericWrapper(mcw), r)
 		}
 
 		return http.HandlerFunc(fn)

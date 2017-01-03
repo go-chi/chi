@@ -26,7 +26,7 @@ func (e *emptyResponseWriterWrapper) Unwrap() http.ResponseWriter {
 
 func identityMiddleware(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w = mkGenericWrapper(w, &emptyResponseWriterWrapper{w})
+		w = mkGenericWrapper(&emptyResponseWriterWrapper{w})
 		inner.ServeHTTP(w, r)
 	})
 }

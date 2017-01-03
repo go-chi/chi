@@ -7,7 +7,8 @@ import (
 	"net/http"
 )
 
-func mkGenericWrapper(orig http.ResponseWriter, wrapper responseWriterWrapper) http.ResponseWriter {
+func mkGenericWrapper(wrapper responseWriterWrapper) http.ResponseWriter {
+	orig := wrapper.Unwrap()
 	_, cn := orig.(http.CloseNotifier)
 	_, fl := orig.(http.Flusher)
 	_, hj := orig.(http.Hijacker)
