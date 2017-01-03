@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"bufio"
 	"compress/flate"
 	"compress/gzip"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -60,7 +62,7 @@ func Compress(level int, types ...string) func(next http.Handler) http.Handler {
 			}
 			defer mcw.Close()
 
-			next.ServeHTTP(mcw, r)
+			next.ServeHTTP(mkGenericWrapper(w, mcw), r)
 		}
 
 		return http.HandlerFunc(fn)
@@ -173,15 +175,81 @@ func (w *maybeCompressResponseWriter) Write(p []byte) (int, error) {
 	return w.w.Write(p)
 }
 
-func (w *maybeCompressResponseWriter) Flush() {
-	if f, ok := w.w.(http.Flusher); ok {
-		f.Flush()
-	}
+func (w *maybeCompressResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 func (w *maybeCompressResponseWriter) Close() error {
-	if c, ok := w.w.(io.WriteCloser); ok {
+	if c, ok := w.w.(io.Closer); ok {
 		return c.Close()
 	}
 	return nil
 }
+
+type responseWriterWrapper interface {
+	http.ResponseWriter
+	Unwrap() http.ResponseWriter
+}
+
+type genericWrapper struct {
+	inner responseWriterWrapper
+}
+
+func (g *genericWrapper) Unwrap() http.ResponseWriter {
+	return g.inner
+}
+
+func (g *genericWrapper) Header() http.Header {
+	return g.inner.Header()
+}
+
+func (g *genericWrapper) Write(data []byte) (int, error) {
+	return g.inner.Write(data)
+}
+
+func (g *genericWrapper) WriteHeader(status int) {
+	g.inner.WriteHeader(status)
+}
+
+var _ http.ResponseWriter = &genericWrapper{}
+
+type httpGenericWrapper struct {
+	genericWrapper
+}
+
+func (h *httpGenericWrapper) CloseNotify() <-chan bool {
+	if cn, ok := h.genericWrapper.inner.(http.CloseNotifier); ok {
+		return cn.CloseNotify()
+	}
+
+	return h.genericWrapper.inner.Unwrap().(http.CloseNotifier).CloseNotify()
+}
+func (h *httpGenericWrapper) Flush() {
+	if f, ok := h.genericWrapper.inner.(http.Flusher); ok {
+		f.Flush()
+	}
+
+	h.genericWrapper.inner.Unwrap().(http.Flusher).Flush()
+}
+
+func (h *httpGenericWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := h.genericWrapper.inner.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+
+	return h.genericWrapper.inner.Unwrap().(http.Hijacker).Hijack()
+}
+
+func (h *httpGenericWrapper) ReadFrom(r io.Reader) (n int64, err error) {
+	if rf, ok := h.genericWrapper.inner.(io.ReaderFrom); ok {
+		return rf.ReadFrom(r)
+	}
+
+	return h.genericWrapper.inner.Unwrap().(io.ReaderFrom).ReadFrom(r)
+}
+
+var _ http.ResponseWriter = &httpGenericWrapper{}
+var _ http.CloseNotifier = &httpGenericWrapper{}
+var _ http.Flusher = &httpGenericWrapper{}
+var _ http.Hijacker = &httpGenericWrapper{}
+var _ io.ReaderFrom = &httpGenericWrapper{}
