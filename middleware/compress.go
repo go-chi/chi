@@ -227,6 +227,7 @@ func (h *httpGenericWrapper) CloseNotify() <-chan bool {
 func (h *httpGenericWrapper) Flush() {
 	if f, ok := h.genericWrapper.inner.(http.Flusher); ok {
 		f.Flush()
+		return
 	}
 
 	h.genericWrapper.inner.Unwrap().(http.Flusher).Flush()
