@@ -1,3 +1,4 @@
+// +build go1.8
 package middleware
 
 import (
