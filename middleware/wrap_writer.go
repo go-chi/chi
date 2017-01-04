@@ -10,8 +10,6 @@ import (
 	"net/http"
 )
 
-var WrapResponseWriterCtxKey = &contextKey{"WrapResponseWriter"}
-
 // WrapResponseWriter is a proxy around an http.ResponseWriter that allows you to hook
 // into various parts of the response process.
 type WrapResponseWriter interface {
@@ -80,7 +78,18 @@ func (b *basicWriter) Unwrap() http.ResponseWriter {
 	return b.ResponseWriter
 }
 
-// httpFancyWriter is a writer that additionally satisfies http.CloseNotifier,
+type flushWriter struct {
+	basicWriter
+}
+
+func (f *flushWriter) Flush() {
+	fl := f.basicWriter.ResponseWriter.(http.Flusher)
+	fl.Flush()
+}
+
+var _ http.Flusher = &flushWriter{}
+
+// httpFancyWriter is a HTTP writer that additionally satisfies http.CloseNotifier,
 // http.Flusher, http.Hijacker, and io.ReaderFrom. It exists for the common case
 // of wrapping the http.ResponseWriter that package http gives you, in order to
 // make the proxied object support the full method set of the proxied object.
@@ -114,13 +123,31 @@ var _ http.Flusher = &httpFancyWriter{}
 var _ http.Hijacker = &httpFancyWriter{}
 var _ io.ReaderFrom = &httpFancyWriter{}
 
-type flushWriter struct {
+// http2FancyWriter is a HTTP2 writer that additionally satisfies http.CloseNotifier,
+// http.Flusher, and io.ReaderFrom. It exists for the common case
+// of wrapping the http.ResponseWriter that package http gives you, in order to
+// make the proxied object support the full method set of the proxied object.
+type http2FancyWriter struct {
 	basicWriter
 }
 
-func (f *flushWriter) Flush() {
+func (f *http2FancyWriter) CloseNotify() <-chan bool {
+	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
+	return cn.CloseNotify()
+}
+func (f *http2FancyWriter) Flush() {
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
+func (f *http2FancyWriter) ReadFrom(r io.Reader) (int64, error) {
+	if f.basicWriter.tee != nil {
+		return io.Copy(&f.basicWriter, r)
+	}
+	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
+	f.basicWriter.maybeWriteHeader()
+	return rf.ReadFrom(r)
+}
 
-var _ http.Flusher = &flushWriter{}
+var _ http.CloseNotifier = &http2FancyWriter{}
+var _ http.Flusher = &http2FancyWriter{}
+var _ io.ReaderFrom = &http2FancyWriter{}
