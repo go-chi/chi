@@ -42,9 +42,15 @@ func TestWrapWriterHTTP2(t *testing.T) {
 		w.Write([]byte("OK"))
 	})
 
+	wmw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(NewWrapResponseWriter(w, r.ProtoMajor), r)
+		})
+	}
+
 	server := http.Server{
 		Addr:    ":7072",
-		Handler: handler,
+		Handler: wmw(handler),
 	}
 	// By serving over TLS, we get HTTP2 requests
 	go server.ListenAndServeTLS(testdataDir+"/cert.pem", testdataDir+"/key.pem")

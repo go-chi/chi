@@ -12,15 +12,16 @@ import (
 func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter {
 	_, cn := w.(http.CloseNotifier)
 	_, fl := w.(http.Flusher)
-	_, rf := w.(io.ReaderFrom)
 
 	bw := basicWriter{ResponseWriter: w}
+
 	if protoMajor == 2 {
-		if cn && fl && rf {
+		if cn && fl {
 			return &http2FancyWriter{bw}
 		}
 	} else {
 		_, hj := w.(http.Hijacker)
+		_, rf := w.(io.ReaderFrom)
 		if cn && fl && hj && rf {
 			return &httpFancyWriter{bw}
 		}
@@ -28,5 +29,6 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 	if fl {
 		return &flushWriter{bw}
 	}
+
 	return &bw
 }

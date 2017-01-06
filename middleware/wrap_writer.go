@@ -139,15 +139,6 @@ func (f *http2FancyWriter) Flush() {
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
-func (f *http2FancyWriter) ReadFrom(r io.Reader) (int64, error) {
-	if f.basicWriter.tee != nil {
-		return io.Copy(&f.basicWriter, r)
-	}
-	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
-	f.basicWriter.maybeWriteHeader()
-	return rf.ReadFrom(r)
-}
 
 var _ http.CloseNotifier = &http2FancyWriter{}
 var _ http.Flusher = &http2FancyWriter{}
-var _ io.ReaderFrom = &http2FancyWriter{}
