@@ -29,7 +29,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			entry := f.NewLogEntry(r)
-			ww := NewWrapResponseWriter(w)
+			ww := NewWrapResponseWriter(w, r.ProtoMajor)
 
 			t1 := time.Now()
 			defer func() {
