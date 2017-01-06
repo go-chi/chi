@@ -1,6 +1,13 @@
 # Changelog
 
-## v2.0.0rc1 (2016-07-26)
+## v2.0.0 (2017-01-06)
+
+- After many months of v2 being in an RC state with many companies and users running it in
+production, the inclusion of some improvements to the middlewares, we are very pleased to
+announce v2.0.0 of chi.
+
+
+## v2.0.0-rc1 (2016-07-26)
 
 - Huge update! chi v2 is a large refactor targetting Go 1.7+. As of Go 1.7, the popular
 community `"net/context"` package has been included in the standard library as `"context"` and
@@ -20,9 +27,11 @@ stdlib HTTP handlers and middlwares.
   2. Use `chi.URLParam(r *http.Request, paramKey string) string`
      or `URLParamFromCtx(ctx context.Context, paramKey string) string` to access a url parameter value
 
+
 ## v1.0.0 (2016-07-01)
 
 - Released chi v1 stable https://github.com/pressly/chi/tree/v1.0.0 for Go 1.6 and older.
+
 
 ## v0.9.0 (2016-03-31)
 
