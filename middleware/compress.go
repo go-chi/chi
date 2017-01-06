@@ -1,9 +1,12 @@
 package middleware
 
 import (
+	"bufio"
 	"compress/flate"
 	"compress/gzip"
+	"errors"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -179,9 +182,16 @@ func (w *maybeCompressResponseWriter) Flush() {
 	}
 }
 
+func (w *maybeCompressResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := w.w.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, errors.New("chi/middleware: http.Hijacker is unavailable on the writer")
+}
+
 func (w *maybeCompressResponseWriter) Close() error {
 	if c, ok := w.w.(io.WriteCloser); ok {
 		return c.Close()
 	}
-	return nil
+	return errors.New("chi/middleware: io.WriteCloser is unavailable on the writer")
 }

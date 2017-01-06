@@ -5,9 +5,22 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"reflect"
+	"runtime"
 	"testing"
 )
+
+// NOTE: we must import `golang.org/x/net/http2` in order to explicitly enable
+// http2 transports for certain tests. The runtime pkg does not have this dependency
+// though as the transport configuration happens under the hood on go 1.7+.
+
+var testdataDir string
+
+func init() {
+	_, filename, _, _ := runtime.Caller(0)
+	testdataDir = path.Join(path.Dir(filename), "/../testdata")
+}
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (int, string) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
