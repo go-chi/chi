@@ -12,7 +12,7 @@ import (
 var (
 	LogEntryCtxKey = &contextKey{"LogEntry"}
 
-	DefaultLogger = RequestLogger(&DefaultLogFormatter{logger: log.New(os.Stdout, "", log.LstdFlags)})
+	DefaultLogger = RequestLogger(&DefaultLogFormatter{Logger: log.New(os.Stdout, "", log.LstdFlags)})
 )
 
 // Logger is a middleware that logs the start and end of each request, along
@@ -63,7 +63,7 @@ func WithLogEntry(r *http.Request, entry LogEntry) *http.Request {
 }
 
 type DefaultLogFormatter struct {
-	logger *log.Logger
+	Logger *log.Logger
 }
 
 func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
@@ -128,12 +128,12 @@ func (l *defaultLogEntry) Write(status, bytes int, elapsed time.Duration) {
 		cW(l.buf, nRed, "%s", elapsed)
 	}
 
-	l.logger.Print(l.buf.String())
+	l.Logger.Print(l.buf.String())
 }
 
 func (l *defaultLogEntry) Panic(v interface{}, stack []byte) {
 	panicEntry := l.NewLogEntry(l.request).(*defaultLogEntry)
 	cW(panicEntry.buf, bRed, "panic: %+v", v)
-	l.logger.Print(panicEntry.buf.String())
-	l.logger.Print(string(stack))
+	l.Logger.Print(panicEntry.buf.String())
+	l.Logger.Print(string(stack))
 }
