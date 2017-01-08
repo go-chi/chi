@@ -339,31 +339,31 @@ and..
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 
-Comparison with other routers (as of Aug 1/16): https://gist.github.com/pkieltyka/76a59d33492dd2732e691ad8c0b274a4
+Comparison with other routers (as of Jan 7/17): https://gist.github.com/pkieltyka/d0814d5396c996cb3ff8076399583d1f
 
 ```shell
-BenchmarkChi_Param        	 5000000	       251 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_Param5       	 5000000	       393 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_Param20      	 1000000	      1012 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_ParamWrite   	 5000000	       301 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_GithubStatic 	 5000000	       287 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_GithubParam  	 3000000	       442 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_GithubAll    	   20000	     90855 ns/op	   48723 B/op	     203 allocs/op
-BenchmarkChi_GPlusStatic  	 5000000	       250 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_GPlusParam   	 5000000	       280 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_GPlus2Params 	 5000000	       337 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_GPlusAll     	  300000	      4128 ns/op	    3120 B/op	      13 allocs/op
-BenchmarkChi_ParseStatic  	 5000000	       250 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_ParseParam   	 5000000	       275 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_Parse2Params 	 5000000	       305 ns/op	     240 B/op	       1 allocs/op
-BenchmarkChi_ParseAll     	  200000	      7671 ns/op	    6240 B/op	      26 allocs/op
-BenchmarkChi_StaticAll    	   30000	     55497 ns/op	   37682 B/op	     157 allocs/op
+BenchmarkChi_Param        	 5000000	       398 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Param5       	 3000000	       556 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Param20      	 1000000	      1184 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParamWrite   	 3000000	       443 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubStatic 	 3000000	       427 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubParam  	 3000000	       565 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubAll    	   10000	    122143 ns/op	   61716 B/op	     406 allocs/op
+BenchmarkChi_GPlusStatic  	 5000000	       383 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlusParam   	 3000000	       431 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlus2Params 	 3000000	       500 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlusAll     	  200000	      6410 ns/op	    3952 B/op	      26 allocs/op
+BenchmarkChi_ParseStatic  	 5000000	       384 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParseParam   	 3000000	       415 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Parse2Params 	 3000000	       450 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParseAll     	  100000	     12124 ns/op	    7904 B/op	      52 allocs/op
+BenchmarkChi_StaticAll    	   20000	     78501 ns/op	   47731 B/op	     314 allocs/op
 ```
 
 NOTE: the allocs in the benchmark above are from the calls to http.Request's
 `WithContext(context.Context)` method that clones the http.Request, sets the `Context()`
 on the duplicated (alloc'd) request and returns it the new request object. This is just
-how setting context on a request in Go 1.7 works. 
+how setting context on a request in Go 1.7+ works. 
 
 
 ## Credits
