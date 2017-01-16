@@ -111,6 +111,7 @@ func (ps *params) Del(key string) string {
 func ServerBaseContext(h http.Handler, baseCtx context.Context) http.Handler {
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		baseCtx := baseCtx
 
 		// Copy over default net/http server context keys
 		if v, ok := ctx.Value(http.ServerContextKey).(*http.Server); ok {
