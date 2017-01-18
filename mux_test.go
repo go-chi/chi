@@ -359,6 +359,56 @@ func TestMuxNestedNotFound(t *testing.T) {
 	}
 }
 
+func TestMuxNestedMethodNotAllowed(t *testing.T) {
+	r := NewRouter()
+	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("root"))
+	})
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(405)
+		w.Write([]byte("root 405"))
+	})
+
+	sr1 := NewRouter()
+	sr1.Get("/sub1", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub1"))
+	})
+	sr1.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(405)
+		w.Write([]byte("sub1 405"))
+	})
+
+	sr2 := NewRouter()
+	sr2.Get("/sub2", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub2"))
+	})
+
+	r.Mount("/prefix1", sr1)
+	r.Mount("/prefix2", sr2)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/root", nil); body != "root" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/root", nil); body != "root 405" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/prefix1/sub1", nil); body != "sub1" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/prefix1/sub1", nil); body != "sub1 405" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/prefix2/sub2", nil); body != "sub2" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/prefix2/sub2", nil); body != "root 405" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxComplicatedNotFound(t *testing.T) {
 	// sub router with groups
 	sub := NewRouter()
