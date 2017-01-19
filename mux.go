@@ -240,10 +240,13 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		panic(fmt.Sprintf("chi: attempting to Mount() a handler on an existing path, '%s'", pattern))
 	}
 
-	// Assign sub-Router's with the parent not found handler if not specified.
+	// Assign sub-Router's with the parent not found & method not allowed handler if not specified.
 	subr, ok := handler.(*Mux)
 	if ok && subr.notFoundHandler == nil && mx.notFoundHandler != nil {
 		subr.NotFound(mx.notFoundHandler)
+	}
+	if ok && subr.methodNotAllowedHandler == nil && mx.methodNotAllowedHandler != nil {
+		subr.MethodNotAllowed(mx.methodNotAllowedHandler)
 	}
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
