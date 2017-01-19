@@ -77,6 +77,10 @@ type Router interface {
 	// NotFound defines a handler to respond whenever a route could
 	// not be found.
 	NotFound(h http.HandlerFunc)
+
+	// MethodNotAllowed defines a handler to respond whenever a method is
+	// not allowed.
+	MethodNotAllowed(h http.HandlerFunc)
 }
 
 // Routes interface adds two methods for router traversal, which is also
