@@ -6,6 +6,10 @@
 // logger using the amazing Sirupsen/logrus package as the logging
 // backend.
 //
+// Also: check out https://github.com/pressly/lg for an improved context
+// logger with support for HTTP request logging, based on the example
+// below.
+//
 package main
 
 import (
@@ -20,9 +24,14 @@ import (
 
 func main() {
 
-	// Setup the logger
+	// Setup the logger backend using Sirupsen/logrus and configure
+	// it to use a custom JSONFormatter. See the logrus docs for how to
+	// configure the backend at github.com/Sirupsen/logrus
 	logger := logrus.New()
-	logger.Formatter = &logrus.JSONFormatter{} // optional / configurable, see docs
+	logger.Formatter = &logrus.JSONFormatter{
+		// disable, as we set our own
+		DisableTimestamp: true,
+	}
 
 	// Routes
 	r := chi.NewRouter()
@@ -46,19 +55,19 @@ func main() {
 
 // StructuredLogger is a simple, but powerful implementation of a custom structured
 // logger backed on logrus. I encourage users to copy it, adapt it and make it their
-// own. It's well suited to live in its own package, and likely soon I will update
-// github.com/goware/lg to use this implementation.
+// own. Also take a look at https://github.com/pressly/lg for a dedicated pkg based
+// on this work, designed for context-based http routers.
 
 func NewStructuredLogger(logger *logrus.Logger) func(next http.Handler) http.Handler {
 	return middleware.RequestLogger(&StructuredLogger{logger})
 }
 
 type StructuredLogger struct {
-	logger *logrus.Logger
+	Logger *logrus.Logger
 }
 
 func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
-	entry := &StructuredLoggerEntry{logger: logrus.NewEntry(l.logger)}
+	entry := &StructuredLoggerEntry{Logger: logrus.NewEntry(l.Logger)}
 	logFields := logrus.Fields{}
 
 	logFields["ts"] = time.Now().UTC().Format(time.RFC1123)
@@ -80,33 +89,28 @@ func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	logFields["uri"] = fmt.Sprintf("%s://%s%s", scheme, r.Host, r.RequestURI)
 
-	entry.logger = entry.logger.WithFields(logFields)
+	entry.Logger = entry.Logger.WithFields(logFields)
 
-	entry.logger.Infoln("request started")
+	entry.Logger.Infoln("request started")
 
 	return entry
 }
 
 type StructuredLoggerEntry struct {
-	logger logrus.FieldLogger
+	Logger logrus.FieldLogger
 }
 
 func (l *StructuredLoggerEntry) Write(status, bytes int, elapsed time.Duration) {
-	l.logger = l.logger.WithFields(logrus.Fields{
+	l.Logger = l.Logger.WithFields(logrus.Fields{
 		"resp_status": status, "resp_bytes_length": bytes,
 		"resp_elasped_ms": float64(elapsed.Nanoseconds()) / 1000000.0,
 	})
 
-	if status == middleware.StatusClientClosedRequest {
-		l.logger.Infoln("[disconnected]")
-		return
-	}
-
-	l.logger.Infoln("request complete")
+	l.Logger.Infoln("request complete")
 }
 
 func (l *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
-	l.logger = l.logger.WithFields(logrus.Fields{
+	l.Logger = l.Logger.WithFields(logrus.Fields{
 		"stack": string(stack),
 		"panic": fmt.Sprintf("%+v", v),
 	})
@@ -121,17 +125,17 @@ func (l *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
 
 func GetLogEntry(r *http.Request) logrus.FieldLogger {
 	entry := middleware.GetLogEntry(r).(*StructuredLoggerEntry)
-	return entry.logger
+	return entry.Logger
 }
 
 func LogEntrySetField(r *http.Request, key string, value interface{}) {
-	entry := middleware.GetLogEntry(r).(*StructuredLoggerEntry)
-	entry.logger = entry.logger.WithField(key, value)
-	middleware.WithLogEntry(r, entry)
+	if entry, ok := r.Context().Value(middleware.LogEntryCtxKey).(*StructuredLoggerEntry); ok {
+		entry.Logger = entry.Logger.WithField(key, value)
+	}
 }
 
 func LogEntrySetFields(r *http.Request, fields map[string]interface{}) {
-	entry := middleware.GetLogEntry(r).(*StructuredLoggerEntry)
-	entry.logger = entry.logger.WithFields(fields)
-	middleware.WithLogEntry(r, entry)
+	if entry, ok := r.Context().Value(middleware.LogEntryCtxKey).(*StructuredLoggerEntry); ok {
+		entry.Logger = entry.Logger.WithFields(fields)
+	}
 }

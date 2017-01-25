@@ -303,7 +303,6 @@ with `net/http` can be used with chi's mux.
 | Logger       | Logs the start and end of each request with the elapsed processing time.        |
 | Recoverer    | Gracefully absorb panics and prints the stack trace.                            |
 | NoCache      | Sets response headers to prevent clients from caching.                          |
-| CloseNotify  | Signals to the request context when a client has closed their connection.       |
 | Timeout      | Signals to the request context when the timeout deadline is reached.            |
 | Throttle     | Puts a ceiling on the number of concurrent requests.                            |
 | Compress     | Gzip compression for clients that accept compressed responses.                  |

@@ -18,9 +18,11 @@ var (
 // Logger is a middleware that logs the start and end of each request, along
 // with some useful data about what was requested, what the response status was,
 // and how long it took to return. When standard output is a TTY, Logger will
-// print in color, otherwise it will print in black and white.
+// print in color, otherwise it will print in black and white. Logger prints a
+// request ID if one is provided.
 //
-// Logger prints a request ID if one is provided.
+// Alternatively, look at https://github.com/pressly/lg and the `lg.RequestLogger`
+// middleware pkg.
 func Logger(next http.Handler) http.Handler {
 	return DefaultLogger(next)
 }
@@ -100,21 +102,17 @@ type defaultLogEntry struct {
 }
 
 func (l *defaultLogEntry) Write(status, bytes int, elapsed time.Duration) {
-	if status == StatusClientClosedRequest {
-		cW(l.buf, bRed, "[disconnected]")
-	} else {
-		switch {
-		case status < 200:
-			cW(l.buf, bBlue, "%03d", status)
-		case status < 300:
-			cW(l.buf, bGreen, "%03d", status)
-		case status < 400:
-			cW(l.buf, bCyan, "%03d", status)
-		case status < 500:
-			cW(l.buf, bYellow, "%03d", status)
-		default:
-			cW(l.buf, bRed, "%03d", status)
-		}
+	switch {
+	case status < 200:
+		cW(l.buf, bBlue, "%03d", status)
+	case status < 300:
+		cW(l.buf, bGreen, "%03d", status)
+	case status < 400:
+		cW(l.buf, bCyan, "%03d", status)
+	case status < 500:
+		cW(l.buf, bYellow, "%03d", status)
+	default:
+		cW(l.buf, bRed, "%03d", status)
 	}
 
 	cW(l.buf, bBlue, " %dB", bytes)
