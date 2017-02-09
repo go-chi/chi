@@ -5,7 +5,9 @@ package chi
 // (MIT licensed). It's been heavily modified for use as a HTTP routing tree.
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 )
@@ -370,7 +372,11 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 			if xn.typ == ntCatchAll {
 				rctx.URLParams.Add("*", xsearch)
 			} else {
-				rctx.URLParams.Add(xn.prefix[1:], xsearch[:p])
+				value, err := url.QueryUnescape(xsearch[:p])
+				if err != nil {
+					panic(fmt.Sprintf("Cannot unescape URL path %v", err))
+				}
+				rctx.URLParams.Add(xn.prefix[1:], value)
 			}
 
 			xsearch = xsearch[p:]

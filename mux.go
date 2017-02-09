@@ -362,7 +362,11 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// The request routing path
 	routePath := rctx.RoutePath
 	if routePath == "" {
-		routePath = r.URL.Path
+		if r.URL.RawPath != "" {
+			routePath = r.URL.RawPath
+		} else {
+			routePath = r.URL.Path
+		}
 	}
 
 	// Check if method is supported by chi

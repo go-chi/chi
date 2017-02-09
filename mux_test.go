@@ -1320,6 +1320,46 @@ func TestServerBaseContext(t *testing.T) {
 	}
 }
 
+func TestPathParams(t *testing.T) {
+	m := NewRouter()
+	m.Get("/api/:identifier/:region/:size/:rotation/*", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		rctx := RouteContext(r.Context())
+		if rctx == nil {
+			t.Error("no context")
+			return
+		}
+		identifier := URLParam(r, "identifier")
+		if identifier != "http://example.com/image.png" {
+			t.Errorf("identifier path parameter incorrect %s", identifier)
+			return
+		}
+		region := URLParam(r, "region")
+		if region != "full" {
+			t.Errorf("region path parameter incorrect %s", region)
+			return
+		}
+		size := URLParam(r, "size")
+		if size != "max" {
+			t.Errorf("size path parameter incorrect %s", size)
+			return
+		}
+		rotation := URLParam(r, "rotation")
+		if rotation != "0" {
+			t.Errorf("rotation path parameter incorrect %s", rotation)
+			return
+		}
+		w.Write([]byte("success"))
+	})
+
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
+		t.Fatalf(body)
+	}
+}
+
 func urlParams(rctx *Context) map[string]string {
 	m := make(map[string]string, 0)
 	for _, p := range rctx.URLParams {
