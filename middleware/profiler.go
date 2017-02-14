@@ -14,7 +14,7 @@ import (
 //  func MyService() http.Handler {
 //    r := chi.NewRouter()
 //    // ..middlewares
-//    r.Mount("/debug", profiler.Router())
+//    r.Mount("/debug", middleware.Profiler())
 //    // ..routes
 //    return r
 //  }
