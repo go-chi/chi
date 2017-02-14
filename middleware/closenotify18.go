@@ -13,5 +13,5 @@ import (
 // Note: this behaviour is standard in Go 1.8+, so the middleware does nothing
 // on 1.8+ and exists just for backwards compatibility.
 func CloseNotify(next http.Handler) http.Handler {
-    return next
+	return next
 }
