@@ -17,6 +17,8 @@ handlers (stdlib-only), developer productivity, and deconstructing a large syste
 parts. The core router `github.com/pressly/chi` is quite small (less than 1000 LOC), but we've also
 included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope you enjoy it too!
 
+## Install
+
 `go get -u github.com/pressly/chi`
 
 
