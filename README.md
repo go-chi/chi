@@ -297,22 +297,23 @@ chi comes equipped with an optional `middleware` package, providing a suite of s
 `net/http` middlewares. Please note, any middleware in the ecosystem that is also compatible
 with `net/http` can be used with chi's mux.
 
---------------------------------------------------------------------------------------------------
-| Middleware   | Description                                                                     |
-|:-------------|:---------------------------------------------------------------------------------
-| RequestID    | Injects a request ID into the context of each request.                          |
-| RealIP       | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
-| Logger       | Logs the start and end of each request with the elapsed processing time.        |
-| Recoverer    | Gracefully absorb panics and prints the stack trace.                            |
-| NoCache      | Sets response headers to prevent clients from caching.                          |
-| Timeout      | Signals to the request context when the timeout deadline is reached.            |
-| Throttle     | Puts a ceiling on the number of concurrent requests.                            |
-| Compress     | Gzip compression for clients that accept compressed responses.                  |
-| Profiler     | Easily attach net/http/pprof to your routers.                                   |
-| Slashes      | Strip and redirect slashes on routing paths.                                    |
-| WithValue    | Short-hand middleware to set a key/value on the request context.                |
-| Heartbeat    | Monitoring endpoint to check the servers pulse.                                 |
---------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------
+| Middleware           | Description                                                                     |
+|:---------------------|:---------------------------------------------------------------------------------
+| RequestID            | Injects a request ID into the context of each request.                          |
+| RealIP               | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
+| Logger               | Logs the start and end of each request with the elapsed processing time.        |
+| Recoverer            | Gracefully absorb panics and prints the stack trace.                            |
+| NoCache              | Sets response headers to prevent clients from caching.                          |
+| Timeout              | Signals to the request context when the timeout deadline is reached.            |
+| Throttle             | Puts a ceiling on the number of concurrent requests.                            |
+| Compress             | Gzip compression for clients that accept compressed responses.                  |
+| Profiler             | Easily attach net/http/pprof to your routers.                                   |
+| StripSlashes         | Strip slashes on routing paths.                                                 |
+| RedirectSlashes      | Redirect slashes on routing paths.                                              |
+| WithValue            | Short-hand middleware to set a key/value on the request context.                |
+| Heartbeat            | Monitoring endpoint to check the servers pulse.                                 |
+----------------------------------------------------------------------------------------------------------
 
 Other cool net/http middlewares:
 
@@ -364,7 +365,7 @@ BenchmarkChi_StaticAll    	   20000	     78501 ns/op	   47731 B/op	     314 allo
 NOTE: the allocs in the benchmark above are from the calls to http.Request's
 `WithContext(context.Context)` method that clones the http.Request, sets the `Context()`
 on the duplicated (alloc'd) request and returns it the new request object. This is just
-how setting context on a request in Go 1.7+ works. 
+how setting context on a request in Go 1.7+ works.
 
 
 ## Credits
@@ -391,7 +392,7 @@ and even [graphql](https://github.com/graphql-go/graphql). They're all pretty co
 own unique approaches and benefits. Specifically, I'd look at gRPC since it makes client-server
 communication feel like a single program on a single computer, no need to hand-write a client library
 and the request/response payloads are typed contracts. NATS is pretty amazing too as a super
-fast and lightweight pub-sub transport that can speak protobufs, with nice service discovery - 
+fast and lightweight pub-sub transport that can speak protobufs, with nice service discovery -
 an excellent combination with gRPC.
 
 
