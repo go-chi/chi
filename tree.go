@@ -454,7 +454,7 @@ func (n *node) isEmpty() bool {
 func (n *node) routes() []Route {
 	rts := []Route{}
 
-	n.walkRoutes(n.prefix, n, func(pattern string, handlers methodHandlers, subroutes Routes) bool {
+	n.walkRoutes(n, func(pattern string, handlers methodHandlers, subroutes Routes) bool {
 		if handlers[mSTUB] != nil && subroutes == nil {
 			return false
 		}
@@ -486,18 +486,16 @@ func (n *node) routes() []Route {
 	return rts
 }
 
-func (n *node) walkRoutes(pattern string, nd *node, fn walkFn) bool {
-	pattern = nd.pattern
-
+func (n *node) walkRoutes(nd *node, fn walkFn) bool {
 	// Visit the leaf values if any
-	if (nd.handlers != nil || nd.subroutes != nil) && fn(pattern, nd.handlers, nd.subroutes) {
+	if (nd.handlers != nil || nd.subroutes != nil) && fn(nd.pattern, nd.handlers, nd.subroutes) {
 		return true
 	}
 
 	// Recurse on the children
 	for _, nds := range nd.children {
 		for _, nd := range nds {
-			if n.walkRoutes(pattern, nd, fn) {
+			if n.walkRoutes(nd, fn) {
 				return true
 			}
 		}
