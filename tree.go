@@ -442,15 +442,6 @@ func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	}
 }
 
-func (n *node) isEmpty() bool {
-	for _, nds := range n.children {
-		if len(nds) > 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func (n *node) routes() []Route {
 	rts := []Route{}
 
