@@ -425,7 +425,7 @@ func (n *node) longestPrefix(k1, k2 string) int {
 
 func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	if n.handlers == nil {
-		n.handlers = make(methodHandlers, 0)
+		n.handlers = make(methodHandlers)
 	}
 	if method&mSTUB == mSTUB {
 		n.handlers[mSTUB] = handler
@@ -454,7 +454,7 @@ func (n *node) routes() []Route {
 			pattern = pattern[:len(pattern)-2]
 		}
 
-		var hs = make(map[string]http.Handler, 0)
+		var hs = make(map[string]http.Handler)
 		if handlers[mALL] != nil {
 			hs["*"] = handlers[mALL]
 		}
