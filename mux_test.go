@@ -309,21 +309,48 @@ func TestMuxTrailingSlash(t *testing.T) {
 
 func TestMuxNestedNotFound(t *testing.T) {
 	r := NewRouter()
+
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), "mw", "mw"))
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("bye"))
 	})
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+
+	r.With(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), "with", "with"))
+			next.ServeHTTP(w, r)
+		})
+	}).NotFound(func(w http.ResponseWriter, r *http.Request) {
+		chkMw := r.Context().Value("mw").(string)
+		chkWith := r.Context().Value("with").(string)
 		w.WriteHeader(404)
-		w.Write([]byte("root 404"))
+		w.Write([]byte(fmt.Sprintf("root 404 %s %s", chkMw, chkWith)))
 	})
 
 	sr1 := NewRouter()
+	sr1.Use()
+
 	sr1.Get("/sub", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("sub"))
 	})
-	sr1.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
-		w.Write([]byte("sub 404"))
+	sr1.Group(func(sr1 Router) {
+		sr1.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				r = r.WithContext(context.WithValue(r.Context(), "mw2", "mw2"))
+				next.ServeHTTP(w, r)
+			})
+		})
+		sr1.NotFound(func(w http.ResponseWriter, r *http.Request) {
+			chkMw2 := r.Context().Value("mw2").(string)
+			w.WriteHeader(404)
+			w.Write([]byte(fmt.Sprintf("sub 404 %s", chkMw2)))
+		})
 	})
 
 	sr2 := NewRouter()
@@ -340,13 +367,13 @@ func TestMuxNestedNotFound(t *testing.T) {
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
 		t.Fatalf(body)
 	}
-	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "root 404" {
+	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "root 404 mw with" {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/admin1/sub", nil); body != "sub" {
 		t.Fatalf(body)
 	}
-	if _, body := testRequest(t, ts, "GET", "/admin1/nope", nil); body != "sub 404" {
+	if _, body := testRequest(t, ts, "GET", "/admin1/nope", nil); body != "sub 404 mw2" {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/admin2/sub", nil); body != "sub2" {
@@ -354,7 +381,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 	}
 
 	// Not found pages should bubble up to the root.
-	if _, body := testRequest(t, ts, "GET", "/admin2/nope", nil); body != "root 404" {
+	if _, body := testRequest(t, ts, "GET", "/admin2/nope", nil); body != "root 404 mw with" {
 		t.Fatalf(body)
 	}
 }
