@@ -82,7 +82,7 @@ func main() {
 		r.Get("/search", SearchArticles) // GET /articles/search
 
 		r.Route("/:articleID", func(r chi.Router) {
-			r.Use(ArticleCtx)            // Load the *Article on the request context
+			r.UseFunc(ArticleCtx)        // Load the *Article on the request context
 			r.Get("/", GetArticle)       // GET /articles/123
 			r.Put("/", UpdateArticle)    // PUT /articles/123
 			r.Delete("/", DeleteArticle) // DELETE /articles/123
@@ -122,18 +122,16 @@ var articles = []*Article{
 // ArticleCtx middleware is used to load an Article object from
 // the URL parameters passed through as the request. In case
 // the Article could not be found, we stop here and return a 404.
-func ArticleCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		articleID := chi.URLParam(r, "articleID")
-		article, err := dbGetArticle(articleID)
-		if err != nil {
-			render.Status(r, http.StatusNotFound)
-			render.JSON(w, r, http.StatusText(http.StatusNotFound))
-			return
-		}
-		ctx := context.WithValue(r.Context(), "article", article)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+func ArticleCtx(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	articleID := chi.URLParam(r, "articleID")
+	article, err := dbGetArticle(articleID)
+	if err != nil {
+		render.Status(r, http.StatusNotFound)
+		render.JSON(w, r, http.StatusText(http.StatusNotFound))
+		return
+	}
+	ctx := context.WithValue(r.Context(), "article", article)
+	next(w, r.WithContext(ctx))
 }
 
 // SearchArticles searches the Articles data for a matching article.
