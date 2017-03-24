@@ -357,8 +357,6 @@ type ArticleResponse struct {
 func NewArticleResponse(article *Article) *ArticleResponse {
 	resp := &ArticleResponse{Article: article}
 
-	// resp.Elapsed = 10
-
 	if resp.User == nil {
 		if user, _ := dbGetUser(resp.UserID); user != nil {
 			resp.User = NewUserPayloadResponse(user)
@@ -388,6 +386,11 @@ func NewArticleListResponse(articles []*Article) []render.Renderer {
 // Error response payloads & renderers
 //--
 
+// ErrResponse renderer type for handling all sorts of errors.
+//
+// In the best case scenario, the excellent github.com/pkg/errors package
+// helps reveal information on the error, setting it on Err, and in the Render()
+// method, using it to set the application-specific error code in AppCode.
 type ErrResponse struct {
 	Err            error `json:"-"` // low-level runtime error
 	HTTPStatusCode int   `json:"-"` // http response status code
