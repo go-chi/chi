@@ -165,12 +165,12 @@ func channelEventStream(w http.ResponseWriter, r *http.Request, v interface{}) {
 			v := recv.Interface()
 
 			// Build each channel item.
-			if renderer, ok := v.(Renderer); ok {
-				err := renderer.Render(w, r)
+			if rv, ok := v.(Renderer); ok {
+				err := renderer(w, r, rv)
 				if err != nil {
 					v = err
 				} else {
-					v = renderer
+					v = rv
 				}
 			}
 
@@ -211,12 +211,12 @@ func channelIntoSlice(w http.ResponseWriter, r *http.Request, from interface{}) 
 			v := recv.Interface()
 
 			// Render each channel item.
-			if renderer, ok := v.(Renderer); ok {
-				err := renderer.Render(w, r)
+			if rv, ok := v.(Renderer); ok {
+				err := renderer(w, r, rv)
 				if err != nil {
 					v = err
 				} else {
-					v = renderer
+					v = rv
 				}
 			}
 

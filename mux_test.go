@@ -334,7 +334,6 @@ func TestMuxNestedNotFound(t *testing.T) {
 	})
 
 	sr1 := NewRouter()
-	sr1.Use()
 
 	sr1.Get("/sub", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("sub"))

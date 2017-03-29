@@ -1,9 +1,8 @@
 //
 // Versions
 // ========
-// This example demonstrates the use of the render subpackage and its
-// render.Presenter interface to transform a handler response to easily
-// handle API versioning.
+// This example demonstrates the use of the render subpackage, with
+// a quick concept for how to support multiple api versions.
 //
 package main
 
@@ -30,32 +29,36 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(render.UsePresenter(v3.Presenter)) // API version 3 (latest) by default.
-
-	// Redirect for Example convenience.
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/v3/articles/1", 302)
-	})
 
 	// API version 3.
 	r.Route("/v3", func(r chi.Router) {
+		r.Use(apiVersionCtx("v3"))
 		r.Mount("/articles", articleRouter())
 	})
 
 	// API version 2.
 	r.Route("/v2", func(r chi.Router) {
-		r.Use(render.UsePresenter(v2.Presenter))
+		r.Use(apiVersionCtx("v2"))
 		r.Mount("/articles", articleRouter())
 	})
 
 	// API version 1.
 	r.Route("/v1", func(r chi.Router) {
 		r.Use(randomErrorMiddleware) // Simulate random error, ie. version 1 is buggy.
-		r.Use(render.UsePresenter(v1.Presenter))
+		r.Use(apiVersionCtx("v1"))
 		r.Mount("/articles", articleRouter())
 	})
 
 	http.ListenAndServe(":3333", r)
+}
+
+func apiVersionCtx(version string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(context.WithValue(r.Context(), "api.version", version))
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 func articleRouter() http.Handler {
@@ -70,17 +73,28 @@ func articleRouter() http.Handler {
 }
 
 func listArticles(w http.ResponseWriter, r *http.Request) {
-	articles := make(chan *data.Article, 5)
+	articles := make(chan render.Renderer, 5)
 
 	// Load data asynchronously into the channel (simulate slow storage):
 	go func() {
 		for i := 1; i <= 10; i++ {
-			articles <- &data.Article{
+			article := &data.Article{
 				ID:    i,
 				Title: fmt.Sprintf("Article #%v", i),
 				Data:  []string{"one", "two", "three", "four"},
 				CustomDataForAuthUsers: "secret data for auth'd users only",
 			}
+
+			apiVersion := r.Context().Value("api.version").(string)
+			switch apiVersion {
+			case "v1":
+				articles <- v1.NewArticleResponse(article)
+			case "v2":
+				articles <- v2.NewArticleResponse(article)
+			default:
+				articles <- v3.NewArticleResponse(article)
+			}
+
 			time.Sleep(100 * time.Millisecond)
 		}
 		close(articles)
@@ -114,7 +128,19 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Respond(w, r, article)
+	var payload render.Renderer
+
+	apiVersion := r.Context().Value("api.version").(string)
+	switch apiVersion {
+	case "v1":
+		payload = v1.NewArticleResponse(article)
+	case "v2":
+		payload = v2.NewArticleResponse(article)
+	default:
+		payload = v3.NewArticleResponse(article)
+	}
+
+	render.Render(w, r, payload)
 }
 
 func randomErrorMiddleware(next http.Handler) http.Handler {
