@@ -1,5 +1,5 @@
-<img alt="chi" src="https://cdn.rawgit.com/pressly/chi/master/_examples/chi.svg" width="220" />
-===
+# <img alt="chi" src="https://cdn.rawgit.com/pressly/chi/master/_examples/chi.svg" width="220" />
+
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
 
@@ -232,7 +232,9 @@ type Routes interface {
 ```
 
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
-supports named params (ie. `/users/:userID`) and wildcards (ie. `/admin/*`).
+supports named params (ie. `/users/:userID`) and wildcards (ie. `/admin/*`). URL parameters
+can be fetched at runtime by calling `chi.URLParam(r, "userID")` for named parameters
+and `chi.URLParam(r, "*")` for a wildcard parameter.
 
 
 ### Middleware handlers

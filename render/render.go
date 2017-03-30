@@ -5,14 +5,18 @@ import (
 	"reflect"
 )
 
+// Renderer interface for managing response payloads.
 type Renderer interface {
 	Render(w http.ResponseWriter, r *http.Request) error
 }
 
+// Binder interface for managing request payloads.
 type Binder interface {
 	Bind(r *http.Request) error
 }
 
+// Bind decodes a request body and executes the Binder method of the
+// payload structure.
 func Bind(r *http.Request, v Binder) error {
 	if err := Decode(r, v); err != nil {
 		return err
@@ -20,6 +24,7 @@ func Bind(r *http.Request, v Binder) error {
 	return binder(r, v)
 }
 
+// Render renders a single payload and respond to the client request.
 func Render(w http.ResponseWriter, r *http.Request, v Renderer) error {
 	if err := renderer(w, r, v); err != nil {
 		return err
@@ -28,6 +33,7 @@ func Render(w http.ResponseWriter, r *http.Request, v Renderer) error {
 	return nil
 }
 
+// RenderList renders a slice of payloads and responds to the client request.
 func RenderList(w http.ResponseWriter, r *http.Request, l []Renderer) error {
 	for _, v := range l {
 		if err := renderer(w, r, v); err != nil {
