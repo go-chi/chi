@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.1.0 (2017-03-30)
+
+- Minor improvements and update to the chi core library
+- Introduced a brand new `chi/render` sub-package to complete the story of building
+APIs to offer a pattern for managing well-defined request / response payloads. Please
+check out the updated `_examples/rest` example for how it works.
+- Added `MethodNotAllowed(h http.HandlerFunc)` to chi.Router interface
+
+
 ## v2.0.0 (2017-01-06)
 
 - After many months of v2 being in an RC state with many companies and users running it in

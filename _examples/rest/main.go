@@ -56,16 +56,6 @@ import (
 
 var routes = flag.Bool("routes", false, "Generate router documentation")
 
-// TODO: make a new example as _examples/metrics
-// func TrackRoute(next http.Handler) http.Handler {
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		next.ServeHTTP(w, r)
-// 		rctx := chi.RouteContext(r.Context())
-// 		routePattern := strings.Join(rctx.RoutePatterns, "")
-// 		fmt.Println("route:", routePattern)
-// 	})
-// }
-
 func main() {
 	flag.Parse()
 
@@ -75,7 +65,6 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(render.SetContentType(render.ContentTypeJSON))
-	// r.Use(TrackMetric)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("root."))
