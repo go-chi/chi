@@ -32,7 +32,7 @@ package chi
 import "net/http"
 
 // NewRouter returns a new Mux object that implements the Router interface.
-func NewRouter() *Mux {
+func NewRouter() Router {
 	return NewMux()
 }
 
