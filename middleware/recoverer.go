@@ -4,7 +4,9 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 	"runtime/debug"
 )
 
@@ -22,6 +24,7 @@ func Recoverer(next http.Handler) http.Handler {
 				if logEntry != nil {
 					logEntry.Panic(rvr, debug.Stack())
 				} else {
+					fmt.Fprintf(os.Stderr, "Panic: %+v\n", rvr)
 					debug.PrintStack()
 				}
 
