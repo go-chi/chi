@@ -91,17 +91,19 @@ func HTML(w http.ResponseWriter, r *http.Request, v string) {
 // JSON marshals 'v' to JSON, automatically escaping HTML and setting the
 // Content-Type as application/json.
 func JSON(w http.ResponseWriter, r *http.Request, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
-		w.WriteHeader(status)
-	}
-
-	enc := json.NewEncoder(w)
+	buf := &bytes.Buffer{}
+	enc := json.NewEncoder(buf)
 	enc.SetEscapeHTML(true)
 	if err := enc.Encode(v); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
+		w.WriteHeader(status)
+	}
+	w.Write(buf.Bytes())
 }
 
 // XML marshals 'v' to JSON, setting the Content-Type as application/xml. It
