@@ -313,11 +313,12 @@ with `net/http` can be used with chi's mux.
 | Heartbeat            | Monitoring endpoint to check the servers pulse.                                 |
 ----------------------------------------------------------------------------------------------------------
 
-Other cool net/http middlewares:
+Other cool community net/http middlewares:
 
 * [jwtauth](https://github.com/goware/jwtauth) - JWT authenticator
 * [cors](https://github.com/goware/cors) - CORS middleware
 * [httpcoala](https://github.com/goware/httpcoala) - Request coalescer
+* [chi-authz](https://github.com/casbin/chi-authz) - Authorization middleware built on https://github.com/hsluoyz/casbin
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi middleware
 
