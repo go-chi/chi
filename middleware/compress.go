@@ -28,7 +28,7 @@ var defaultContentTypes = map[string]struct{}{
 	"application/x-javascript": struct{}{},
 	"application/json":         struct{}{},
 	"application/atom+xml":     struct{}{},
-	"application/rss+xml ":     struct{}{},
+	"application/rss+xml":      struct{}{},
 }
 
 // DefaultCompress is a middleware that compresses response
