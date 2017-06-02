@@ -425,7 +425,7 @@ func (n *node) longestPrefix(k1, k2 string) int {
 
 func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	if n.handlers == nil {
-		n.handlers = make(methodHandlers, 0)
+		n.handlers = make(methodHandlers)
 	}
 	if method&mSTUB == mSTUB {
 		n.handlers[mSTUB] = handler
@@ -442,19 +442,10 @@ func (n *node) setHandler(method methodTyp, handler http.Handler) {
 	}
 }
 
-func (n *node) isEmpty() bool {
-	for _, nds := range n.children {
-		if len(nds) > 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func (n *node) routes() []Route {
 	rts := []Route{}
 
-	n.walkRoutes(n.prefix, n, func(pattern string, handlers methodHandlers, subroutes Routes) bool {
+	n.walkRoutes(n, func(pattern string, handlers methodHandlers, subroutes Routes) bool {
 		if handlers[mSTUB] != nil && subroutes == nil {
 			return false
 		}
@@ -463,7 +454,7 @@ func (n *node) routes() []Route {
 			pattern = pattern[:len(pattern)-2]
 		}
 
-		var hs = make(map[string]http.Handler, 0)
+		var hs = make(map[string]http.Handler)
 		if handlers[mALL] != nil {
 			hs["*"] = handlers[mALL]
 		}
@@ -486,18 +477,16 @@ func (n *node) routes() []Route {
 	return rts
 }
 
-func (n *node) walkRoutes(pattern string, nd *node, fn walkFn) bool {
-	pattern = nd.pattern
-
+func (n *node) walkRoutes(nd *node, fn walkFn) bool {
 	// Visit the leaf values if any
-	if (nd.handlers != nil || nd.subroutes != nil) && fn(pattern, nd.handlers, nd.subroutes) {
+	if (nd.handlers != nil || nd.subroutes != nil) && fn(nd.pattern, nd.handlers, nd.subroutes) {
 		return true
 	}
 
 	// Recurse on the children
 	for _, nds := range nd.children {
 		for _, nd := range nds {
-			if n.walkRoutes(pattern, nd, fn) {
+			if n.walkRoutes(nd, fn) {
 				return true
 			}
 		}
