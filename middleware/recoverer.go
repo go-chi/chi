@@ -34,3 +34,21 @@ func Recoverer(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(fn)
 }
+
+// CustomRecoverer returns a middleware that recovers from panics and calls provided
+// recoverFunc.
+func CustomRecoverer(recoverFunc func(http.ResponseWriter, *http.Request, interface{})) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rvr := recover(); rvr != nil {
+					recoverFunc(w, r, rvr)
+				}
+			}()
+
+			next.ServeHTTP(w, r)
+		}
+
+		return http.HandlerFunc(fn)
+	}
+}
