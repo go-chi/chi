@@ -25,7 +25,8 @@ const (
 )
 
 func GetContentType(s string) ContentType {
-	switch s {
+	parts := strings.Split(s, ";")
+	switch parts[0] {
 	case "text/plain":
 		return ContentTypePlainText
 	case "text/html", "application/xhtml+xml":
