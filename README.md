@@ -34,6 +34,21 @@ included some useful/optional subpackages: `middleware`, `render` and `docgen`. 
 * **No external dependencies** - plain ol' Go 1.7+ stdlib + net/http
 
 
+## Installing
+
+First, use `go get` to install the latest version of the library.
+
+```
+go get -u github.com/pressly/chi
+```
+
+Next include Chi in your application:
+
+```go
+import "github.com/pressly/chi"
+```
+
+
 ## Examples
 
 * [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
