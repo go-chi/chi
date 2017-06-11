@@ -25,6 +25,7 @@ const (
 )
 
 func GetContentType(s string) ContentType {
+	s = strings.TrimSpace(strings.Split(s, ";")[0])
 	switch s {
 	case "text/plain":
 		return ContentTypePlainText
