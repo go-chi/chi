@@ -64,7 +64,7 @@ func apiVersionCtx(version string) func(next http.Handler) http.Handler {
 func articleRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", listArticles)
-	r.Route("/:articleID", func(r chi.Router) {
+	r.Route("/{articleID}", func(r chi.Router) {
 		r.Get("/", getArticle)
 		// r.Put("/", updateArticle)
 		// r.Delete("/", deleteArticle)

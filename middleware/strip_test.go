@@ -24,7 +24,7 @@ func TestStripSlashes(t *testing.T) {
 		w.Write([]byte("root"))
 	})
 
-	r.Route("/accounts/:accountID", func(r chi.Router) {
+	r.Route("/accounts/{accountID}", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			accountID := chi.URLParam(r, "accountID")
 			w.Write([]byte(accountID))
@@ -63,7 +63,7 @@ func TestStripSlashesInRoute(t *testing.T) {
 		w.Write([]byte("hi"))
 	})
 
-	r.Route("/accounts/:accountID", func(r chi.Router) {
+	r.Route("/accounts/{accountID}", func(r chi.Router) {
 		r.Use(StripSlashes)
 		r.Get("/query", func(w http.ResponseWriter, r *http.Request) {
 			accountID := chi.URLParam(r, "accountID")
@@ -104,7 +104,7 @@ func TestRedirectSlashes(t *testing.T) {
 		w.Write([]byte("root"))
 	})
 
-	r.Route("/accounts/:accountID", func(r chi.Router) {
+	r.Route("/accounts/{accountID}", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			accountID := chi.URLParam(r, "accountID")
 			w.Write([]byte(accountID))

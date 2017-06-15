@@ -253,7 +253,7 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Provide runtime safety for ensuring a pattern isn't mounted on an existing
 	// routing pattern.
-	if mx.tree.findPattern(pattern+"*") != nil || mx.tree.findPattern(pattern+"/*") != nil {
+	if mx.tree.matchPattern(pattern+"*") || mx.tree.matchPattern(pattern+"/*") {
 		panic(fmt.Sprintf("chi: attempting to Mount() a handler on an existing path, '%s'", pattern))
 	}
 
@@ -269,7 +269,15 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
-		rctx.RoutePath = "/" + rctx.URLParams.Del("*")
+
+		nsx := len(rctx.URLParams) - 1          // index of current stacked router
+		nx := len(rctx.URLParams[nsx].keys) - 1 // index of last param in list
+
+		rctx.RoutePath = "/"
+		if nx >= 0 && rctx.URLParams[nsx].keys[nx] == "*" {
+			rctx.RoutePath += rctx.URLParams[nsx].values[nx]
+		}
+
 		handler.ServeHTTP(w, r)
 	})
 
@@ -305,6 +313,8 @@ func (mx *Mux) FileServer(path string, root http.FileSystem) {
 	if strings.ContainsAny(path, ":*") {
 		panic("chi: FileServer does not permit URL parameters.")
 	}
+
+	// TODO: test file stat, and trigger not found handler..
 
 	fs := http.StripPrefix(path, http.FileServer(root))
 

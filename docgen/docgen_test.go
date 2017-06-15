@@ -48,13 +48,13 @@ func TestMuxBig(t *testing.T) {
 		r.Get("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("fav"))
 		})
-		r.Get("/hubs/:hubID/view", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/hubs/{hubID}/view", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			s := fmt.Sprintf("/hubs/%s/view reqid:%s session:%s", chi.URLParam(r, "hubID"),
 				ctx.Value("requestID"), ctx.Value("session.user"))
 			w.Write([]byte(s))
 		})
-		r.Get("/hubs/:hubID/view/*", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/hubs/{hubID}/view/*", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s session:%s", chi.URLParamFromCtx(ctx, "hubID"),
 				chi.URLParam(r, "*"), ctx.Value("requestID"), ctx.Value("session.user"))
@@ -79,7 +79,7 @@ func TestMuxBig(t *testing.T) {
 			w.Write([]byte(s))
 		})
 
-		r.Get("/woot/:wootID/*", func(w http.ResponseWriter, r *http.Request) {
+		r.Get("/woot/{wootID}/*", func(w http.ResponseWriter, r *http.Request) {
 			s := fmt.Sprintf("/woot/%s/%s", chi.URLParam(r, "wootID"), chi.URLParam(r, "*"))
 			w.Write([]byte(s))
 		})
@@ -91,7 +91,7 @@ func TestMuxBig(t *testing.T) {
 					next.ServeHTTP(w, r)
 				})
 			})
-			r.Route("/:hubID", func(r chi.Router) {
+			r.Route("/{hubID}", func(r chi.Router) {
 				sr2 = r.(*chi.Mux)
 				r.Get("/", hubIndexHandler)
 				r.Get("/touch", func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +108,7 @@ func TestMuxBig(t *testing.T) {
 						ctx.Value("requestID"), ctx.Value("session.user"))
 					w.Write([]byte(s))
 				})
-				sr3.Route("/:webhookID", func(r chi.Router) {
+				sr3.Route("/{webhookID}", func(r chi.Router) {
 					sr4 = r.(*chi.Mux)
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
