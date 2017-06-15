@@ -63,6 +63,14 @@ type Router interface {
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
 
+	// TODO: support user-defined http method by string
+	// Handle(method, pattern string, h http.Handler)
+	// HandleFunc(method, pattern string, h http.HandlerFunc)
+
+	// TODO: considering having a catch-all http method route
+	// like how Handle() currently behaves in chi v2
+	// Any(pattern string, h http.HandlerFunc)
+
 	// HTTP-method routing along `pattern`
 	Connect(pattern string, h http.HandlerFunc)
 	Delete(pattern string, h http.HandlerFunc)

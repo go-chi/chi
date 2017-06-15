@@ -45,7 +45,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-
 	"strings"
 
 	"github.com/pressly/chi"
@@ -84,7 +83,7 @@ func main() {
 		r.Post("/", CreateArticle)       // POST /articles
 		r.Get("/search", SearchArticles) // GET /articles/search
 
-		r.Route("/:articleID", func(r chi.Router) {
+		r.Route("/{articleID}", func(r chi.Router) {
 			r.Use(ArticleCtx)            // Load the *Article on the request context
 			r.Get("/", GetArticle)       // GET /articles/123
 			r.Put("/", UpdateArticle)    // PUT /articles/123
@@ -215,7 +214,7 @@ func adminRouter() chi.Router {
 	r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("admin: list accounts.."))
 	})
-	r.Get("/users/:userId", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/users/{userId}", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("admin: view user id %v", chi.URLParam(r, "userId"))))
 	})
 	return r
@@ -276,12 +275,6 @@ func init() {
 // In a real-world project, it would make sense to put these payloads
 // in another file, or another sub-package.
 //--
-
-// HMMMM.. request and response payloads for an Article could be the same payload
-// type, perhaps will do an example with it as well.
-// type ArticlePayload struct {
-// 	*Article
-// }
 
 type UserPayload struct {
 	*User
@@ -370,6 +363,12 @@ func NewArticleListResponse(articles []*Article) []render.Renderer {
 	}
 	return list
 }
+
+// NOTE: as a thought, the request and response payloads for an Article could be the
+// same payload type, perhaps will do an example with it as well.
+// type ArticlePayload struct {
+//   *Article
+// }
 
 //--
 // Error response payloads & renderers

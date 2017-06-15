@@ -26,7 +26,7 @@ included some useful/optional subpackages: `middleware`, `render` and `docgen`. 
 
 * **Lightweight** - cloc'd in <1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
-* **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compat with `net/http`
+* **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
 * **Context control** - built on new `context` package, providing value chaining, cancelations and timeouts
 * **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/pressly/chi/issues/91))
@@ -105,7 +105,7 @@ func main() {
     r.Post("/", createArticle)               // POST /articles
     r.Get("/search", searchArticles)         // GET /articles/search
 
-    r.Route("/:articleID", func(r chi.Router) {
+    r.Route("/{articleID}", func(r chi.Router) {
       r.Use(ArticleCtx)
       r.Get("/", getArticle)                 // GET /articles/123
       r.Put("/", updateArticle)              // PUT /articles/123
@@ -228,7 +228,7 @@ type Routes interface {
 ```
 
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
-supports named params (ie. `/users/:userID`) and wildcards (ie. `/admin/*`). URL parameters
+supports named params (ie. `/users/{userID}`) and wildcards (ie. `/admin/*`). URL parameters
 can be fetched at runtime by calling `chi.URLParam(r, "userID")` for named parameters
 and `chi.URLParam(r, "*")` for a wildcard parameter.
 
@@ -279,7 +279,7 @@ are able to access the same information.
 ```go
 // HTTP handler accessing the url routing parameters.
 func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
-  userID := chi.URLParam(r, "userID") // from a route like /users/:userID
+  userID := chi.URLParam(r, "userID") // from a route like /users/{userID}
 
   ctx := r.Context()
   key := ctx.Value("key").(string)
