@@ -35,8 +35,7 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 
 			t1 := time.Now()
 			defer func() {
-				t2 := time.Now()
-				entry.Write(ww.Status(), ww.BytesWritten(), t2.Sub(t1))
+				entry.Write(ww.Status(), ww.BytesWritten(), time.Since(t1))
 			}()
 
 			next.ServeHTTP(ww, WithLogEntry(r, entry))
