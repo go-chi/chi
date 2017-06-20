@@ -106,6 +106,22 @@ func (mx *Mux) HandleFunc(pattern string, handlerFn http.HandlerFunc) {
 	mx.handle(mALL, pattern, handlerFn)
 }
 
+// Method adds the route `pattern` that matches `method` http method to
+// execute the `handler` http.Handler.
+func (mx *Mux) Method(method, pattern string, handler http.Handler) {
+	m, ok := methodMap[strings.ToUpper(method)]
+	if !ok {
+		panic(fmt.Sprintf("chi: '%s' http method is not supported.", method))
+	}
+	mx.handle(m, pattern, handler)
+}
+
+// MethodFunc adds the route `pattern` that matches `method` http method to
+// execute the `handlerFn` http.HandlerFunc.
+func (mx *Mux) MethodFunc(method, pattern string, handlerFn http.HandlerFunc) {
+	mx.Method(method, pattern, handlerFn)
+}
+
 // Connect adds the route `pattern` that matches a CONNECT http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Connect(pattern string, handlerFn http.HandlerFunc) {
