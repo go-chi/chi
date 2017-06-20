@@ -111,9 +111,9 @@ func TestMuxBasic(t *testing.T) {
 	m.Use(exmw)
 	m.Use(logmw)
 	m.Get("/", cxindex)
-	m.Get("/ping", ping)
-	m.Get("/pingall", pingAll)
-	m.Get("/ping/all", pingAll)
+	m.Method("GET", "/ping", http.HandlerFunc(ping))
+	m.MethodFunc("GET", "/pingall", pingAll)
+	m.MethodFunc("get", "/ping/all", pingAll)
 	m.Get("/ping/all2", pingAll2)
 
 	m.Head("/ping", headPing)
