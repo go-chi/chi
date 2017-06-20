@@ -3,7 +3,6 @@ package chi
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -1313,85 +1312,6 @@ func testMuxContextIsThreadSafe(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-}
-
-func TestMuxFileServer(t *testing.T) {
-	fixtures := map[string]http.File{
-		"index.html": &testFile{"index.html", []byte("index\n")},
-		"ok":         &testFile{"ok", []byte("ok\n")},
-	}
-
-	memfs := &testFileSystem{func(name string) (http.File, error) {
-		name = name[1:]
-		// if name == "" {
-		// 	name = "index.html"
-		// }
-		if f, ok := fixtures[name]; ok {
-			return f, nil
-		}
-		return nil, errors.New("file not found")
-	}}
-
-	r := NewRouter()
-	r.FileServer("/mounted", memfs)
-	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("bye"))
-	})
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
-		w.Write([]byte("nothing here"))
-	})
-	r.FileServer("/", memfs)
-
-	ts := httptest.NewServer(r)
-	defer ts.Close()
-
-	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
-	}
-
-	// HEADS UP: net/http notfoundhandler will kick-in for static assets
-	if _, body := testRequest(t, ts, "GET", "/mounted/nothing-here", nil); body == "nothing here" {
-		t.Fatalf(body)
-	}
-
-	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body == "nothing here" {
-		t.Fatalf(body)
-	}
-
-	if _, body := testRequest(t, ts, "GET", "/mounted-nothing-here", nil); body == "nothing here" {
-		t.Fatalf(body)
-	}
-
-	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
-	}
-
-	if _, body := testRequest(t, ts, "GET", "/ok", nil); body != "ok\n" {
-		t.Fatalf(body)
-	}
-
-	if _, body := testRequest(t, ts, "GET", "/mounted/ok", nil); body != "ok\n" {
-		t.Fatalf(body)
-	}
-
-	// TODO/FIX: testFileSystem mock struct.. it struggles to pass this since it gets
-	// into a redirect loop, however, it does work with http.Dir() using the disk.
-	// if _, body := testRequest(t, ts, "GET", "/index.html", nil); body != "index\n" {
-	// 	t.Fatalf(body)
-	// }
-
-	// if _, body := testRequest(t, ts, "GET", "/", nil); body != "index\n" {
-	// 	t.Fatalf(body)
-	// }
-
-	// if _, body := testRequest(t, ts, "GET", "/mounted", nil); body != "index\n" {
-	// 	t.Fatalf(body)
-	// }
-
-	// if _, body := testRequest(t, ts, "GET", "/mounted/", nil); body != "index\n" {
-	// 	t.Fatalf(body)
-	// }
 }
 
 func TestEscapedURLParams(t *testing.T) {
