@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 // StripSlashes is a middleware that will match request paths with a trailing

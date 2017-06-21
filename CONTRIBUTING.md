@@ -6,8 +6,8 @@
 2. Download the sources and switch the working directory:
 
     ```bash
-    go get -u -d github.com/pressly/chi
-    cd $GOPATH/src/github.com/pressly/chi
+    go get -u -d github.com/go-chi/chi
+    cd $GOPATH/src/github.com/go-chi/chi
     ```
 
 ## Submitting a Pull Request

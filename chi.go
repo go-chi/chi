@@ -9,8 +9,8 @@
 //  import (
 //  	"net/http"
 //
-//  	"github.com/pressly/chi"
-//  	"github.com/pressly/chi/middleware"
+//  	"github.com/go-chi/chi"
+//  	"github.com/go-chi/chi/middleware"
 //  )
 //
 //  func main() {
@@ -25,7 +25,7 @@
 //  	http.ListenAndServe(":3333", r)
 //  }
 //
-// See github.com/pressly/chi/_examples/ for more in-depth examples.
+// See github.com/go-chi/chi/_examples/ for more in-depth examples.
 //
 package chi
 
@@ -62,6 +62,11 @@ type Router interface {
 	// all HTTP methods.
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
+
+	// Method and MethodFunc adds routes for `pattern` that matches
+	// the `method` HTTP method.
+	Method(method, pattern string, h http.Handler)
+	MethodFunc(method, pattern string, h http.HandlerFunc)
 
 	// HTTP-method routing along `pattern`
 	Connect(pattern string, h http.HandlerFunc)

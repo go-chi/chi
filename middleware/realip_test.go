@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 func TestXRealIP(t *testing.T) {

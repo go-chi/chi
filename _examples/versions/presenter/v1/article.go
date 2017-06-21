@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	"github.com/pressly/chi/_examples/versions/data"
+	"github.com/go-chi/chi/_examples/versions/data"
 )
 
 // Article presented in API version 1.

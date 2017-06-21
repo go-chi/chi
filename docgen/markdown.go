@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 type MarkdownDoc struct {
@@ -32,7 +32,7 @@ type MarkdownOpts struct {
 	// URLMap allows specifying a map of package import paths to their link sources
 	// Used for mapping vendored dependencies to their upstream sources
 	// For example:
-	// map[string]string{"github.com/my/package/vendor/pressly/chi/": "https://github.com/pressly/chi/blob/master/"}
+	// map[string]string{"github.com/my/package/vendor/go-chi/chi/": "https://github.com/go-chi/chi/blob/master/"}
 	URLMap map[string]string
 }
 
