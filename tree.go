@@ -19,15 +19,17 @@ const (
 	mDELETE
 	mGET
 	mHEAD
+	mLINK
 	mOPTIONS
 	mPATCH
 	mPOST
 	mPUT
 	mTRACE
+	mUNLINK
 	mSTUB
 
-	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
-		mPATCH | mPOST | mPUT | mTRACE
+	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mLINK |
+		mOPTIONS | mPATCH | mPOST | mPUT | mTRACE | mUNLINK
 )
 
 var methodMap = map[string]methodTyp{
@@ -35,11 +37,13 @@ var methodMap = map[string]methodTyp{
 	"DELETE":  mDELETE,
 	"GET":     mGET,
 	"HEAD":    mHEAD,
+	"LINK":    mLINK,
 	"OPTIONS": mOPTIONS,
 	"PATCH":   mPATCH,
 	"POST":    mPOST,
 	"PUT":     mPUT,
 	"TRACE":   mTRACE,
+	"UNLINK":  mUNLINK,
 }
 
 type nodeTyp uint8
