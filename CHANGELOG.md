@@ -15,7 +15,8 @@
   own using file handler with the stdlib, see `_examples/fileserver` for an example
 - Moved the chi project to its own organization, to allow chi-related community packages to
   be easily discovered and supported, at: https://github.com/go-chi
-- NOTE: chi v2 is still available at https://github.com/go-chi/chi/tree/v2
+- *NOTE:* please update your import paths to `"github.com/go-chi/chi"`
+- *NOTE:* chi v2 is still available at https://github.com/go-chi/chi/tree/v2
 
 
 ## v2.1.0 (2017-03-30)
