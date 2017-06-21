@@ -108,7 +108,7 @@ func main() {
     r.Get("/search", searchArticles)                                  // GET /articles/search
 
     // Regexp url parameters:
-    r.Get("/{articleSlug:[a-z\-]+}", getArticleBySlug)                // GET /articles/home-is-toronto
+    r.Get("/{articleSlug:[a-z-]+}", getArticleBySlug)                // GET /articles/home-is-toronto
     
     // Subrouters:
     r.Route("/{articleID}", func(r chi.Router) {
