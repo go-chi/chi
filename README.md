@@ -101,15 +101,21 @@ func main() {
 
   // RESTy routes for "articles" resource
   r.Route("/articles", func(r chi.Router) {
-    r.With(paginate).Get("/", listArticles)  // GET /articles
-    r.Post("/", createArticle)               // POST /articles
-    r.Get("/search", searchArticles)         // GET /articles/search
+    r.With(paginate).Get("/", listArticles)                           // GET /articles
+    r.With(paginate).Get("/{month}-{day}-{year}", listArticlesByDate) // GET /articles/01-16-2017
 
+    r.Post("/", createArticle)                                        // POST /articles
+    r.Get("/search", searchArticles)                                  // GET /articles/search
+
+    // Regexp url parameters:
+    r.Get("/{articleSlug:[a-z\-]+}", getArticleBySlug)                // GET /articles/home-is-toronto
+    
+    // Subrouters:
     r.Route("/{articleID}", func(r chi.Router) {
       r.Use(ArticleCtx)
-      r.Get("/", getArticle)                 // GET /articles/123
-      r.Put("/", updateArticle)              // PUT /articles/123
-      r.Delete("/", deleteArticle)           // DELETE /articles/123
+      r.Get("/", getArticle)                                          // GET /articles/123
+      r.Put("/", updateArticle)                                       // PUT /articles/123
+      r.Delete("/", deleteArticle)                                    // DELETE /articles/123
     })
   })
 
@@ -200,6 +206,11 @@ type Router interface {
 	Handle(pattern string, h http.Handler)
 	HandleFunc(pattern string, h http.HandlerFunc)
 
+	// Method and MethodFunc adds routes for `pattern` that matches
+	// the `method` HTTP method.
+	Method(method, pattern string, h http.Handler)
+	MethodFunc(method, pattern string, h http.HandlerFunc)
+
 	// HTTP-method routing along `pattern`
 	Connect(pattern string, h http.HandlerFunc)
 	Delete(pattern string, h http.HandlerFunc)
@@ -214,6 +225,10 @@ type Router interface {
 	// NotFound defines a handler to respond whenever a route could
 	// not be found.
 	NotFound(h http.HandlerFunc)
+
+	// MethodNotAllowed defines a handler to respond whenever a method is
+	// not allowed.
+	MethodNotAllowed(h http.HandlerFunc)
 }
 
 // Routes interface adds two methods for router traversal, which is also
