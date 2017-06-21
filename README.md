@@ -355,25 +355,25 @@ and..
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 
-Comparison with other routers (as of Jan 7/17): https://gist.github.com/pkieltyka/d0814d5396c996cb3ff8076399583d1f
+Comparison with other routers (as of June 21, 2017): https://gist.github.com/pkieltyka/c089f309abeb179cfc4deaa519956d8c
 
 ```shell
-BenchmarkChi_Param        	 3000000	       449 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Param5       	 2000000	       633 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Param20      	 1000000	      1379 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParamWrite   	 3000000	       493 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubStatic 	 3000000	       461 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubParam  	 1000000	      1488 ns/op	    1152 B/op	       9 allocs/op
-BenchmarkChi_GithubAll    	   10000	    114004 ns/op	   61716 B/op	     406 allocs/op
-BenchmarkChi_GPlusStatic  	 3000000	       431 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlusParam   	 1000000	      1518 ns/op	    1152 B/op	       9 allocs/op
-BenchmarkChi_GPlus2Params 	 1000000	      1439 ns/op	    1152 B/op	       9 allocs/op
-BenchmarkChi_GPlusAll     	  200000	      6032 ns/op	    3952 B/op	      26 allocs/op
-BenchmarkChi_ParseStatic  	 5000000	       397 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParseParam   	 1000000	      1362 ns/op	    1152 B/op	       9 allocs/op
-BenchmarkChi_Parse2Params 	 1000000	      1356 ns/op	    1152 B/op	       9 allocs/op
-BenchmarkChi_ParseAll     	  100000	     11688 ns/op	    7904 B/op	      52 allocs/op
-BenchmarkChi_StaticAll    	   20000	     80518 ns/op	   47731 B/op	     314 allocs/op
+BenchmarkChi_Param        	 3000000	       427 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Param5       	 2000000	       631 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Param20      	 1000000	      1343 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParamWrite   	 3000000	       477 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubStatic 	 3000000	       452 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubParam  	 2000000	       616 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubAll    	   10000	    130637 ns/op	   61716 B/op	     406 allocs/op
+BenchmarkChi_GPlusStatic  	 3000000	       415 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlusParam   	 3000000	       465 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlus2Params 	 3000000	       548 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlusAll     	  200000	      6895 ns/op	    3952 B/op	      26 allocs/op
+BenchmarkChi_ParseStatic  	 3000000	       407 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParseParam   	 3000000	       451 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Parse2Params 	 3000000	       504 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParseAll     	  100000	     13221 ns/op	    7904 B/op	      52 allocs/op
+BenchmarkChi_StaticAll    	   20000	     84327 ns/op	   47731 B/op	     314 allocs/op
 ```
 
 NOTE: the allocs in the benchmark above are from the calls to http.Request's
