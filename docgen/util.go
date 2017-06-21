@@ -8,7 +8,15 @@ import (
 )
 
 func getCallerFrame(i interface{}) *runtime.Frame {
-	pc := reflect.ValueOf(i).Pointer()
+	v := reflect.ValueOf(i)
+
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+	default:
+		return nil
+	}
+
+	pc := v.Pointer()
 	frames := runtime.CallersFrames([]uintptr{pc})
 	if frames == nil {
 		return nil
