@@ -89,6 +89,9 @@ func main() {
 			r.Put("/", UpdateArticle)    // PUT /articles/123
 			r.Delete("/", DeleteArticle) // DELETE /articles/123
 		})
+
+		// GET /articles/whats-up
+		r.With(ArticleCtx).Get("/{articleSlug:[a-z-]+}", GetArticle)
 	})
 
 	// Mount the admin sub-router, which btw is the same as:
@@ -122,12 +125,22 @@ func ListArticles(w http.ResponseWriter, r *http.Request) {
 // the Article could not be found, we stop here and return a 404.
 func ArticleCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		articleID := chi.URLParam(r, "articleID")
-		article, err := dbGetArticle(articleID)
+		var article *Article
+		var err error
+
+		if articleID := chi.URLParam(r, "articleID"); articleID != "" {
+			article, err = dbGetArticle(articleID)
+		} else if articleSlug := chi.URLParam(r, "articleSlug"); articleSlug != "" {
+			article, err = dbGetArticleBySlug(articleSlug)
+		} else {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 		if err != nil {
 			render.Render(w, r, ErrNotFound)
 			return
 		}
+
 		ctx := context.WithValue(r.Context(), "article", article)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -429,15 +442,16 @@ type Article struct {
 	ID     string `json:"id"`
 	UserID int64  `json:"user_id` // the author
 	Title  string `json:"title"`
+	Slug   string `json:"slug"`
 }
 
 // Article fixture data
 var articles = []*Article{
-	{ID: "1", UserID: 100, Title: "Hi"},
-	{ID: "2", UserID: 200, Title: "sup"},
-	{ID: "3", UserID: 300, Title: "alo"},
-	{ID: "4", UserID: 400, Title: "bonjour"},
-	{ID: "5", UserID: 500, Title: "whats up"},
+	{ID: "1", UserID: 100, Title: "Hi", Slug: "hi"},
+	{ID: "2", UserID: 200, Title: "sup", Slug: "sup"},
+	{ID: "3", UserID: 300, Title: "alo", Slug: "alo"},
+	{ID: "4", UserID: 400, Title: "bonjour", Slug: "bonjour"},
+	{ID: "5", UserID: 500, Title: "whats up", Slug: "whats-up"},
 }
 
 // User fixture data
@@ -455,6 +469,15 @@ func dbNewArticle(article *Article) (string, error) {
 func dbGetArticle(id string) (*Article, error) {
 	for _, a := range articles {
 		if a.ID == id {
+			return a, nil
+		}
+	}
+	return nil, errors.New("article not found.")
+}
+
+func dbGetArticleBySlug(slug string) (*Article, error) {
+	for _, a := range articles {
+		if a.Slug == slug {
 			return a, nil
 		}
 	}
