@@ -14,13 +14,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pressly/chi"
-	"github.com/pressly/chi/_examples/versions/data"
-	"github.com/pressly/chi/_examples/versions/presenter/v1"
-	"github.com/pressly/chi/_examples/versions/presenter/v2"
-	"github.com/pressly/chi/_examples/versions/presenter/v3"
-	"github.com/pressly/chi/middleware"
-	"github.com/pressly/chi/render"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/_examples/versions/data"
+	"github.com/go-chi/chi/_examples/versions/presenter/v1"
+	"github.com/go-chi/chi/_examples/versions/presenter/v2"
+	"github.com/go-chi/chi/_examples/versions/presenter/v3"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/render"
 )
 
 func main() {

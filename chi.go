@@ -9,8 +9,8 @@
 //  import (
 //  	"net/http"
 //
-//  	"github.com/pressly/chi"
-//  	"github.com/pressly/chi/middleware"
+//  	"github.com/go-chi/chi"
+//  	"github.com/go-chi/chi/middleware"
 //  )
 //
 //  func main() {
@@ -25,7 +25,7 @@
 //  	http.ListenAndServe(":3333", r)
 //  }
 //
-// See github.com/pressly/chi/_examples/ for more in-depth examples.
+// See github.com/go-chi/chi/_examples/ for more in-depth examples.
 //
 package chi
 

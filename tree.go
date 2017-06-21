@@ -576,8 +576,6 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 	}
 
 	// Sanity check
-	// TODO: move this to InsertRoute ..?
-	// TODO: we need to check {x}{x} and {x}* but is {x:^[0-9]+}* valid?
 	if ps >= 0 && ws >= 0 && ws < ps {
 		panic("chi: wildcard '*' must be the last pattern in a route, otherwise use a '{param}'")
 	}

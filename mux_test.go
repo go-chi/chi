@@ -1058,28 +1058,6 @@ func TestMuxSubroutes(t *testing.T) {
 
 }
 
-// TODO: should setting params manually be allowed?
-func XXTestManuallySetURLParams(t *testing.T) {
-	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		name := URLParam(r, "name")
-		w.Write([]byte("hi " + name))
-	})
-
-	r, _ := http.NewRequest("GET", "/", nil)
-	rctx := NewRouteContext()
-	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
-	// rctx.URLParams.Set("name", "joe") // XXXX TODO: .. should we allow Set..?
-
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-
-	body := string(w.Body.Bytes())
-	expected := "hi joe"
-	if body != expected {
-		t.Fatalf("expected:%s got:%s", expected, body)
-	}
-}
-
 // TODO: a Router wrapper test..
 //
 // type ACLMux struct {

@@ -65,7 +65,6 @@ func RouteContext(ctx context.Context) *Context {
 func URLParam(r *http.Request, key string) string {
 	if rctx := RouteContext(r.Context()); rctx != nil {
 		return rctx.URLParam(key)
-		// return rctx.URLParams.Get(key)
 	}
 	return ""
 }
@@ -73,7 +72,6 @@ func URLParam(r *http.Request, key string) string {
 // URLParamFromCtx returns the url parameter from a http.Request Context.
 func URLParamFromCtx(ctx context.Context, key string) string {
 	if rctx := RouteContext(ctx); rctx != nil {
-		// return rctx.URLParams.Get(key)
 		return rctx.URLParam(key)
 	}
 	return ""

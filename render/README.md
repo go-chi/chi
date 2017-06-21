@@ -17,7 +17,7 @@ This is where `render` comes in - offering a few simple helpers and interfaces t
 provide a simple pattern for managing payload encoding and decoding.
 
 We've also combined it with some helpers for responding to content types and parsing
-request bodies. Please have a look at the [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go)
+request bodies. Please have a look at the [rest](https://github.com/go-chi/chi/blob/master/_examples/rest/main.go)
 example which uses the latest chi/render sub-pkg.
 
 All feedback is welcome, thank you!

@@ -2,24 +2,24 @@
   "router": {
     "middlewares": [
       {
-        "pkg": "github.com/pressly/chi/middleware",
+        "pkg": "github.com/go-chi/chi/middleware",
         "func": "RequestID",
         "comment": "RequestID is a middleware that injects a request ID into the context of each\nrequest. A request ID is a string of the form \"host.example.com/random-0001\",\nwhere \"random\" is a base62 random string that uniquely identifies this go\nprocess, and where the last number is an atomically incremented request\ncounter.\n",
-        "file": "github.com/pressly/chi/middleware/request_id.go",
+        "file": "github.com/go-chi/chi/middleware/request_id.go",
         "line": 63
       },
       {
-        "pkg": "github.com/pressly/chi/middleware",
+        "pkg": "github.com/go-chi/chi/middleware",
         "func": "Logger",
         "comment": "Logger is a middleware that logs the start and end of each request, along\nwith some useful data about what was requested, what the response status was,\nand how long it took to return. When standard output is a TTY, Logger will\nprint in color, otherwise it will print in black and white.\n\nLogger prints a request ID if one is provided.\n",
-        "file": "github.com/pressly/chi/middleware/logger.go",
+        "file": "github.com/go-chi/chi/middleware/logger.go",
         "line": 22
       },
       {
-        "pkg": "github.com/pressly/chi/middleware",
+        "pkg": "github.com/go-chi/chi/middleware",
         "func": "Recoverer",
         "comment": "Recoverer is a middleware that recovers from panics, logs the panic (and a\nbacktrace), and returns a HTTP 500 (Internal Server Error) status if\npossible.\n\nRecoverer prints a request ID if one is provided.\n",
-        "file": "github.com/pressly/chi/middleware/recoverer.go",
+        "file": "github.com/go-chi/chi/middleware/recoverer.go",
         "line": 18
       }
     ],
@@ -32,7 +32,7 @@
             "pkg": "",
             "func": "main.main.func1",
             "comment": "",
-            "file": "github.com/pressly/chi/_examples/rest/main.go",
+            "file": "github.com/go-chi/chi/_examples/rest/main.go",
             "line": 66,
             "anonymous": true
           }
@@ -45,7 +45,7 @@
               "pkg": "",
               "func": "main.AdminOnly",
               "comment": "AdminOnly middleware restricts access to just administrators.\n",
-              "file": "github.com/pressly/chi/_examples/rest/main.go",
+              "file": "github.com/go-chi/chi/_examples/rest/main.go",
               "line": 238
             }
           ],
@@ -58,7 +58,7 @@
                   "pkg": "",
                   "func": "main.adminRouter.func1",
                   "comment": "",
-                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
                   "line": 225,
                   "anonymous": true
                 }
@@ -72,7 +72,7 @@
                   "pkg": "",
                   "func": "main.adminRouter.func2",
                   "comment": "",
-                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
                   "line": 228,
                   "anonymous": true
                 }
@@ -86,7 +86,7 @@
                   "pkg": "",
                   "func": "main.adminRouter.func3",
                   "comment": "",
-                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
                   "line": 231,
                   "anonymous": true
                 }
@@ -107,7 +107,7 @@
                       "pkg": "",
                       "func": "main.paginate",
                       "comment": "paginate is a stub, but very possible to implement middleware logic\nto handle the request params for handling a paginated request.\n",
-                      "file": "github.com/pressly/chi/_examples/rest/main.go",
+                      "file": "github.com/go-chi/chi/_examples/rest/main.go",
                       "line": 251
                     }
                   ],
@@ -115,7 +115,7 @@
                   "pkg": "",
                   "func": "main.ListArticles",
                   "comment": "ListArticles returns an array of Articles.\n",
-                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
                   "line": 144
                 },
                 "POST": {
@@ -124,7 +124,7 @@
                   "pkg": "",
                   "func": "main.CreateArticle",
                   "comment": "CreateArticle persists the posted Article and returns it\nback to the client as an acknowledgement.\n",
-                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
                   "line": 150
                 }
               }
@@ -136,7 +136,7 @@
                     "pkg": "",
                     "func": "main.ArticleCtx",
                     "comment": "ArticleCtx middleware is used to load an Article object from\nthe URL parameters passed through as the request. In case\nthe Article could not be found, we stop here and return a 404.\n",
-                    "file": "github.com/pressly/chi/_examples/rest/main.go",
+                    "file": "github.com/go-chi/chi/_examples/rest/main.go",
                     "line": 122
                   }
                 ],
@@ -149,7 +149,7 @@
                         "pkg": "",
                         "func": "main.DeleteArticle",
                         "comment": "DeleteArticle removes an existing Article from our persistent store.\n",
-                        "file": "github.com/pressly/chi/_examples/rest/main.go",
+                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
                         "line": 203
                       },
                       "GET": {
@@ -158,7 +158,7 @@
                         "pkg": "",
                         "func": "main.GetArticle",
                         "comment": "GetArticle returns the specific Article. You'll notice it just\nfetches the Article right off the context, as its understood that\nif we made it this far, the Article must be on the context. In case\nits not due to a bug, then it will panic, and our Recoverer will save us.\n",
-                        "file": "github.com/pressly/chi/_examples/rest/main.go",
+                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
                         "line": 173
                       },
                       "PUT": {
@@ -167,7 +167,7 @@
                         "pkg": "",
                         "func": "main.UpdateArticle",
                         "comment": "UpdateArticle updates an existing Article in our persistent store.\n",
-                        "file": "github.com/pressly/chi/_examples/rest/main.go",
+                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
                         "line": 185
                       }
                     }
@@ -183,7 +183,7 @@
                   "pkg": "",
                   "func": "main.SearchArticles",
                   "comment": "SearchArticles searches the Articles data for a matching article.\nIt's just a stub, but you get the idea.\n",
-                  "file": "github.com/pressly/chi/_examples/rest/main.go",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
                   "line": 138
                 }
               }
@@ -199,7 +199,7 @@
             "pkg": "",
             "func": "main.main.func3",
             "comment": "",
-            "file": "github.com/pressly/chi/_examples/rest/main.go",
+            "file": "github.com/go-chi/chi/_examples/rest/main.go",
             "line": 74,
             "anonymous": true
           }
@@ -213,7 +213,7 @@
             "pkg": "",
             "func": "main.main.func2",
             "comment": "",
-            "file": "github.com/pressly/chi/_examples/rest/main.go",
+            "file": "github.com/go-chi/chi/_examples/rest/main.go",
             "line": 70,
             "anonymous": true
           }

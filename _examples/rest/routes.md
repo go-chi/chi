@@ -1,4 +1,4 @@
-# github.com/pressly/chi
+# github.com/go-chi/chi
 
 Welcome to the chi/_examples/rest generated docs.
 

@@ -93,31 +93,31 @@ func TestTree(t *testing.T) {
 		{r: "/article", h: hArticleList, k: []string{}, v: []string{}},
 		{r: "/article/", h: hArticleList, k: []string{}, v: []string{}},
 		{r: "/article/near", h: hArticleNear, k: []string{}, v: []string{}},
-		{r: "/article/neard", h: hArticleShow, k: []string{"id"}, v: []string{"neard"}},                                            //p: map[string]string{"id": "neard"},
-		{r: "/article/123", h: hArticleShow, k: []string{"id"}, v: []string{"123"}},                                                //p: map[string]string{"id": "123"},
-		{r: "/article/123/456", h: hArticleShowOpts, k: []string{"id", "opts"}, v: []string{"123", "456"}},                         //p: map[string]string{"id": "123", "opts": "456"},
-		{r: "/article/@peter", h: hArticleByUser, k: []string{"user"}, v: []string{"peter"}},                                       //p: map[string]string{"user": "peter"},
-		{r: "/article/22//related", h: hArticleShowRelated, k: []string{"id"}, v: []string{"22"}},                                  //p: map[string]string{"id": "22"},
-		{r: "/article/111/edit", h: hStub, k: []string{"iffd"}, v: []string{"111"}},                                                //p: map[string]string{"id": "111"},
-		{r: "/article/slug/sept/-/4/2015", h: hArticleSlug, k: []string{"month", "day", "year"}, v: []string{"sept", "4", "2015"}}, //p: map[string]string{"month": "sept", "day": "4", "year": "2015"},
-		{r: "/article/:id", h: hArticleShow, k: []string{"id"}, v: []string{":id"}},                                                //p: map[string]string{"id": ":id"},
+		{r: "/article/neard", h: hArticleShow, k: []string{"id"}, v: []string{"neard"}},
+		{r: "/article/123", h: hArticleShow, k: []string{"id"}, v: []string{"123"}},
+		{r: "/article/123/456", h: hArticleShowOpts, k: []string{"id", "opts"}, v: []string{"123", "456"}},
+		{r: "/article/@peter", h: hArticleByUser, k: []string{"user"}, v: []string{"peter"}},
+		{r: "/article/22//related", h: hArticleShowRelated, k: []string{"id"}, v: []string{"22"}},
+		{r: "/article/111/edit", h: hStub, k: []string{"iffd"}, v: []string{"111"}},
+		{r: "/article/slug/sept/-/4/2015", h: hArticleSlug, k: []string{"month", "day", "year"}, v: []string{"sept", "4", "2015"}},
+		{r: "/article/:id", h: hArticleShow, k: []string{"id"}, v: []string{":id"}},
 
 		{r: "/admin/user", h: hUserList, k: []string{}, v: []string{}},
 		{r: "/admin/user/", h: hUserList, k: []string{}, v: []string{}},
-		{r: "/admin/user/1", h: hUserShow, k: []string{"id"}, v: []string{"1"}},                                   //p: map[string]string{"id": "1"}, // hmmm.... TODO, review
-		{r: "/admin/user//1", h: hUserShow, k: []string{"id"}, v: []string{"1"}},                                  //p: map[string]string{"id": "1"},
-		{r: "/admin/hi", h: hAdminCatchall, k: []string{"*"}, v: []string{"hi"}},                                  //p: map[string]string{"*": "hi"},
-		{r: "/admin/lots/of/:fun", h: hAdminCatchall, k: []string{"*"}, v: []string{"lots/of/:fun"}},              //p: map[string]string{"*": "lots/of/:fun"},
-		{r: "/admin/apps/333", h: hAdminAppShow, k: []string{"id"}, v: []string{"333"}},                           //p: map[string]string{"id": "333"},
-		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, k: []string{"id", "*"}, v: []string{"333", "woot"}}, //p: map[string]string{"id": "333", "*": "woot"},
+		{r: "/admin/user/1", h: hUserShow, k: []string{"id"}, v: []string{"1"}},
+		{r: "/admin/user//1", h: hUserShow, k: []string{"id"}, v: []string{"1"}},
+		{r: "/admin/hi", h: hAdminCatchall, k: []string{"*"}, v: []string{"hi"}},
+		{r: "/admin/lots/of/:fun", h: hAdminCatchall, k: []string{"*"}, v: []string{"lots/of/:fun"}},
+		{r: "/admin/apps/333", h: hAdminAppShow, k: []string{"id"}, v: []string{"333"}},
+		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, k: []string{"id", "*"}, v: []string{"333", "woot"}},
 
-		{r: "/hubs/123/view", h: hHubView1, k: []string{"hubID"}, v: []string{"123"}},                               //p: map[string]string{"hubID": "123"},
-		{r: "/hubs/123/view/index.html", h: hHubView2, k: []string{"hubID", "*"}, v: []string{"123", "index.html"}}, //p: map[string]string{"hubID": "123", "*": "index.html"},
-		{r: "/hubs/123/users", h: hHubView3, k: []string{"hubID"}, v: []string{"123"}},                              //p: map[string]string{"hubID": "123"},
+		{r: "/hubs/123/view", h: hHubView1, k: []string{"hubID"}, v: []string{"123"}},
+		{r: "/hubs/123/view/index.html", h: hHubView2, k: []string{"hubID", "*"}, v: []string{"123", "index.html"}},
+		{r: "/hubs/123/users", h: hHubView3, k: []string{"hubID"}, v: []string{"123"}},
 
-		{r: "/users/123/profile", h: hUserProfile, k: []string{"userID"}, v: []string{"123"}},          //p: map[string]string{"userID": "123"},
-		{r: "/users/super/123/okay/yes", h: hUserSuper, k: []string{"*"}, v: []string{"123/okay/yes"}}, //p: map[string]string{"*": "123/okay/yes"},
-		{r: "/users/123/okay/yes", h: hUserAll, k: []string{"*"}, v: []string{"123/okay/yes"}},         //p: map[string]string{"*": "123/okay/yes"},
+		{r: "/users/123/profile", h: hUserProfile, k: []string{"userID"}, v: []string{"123"}},
+		{r: "/users/super/123/okay/yes", h: hUserSuper, k: []string{"*"}, v: []string{"123/okay/yes"}},
+		{r: "/users/123/okay/yes", h: hUserAll, k: []string{"*"}, v: []string{"123/okay/yes"}},
 	}
 
 	// log.Println("~~~~~~~~~")
@@ -158,10 +158,6 @@ func TestTreeMoar(t *testing.T) {
 	hStub7 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub8 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub9 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
-	// TODO: if someone uses pattern /article/{id}/users/{id} then lets panic..
-	// easy, except, what to do for subroutes..?
-	// maybe there is a way...
 
 	// TODO: panic if we see {id}{x} because we're missing a delimiter, its not possible.
 	// also {:id}* is not possible.

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 func main() {
