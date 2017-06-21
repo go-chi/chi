@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 type Doc struct {
-	// TODO: should we take some kind of package name?
-	// or the base pkg path...?
-	// ^ we could confirm it..
 	Router DocRouter `json:"router"`
 }
 

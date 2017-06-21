@@ -1,4 +1,4 @@
-# <img alt="chi" src="https://cdn.rawgit.com/pressly/chi/master/_examples/chi.svg" width="220" />
+# <img alt="chi" src="https://cdn.rawgit.com/go-chi/chi/master/_examples/chi.svg" width="220" />
 
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
@@ -14,12 +14,12 @@ public API service, which in turn powers all of our client-side applications.
 
 The key considerations of chi's design are: project structure, maintainability, standard http
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
-parts. The core router `github.com/pressly/chi` is quite small (less than 1000 LOC), but we've also
+parts. The core router `github.com/go-chi/chi` is quite small (less than 1000 LOC), but we've also
 included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope you enjoy it too!
 
 ## Install
 
-`go get -u github.com/pressly/chi`
+`go get -u github.com/go-chi/chi`
 
 
 ## Features
@@ -29,20 +29,20 @@ included some useful/optional subpackages: `middleware`, `render` and `docgen`. 
 * **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
 * **Context control** - built on new `context` package, providing value chaining, cancelations and timeouts
-* **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/pressly/chi/issues/91))
+* **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
 * **No external dependencies** - plain ol' Go 1.7+ stdlib + net/http
 
 
 ## Examples
 
-* [rest](https://github.com/pressly/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
-* [logging](https://github.com/pressly/chi/blob/master/_examples/logging/main.go) - Easy structured logging for any backend
-* [limits](https://github.com/pressly/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
-* [todos-resource](https://github.com/pressly/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
-* [versions](https://github.com/pressly/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
-* [fileserver](https://github.com/pressly/chi/blob/master/_examples/fileserver/main.go) - Easily serve static files
-* [graceful](https://github.com/pressly/chi/blob/master/_examples/graceful/main.go) - Graceful context signaling and server shutdown
+* [rest](https://github.com/go-chi/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
+* [logging](https://github.com/go-chi/chi/blob/master/_examples/logging/main.go) - Easy structured logging for any backend
+* [limits](https://github.com/go-chi/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
+* [todos-resource](https://github.com/go-chi/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
+* [versions](https://github.com/go-chi/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
+* [fileserver](https://github.com/go-chi/chi/blob/master/_examples/fileserver/main.go) - Easily serve static files
+* [graceful](https://github.com/go-chi/chi/blob/master/_examples/graceful/main.go) - Graceful context signaling and server shutdown
 
 
 **As easy as:**
@@ -52,7 +52,7 @@ package main
 
 import (
 	"net/http"
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 func main() {
@@ -67,8 +67,8 @@ func main() {
 **REST Preview:**
 
 Here is a little preview of how routing looks like with chi. Also take a look at the generated routing docs
-in JSON ([routes.json](https://github.com/pressly/chi/blob/master/_examples/rest/routes.json)) and in
-Markdown ([routes.md](https://github.com/pressly/chi/blob/master/_examples/rest/routes.md)).
+in JSON ([routes.json](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.json)) and in
+Markdown ([routes.md](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.md)).
 
 I highly recommend reading the source of the [examples](#examples) listed above, they will show you all the features
 of chi and serve as a good form of documentation.
@@ -77,8 +77,8 @@ of chi and serve as a good form of documentation.
 import (
   //...
   "context"
-  "github.com/pressly/chi"
-  "github.com/pressly/chi/middleware"
+  "github.com/go-chi/chi"
+  "github.com/go-chi/chi/middleware"
 )
 
 func main() {
@@ -343,22 +343,22 @@ The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 Comparison with other routers (as of Jan 7/17): https://gist.github.com/pkieltyka/d0814d5396c996cb3ff8076399583d1f
 
 ```shell
-BenchmarkChi_Param        	 5000000	       398 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Param5       	 3000000	       556 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Param20      	 1000000	      1184 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParamWrite   	 3000000	       443 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubStatic 	 3000000	       427 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubParam  	 3000000	       565 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubAll    	   10000	    122143 ns/op	   61716 B/op	     406 allocs/op
-BenchmarkChi_GPlusStatic  	 5000000	       383 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlusParam   	 3000000	       431 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlus2Params 	 3000000	       500 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlusAll     	  200000	      6410 ns/op	    3952 B/op	      26 allocs/op
-BenchmarkChi_ParseStatic  	 5000000	       384 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParseParam   	 3000000	       415 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Parse2Params 	 3000000	       450 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParseAll     	  100000	     12124 ns/op	    7904 B/op	      52 allocs/op
-BenchmarkChi_StaticAll    	   20000	     78501 ns/op	   47731 B/op	     314 allocs/op
+BenchmarkChi_Param        	 3000000	       449 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Param5       	 2000000	       633 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_Param20      	 1000000	      1379 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParamWrite   	 3000000	       493 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubStatic 	 3000000	       461 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GithubParam  	 1000000	      1488 ns/op	    1152 B/op	       9 allocs/op
+BenchmarkChi_GithubAll    	   10000	    114004 ns/op	   61716 B/op	     406 allocs/op
+BenchmarkChi_GPlusStatic  	 3000000	       431 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_GPlusParam   	 1000000	      1518 ns/op	    1152 B/op	       9 allocs/op
+BenchmarkChi_GPlus2Params 	 1000000	      1439 ns/op	    1152 B/op	       9 allocs/op
+BenchmarkChi_GPlusAll     	  200000	      6032 ns/op	    3952 B/op	      26 allocs/op
+BenchmarkChi_ParseStatic  	 5000000	       397 ns/op	     304 B/op	       2 allocs/op
+BenchmarkChi_ParseParam   	 1000000	      1362 ns/op	    1152 B/op	       9 allocs/op
+BenchmarkChi_Parse2Params 	 1000000	      1356 ns/op	    1152 B/op	       9 allocs/op
+BenchmarkChi_ParseAll     	  100000	     11688 ns/op	    7904 B/op	      52 allocs/op
+BenchmarkChi_StaticAll    	   20000	     80518 ns/op	   47731 B/op	     314 allocs/op
 ```
 
 NOTE: the allocs in the benchmark above are from the calls to http.Request's
@@ -401,7 +401,7 @@ Copyright (c) 2015-present [Peter Kieltyka](https://github.com/pkieltyka)
 
 Licensed under [MIT License](./LICENSE)
 
-[GoDoc]: https://godoc.org/github.com/pressly/chi
-[GoDoc Widget]: https://godoc.org/github.com/pressly/chi?status.svg
-[Travis]: https://travis-ci.org/pressly/chi
-[Travis Widget]: https://travis-ci.org/pressly/chi.svg?branch=master
+[GoDoc]: https://godoc.org/github.com/go-chi/chi
+[GoDoc Widget]: https://godoc.org/github.com/go-chi/chi?status.svg
+[Travis]: https://travis-ci.org/go-chi/chi
+[Travis Widget]: https://travis-ci.org/go-chi/chi.svg?branch=master

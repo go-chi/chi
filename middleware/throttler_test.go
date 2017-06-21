@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 var testContent = []byte("Hello world!")

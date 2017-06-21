@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/pressly/chi"
+	"github.com/go-chi/chi"
 )
 
 type usersResource struct{}
