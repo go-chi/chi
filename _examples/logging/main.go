@@ -3,7 +3,7 @@
 // ========================
 // This example demonstrates how to use middleware.RequestLogger,
 // middleware.LogFormatter and middleware.LogEntry to build a structured
-// logger using the amazing Sirupsen/logrus package as the logging
+// logger using the amazing sirupsen/logrus package as the logging
 // backend.
 //
 // Also: check out https://github.com/pressly/lg for an improved context
@@ -17,16 +17,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
 
-	// Setup the logger backend using Sirupsen/logrus and configure
+	// Setup the logger backend using sirupsen/logrus and configure
 	// it to use a custom JSONFormatter. See the logrus docs for how to
-	// configure the backend at github.com/Sirupsen/logrus
+	// configure the backend at github.com/sirupsen/logrus
 	logger := logrus.New()
 	logger.Formatter = &logrus.JSONFormatter{
 		// disable, as we set our own
