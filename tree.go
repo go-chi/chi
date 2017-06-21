@@ -25,9 +25,11 @@ const (
 	mPUT
 	mTRACE
 	mSTUB
+	mLINK
+	mUNLINK
 
 	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mOPTIONS |
-		mPATCH | mPOST | mPUT | mTRACE
+		mPATCH | mPOST | mPUT | mTRACE | mLINK | mUNLINK
 )
 
 var methodMap = map[string]methodTyp{
@@ -40,6 +42,8 @@ var methodMap = map[string]methodTyp{
 	"POST":    mPOST,
 	"PUT":     mPUT,
 	"TRACE":   mTRACE,
+	"LINK":    mLINK,
+	"UNLINK":  mUNLINK,
 }
 
 type nodeTyp uint8

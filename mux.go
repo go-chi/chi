@@ -176,6 +176,18 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 	mx.handle(mTRACE, pattern, handlerFn)
 }
 
+// Link adds the route `pattern` that matches a LINK http method to
+// execute the `handlerFn` http.HandlerFunc.
+func (mx *Mux) Link(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mLINK, pattern, handlerFn)
+}
+
+// Unlink adds the route `pattern` that matches a UNLINK http method to
+// execute the `handlerFn` http.HandlerFunc.
+func (mx *Mux) Unlink(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mUNLINK, pattern, handlerFn)
+}
+
 // NotFound sets a custom http.HandlerFunc for routing paths that could
 // not be found. The default 404 handler is `http.NotFound`.
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
