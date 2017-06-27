@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/pressly/valve"
-	"github.com/tylerb/graceful"
+	"github.com/go-chi/valve"
 )
 
 func main() {
@@ -82,31 +83,33 @@ func main() {
 		w.Write([]byte(fmt.Sprintf("all done.\n")))
 	})
 
-	// c := make(chan os.Signal, 1)
-	// signal.Notify(c, os.Interrupt)
-	// go func() {
-	// 	for sig := range c {
-	// 		// sig is a ^C, handle it
-	// 		valv.Shutdown()
-	// 		os.Exit(1)
-	// 	}
-	// }()
-	// http.ListenAndServe(":3333", chi.ServerBaseContext(r, baseCtx))
+	srv := http.Server{Addr: ":3333", Handler: chi.ServerBaseContext(r, baseCtx)}
 
-	srv := &graceful.Server{
-		Timeout: 20 * time.Second,
-		Server:  &http.Server{Addr: ":3333", Handler: chi.ServerBaseContext(r, baseCtx)},
-	}
-	srv.BeforeShutdown = func() bool {
-		fmt.Println("shutting down..")
-		err := valv.Shutdown(srv.Timeout)
-		if err != nil {
-			fmt.Println("Shutdown error -", err)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for range c {
+			// sig is a ^C, handle it
+			fmt.Println("shutting down..")
+
+			// first valv
+			valv.Shutdown(20 * time.Second)
+
+			// create context with timeout
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+
+			// start http shutdown
+			srv.Shutdown(ctx)
+
+			// verify, in worst case call cancel via defer
+			select {
+			case <-time.After(21 * time.Second):
+				fmt.Println("not all connections done")
+			case <-ctx.Done():
+
+			}
 		}
-
-		// the app code has stopped here now, and so this would be a good place
-		// to close up any db and other service connections, etc.
-		return true
-	}
+	}()
 	srv.ListenAndServe()
 }
