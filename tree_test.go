@@ -158,6 +158,8 @@ func TestTreeMoar(t *testing.T) {
 	hStub7 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub8 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub9 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub10 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub11 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	// TODO: panic if we see {id}{x} because we're missing a delimiter, its not possible.
 	// also {:id}* is not possible.
@@ -174,6 +176,8 @@ func TestTreeMoar(t *testing.T) {
 	tr.InsertRoute(mGET, "/articles/{slug:^[a-z]+}/posts", hStub)                    // up to tail '/' will only match if contents match the rex
 	tr.InsertRoute(mGET, "/articles/{id}/posts/{pid}", hStub6)                       // /articles/123/posts/1
 	tr.InsertRoute(mGET, "/articles/{id}/posts/{month}/{day}/{year}/{slug}", hStub7) // /articles/123/posts/09/04/1984/juice
+	tr.InsertRoute(mGET, "/articles/{id}.json", hStub10)
+	tr.InsertRoute(mGET, "/articles/{id}/data.json", hStub11)
 
 	// TODO: make a separate test case for this one..
 	// tr.InsertRoute(mGET, "/articles/{id}/{id}", hStub1)                              // panic expected, we're duplicating param keys
@@ -195,6 +199,8 @@ func TestTreeMoar(t *testing.T) {
 		{r: "/articles/123:sync", h: hStub2, k: []string{"id", "op"}, v: []string{"123", "sync"}},
 		{r: "/articles/456/posts/1", h: hStub6, k: []string{"id", "pid"}, v: []string{"456", "1"}},
 		{r: "/articles/456/posts/09/04/1984/juice", h: hStub7, k: []string{"id", "month", "day", "year", "slug"}, v: []string{"456", "09", "04", "1984", "juice"}},
+		{r: "/articles/456.json", h: hStub10, k: []string{"id"}, v: []string{"456"}},
+		{r: "/articles/456/data.json", h: hStub11, k: []string{"id"}, v: []string{"456"}},
 		{r: "/pages", h: nil, k: []string{}, v: []string{}},
 		{r: "/pages/", h: hStub9, k: []string{"*"}, v: []string{""}},
 		{r: "/pages/yes", h: hStub9, k: []string{"*"}, v: []string{"yes"}},

@@ -388,6 +388,9 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 					if xn.rex.Match([]byte(xsearch[:p])) == false {
 						continue
 					}
+				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
+					// avoid a match across path segments
+					continue
 				}
 
 				rctx.routeParams.values = append(rctx.routeParams.values, xsearch[:p])
