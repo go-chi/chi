@@ -15,7 +15,7 @@ public API service, which in turn powers all of our client-side applications.
 The key considerations of chi's design are: project structure, maintainability, standard http
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
 parts. The core router `github.com/go-chi/chi` is quite small (less than 1000 LOC), but we've also
-included some useful/optional subpackages: `middleware`, `render` and `docgen`. We hope you enjoy it too!
+included some useful/optional subpackages: [middleware](/middleware), [render](https://github.com/go-chi/render) and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 ## Install
 
