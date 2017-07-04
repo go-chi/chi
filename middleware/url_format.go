@@ -12,7 +12,6 @@ var (
 	URLFormatCtxKey = &contextKey{"URLFormat"}
 )
 
-//
 // URLFormat is a middleware that parses the url extension from a request path and stores it
 // on the context as a string under the key `middleware.URLFormatCtxKey`. The middleware will
 // trim the suffix from the routing path and continue routing.

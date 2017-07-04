@@ -20,7 +20,7 @@ import (
 	"github.com/go-chi/chi/_examples/versions/presenter/v2"
 	"github.com/go-chi/chi/_examples/versions/presenter/v3"
 	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/chi/render"
+	"github.com/go-chi/render"
 )
 
 func main() {

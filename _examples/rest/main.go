@@ -48,9 +48,9 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/docgen"
 	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/chi/render"
+	"github.com/go-chi/docgen"
+	"github.com/go-chi/render"
 )
 
 var routes = flag.Bool("routes", false, "Generate router documentation")
@@ -63,6 +63,7 @@ func main() {
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.URLFormat)
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
