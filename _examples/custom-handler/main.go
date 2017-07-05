@@ -19,11 +19,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	r := chi.NewRouter()
-	r.Method("GET", "/", Handler(fooHandler))
+	r.Method("GET", "/", Handler(customHandler))
 	http.ListenAndServe(":3333", r)
 }
 
-func fooHandler(w http.ResponseWriter, r *http.Request) error {
+func customHandler(w http.ResponseWriter, r *http.Request) error {
 	q := r.URL.Query().Get("err")
 
 	if q != "" {
