@@ -484,6 +484,19 @@ func TestMuxComplicatedNotFound(t *testing.T) {
 	if _, body := testRequest(t, ts, "GET", "/private/resource/nope", nil); body != "custom not-found" {
 		t.Fatalf(body)
 	}
+	// check custom not-found on trailing slash routes
+	if _, body := testRequest(t, ts, "GET", "/auth/", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/public/", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/private/", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/private/resource/", nil); body != "custom not-found" {
+		t.Fatalf(body)
+	}
 }
 
 func TestMuxWith(t *testing.T) {
