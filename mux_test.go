@@ -234,6 +234,28 @@ func TestMuxPlain(t *testing.T) {
 	}
 }
 
+func TestMuxMissingParams(t *testing.T) {
+	r := NewRouter()
+	r.Get(`/user/{userId:\d+}`, func(w http.ResponseWriter, r *http.Request) {
+		userId := URLParam(r, "userId")
+		w.Write([]byte(fmt.Sprintf("userId = '%s'", userId)))
+	})
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/user/123", nil); body != "userId = '123'" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/user/", nil); body != "userId = ''" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxEmptyRoutes(t *testing.T) {
 	mux := NewRouter()
 
