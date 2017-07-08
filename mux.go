@@ -285,13 +285,11 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
-
-		nsx := len(rctx.URLParams) - 1          // index of current stacked router
-		nx := len(rctx.URLParams[nsx].keys) - 1 // index of last param in list
-
 		rctx.RoutePath = "/"
-		if nx >= 0 && rctx.URLParams[nsx].keys[nx] == "*" {
-			rctx.RoutePath += rctx.URLParams[nsx].values[nx]
+
+		nx := len(rctx.routeParams.Keys) - 1 // index of last param in list
+		if nx >= 0 && rctx.routeParams.Keys[nx] == "*" {
+			rctx.RoutePath += rctx.routeParams.Values[nx]
 		}
 
 		handler.ServeHTTP(w, r)

@@ -132,8 +132,8 @@ func TestTree(t *testing.T) {
 		handlers := tr.FindRoute(rctx, tt.r)
 		handler, _ := handlers[mGET]
 
-		paramKeys := rctx.routeParams.keys
-		paramValues := rctx.routeParams.values
+		paramKeys := rctx.routeParams.Keys
+		paramValues := rctx.routeParams.Values
 
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
@@ -160,6 +160,11 @@ func TestTreeMoar(t *testing.T) {
 	hStub9 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub10 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub11 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub12 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub13 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub14 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub15 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub16 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	// TODO: panic if we see {id}{x} because we're missing a delimiter, its not possible.
 	// also {:id}* is not possible.
@@ -178,6 +183,8 @@ func TestTreeMoar(t *testing.T) {
 	tr.InsertRoute(mGET, "/articles/{id}/posts/{month}/{day}/{year}/{slug}", hStub7) // /articles/123/posts/09/04/1984/juice
 	tr.InsertRoute(mGET, "/articles/{id}.json", hStub10)
 	tr.InsertRoute(mGET, "/articles/{id}/data.json", hStub11)
+	tr.InsertRoute(mGET, "/articles/files/{file}.{ext}", hStub12)
+	tr.InsertRoute(mPUT, "/articles/me", hStub13)
 
 	// TODO: make a separate test case for this one..
 	// tr.InsertRoute(mGET, "/articles/{id}/{id}", hStub1)                              // panic expected, we're duplicating param keys
@@ -185,25 +192,42 @@ func TestTreeMoar(t *testing.T) {
 	tr.InsertRoute(mGET, "/pages/*ff", hStub) // TODO: panic, allow it..?
 	tr.InsertRoute(mGET, "/pages/*", hStub9)
 
+	tr.InsertRoute(mGET, "/users/{id}", hStub14)
+	tr.InsertRoute(mGET, "/users/{id}/settings/{key}", hStub15)
+	tr.InsertRoute(mGET, "/users/{id}/settings/*", hStub16)
+
 	tests := []struct {
+		m methodTyp    // input request http method
 		r string       // input request path
 		h http.Handler // output matched handler
 		k []string     // output param keys
 		v []string     // output param values
 	}{
-		{r: "/articles/search", h: hStub1, k: []string{}, v: []string{}},
-		{r: "/articlefun", h: hStub5, k: []string{}, v: []string{}},
-		{r: "/articles/123", h: hStub, k: []string{"id"}, v: []string{"123"}},
-		{r: "/articles/789:delete", h: hStub8, k: []string{"id"}, v: []string{"789"}},
-		{r: "/articles/789!sup", h: hStub4, k: []string{"iidd"}, v: []string{"789"}},
-		{r: "/articles/123:sync", h: hStub2, k: []string{"id", "op"}, v: []string{"123", "sync"}},
-		{r: "/articles/456/posts/1", h: hStub6, k: []string{"id", "pid"}, v: []string{"456", "1"}},
-		{r: "/articles/456/posts/09/04/1984/juice", h: hStub7, k: []string{"id", "month", "day", "year", "slug"}, v: []string{"456", "09", "04", "1984", "juice"}},
-		{r: "/articles/456.json", h: hStub10, k: []string{"id"}, v: []string{"456"}},
-		{r: "/articles/456/data.json", h: hStub11, k: []string{"id"}, v: []string{"456"}},
-		{r: "/pages", h: nil, k: []string{}, v: []string{}},
-		{r: "/pages/", h: hStub9, k: []string{"*"}, v: []string{""}},
-		{r: "/pages/yes", h: hStub9, k: []string{"*"}, v: []string{"yes"}},
+		{m: mGET, r: "/articles/search", h: hStub1, k: []string{}, v: []string{}},
+		{m: mGET, r: "/articlefun", h: hStub5, k: []string{}, v: []string{}},
+		{m: mGET, r: "/articles/123", h: hStub, k: []string{"id"}, v: []string{"123"}},
+		{m: mGET, r: "/articles/789:delete", h: hStub8, k: []string{"id"}, v: []string{"789"}},
+		{m: mGET, r: "/articles/789!sup", h: hStub4, k: []string{"iidd"}, v: []string{"789"}},
+		{m: mGET, r: "/articles/123:sync", h: hStub2, k: []string{"id", "op"}, v: []string{"123", "sync"}},
+		{m: mGET, r: "/articles/456/posts/1", h: hStub6, k: []string{"id", "pid"}, v: []string{"456", "1"}},
+		{m: mGET, r: "/articles/456/posts/09/04/1984/juice", h: hStub7, k: []string{"id", "month", "day", "year", "slug"}, v: []string{"456", "09", "04", "1984", "juice"}},
+		{m: mGET, r: "/articles/456.json", h: hStub10, k: []string{"id"}, v: []string{"456"}},
+		{m: mGET, r: "/articles/456/data.json", h: hStub11, k: []string{"id"}, v: []string{"456"}},
+
+		{m: mGET, r: "/articles/files/file.zip", h: hStub12, k: []string{"file", "ext"}, v: []string{"file", "zip"}},
+		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
+		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
+
+		{m: mPUT, r: "/articles/me", h: hStub13, k: []string{}, v: []string{}},
+		// {m: mGET, r: "/articles/me", h: hStub, k: []string{"id"}, v: []string{"me"}}, // TODO ..
+		{m: mGET, r: "/pages", h: nil, k: []string{}, v: []string{}},
+		{m: mGET, r: "/pages/", h: hStub9, k: []string{"*"}, v: []string{""}},
+		{m: mGET, r: "/pages/yes", h: hStub9, k: []string{"*"}, v: []string{"yes"}},
+
+		{m: mGET, r: "/users/1", h: hStub14, k: []string{"id"}, v: []string{"1"}},
+		{m: mGET, r: "/users/", h: nil, k: []string{}, v: []string{}},
+		{m: mGET, r: "/users/2/settings/password", h: hStub15, k: []string{"id", "key"}, v: []string{"2", "password"}},
+		{m: mGET, r: "/users/2/settings/", h: hStub16, k: []string{"id", "*"}, v: []string{"2", ""}},
 	}
 
 	// log.Println("~~~~~~~~~")
@@ -216,10 +240,10 @@ func TestTreeMoar(t *testing.T) {
 		rctx := NewRouteContext()
 
 		handlers := tr.FindRoute(rctx, tt.r)
-		handler, _ := handlers[mGET]
+		handler, _ := handlers[tt.m]
 
-		paramKeys := rctx.routeParams.keys
-		paramValues := rctx.routeParams.values
+		paramKeys := rctx.routeParams.Keys
+		paramValues := rctx.routeParams.Values
 
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
@@ -277,8 +301,8 @@ func TestTreeRegexp(t *testing.T) {
 		handlers := tr.FindRoute(rctx, tt.r)
 		handler, _ := handlers[mGET]
 
-		paramKeys := rctx.routeParams.keys
-		paramValues := rctx.routeParams.values
+		paramKeys := rctx.routeParams.Keys
+		paramValues := rctx.routeParams.Values
 
 		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
 			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)

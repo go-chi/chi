@@ -40,7 +40,6 @@ func TestMuxBasic(t *testing.T) {
 			next.ServeHTTP(w, r)
 		})
 	}
-	_ = exmw
 
 	logbuf := bytes.NewBufferString("")
 	logmsg := "logmw test"
@@ -50,7 +49,6 @@ func TestMuxBasic(t *testing.T) {
 			next.ServeHTTP(w, r)
 		})
 	}
-	_ = logmw
 
 	cxindex := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -78,13 +76,11 @@ func TestMuxBasic(t *testing.T) {
 		w.WriteHeader(200)
 		w.Write([]byte("ping all"))
 	}
-	_ = pingAll
 
 	pingAll2 := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Write([]byte("ping all2"))
 	}
-	_ = pingAll2
 
 	pingOne := func(w http.ResponseWriter, r *http.Request) {
 		idParam := URLParam(r, "id")
@@ -96,13 +92,11 @@ func TestMuxBasic(t *testing.T) {
 		w.WriteHeader(200)
 		w.Write([]byte("woop." + URLParam(r, "iidd")))
 	}
-	_ = pingWoop
 
 	catchAll := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Write([]byte("catchall"))
 	}
-	_ = catchAll
 
 	m := NewRouter()
 	m.Use(countermw)
@@ -1069,6 +1063,27 @@ func TestMuxSubroutes(t *testing.T) {
 		t.Fatalf("routePattern, expected:%s got:%s", expected, routePatterns[2])
 	}
 
+}
+
+func TestSingleHandler(t *testing.T) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		name := URLParam(r, "name")
+		w.Write([]byte("hi " + name))
+	})
+
+	r, _ := http.NewRequest("GET", "/", nil)
+	rctx := NewRouteContext()
+	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
+	rctx.URLParams.Add("name", "joe")
+
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, r)
+
+	body := string(w.Body.Bytes())
+	expected := "hi joe"
+	if body != expected {
+		t.Fatalf("expected:%s got:%s", expected, body)
+	}
 }
 
 // TODO: a Router wrapper test..

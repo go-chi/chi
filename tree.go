@@ -319,8 +319,8 @@ func (n *node) setHandler(method methodTyp, handler http.Handler, pattern string
 func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
 	// Reset the context routing pattern and params
 	rctx.RoutePattern = ""
-	rctx.routeParams.keys = rctx.routeParams.keys[:0]
-	rctx.routeParams.values = rctx.routeParams.values[:0]
+	rctx.routeParams.Keys = rctx.routeParams.Keys[:0]
+	rctx.routeParams.Values = rctx.routeParams.Values[:0]
 
 	// Find the routing handlers for the path
 	rn := n.findRoute(rctx, path)
@@ -398,14 +398,14 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 					continue
 				}
 
-				rctx.routeParams.values = append(rctx.routeParams.values, xsearch[:p])
+				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
 				xsearch = xsearch[p:]
 				break
 			}
 
 		default:
 			// catch-all nodes
-			rctx.routeParams.values = append(rctx.routeParams.values, search)
+			rctx.routeParams.Values = append(rctx.routeParams.Values, search)
 			xn = nds[0]
 			xsearch = ""
 		}
@@ -417,7 +417,7 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 		// did we find it yet?
 		if len(xsearch) == 0 {
 			if xn.isLeaf() {
-				rctx.routeParams.keys = append(rctx.routeParams.keys, xn.paramKeys...)
+				rctx.routeParams.Keys = append(rctx.routeParams.Keys, xn.paramKeys...)
 				return xn
 			}
 		}
@@ -430,8 +430,8 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 
 		// Did not find final handler, let's remove the param here if it was set
 		if xn.typ > ntStatic {
-			if len(rctx.routeParams.values) > 0 {
-				rctx.routeParams.values = rctx.routeParams.values[:len(rctx.routeParams.values)-1]
+			if len(rctx.routeParams.Values) > 0 {
+				rctx.routeParams.Values = rctx.routeParams.Values[:len(rctx.routeParams.Values)-1]
 			}
 		}
 
