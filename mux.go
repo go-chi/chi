@@ -298,8 +298,12 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	})
 
 	if pattern == "" || pattern[len(pattern)-1] != '/' {
+		notFoundHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mx.NotFoundHandler().ServeHTTP(w, r)
+		})
+
 		mx.handle(mALL|mSTUB, pattern, subHandler)
-		mx.handle(mALL|mSTUB, pattern+"/", mx.NotFoundHandler())
+		mx.handle(mALL|mSTUB, pattern+"/", notFoundHandler)
 		pattern += "/"
 	}
 
