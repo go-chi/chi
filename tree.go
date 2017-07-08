@@ -371,7 +371,7 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 		case ntParam, ntRegexp:
 			// short-circuit and return no matching route for empty param values
 			if xsearch == "" {
-				return nil
+				continue
 			}
 
 			// serially loop through each node grouped by the tail delimiter
