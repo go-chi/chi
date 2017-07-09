@@ -129,8 +129,12 @@ func TestTree(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		handlers := tr.FindRoute(rctx, tt.r)
-		handler, _ := handlers[mGET]
+		handlers := tr.FindRoute(rctx, mGET, tt.r)
+
+		var handler http.Handler
+		if methodHandler, ok := handlers[mGET]; ok {
+			handler = methodHandler.handler
+		}
 
 		paramKeys := rctx.routeParams.Keys
 		paramValues := rctx.routeParams.Values
@@ -173,6 +177,7 @@ func TestTreeMoar(t *testing.T) {
 
 	tr.InsertRoute(mGET, "/articlefun", hStub5)
 	tr.InsertRoute(mGET, "/articles/{id}", hStub)
+	tr.InsertRoute(mDELETE, "/articles/{slug}", hStub8)
 	tr.InsertRoute(mGET, "/articles/search", hStub1)
 	tr.InsertRoute(mGET, "/articles/{id}:delete", hStub8)
 	tr.InsertRoute(mGET, "/articles/{iidd}!sup", hStub4)
@@ -206,6 +211,7 @@ func TestTreeMoar(t *testing.T) {
 		{m: mGET, r: "/articles/search", h: hStub1, k: []string{}, v: []string{}},
 		{m: mGET, r: "/articlefun", h: hStub5, k: []string{}, v: []string{}},
 		{m: mGET, r: "/articles/123", h: hStub, k: []string{"id"}, v: []string{"123"}},
+		{m: mDELETE, r: "/articles/123mm", h: hStub8, k: []string{"slug"}, v: []string{"123mm"}},
 		{m: mGET, r: "/articles/789:delete", h: hStub8, k: []string{"id"}, v: []string{"789"}},
 		{m: mGET, r: "/articles/789!sup", h: hStub4, k: []string{"iidd"}, v: []string{"789"}},
 		{m: mGET, r: "/articles/123:sync", h: hStub2, k: []string{"id", "op"}, v: []string{"123", "sync"}},
@@ -219,7 +225,7 @@ func TestTreeMoar(t *testing.T) {
 		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
 
 		{m: mPUT, r: "/articles/me", h: hStub13, k: []string{}, v: []string{}},
-		// {m: mGET, r: "/articles/me", h: hStub, k: []string{"id"}, v: []string{"me"}}, // TODO ..
+		{m: mGET, r: "/articles/me", h: hStub, k: []string{"id"}, v: []string{"me"}},
 		{m: mGET, r: "/pages", h: nil, k: []string{}, v: []string{}},
 		{m: mGET, r: "/pages/", h: hStub9, k: []string{"*"}, v: []string{""}},
 		{m: mGET, r: "/pages/yes", h: hStub9, k: []string{"*"}, v: []string{"yes"}},
@@ -239,8 +245,12 @@ func TestTreeMoar(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		handlers := tr.FindRoute(rctx, tt.r)
-		handler, _ := handlers[tt.m]
+		handlers := tr.FindRoute(rctx, tt.m, tt.r)
+
+		var handler http.Handler
+		if methodHandler, ok := handlers[tt.m]; ok {
+			handler = methodHandler.handler
+		}
 
 		paramKeys := rctx.routeParams.Keys
 		paramValues := rctx.routeParams.Values
@@ -298,8 +308,12 @@ func TestTreeRegexp(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		handlers := tr.FindRoute(rctx, tt.r)
-		handler, _ := handlers[mGET]
+		handlers := tr.FindRoute(rctx, mGET, tt.r)
+
+		var handler http.Handler
+		if methodHandler, ok := handlers[mGET]; ok {
+			handler = methodHandler.handler
+		}
 
 		paramKeys := rctx.routeParams.Keys
 		paramValues := rctx.routeParams.Values
@@ -352,12 +366,16 @@ func debugPrintTree(parent int, i int, n *node, label byte) bool {
 		numEdges += len(nds)
 	}
 
-	if n.handlers != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.handlers, n.pattern, n.paramKeys)
+	// if n.handlers != nil {
+	// 	log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.handlers, n.pattern, n.paramKeys)
+	// } else {
+	// 	log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.pattern, n.paramKeys)
+	// }
+	if n.endpoints != nil {
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.endpoints)
 	} else {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.pattern, n.paramKeys)
+		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf())
 	}
-
 	parent = i
 	for _, nds := range n.children {
 		for _, e := range nds {
@@ -401,7 +419,7 @@ func BenchmarkTreeGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		mctx := NewRouteContext()
-		tr.FindRoute(mctx, "/ping/123/456")
+		tr.FindRoute(mctx, mGET, "/ping/123/456")
 	}
 }
 

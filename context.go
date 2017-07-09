@@ -18,24 +18,27 @@ type Context struct {
 	// See Mux#routeHTTP method.
 	RoutePath string
 
-	// The endpoint routing pattern that matched the request URI path
-	// or `RoutePath` of the current sub-router. This value will update
-	// during the lifecycle of a request passing through a stack of
-	// sub-routers.
-	RoutePattern string
-
 	// Routing pattern stack throughout the lifecycle of the request,
 	// across all connected routers. It is a record of all matching
 	// patterns across a stack of sub-routers.
 	RoutePatterns []string
 
+	// URLParams are the stack of routeParams captured during the
+	// routing lifecycle across a stack of sub-routers.
+	URLParams RouteParamsStack
+
+	// The endpoint routing pattern that matched the request URI path
+	// or `RoutePath` of the current sub-router. This value will update
+	// during the lifecycle of a request passing through a stack of
+	// sub-routers.
+	routePattern string
+
 	// Route parameters matched for the current sub-router. It is
 	// intentionally unexported so it cant be tampered.
 	routeParams RouteParams
 
-	// URLParams are the stack of routeParams captured during the
-	// routing lifecycle across a stack of sub-routers.
-	URLParams RouteParamsStack
+	// methodNotAllowed hint
+	methodNotAllowed bool
 }
 
 // NewRouteContext returns a new routing Context object.
@@ -46,12 +49,13 @@ func NewRouteContext() *Context {
 // reset a routing context to its initial state.
 func (x *Context) reset() {
 	x.RoutePath = ""
-	x.RoutePattern = ""
 	x.RoutePatterns = x.RoutePatterns[:0]
+	x.URLParams = x.URLParams[:0]
 
+	x.routePattern = ""
 	x.routeParams.Keys = x.routeParams.Keys[:0]
 	x.routeParams.Values = x.routeParams.Values[:0]
-	x.URLParams = x.URLParams[:0]
+	x.methodNotAllowed = false
 }
 
 func (x *Context) URLParam(key string) string {

@@ -71,14 +71,8 @@ type node struct {
 	// regexp matcher for regexp nodes
 	rex *regexp.Regexp
 
-	// pattern is the routing pattern for handler nodes
-	pattern string
-
-	// parameter keys recorded on handler nodes
-	paramKeys []string
-
-	// HTTP handler on the leaf node
-	handlers methodHandlers
+	// HTTP handler endpoints on the leaf node
+	endpoints endpoints
 
 	// subroutes on the leaf node
 	subroutes Routes
@@ -86,6 +80,30 @@ type node struct {
 	// child nodes should be stored in-order for iteration,
 	// in groups of the node type.
 	children [ntCatchAll + 1]nodes
+}
+
+// endpoints is a mapping of http method constants to handlers
+// for a given route.
+type endpoints map[methodTyp]*endpoint
+
+type endpoint struct {
+	// endpoint handler
+	handler http.Handler
+
+	// pattern is the routing pattern for handler nodes
+	pattern string
+
+	// parameter keys recorded on handler nodes
+	paramKeys []string
+}
+
+func (s endpoints) Value(method methodTyp) *endpoint {
+	mh, ok := s[method]
+	if !ok {
+		mh = &endpoint{}
+		s[method] = mh
+	}
+	return mh
 }
 
 func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
@@ -96,7 +114,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 		// Handle key exhaustion
 		if len(search) == 0 {
 			// Insert or update the node's leaf handler
-			n.setHandler(method, handler, pattern)
+			n.setEndpoint(method, handler, pattern)
 			return n
 		}
 
@@ -124,7 +142,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 		if n == nil {
 			child := &node{label: label, tail: segTail, prefix: search}
 			hn := parent.addChild(child, search)
-			hn.setHandler(method, handler, pattern)
+			hn.setEndpoint(method, handler, pattern)
 
 			return hn
 		}
@@ -164,7 +182,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 		// If the new key is a subset, set the method/handler on this node and finish.
 		search = search[commonPrefix:]
 		if len(search) == 0 {
-			child.setHandler(method, handler, pattern)
+			child.setEndpoint(method, handler, pattern)
 			return child
 		}
 
@@ -175,7 +193,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 			prefix: search,
 		}
 		hn := child.addChild(subchild, search)
-		hn.setHandler(method, handler, pattern)
+		hn.setEndpoint(method, handler, pattern)
 		return hn
 	}
 }
@@ -293,37 +311,44 @@ func (n *node) getEdge(ntyp nodeTyp, label, tail byte, prefix string) *node {
 	return nil
 }
 
-func (n *node) setHandler(method methodTyp, handler http.Handler, pattern string) {
-	n.pattern = pattern
-	n.paramKeys = patParamKeys(pattern)
-
+func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern string) {
 	// Set the handler for the method type on the node
-	if n.handlers == nil {
-		n.handlers = make(methodHandlers, 0)
+	if n.endpoints == nil {
+		n.endpoints = make(endpoints, 0)
 	}
+
+	paramKeys := patParamKeys(pattern)
+
 	if method&mSTUB == mSTUB {
-		n.handlers[mSTUB] = handler
-	} else {
-		n.handlers[mSTUB] = nil
+		n.endpoints.Value(mSTUB).handler = handler
 	}
 	if method&mALL == mALL {
-		n.handlers[mALL] = handler
+		h := n.endpoints.Value(mALL)
+		h.handler = handler
+		h.pattern = pattern
+		h.paramKeys = paramKeys
 		for _, m := range methodMap {
-			n.handlers[m] = handler
+			h := n.endpoints.Value(m)
+			h.handler = handler
+			h.pattern = pattern
+			h.paramKeys = paramKeys
 		}
 	} else {
-		n.handlers[method] = handler
+		h := n.endpoints.Value(method)
+		h.handler = handler
+		h.pattern = pattern
+		h.paramKeys = paramKeys
 	}
 }
 
-func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
+func (n *node) FindRoute(rctx *Context, method methodTyp, path string) endpoints {
 	// Reset the context routing pattern and params
-	rctx.RoutePattern = ""
+	rctx.routePattern = ""
 	rctx.routeParams.Keys = rctx.routeParams.Keys[:0]
 	rctx.routeParams.Values = rctx.routeParams.Values[:0]
 
 	// Find the routing handlers for the path
-	rn := n.findRoute(rctx, path)
+	rn := n.findRoute(rctx, method, path)
 	if rn == nil {
 		return nil
 	}
@@ -332,17 +357,17 @@ func (n *node) FindRoute(rctx *Context, path string) methodHandlers {
 	rctx.URLParams = append(rctx.URLParams, rctx.routeParams)
 
 	// Record the routing pattern in the request lifecycle
-	if rn.pattern != "" {
-		rctx.RoutePattern = rn.pattern
-		rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.RoutePattern)
+	if rn.endpoints[method].pattern != "" {
+		rctx.routePattern = rn.endpoints[method].pattern
+		rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.routePattern)
 	}
 
-	return rn.handlers
+	return rn.endpoints
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
 // It's like searching through a multi-dimensional radix trie.
-func (n *node) findRoute(rctx *Context, path string) *node {
+func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 	nn := n
 	search := path
 
@@ -417,13 +442,20 @@ func (n *node) findRoute(rctx *Context, path string) *node {
 		// did we find it yet?
 		if len(xsearch) == 0 {
 			if xn.isLeaf() {
-				rctx.routeParams.Keys = append(rctx.routeParams.Keys, xn.paramKeys...)
-				return xn
+				h, _ := xn.endpoints[method]
+				if h != nil && h.handler != nil {
+					rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
+					return xn
+				} else {
+					// flag that the routing context found a route, but not a corresponding
+					// supported method
+					rctx.methodNotAllowed = true
+				}
 			}
 		}
 
 		// recursively find the next node..
-		fin := xn.findRoute(rctx, xsearch)
+		fin := xn.findRoute(rctx, method, xsearch)
 		if fin != nil {
 			return fin
 		}
@@ -478,7 +510,7 @@ func (n *node) isEmpty() bool {
 }
 
 func (n *node) isLeaf() bool {
-	return n.handlers != nil
+	return n.endpoints != nil
 }
 
 func (n *node) matchPattern(pattern string) bool {
@@ -526,50 +558,63 @@ func (n *node) matchPattern(pattern string) bool {
 func (n *node) routes() []Route {
 	rts := []Route{}
 
-	n.walkRoutes(n.prefix, n, func(pattern string, handlers methodHandlers, subroutes Routes) bool {
-		if handlers[mSTUB] != nil && subroutes == nil {
+	n.walk(func(eps endpoints, subroutes Routes) bool {
+		if eps[mSTUB] != nil && eps[mSTUB].handler != nil && subroutes == nil {
 			return false
 		}
 
-		if subroutes != nil && len(pattern) > 2 {
-			pattern = pattern[:len(pattern)-2]
-		}
+		// Group methodHandlers by unique patterns
+		pats := make(map[string]endpoints, 0)
 
-		var hs = make(map[string]http.Handler, 0)
-		if handlers[mALL] != nil {
-			hs["*"] = handlers[mALL]
-		}
-		for mt, h := range handlers {
-			if h == nil {
+		for mt, h := range eps {
+			if h.pattern == "" {
 				continue
 			}
-			m := methodTypString(mt)
-			if m == "" {
-				continue
+			p, ok := pats[h.pattern]
+			if !ok {
+				p = endpoints{}
+				pats[h.pattern] = p
 			}
-			hs[m] = h
+			p[mt] = h
 		}
 
-		rt := Route{pattern, hs, subroutes}
-		rts = append(rts, rt)
+		for p, mh := range pats {
+			hs := make(map[string]http.Handler, 0)
+			if mh[mALL] != nil && mh[mALL].handler != nil {
+				hs["*"] = mh[mALL].handler
+			}
+
+			for mt, h := range mh {
+				if h.handler == nil {
+					continue
+				}
+				m := methodTypString(mt)
+				if m == "" {
+					continue
+				}
+				hs[m] = h.handler
+			}
+
+			rt := Route{p, hs, subroutes}
+			rts = append(rts, rt)
+		}
+
 		return false
 	})
 
 	return rts
 }
 
-func (n *node) walkRoutes(pattern string, nd *node, fn walkFn) bool {
-	pattern = nd.pattern
-
+func (n *node) walk(fn func(eps endpoints, subroutes Routes) bool) bool {
 	// Visit the leaf values if any
-	if (nd.handlers != nil || nd.subroutes != nil) && fn(pattern, nd.handlers, nd.subroutes) {
+	if (n.endpoints != nil || n.subroutes != nil) && fn(n.endpoints, n.subroutes) {
 		return true
 	}
 
 	// Recurse on the children
-	for _, nds := range nd.children {
-		for _, nd := range nds {
-			if n.walkRoutes(pattern, nd, fn) {
+	for _, ns := range n.children {
+		for _, cn := range ns {
+			if cn.walk(fn) {
 				return true
 			}
 		}
@@ -669,12 +714,6 @@ func methodTypString(method methodTyp) string {
 	}
 	return ""
 }
-
-type walkFn func(pattern string, handlers methodHandlers, subroutes Routes) bool
-
-// methodHandlers is a mapping of http method constants to handlers
-// for a given route.
-type methodHandlers map[methodTyp]http.Handler
 
 type nodes []*node
 

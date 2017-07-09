@@ -11,16 +11,31 @@
       {
         "pkg": "github.com/go-chi/chi/middleware",
         "func": "Logger",
-        "comment": "Logger is a middleware that logs the start and end of each request, along\nwith some useful data about what was requested, what the response status was,\nand how long it took to return. When standard output is a TTY, Logger will\nprint in color, otherwise it will print in black and white.\n\nLogger prints a request ID if one is provided.\n",
+        "comment": "Logger is a middleware that logs the start and end of each request, along\nwith some useful data about what was requested, what the response status was,\nand how long it took to return. When standard output is a TTY, Logger will\nprint in color, otherwise it will print in black and white. Logger prints a\nrequest ID if one is provided.\n\nAlternatively, look at https://github.com/pressly/lg and the `lg.RequestLogger`\nmiddleware pkg.\n",
         "file": "github.com/go-chi/chi/middleware/logger.go",
-        "line": 22
+        "line": 26
       },
       {
         "pkg": "github.com/go-chi/chi/middleware",
         "func": "Recoverer",
-        "comment": "Recoverer is a middleware that recovers from panics, logs the panic (and a\nbacktrace), and returns a HTTP 500 (Internal Server Error) status if\npossible.\n\nRecoverer prints a request ID if one is provided.\n",
+        "comment": "Recoverer is a middleware that recovers from panics, logs the panic (and a\nbacktrace), and returns a HTTP 500 (Internal Server Error) status if\npossible. Recoverer prints a request ID if one is provided.\n\nAlternatively, look at https://github.com/pressly/lg middleware pkgs.\n",
         "file": "github.com/go-chi/chi/middleware/recoverer.go",
         "line": 18
+      },
+      {
+        "pkg": "github.com/go-chi/chi/middleware",
+        "func": "URLFormat",
+        "comment": "URLFormat is a middleware that parses the url extension from a request path and stores it\non the context as a string under the key `middleware.URLFormatCtxKey`. The middleware will\ntrim the suffix from the routing path and continue routing.\n\nRouters should not include a url parameter for the suffix when using this middleware.\n\nSample usage.. for url paths: `/articles/1`, `/articles/1.json` and `/articles/1.xml`\n\n func routes() http.Handler {\n   r := chi.NewRouter()\n   r.Use(middleware.URLFormat)\n\n   r.Get(\"/articles/{id}\", ListArticles)\n\n   return r\n }\n\n func ListArticles(w http.ResponseWriter, r *http.Request) {\n\t  urlFormat, _ := r.Context().Value(middleware.URLFormatCtxKey).(string)\n\n\t  switch urlFormat {\n\t  case \"json\":\n\t  \trender.JSON(w, r, articles)\n\t  case \"xml:\"\n\t  \trender.XML(w, r, articles)\n\t  default:\n\t  \trender.JSON(w, r, articles)\n\t  }\n}\n",
+        "file": "github.com/go-chi/chi/middleware/url_format.go",
+        "line": 45
+      },
+      {
+        "pkg": "github.com/go-chi/render",
+        "func": "SetContentType.func1",
+        "comment": "",
+        "file": "github.com/go-chi/render/content_type.go",
+        "line": 49,
+        "anonymous": true
       }
     ],
     "routes": {
@@ -33,12 +48,12 @@
             "func": "main.main.func1",
             "comment": "",
             "file": "github.com/go-chi/chi/_examples/rest/main.go",
-            "line": 66,
+            "line": 69,
             "anonymous": true
           }
         }
       },
-      "/admin": {
+      "/admin/*": {
         "router": {
           "middlewares": [
             {
@@ -78,7 +93,7 @@
                 }
               }
             },
-            "/users/:userId": {
+            "/users/{userId}": {
               "handlers": {
                 "GET": {
                   "middlewares": [],
@@ -95,7 +110,7 @@
           }
         }
       },
-      "/articles": {
+      "/articles/*": {
         "router": {
           "middlewares": [],
           "routes": {
@@ -114,9 +129,9 @@
                   "method": "GET",
                   "pkg": "",
                   "func": "main.ListArticles",
-                  "comment": "ListArticles returns an array of Articles.\n",
+                  "comment": "",
                   "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                  "line": 144
+                  "line": 117
                 },
                 "POST": {
                   "middlewares": [],
@@ -125,53 +140,7 @@
                   "func": "main.CreateArticle",
                   "comment": "CreateArticle persists the posted Article and returns it\nback to the client as an acknowledgement.\n",
                   "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                  "line": 150
-                }
-              }
-            },
-            "/:articleID": {
-              "router": {
-                "middlewares": [
-                  {
-                    "pkg": "",
-                    "func": "main.ArticleCtx",
-                    "comment": "ArticleCtx middleware is used to load an Article object from\nthe URL parameters passed through as the request. In case\nthe Article could not be found, we stop here and return a 404.\n",
-                    "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                    "line": 122
-                  }
-                ],
-                "routes": {
-                  "/": {
-                    "handlers": {
-                      "DELETE": {
-                        "middlewares": [],
-                        "method": "DELETE",
-                        "pkg": "",
-                        "func": "main.DeleteArticle",
-                        "comment": "DeleteArticle removes an existing Article from our persistent store.\n",
-                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                        "line": 203
-                      },
-                      "GET": {
-                        "middlewares": [],
-                        "method": "GET",
-                        "pkg": "",
-                        "func": "main.GetArticle",
-                        "comment": "GetArticle returns the specific Article. You'll notice it just\nfetches the Article right off the context, as its understood that\nif we made it this far, the Article must be on the context. In case\nits not due to a bug, then it will panic, and our Recoverer will save us.\n",
-                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                        "line": 173
-                      },
-                      "PUT": {
-                        "middlewares": [],
-                        "method": "PUT",
-                        "pkg": "",
-                        "func": "main.UpdateArticle",
-                        "comment": "UpdateArticle updates an existing Article in our persistent store.\n",
-                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                        "line": 185
-                      }
-                    }
-                  }
+                  "line": 158
                 }
               }
             },
@@ -184,7 +153,74 @@
                   "func": "main.SearchArticles",
                   "comment": "SearchArticles searches the Articles data for a matching article.\nIt's just a stub, but you get the idea.\n",
                   "file": "github.com/go-chi/chi/_examples/rest/main.go",
-                  "line": 138
+                  "line": 152
+                }
+              }
+            },
+            "/{articleID}/*": {
+              "router": {
+                "middlewares": [
+                  {
+                    "pkg": "",
+                    "func": "main.ArticleCtx",
+                    "comment": "ArticleCtx middleware is used to load an Article object from\nthe URL parameters passed through as the request. In case\nthe Article could not be found, we stop here and return a 404.\n",
+                    "file": "github.com/go-chi/chi/_examples/rest/main.go",
+                    "line": 127
+                  }
+                ],
+                "routes": {
+                  "/": {
+                    "handlers": {
+                      "DELETE": {
+                        "middlewares": [],
+                        "method": "DELETE",
+                        "pkg": "",
+                        "func": "main.DeleteArticle",
+                        "comment": "DeleteArticle removes an existing Article from our persistent store.\n",
+                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
+                        "line": 204
+                      },
+                      "GET": {
+                        "middlewares": [],
+                        "method": "GET",
+                        "pkg": "",
+                        "func": "main.GetArticle",
+                        "comment": "GetArticle returns the specific Article. You'll notice it just\nfetches the Article right off the context, as its understood that\nif we made it this far, the Article must be on the context. In case\nits not due to a bug, then it will panic, and our Recoverer will save us.\n",
+                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
+                        "line": 176
+                      },
+                      "PUT": {
+                        "middlewares": [],
+                        "method": "PUT",
+                        "pkg": "",
+                        "func": "main.UpdateArticle",
+                        "comment": "UpdateArticle updates an existing Article in our persistent store.\n",
+                        "file": "github.com/go-chi/chi/_examples/rest/main.go",
+                        "line": 189
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/{articleSlug:[a-z-]+}": {
+              "handlers": {
+                "GET": {
+                  "middlewares": [
+                    {
+                      "pkg": "",
+                      "func": "main.ArticleCtx",
+                      "comment": "ArticleCtx middleware is used to load an Article object from\nthe URL parameters passed through as the request. In case\nthe Article could not be found, we stop here and return a 404.\n",
+                      "file": "github.com/go-chi/chi/_examples/rest/main.go",
+                      "line": 127
+                    }
+                  ],
+                  "method": "GET",
+                  "pkg": "",
+                  "func": "main.GetArticle",
+                  "comment": "GetArticle returns the specific Article. You'll notice it just\nfetches the Article right off the context, as its understood that\nif we made it this far, the Article must be on the context. In case\nits not due to a bug, then it will panic, and our Recoverer will save us.\n",
+                  "file": "github.com/go-chi/chi/_examples/rest/main.go",
+                  "line": 176
                 }
               }
             }
@@ -200,7 +236,7 @@
             "func": "main.main.func3",
             "comment": "",
             "file": "github.com/go-chi/chi/_examples/rest/main.go",
-            "line": 74,
+            "line": 77,
             "anonymous": true
           }
         }
@@ -214,7 +250,7 @@
             "func": "main.main.func2",
             "comment": "",
             "file": "github.com/go-chi/chi/_examples/rest/main.go",
-            "line": 70,
+            "line": 73,
             "anonymous": true
           }
         }

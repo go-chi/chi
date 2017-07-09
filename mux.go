@@ -400,20 +400,19 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the route
-	hs := mx.tree.FindRoute(rctx, routePath)
+	hs := mx.tree.FindRoute(rctx, method, routePath)
 	if hs == nil {
-		mx.NotFoundHandler().ServeHTTP(w, r)
+		if rctx.methodNotAllowed {
+			mx.MethodNotAllowedHandler().ServeHTTP(w, r)
+		} else {
+			mx.NotFoundHandler().ServeHTTP(w, r)
+		}
 		return
 	}
-
-	h, ok := hs[method]
-	if !ok {
-		mx.MethodNotAllowedHandler().ServeHTTP(w, r)
-		return
-	}
+	h, _ := hs[method]
 
 	// Serve it up
-	h.ServeHTTP(w, r)
+	h.handler.ServeHTTP(w, r)
 }
 
 // Recursively update data on child routers.
