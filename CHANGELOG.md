@@ -1,6 +1,6 @@
 # Changelog
 
-## v3.1.0 (in-development)
+## v3.1.0 (2017-07-10)
 
 - Fix a few minor issues after v3 release
 - Move `docgen` sub-pkg to https://github.com/go-chi/docgen
