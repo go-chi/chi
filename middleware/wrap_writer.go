@@ -115,7 +115,9 @@ func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	}
 	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
 	f.basicWriter.maybeWriteHeader()
-	return rf.ReadFrom(r)
+	n, err := rf.ReadFrom(r)
+	f.basicWriter.bytes += int(n)
+	return n, err
 }
 
 var _ http.CloseNotifier = &httpFancyWriter{}
