@@ -422,24 +422,3 @@ func BenchmarkTreeGet(b *testing.B) {
 		tr.FindRoute(mctx, mGET, "/ping/123/456")
 	}
 }
-
-// func BenchmarkMuxGet(b *testing.B) {
-// 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-// 	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-// 	h3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-//
-// 	mx := NewRouter()
-// 	mx.Get("/", h1)
-// 	mx.Get("/hi", h2)
-// 	mx.Get("/sup/{id}/and/{this}", h3)
-//
-// 	w := new(mockResponseWriter)
-// 	r, _ := http.NewRequest("GET", "/sup/123/and/this", nil)
-//
-// 	b.ReportAllocs()
-// 	b.ResetTimer()
-//
-// 	for i := 0; i < b.N; i++ {
-// 		mx.ServeHTTP(w, r)
-// 	}
-// }

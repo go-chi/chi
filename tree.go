@@ -353,8 +353,12 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) endpoints
 		return nil
 	}
 
+	rp := RouteParams{}
+	rp.Keys = append(rp.Keys, rctx.routeParams.Keys...)
+	rp.Values = append(rp.Values, rctx.routeParams.Values...)
+
 	// Record the routing params in the request lifecycle
-	rctx.URLParams = append(rctx.URLParams, rctx.routeParams)
+	rctx.URLParams = append(rctx.URLParams, rp)
 
 	// Record the routing pattern in the request lifecycle
 	if rn.endpoints[method].pattern != "" {

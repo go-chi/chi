@@ -207,6 +207,43 @@ func TestMuxBasic(t *testing.T) {
 	}
 }
 
+func TestMuxMounts(t *testing.T) {
+	r := NewRouter()
+
+	r.Get("/{hash}", func(w http.ResponseWriter, r *http.Request) {
+		v := URLParam(r, "hash")
+		w.Write([]byte(fmt.Sprintf("/%s", v)))
+	})
+
+	r.Route("/{hash}/share", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			v := URLParam(r, "hash")
+			w.Write([]byte(fmt.Sprintf("/%s/share", v)))
+		})
+		r.Get("/{network}", func(w http.ResponseWriter, r *http.Request) {
+			v := URLParam(r, "hash")
+			n := URLParam(r, "network")
+			w.Write([]byte(fmt.Sprintf("/%s/share/%s", v, n)))
+		})
+	})
+
+	m := NewRouter()
+	m.Mount("/sharing", r)
+
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/sharing/aBc", nil); body != "/aBc" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/sharing/aBc/share", nil); body != "/aBc/share" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/sharing/aBc/share/twitter", nil); body != "/aBc/share/twitter" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxPlain(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
@@ -1497,3 +1534,47 @@ func (tfi *testFileInfo) Mode() os.FileMode  { return 0755 }
 func (tfi *testFileInfo) ModTime() time.Time { return time.Now() }
 func (tfi *testFileInfo) IsDir() bool        { return false }
 func (tfi *testFileInfo) Sys() interface{}   { return nil }
+
+func BenchmarkMux(b *testing.B) {
+	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h4 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h5 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	h6 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	mx := NewRouter()
+	mx.Get("/", h1)
+	mx.Get("/hi", h2)
+	mx.Get("/sup/{id}/and/{this}", h3)
+
+	mx.Route("/sharing/{hash}", func(mx Router) { // subrouter-1
+		mx.Get("/", h4)
+		mx.Get("/{network}", h5)
+		mx.Route("/direct", func(mx Router) { // subrouter-2
+			mx.Get("/", h6)
+		})
+	})
+
+	routes := []string{
+		"/",
+		"/sup/123/and/this",
+		"/sharing/aBc",         // subrouter-1
+		"/sharing/aBc/twitter", // subrouter-1
+		"/sharing/aBc/direct",  // subrouter-2
+	}
+
+	for _, path := range routes {
+		b.Run("route:"+path, func(b *testing.B) {
+			w := httptest.NewRecorder()
+			r, _ := http.NewRequest("GET", path, nil)
+
+			b.ReportAllocs()
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				mx.ServeHTTP(w, r)
+			}
+		})
+	}
+}
