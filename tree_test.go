@@ -414,11 +414,13 @@ func BenchmarkTreeGet(b *testing.B) {
 	tr.InsertRoute(mGET, "/pinggggg", h2)
 	tr.InsertRoute(mGET, "/hello", h1)
 
+	mctx := NewRouteContext()
+
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		mctx := NewRouteContext()
+		mctx.reset()
 		tr.FindRoute(mctx, mGET, "/ping/123/456")
 	}
 }

@@ -25,7 +25,7 @@ type Context struct {
 
 	// URLParams are the stack of routeParams captured during the
 	// routing lifecycle across a stack of sub-routers.
-	URLParams RouteParamsStack
+	URLParams RouteParams
 
 	// The endpoint routing pattern that matched the request URI path
 	// or `RoutePath` of the current sub-router. This value will update
@@ -50,7 +50,8 @@ func NewRouteContext() *Context {
 func (x *Context) reset() {
 	x.RoutePath = ""
 	x.RoutePatterns = x.RoutePatterns[:0]
-	x.URLParams = x.URLParams[:0]
+	x.URLParams.Keys = x.URLParams.Keys[:0]
+	x.URLParams.Values = x.URLParams.Values[:0]
 
 	x.routePattern = ""
 	x.routeParams.Keys = x.routeParams.Keys[:0]
@@ -59,11 +60,9 @@ func (x *Context) reset() {
 }
 
 func (x *Context) URLParam(key string) string {
-	for s := len(x.URLParams) - 1; s >= 0; s-- {
-		for k := len(x.URLParams[s].Keys) - 1; k >= 0; k-- {
-			if x.URLParams[s].Keys[k] == key {
-				return x.URLParams[s].Values[k]
-			}
+	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
+		if x.URLParams.Keys[k] == key {
+			return x.URLParams.Values[k]
 		}
 	}
 	return ""
@@ -95,17 +94,10 @@ type RouteParams struct {
 	Keys, Values []string
 }
 
-type RouteParamsStack []RouteParams
-
-// Add will append a URL parameter to the end of the route param stack
-func (s *RouteParamsStack) Add(key, value string) {
-	x := len(*s) - 1
-	if x < 0 {
-		*s = append(*s, RouteParams{})
-		x = 0
-	}
-	(*s)[x].Keys = append((*s)[x].Keys, key)
-	(*s)[x].Values = append((*s)[x].Values, value)
+// Add will append a URL parameter to the end of the route param
+func (s *RouteParams) Add(key, value string) {
+	(*s).Keys = append((*s).Keys, key)
+	(*s).Values = append((*s).Values, value)
 }
 
 // ServerBaseContext wraps an http.Handler to set the request context to the

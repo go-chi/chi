@@ -283,12 +283,12 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	}
 
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
-	subHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
 		rctx.RoutePath = "/"
 
 		nx := len(rctx.routeParams.Keys) - 1 // index of last param in list
-		if nx >= 0 && rctx.routeParams.Keys[nx] == "*" {
+		if nx >= 0 && rctx.routeParams.Keys[nx] == "*" && len(rctx.routeParams.Values) >= nx {
 			rctx.RoutePath += rctx.routeParams.Values[nx]
 		}
 
@@ -300,7 +300,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 			mx.NotFoundHandler().ServeHTTP(w, r)
 		})
 
-		mx.handle(mALL|mSTUB, pattern, subHandler)
+		mx.handle(mALL|mSTUB, pattern, mountHandler)
 		mx.handle(mALL|mSTUB, pattern+"/", notFoundHandler)
 		pattern += "/"
 	}
@@ -310,7 +310,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	if subroutes != nil {
 		method |= mSTUB
 	}
-	n := mx.handle(method, pattern+"*", subHandler)
+	n := mx.handle(method, pattern+"*", mountHandler)
 
 	if subroutes != nil {
 		n.subroutes = subroutes
