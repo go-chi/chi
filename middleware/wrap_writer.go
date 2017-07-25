@@ -111,7 +111,9 @@ func (f *httpFancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	if f.basicWriter.tee != nil {
-		return io.Copy(&f.basicWriter, r)
+		n, err := io.Copy(&f.basicWriter, r)
+		f.basicWriter.bytes += int(n)
+		return n, err
 	}
 	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
 	f.basicWriter.maybeWriteHeader()
