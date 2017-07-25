@@ -424,3 +424,16 @@ func BenchmarkTreeGet(b *testing.B) {
 		tr.FindRoute(mctx, mGET, "/ping/123/456")
 	}
 }
+
+func TestWalker(t *testing.T) {
+	r := bigMux()
+
+	// Walk the muxBig router tree.
+	if err := Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		t.Logf("%v %v", method, route)
+
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+}
