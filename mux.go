@@ -288,7 +288,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		rctx.RoutePath = "/"
 
 		nx := len(rctx.routeParams.Keys) - 1 // index of last param in list
-		if nx >= 0 && rctx.routeParams.Keys[nx] == "*" && len(rctx.routeParams.Values) >= nx {
+		if nx >= 0 && rctx.routeParams.Keys[nx] == "*" && len(rctx.routeParams.Values) > nx {
 			rctx.RoutePath += rctx.routeParams.Values[nx]
 		}
 
