@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -66,6 +67,25 @@ func (x *Context) URLParam(key string) string {
 		}
 	}
 	return ""
+}
+
+// RoutePattern builds the routing pattern string for the particular
+// request, at the particular point during routing. This means, the value
+// will change throughout the execution of a request in a router. That is
+// why its advised to only use this value after calling the next handler.
+//
+// For example,
+//
+// func Instrument(next http.Handler) http.Handler {
+//   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//     next.ServeHTTP(w, r)
+//     routePattern := chi.RouteContext(r.Context()).RoutePattern()
+//     measure(w, r, routePattern)
+// 	 })
+// }
+func (x *Context) RoutePattern() string {
+	routePattern := strings.Join(x.RoutePatterns, "")
+	return strings.Replace(routePattern, "/*/", "/", -1)
 }
 
 // RouteContext returns chi's routing Context object from a
