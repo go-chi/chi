@@ -120,7 +120,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 
 		// We're going to be searching for a wild node next,
 		// in this case, we need to get the tail
-		var label byte = search[0]
+		var label = search[0]
 		var segTail byte
 		var segEndIdx int
 		var segTyp nodeTyp
@@ -447,11 +447,11 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				if h != nil && h.handler != nil {
 					rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 					return xn
-				} else {
-					// flag that the routing context found a route, but not a corresponding
-					// supported method
-					rctx.methodNotAllowed = true
 				}
+
+				// flag that the routing context found a route, but not a corresponding
+				// supported method
+				rctx.methodNotAllowed = true
 			}
 		}
 
@@ -649,7 +649,7 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 		}
 
 		key := pattern[ps+1 : pe]
-		pe += 1 // set end to next position
+		pe++ // set end to next position
 
 		if pe < len(pattern) {
 			tail = pattern[pe]
@@ -663,13 +663,11 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 		}
 
 		return nt, key, rexpat, tail, ps, pe
-	} else {
-		// Wildcard pattern is next
-
-		// TODO: should we panic if there is stuff after the * ???
-
-		return ntCatchAll, "*", "", 0, ws, len(pattern)
 	}
+
+	// Wildcard pattern as finale
+	// TODO: should we panic if there is stuff after the * ???
+	return ntCatchAll, "*", "", 0, ws, len(pattern)
 }
 
 func patParamKeys(pattern string) []string {
@@ -688,7 +686,6 @@ func patParamKeys(pattern string) []string {
 		paramKeys = append(paramKeys, paramKey)
 		pat = pat[e:]
 	}
-	return paramKeys
 }
 
 // longestPrefix finds the length of the shared prefix
@@ -755,6 +752,7 @@ func (ns nodes) findEdge(label byte) *node {
 	return ns[idx]
 }
 
+// Route describes the details of a routing handler.
 type Route struct {
 	Pattern   string
 	Handlers  map[string]http.Handler

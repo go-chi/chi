@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	// RouteCtxKey is the context.Context key to store the request context.
 	RouteCtxKey = &contextKey{"RouteContext"}
 )
 
@@ -60,6 +61,8 @@ func (x *Context) reset() {
 	x.methodNotAllowed = false
 }
 
+// URLParam returns the corresponding URL parameter value from the request
+// routing context.
 func (x *Context) URLParam(key string) string {
 	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
 		if x.URLParams.Keys[k] == key {
@@ -110,6 +113,7 @@ func URLParamFromCtx(ctx context.Context, key string) string {
 	return ""
 }
 
+// RouteParams is a structure to track URL routing parameters efficiently.
 type RouteParams struct {
 	Keys, Values []string
 }
@@ -122,7 +126,7 @@ func (s *RouteParams) Add(key, value string) {
 
 // ServerBaseContext wraps an http.Handler to set the request context to the
 // `baseCtx`.
-func ServerBaseContext(h http.Handler, baseCtx context.Context) http.Handler {
+func ServerBaseContext(baseCtx context.Context, h http.Handler) http.Handler {
 	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		baseCtx := baseCtx

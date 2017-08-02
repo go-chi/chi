@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.1.5
+
+- Setup golint and go vet for the project
+- As per golint, we've redefined `func ServerBaseContext(h http.Handler, baseCtx context.Context) http.Handler`
+  to `func ServerBaseContext(baseCtx context.Context, h http.Handler) http.Handler`
+
+
 ## v3.1.0 (2017-07-10)
 
 - Fix a few minor issues after v3 release

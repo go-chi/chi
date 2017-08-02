@@ -317,10 +317,13 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	}
 }
 
+// Middlewares returns a slice of middleware handler functions.
 func (mx *Mux) Middlewares() Middlewares {
 	return mx.middlewares
 }
 
+// Routes returns a slice of routing information from the tree,
+// useful for traversing available routes of a router.
 func (mx *Mux) Routes() []Route {
 	return mx.tree.routes()
 }

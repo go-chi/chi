@@ -9,6 +9,8 @@ import (
 )
 
 var (
+	// URLFormatCtxKey is the context.Context key to store the URL format data
+	// for a request.
 	URLFormatCtxKey = &contextKey{"URLFormat"}
 )
 

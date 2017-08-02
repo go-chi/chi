@@ -392,7 +392,7 @@ func stringSliceEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-	for i, _ := range a {
+	for i := range a {
 		if b[i] != a[i] {
 			return false
 		}

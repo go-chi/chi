@@ -83,7 +83,7 @@ func main() {
 		w.Write([]byte(fmt.Sprintf("all done.\n")))
 	})
 
-	srv := http.Server{Addr: ":3333", Handler: chi.ServerBaseContext(r, baseCtx)}
+	srv := http.Server{Addr: ":3333", Handler: chi.ServerBaseContext(baseCtx, r)}
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

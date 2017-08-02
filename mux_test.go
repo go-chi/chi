@@ -27,7 +27,7 @@ func TestMuxBasic(t *testing.T) {
 	usermw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "user", "peter")
+			ctx = context.WithValue(ctx, ctxKey{"user"}, "peter")
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})
@@ -35,7 +35,7 @@ func TestMuxBasic(t *testing.T) {
 
 	exmw := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "ex", "a")
+			ctx := context.WithValue(r.Context(), ctxKey{"ex"}, "a")
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})
@@ -52,7 +52,7 @@ func TestMuxBasic(t *testing.T) {
 
 	cxindex := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		user := ctx.Value("user").(string)
+		user := ctx.Value(ctxKey{"user"}).(string)
 		w.WriteHeader(200)
 		w.Write([]byte(fmt.Sprintf("hi %s", user)))
 	}
@@ -342,7 +342,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r = r.WithContext(context.WithValue(r.Context(), "mw", "mw"))
+			r = r.WithContext(context.WithValue(r.Context(), ctxKey{"mw"}, "mw"))
 			next.ServeHTTP(w, r)
 		})
 	})
@@ -353,12 +353,12 @@ func TestMuxNestedNotFound(t *testing.T) {
 
 	r.With(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			r = r.WithContext(context.WithValue(r.Context(), "with", "with"))
+			r = r.WithContext(context.WithValue(r.Context(), ctxKey{"with"}, "with"))
 			next.ServeHTTP(w, r)
 		})
 	}).NotFound(func(w http.ResponseWriter, r *http.Request) {
-		chkMw := r.Context().Value("mw").(string)
-		chkWith := r.Context().Value("with").(string)
+		chkMw := r.Context().Value(ctxKey{"mw"}).(string)
+		chkWith := r.Context().Value(ctxKey{"with"}).(string)
 		w.WriteHeader(404)
 		w.Write([]byte(fmt.Sprintf("root 404 %s %s", chkMw, chkWith)))
 	})
@@ -371,12 +371,12 @@ func TestMuxNestedNotFound(t *testing.T) {
 	sr1.Group(func(sr1 Router) {
 		sr1.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				r = r.WithContext(context.WithValue(r.Context(), "mw2", "mw2"))
+				r = r.WithContext(context.WithValue(r.Context(), ctxKey{"mw2"}, "mw2"))
 				next.ServeHTTP(w, r)
 			})
 		})
 		sr1.NotFound(func(w http.ResponseWriter, r *http.Request) {
-			chkMw2 := r.Context().Value("mw2").(string)
+			chkMw2 := r.Context().Value(ctxKey{"mw2"}).(string)
 			w.WriteHeader(404)
 			w.Write([]byte(fmt.Sprintf("sub 404 %s", chkMw2)))
 		})
@@ -537,7 +537,7 @@ func TestMuxWith(t *testing.T) {
 		cmwInit1++
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cmwHandler1++
-			r = r.WithContext(context.WithValue(r.Context(), "inline1", "yes"))
+			r = r.WithContext(context.WithValue(r.Context(), ctxKey{"inline1"}, "yes"))
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -545,7 +545,7 @@ func TestMuxWith(t *testing.T) {
 		cmwInit2++
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			cmwHandler2++
-			r = r.WithContext(context.WithValue(r.Context(), "inline2", "yes"))
+			r = r.WithContext(context.WithValue(r.Context(), ctxKey{"inline2"}, "yes"))
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -555,8 +555,8 @@ func TestMuxWith(t *testing.T) {
 		w.Write([]byte("bye"))
 	})
 	r.With(mw1).With(mw2).Get("/inline", func(w http.ResponseWriter, r *http.Request) {
-		v1 := r.Context().Value("inline1").(string)
-		v2 := r.Context().Value("inline2").(string)
+		v1 := r.Context().Value(ctxKey{"inline1"}).(string)
+		v2 := r.Context().Value(ctxKey{"inline2"}).(string)
 		w.Write([]byte(fmt.Sprintf("inline %s %s", v1, v2)))
 	})
 
@@ -600,7 +600,7 @@ func TestMuxMiddlewareStack(t *testing.T) {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctxmwHandler++
 			ctx := r.Context()
-			ctx = context.WithValue(ctx, "count.ctxmwHandler", ctxmwHandler)
+			ctx = context.WithValue(ctx, ctxKey{"count.ctxmwHandler"}, ctxmwHandler)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})
@@ -633,7 +633,7 @@ func TestMuxMiddlewareStack(t *testing.T) {
 	r.With(inCtxmw).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		handlerCount++
 		ctx := r.Context()
-		ctxmwHandlerCount := ctx.Value("count.ctxmwHandler").(uint64)
+		ctxmwHandlerCount := ctx.Value(ctxKey{"count.ctxmwHandler"}).(uint64)
 		w.Write([]byte(fmt.Sprintf("inits:%d reqs:%d ctxValue:%d", ctxmwInit, handlerCount, ctxmwHandlerCount)))
 	})
 
@@ -791,7 +791,7 @@ func bigMux() Router {
 	r = NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "requestID", "1")
+			ctx := context.WithValue(r.Context(), ctxKey{"requestID"}, "1")
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	})
@@ -803,7 +803,7 @@ func bigMux() Router {
 	r.Group(func(r Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				ctx := context.WithValue(r.Context(), "session.user", "anonymous")
+				ctx := context.WithValue(r.Context(), ctxKey{"session.user"}, "anonymous")
 				next.ServeHTTP(w, r.WithContext(ctx))
 			})
 		})
@@ -813,37 +813,37 @@ func bigMux() Router {
 		r.Get("/hubs/{hubID}/view", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			s := fmt.Sprintf("/hubs/%s/view reqid:%s session:%s", URLParam(r, "hubID"),
-				ctx.Value("requestID"), ctx.Value("session.user"))
+				ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 			w.Write([]byte(s))
 		})
 		r.Get("/hubs/{hubID}/view/*", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s session:%s", URLParamFromCtx(ctx, "hubID"),
-				URLParam(r, "*"), ctx.Value("requestID"), ctx.Value("session.user"))
+				URLParam(r, "*"), ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 			w.Write([]byte(s))
 		})
 		r.Post("/hubs/{hubSlug}/view/*", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			s := fmt.Sprintf("/hubs/%s/view/%s reqid:%s session:%s", URLParamFromCtx(ctx, "hubSlug"),
-				URLParam(r, "*"), ctx.Value("requestID"), ctx.Value("session.user"))
+				URLParam(r, "*"), ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 			w.Write([]byte(s))
 		})
 	})
 	r.Group(func(r Router) {
 		r.Use(func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				ctx := context.WithValue(r.Context(), "session.user", "elvis")
+				ctx := context.WithValue(r.Context(), ctxKey{"session.user"}, "elvis")
 				next.ServeHTTP(w, r.WithContext(ctx))
 			})
 		})
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			s := fmt.Sprintf("/ reqid:%s session:%s", ctx.Value("requestID"), ctx.Value("session.user"))
+			s := fmt.Sprintf("/ reqid:%s session:%s", ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 			w.Write([]byte(s))
 		})
 		r.Get("/suggestions", func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			s := fmt.Sprintf("/suggestions reqid:%s session:%s", ctx.Value("requestID"), ctx.Value("session.user"))
+			s := fmt.Sprintf("/suggestions reqid:%s session:%s", ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 			w.Write([]byte(s))
 		})
 
@@ -859,13 +859,13 @@ func bigMux() Router {
 				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
 					s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
-						URLParam(r, "hubID"), ctx.Value("requestID"), ctx.Value("session.user"))
+						URLParam(r, "hubID"), ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 					w.Write([]byte(s))
 				})
 				r.Get("/touch", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
 					s := fmt.Sprintf("/hubs/%s/touch reqid:%s session:%s", URLParam(r, "hubID"),
-						ctx.Value("requestID"), ctx.Value("session.user"))
+						ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 					w.Write([]byte(s))
 				})
 
@@ -873,7 +873,7 @@ func bigMux() Router {
 				sr3.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
 					s := fmt.Sprintf("/hubs/%s/webhooks reqid:%s session:%s", URLParam(r, "hubID"),
-						ctx.Value("requestID"), ctx.Value("session.user"))
+						ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 					w.Write([]byte(s))
 				})
 				sr3.Route("/{webhookID}", func(r Router) {
@@ -881,14 +881,14 @@ func bigMux() Router {
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
 						s := fmt.Sprintf("/hubs/%s/webhooks/%s reqid:%s session:%s", URLParam(r, "hubID"),
-							URLParam(r, "webhookID"), ctx.Value("requestID"), ctx.Value("session.user"))
+							URLParam(r, "webhookID"), ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 						w.Write([]byte(s))
 					})
 				})
 
 				r.Mount("/webhooks", Chain(func(next http.Handler) http.Handler {
 					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "hook", true)))
+						next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKey{"hook"}, true)))
 					})
 				}).Handler(sr3))
 
@@ -897,7 +897,7 @@ func bigMux() Router {
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
 						s := fmt.Sprintf("/hubs/%s/posts reqid:%s session:%s", URLParam(r, "hubID"),
-							ctx.Value("requestID"), ctx.Value("session.user"))
+							ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 						w.Write([]byte(s))
 					})
 				})
@@ -909,13 +909,13 @@ func bigMux() Router {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 				s := fmt.Sprintf("/folders/ reqid:%s session:%s",
-					ctx.Value("requestID"), ctx.Value("session.user"))
+					ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 				w.Write([]byte(s))
 			})
 			r.Get("/public", func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 				s := fmt.Sprintf("/folders/public reqid:%s session:%s",
-					ctx.Value("requestID"), ctx.Value("session.user"))
+					ctx.Value(ctxKey{"requestID"}), ctx.Value(ctxKey{"session.user"}))
 				w.Write([]byte(s))
 			})
 		})
@@ -1165,11 +1165,11 @@ func TestSingleHandler(t *testing.T) {
 func TestServeHTTPExistingContext(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
-		s, _ := r.Context().Value("testCtx").(string)
+		s, _ := r.Context().Value(ctxKey{"testCtx"}).(string)
 		w.Write([]byte(s))
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		s, _ := r.Context().Value("testCtx").(string)
+		s, _ := r.Context().Value(ctxKey{"testCtx"}).(string)
 		w.WriteHeader(404)
 		w.Write([]byte(s))
 	})
@@ -1184,14 +1184,14 @@ func TestServeHTTPExistingContext(t *testing.T) {
 		{
 			Method:         "GET",
 			Path:           "/hi",
-			Ctx:            context.WithValue(context.Background(), "testCtx", "hi ctx"),
+			Ctx:            context.WithValue(context.Background(), ctxKey{"testCtx"}, "hi ctx"),
 			ExpectedStatus: 200,
 			ExpectedBody:   "hi ctx",
 		},
 		{
 			Method:         "GET",
 			Path:           "/hello",
-			Ctx:            context.WithValue(context.Background(), "testCtx", "nothing here ctx"),
+			Ctx:            context.WithValue(context.Background(), ctxKey{"testCtx"}, "nothing here ctx"),
 			ExpectedStatus: 404,
 			ExpectedBody:   "nothing here ctx",
 		},
@@ -1220,16 +1220,16 @@ func TestServeHTTPExistingContext(t *testing.T) {
 
 func TestNestedGroups(t *testing.T) {
 	handlerPrintCounter := func(w http.ResponseWriter, r *http.Request) {
-		counter, _ := r.Context().Value("counter").(int)
+		counter, _ := r.Context().Value(ctxKey{"counter"}).(int)
 		w.Write([]byte(fmt.Sprintf("%v", counter)))
 	}
 
 	mwIncreaseCounter := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			counter, _ := ctx.Value("counter").(int)
+			counter, _ := ctx.Value(ctxKey{"counter"}).(int)
 			counter++
-			ctx = context.WithValue(ctx, "counter", counter)
+			ctx = context.WithValue(ctx, ctxKey{"counter"}, counter)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -1341,8 +1341,8 @@ func TestMountingSimilarPattern(t *testing.T) {
 func TestMuxMissingParams(t *testing.T) {
 	r := NewRouter()
 	r.Get(`/user/{userId:\d+}`, func(w http.ResponseWriter, r *http.Request) {
-		userId := URLParam(r, "userId")
-		w.Write([]byte(fmt.Sprintf("userId = '%s'", userId)))
+		userID := URLParam(r, "userId")
+		w.Write([]byte(fmt.Sprintf("userId = '%s'", userID)))
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
@@ -1438,7 +1438,7 @@ func TestEscapedURLParams(t *testing.T) {
 func TestServerBaseContext(t *testing.T) {
 	r := NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		baseYes := r.Context().Value("base").(string)
+		baseYes := r.Context().Value(ctxKey{"base"}).(string)
 		if _, ok := r.Context().Value(http.ServerContextKey).(*http.Server); !ok {
 			panic("missing server context")
 		}
@@ -1449,8 +1449,8 @@ func TestServerBaseContext(t *testing.T) {
 	})
 
 	// Setup http Server with a base context
-	ctx := context.WithValue(context.Background(), "base", "yes")
-	ts := httptest.NewServer(ServerBaseContext(r, ctx))
+	ctx := context.WithValue(context.Background(), ctxKey{"base"}, "yes")
+	ts := httptest.NewServer(ServerBaseContext(ctx, r))
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "yes" {
@@ -1534,6 +1534,14 @@ func (tfi *testFileInfo) Mode() os.FileMode  { return 0755 }
 func (tfi *testFileInfo) ModTime() time.Time { return time.Now() }
 func (tfi *testFileInfo) IsDir() bool        { return false }
 func (tfi *testFileInfo) Sys() interface{}   { return nil }
+
+type ctxKey struct {
+	name string
+}
+
+func (k ctxKey) String() string {
+	return "context value " + k.name
+}
 
 func BenchmarkMux(b *testing.B) {
 	h1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
