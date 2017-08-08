@@ -126,7 +126,7 @@ func TestMuxBasic(t *testing.T) {
 	}
 	tlogmsg, _ := logbuf.ReadString(0)
 	if tlogmsg != logmsg {
-		t.Error("expecting log message from middlware:", logmsg)
+		t.Error("expecting log message from middleware:", logmsg)
 	}
 
 	// GET /ping
