@@ -310,32 +310,39 @@ chi comes equipped with an optional `middleware` package, providing a suite of s
 `net/http` middlewares. Please note, any middleware in the ecosystem that is also compatible
 with `net/http` can be used with chi's mux.
 
-----------------------------------------------------------------------------------------------------------
-| Middleware           | Description                                                                     |
-|:---------------------|:---------------------------------------------------------------------------------
-| RequestID            | Injects a request ID into the context of each request.                          |
-| RealIP               | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP.        |
-| Logger               | Logs the start and end of each request with the elapsed processing time.        |
-| Recoverer            | Gracefully absorb panics and prints the stack trace.                            |
-| NoCache              | Sets response headers to prevent clients from caching.                          |
-| Timeout              | Signals to the request context when the timeout deadline is reached.            |
-| Throttle             | Puts a ceiling on the number of concurrent requests.                            |
-| Compress             | Gzip compression for clients that accept compressed responses.                  |
-| Profiler             | Easily attach net/http/pprof to your routers.                                   |
-| StripSlashes         | Strip slashes on routing paths.                                                 |
-| RedirectSlashes      | Redirect slashes on routing paths.                                              |
-| WithValue            | Short-hand middleware to set a key/value on the request context.                |
-| Heartbeat            | Monitoring endpoint to check the servers pulse.                                 |
-----------------------------------------------------------------------------------------------------------
+### Core middlewares
 
-Other cool community net/http middlewares:
+-----------------------------------------------------------------------------------------------------------
+| chi/middlware Handler | description                                                                     |
+|:----------------------|:---------------------------------------------------------------------------------
+| Compress              | Gzip compression for clients that accept compressed responses                   |
+| Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
+| Logger                | Logs the start and end of each request with the elapsed processing time         |
+| NoCache               | Sets response headers to prevent clients from caching                           |
+| Profiler              | Easily attach net/http/pprof to your routers                                    |
+| RealIP                | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP         |
+| Recoverer             | Gracefully absorb panics and prints the stack trace                             |
+| RequestID             | Injects a request ID into the context of each request                           |
+| RedirectSlashes       | Redirect slashes on routing paths                                               |
+| StripSlashes          | Strip slashes on routing paths                                                  |
+| Throttle              | Puts a ceiling on the number of concurrent requests                             |
+| Timeout               | Signals to the request context when the timeout deadline is reached             |
+| URLFormat             | Parse extension from url and put it on request context                          |
+| WithValue             | Short-hand middleware to set a key/value on the request context                 |
+-----------------------------------------------------------------------------------------------------------
 
-* [jwtauth](https://github.com/goware/jwtauth) - JWT authenticator
-* [cors](https://github.com/goware/cors) - CORS middleware
-* [httpcoala](https://github.com/goware/httpcoala) - Request coalescer
-* [chi-authz](https://github.com/casbin/chi-authz) - Authorization middleware built on https://github.com/hsluoyz/casbin
+### Auxiliary middlewares
 
-please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi middleware
+-----------------------------------------------------------------------------------------------------------
+| package                                          | description                                          |
+|:-------------------------------------------------|:------------------------------------------------------
+| [cors](https://github.com/go-chi/cors)           | Cross-origin resource sharing (CORS)                 |
+| [jwtauth](https://github.com/go-chi/jwtauth)     | JWT authentication                                   |
+| [httpcoala](https://github.com/go-chi/httpcoala) | HTTP request coalescer                               |
+| [chi-authz](https://github.com/casbin/chi-authz) | Request ACL via https://github.com/hsluoyz/casbin    | 
+-----------------------------------------------------------------------------------------------------------
+
+please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware
 
 
 ## context?
