@@ -643,8 +643,22 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 	if ps >= 0 {
 		// Param/Regexp pattern is next
 		nt := ntParam
-		pe := strings.Index(pattern, "}")
-		if pe < 0 {
+
+		// Read to closing } taking into account opens and closes in curl count (cc)
+		cc := 0
+		pe := ps
+		for i, c := range pattern[ps:] {
+			if c == '{' {
+				cc++
+			} else if c == '}' {
+				cc--
+				if cc == 0 {
+					pe = ps + i
+					break
+				}
+			}
+		}
+		if pe == ps {
 			panic("chi: route param closing delimiter '}' is missing")
 		}
 
