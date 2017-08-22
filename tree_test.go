@@ -129,7 +129,7 @@ func TestTree(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		handlers := tr.FindRoute(rctx, mGET, tt.r)
+		handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
 		if methodHandler, ok := handlers[mGET]; ok {
@@ -245,7 +245,7 @@ func TestTreeMoar(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		handlers := tr.FindRoute(rctx, tt.m, tt.r)
+		handlers, _ := tr.FindRoute(rctx, tt.m, tt.r)
 
 		var handler http.Handler
 		if methodHandler, ok := handlers[tt.m]; ok {
@@ -311,7 +311,7 @@ func TestTreeRegexp(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		handlers := tr.FindRoute(rctx, mGET, tt.r)
+		handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
 		if methodHandler, ok := handlers[mGET]; ok {

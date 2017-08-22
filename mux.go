@@ -403,15 +403,15 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the route
-	if hs := mx.tree.FindRoute(rctx, method, routePath); hs != nil {
-		hs[method].handler.ServeHTTP(w, r)
+	if _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
+		h.ServeHTTP(w, r)
 		return
 	}
 	if method == mHEAD {
 		// Try again with GET for HEAD
 		method = mGET
-		if hs := mx.tree.FindRoute(rctx, method, routePath); hs != nil {
-			hs[method].handler.ServeHTTP(w, r)
+		if _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
+			h.ServeHTTP(w, r)
 			return
 		}
 	}

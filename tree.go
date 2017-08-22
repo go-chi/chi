@@ -341,7 +341,7 @@ func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern strin
 	}
 }
 
-func (n *node) FindRoute(rctx *Context, method methodTyp, path string) endpoints {
+func (n *node) FindRoute(rctx *Context, method methodTyp, path string) (endpoints, http.Handler) {
 	// Reset the context routing pattern and params
 	rctx.routePattern = ""
 	rctx.routeParams.Keys = rctx.routeParams.Keys[:0]
@@ -350,7 +350,7 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) endpoints
 	// Find the routing handlers for the path
 	rn := n.findRoute(rctx, method, path)
 	if rn == nil {
-		return nil
+		return nil, nil
 	}
 
 	// Record the routing params in the request lifecycle
@@ -363,7 +363,7 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) endpoints
 		rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.routePattern)
 	}
 
-	return rn.endpoints
+	return rn.endpoints, rn.endpoints[method].handler
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
