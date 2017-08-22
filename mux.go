@@ -403,27 +403,24 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the route
-	var h http.Handler
-	for {
-		hs := mx.tree.FindRoute(rctx, method, routePath)
-		if hs != nil {
-			h = hs[method].handler
-			break
-		}
-		if method == mHEAD {
-			method = mGET
-			continue
-		}
-		if rctx.methodNotAllowed {
-			mx.MethodNotAllowedHandler().ServeHTTP(w, r)
-		} else {
-			mx.NotFoundHandler().ServeHTTP(w, r)
-		}
+	if hs := mx.tree.FindRoute(rctx, method, routePath); hs != nil {
+		hs[method].handler.ServeHTTP(w, r)
 		return
 	}
+	if method == mHEAD {
+		// Try again with GET for HEAD
+		method = mGET
+		if hs := mx.tree.FindRoute(rctx, method, routePath); hs != nil {
+			hs[method].handler.ServeHTTP(w, r)
+			return
+		}
+	}
 
-	// Serve it up
-	h.ServeHTTP(w, r)
+	if rctx.methodNotAllowed {
+		mx.MethodNotAllowedHandler().ServeHTTP(w, r)
+	} else {
+		mx.NotFoundHandler().ServeHTTP(w, r)
+	}
 }
 
 // Recursively update data on child routers.
