@@ -423,7 +423,7 @@ func BenchmarkTreeGet(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		mctx.reset()
+		mctx.Reset()
 		tr.FindRoute(mctx, mGET, "/ping/123/456")
 	}
 }

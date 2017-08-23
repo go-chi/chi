@@ -75,7 +75,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Once the request is finished, reset the routing context and put it back
 	// into the pool for reuse from another request.
 	rctx = mx.pool.Get().(*Context)
-	rctx.reset()
+	rctx.Reset()
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
 	mx.handler.ServeHTTP(w, r)
 	mx.pool.Put(rctx)
@@ -317,15 +317,30 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	}
 }
 
+// Routes returns a slice of routing information from the tree,
+// useful for traversing available routes of a router.
+func (mx *Mux) Routes() []Route {
+	return mx.tree.routes()
+}
+
 // Middlewares returns a slice of middleware handler functions.
 func (mx *Mux) Middlewares() Middlewares {
 	return mx.middlewares
 }
 
-// Routes returns a slice of routing information from the tree,
-// useful for traversing available routes of a router.
-func (mx *Mux) Routes() []Route {
-	return mx.tree.routes()
+// FindHandler searches the routing tree for a handler that matches
+// the method/path - similar to routing a http request, but without
+// executing the handler automatically.
+//
+// Note: the *Context state is updated during execution, so manage
+// the state carefully or make a NewRouteContext().
+func (mx *Mux) FindHandler(rctx *Context, method, path string) http.Handler {
+	m, ok := methodMap[method]
+	if !ok {
+		return nil
+	}
+	_, h := mx.tree.FindRoute(rctx, m, path)
+	return h
 }
 
 // NotFoundHandler returns the default Mux 404 responder whenever a route
@@ -396,7 +411,10 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if method is supported by chi
-	method, ok := methodMap[r.Method]
+	if rctx.RouteMethod == "" {
+		rctx.RouteMethod = r.Method
+	}
+	method, ok := methodMap[rctx.RouteMethod]
 	if !ok {
 		mx.MethodNotAllowedHandler().ServeHTTP(w, r)
 		return
@@ -407,15 +425,6 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 		return
 	}
-	if method == mHEAD {
-		// Try again with GET for HEAD
-		method = mGET
-		if _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
-			h.ServeHTTP(w, r)
-			return
-		}
-	}
-
 	if rctx.methodNotAllowed {
 		mx.MethodNotAllowedHandler().ServeHTTP(w, r)
 	} else {

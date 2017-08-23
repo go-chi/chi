@@ -316,6 +316,7 @@ with `net/http` can be used with chi's mux.
 | chi/middlware Handler | description                                                                     |
 |:----------------------|:---------------------------------------------------------------------------------
 | Compress              | Gzip compression for clients that accept compressed responses                   |
+| HeadGet               | Automatically route undefined HEAD requests to GET handlers                     |
 | Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
 | Logger                | Logs the start and end of each request with the elapsed processing time         |
 | NoCache               | Sets response headers to prevent clients from caching                           |

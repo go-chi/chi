@@ -114,25 +114,25 @@ func TestRedirectSlashes(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if status, resp := testRequest(t, ts, "GET", "/", nil); resp != "root" && status != 200 {
+	if req, resp := testRequest(t, ts, "GET", "/", nil); resp != "root" && req.StatusCode != 200 {
 		t.Fatalf(resp)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if status, resp := testRequest(t, ts, "GET", "//", nil); resp != "root" && status != 200 {
+	if req, resp := testRequest(t, ts, "GET", "//", nil); resp != "root" && req.StatusCode != 200 {
 		t.Fatalf(resp)
 	}
 
-	if status, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" && status != 200 {
+	if req, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" && req.StatusCode != 200 {
 		t.Fatalf(resp)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if status, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" && status != 200 {
+	if req, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" && req.StatusCode != 200 {
 		t.Fatalf(resp)
 	}
 
-	if status, resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" && status != 200 {
+	if req, resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" && req.StatusCode != 200 {
 		t.Fatalf(resp)
 	}
 }
