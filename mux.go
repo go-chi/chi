@@ -19,6 +19,9 @@ var _ Router = &Mux{}
 // particularly useful for writing large REST API services that break a handler
 // into many smaller parts composed of middlewares and end handlers.
 type Mux struct {
+	// Config ...
+	Config Config
+
 	// The radix trie router
 	tree *node
 
@@ -44,10 +47,17 @@ type Mux struct {
 	methodNotAllowedHandler http.HandlerFunc
 }
 
+type Config struct {
+	AutoHeadGet bool
+}
+
 // NewMux returns a newly initialized Mux object that implements the Router
 // interface.
-func NewMux() *Mux {
+func NewMux(config ...Config) *Mux {
 	mux := &Mux{tree: &node{}}
+	if len(config) > 0 {
+		mux.Config = config[0]
+	}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext()
 	}
@@ -251,7 +261,7 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 // along the `pattern` as a subrouter. Effectively, this is a short-hand
 // call to Mount. See _examples/.
 func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
-	subRouter := NewRouter()
+	subRouter := NewRouter(mx.Config)
 	if fn != nil {
 		fn(subRouter)
 	}
@@ -407,12 +417,14 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 		return
 	}
-	if method == mHEAD {
-		// Try again with GET for HEAD
-		method = mGET
-		if _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
-			h.ServeHTTP(w, r)
-			return
+	if mx.Config.AutoHeadGet {
+		if method == mHEAD {
+			// Try again with GET for HEAD
+			method = mGET
+			if _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
+				h.ServeHTTP(w, r)
+				return
+			}
 		}
 	}
 

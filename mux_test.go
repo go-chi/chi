@@ -716,7 +716,10 @@ func TestMuxRouteGroups(t *testing.T) {
 }
 
 func TestMuxHeadGet(t *testing.T) {
-	r := NewRouter()
+	r := NewRouter(Config{
+		AutoHeadGet: true,
+	})
+
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Test", "yes")
 		w.Write([]byte("bye"))
