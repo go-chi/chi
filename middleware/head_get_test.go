@@ -10,7 +10,7 @@ import (
 
 func TestHeadGet(t *testing.T) {
 	r := chi.NewRouter()
-	r.Use(HeadGet(r))
+	r.Use(HeadGet)
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Test", "yes")
 		w.Write([]byte("bye"))

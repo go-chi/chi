@@ -76,6 +76,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// into the pool for reuse from another request.
 	rctx = mx.pool.Get().(*Context)
 	rctx.Reset()
+	rctx.Routes = mx
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
 	mx.handler.ServeHTTP(w, r)
 	mx.pool.Put(rctx)
