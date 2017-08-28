@@ -97,10 +97,10 @@ type Routes interface {
 	// Middlewares returns the list of middlewares in use by the router.
 	Middlewares() Middlewares
 
-	// FindHandler searches the routing tree for a handler that matches
+	// Find searches the routing tree for a handler that matches
 	// the method/path - similar to routing a http request, but without
-	// executing the handler automatically.
-	FindHandler(rctx *Context, method, path string) http.Handler
+	// executing the handler thereafter.
+	Find(rctx *Context, method, path string) http.Handler
 }
 
 // Middlewares type is a slice of standard middleware handlers with methods

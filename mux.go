@@ -329,13 +329,13 @@ func (mx *Mux) Middlewares() Middlewares {
 	return mx.middlewares
 }
 
-// FindHandler searches the routing tree for a handler that matches
-// the method/path - similar to routing a http request, but without
-// executing the handler automatically.
+// Find searches the routing tree for a handler that matches the method/path.
+// It's similar to routing a http request, but without executing the handler
+// thereafter.
 //
 // Note: the *Context state is updated during execution, so manage
 // the state carefully or make a NewRouteContext().
-func (mx *Mux) FindHandler(rctx *Context, method, path string) http.Handler {
+func (mx *Mux) Find(rctx *Context, method, path string) http.Handler {
 	m, ok := methodMap[method]
 	if !ok {
 		return nil
