@@ -74,9 +74,14 @@ func WithLogEntry(r *http.Request, entry LogEntry) *http.Request {
 	return r
 }
 
+// LoggerInterface accepts printing to stdlib logger or compatible logger.
+type LoggerInterface interface {
+	Print(v ...interface{})
+}
+
 // DefaultLogFormatter is a simple logger that implements a LogFormatter.
 type DefaultLogFormatter struct {
-	Logger *log.Logger
+	Logger LoggerInterface
 }
 
 // NewLogEntry creates a new LogEntry for the request.
