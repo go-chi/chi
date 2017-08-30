@@ -24,7 +24,7 @@ included some useful/optional subpackages: [middleware](/middleware), [render](h
 
 ## Features
 
-* **Lightweight** - cloc'd in <1000 LOC for the chi router
+* **Lightweight** - cloc'd in ~1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
 * **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
