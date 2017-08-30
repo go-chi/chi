@@ -286,13 +286,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
-		rctx.RoutePath = "/"
-
-		nx := len(rctx.routeParams.Keys) - 1 // index of last param in list
-		if nx >= 0 && rctx.routeParams.Keys[nx] == "*" && len(rctx.routeParams.Values) > nx {
-			rctx.RoutePath += rctx.routeParams.Values[nx]
-		}
-
+		rctx.RoutePath = mx.nextRoutePath(rctx)
 		handler.ServeHTTP(w, r)
 	})
 
@@ -340,7 +334,14 @@ func (mx *Mux) Find(rctx *Context, method, path string) http.Handler {
 	if !ok {
 		return nil
 	}
-	_, h := mx.tree.FindRoute(rctx, m, path)
+
+	node, _, h := mx.tree.FindRoute(rctx, m, path)
+
+	if node != nil && node.subroutes != nil {
+		rctx.RoutePath = mx.nextRoutePath(rctx)
+		return node.subroutes.Find(rctx, rctx.RouteMethod, rctx.RoutePath)
+	}
+
 	return h
 }
 
@@ -422,7 +423,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the route
-	if _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
+	if _, _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
 		h.ServeHTTP(w, r)
 		return
 	}
@@ -431,6 +432,15 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		mx.NotFoundHandler().ServeHTTP(w, r)
 	}
+}
+
+func (mx *Mux) nextRoutePath(rctx *Context) string {
+	routePath := "/"
+	nx := len(rctx.routeParams.Keys) - 1 // index of last param in list
+	if nx >= 0 && rctx.routeParams.Keys[nx] == "*" && len(rctx.routeParams.Values) > nx {
+		routePath += rctx.routeParams.Values[nx]
+	}
+	return routePath
 }
 
 // Recursively update data on child routers.

@@ -8,9 +8,9 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func TestHeadGet(t *testing.T) {
+func TestGetHead(t *testing.T) {
 	r := chi.NewRouter()
-	r.Use(HeadGet)
+	r.Use(GetHead)
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Test", "yes")
 		w.Write([]byte("bye"))
@@ -63,5 +63,4 @@ func TestHeadGet(t *testing.T) {
 	if req, body := testRequest(t, ts, "HEAD", "/users/1", nil); body != "" || req.Header.Get("X-User") != "-" {
 		t.Fatalf("expecting X-User header '-' but got '%s'", req.Header.Get("X-User"))
 	}
-
 }
