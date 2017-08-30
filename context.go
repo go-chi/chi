@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -72,6 +73,21 @@ func (x *Context) URLParam(key string) string {
 	return ""
 }
 
+// URLParamInt64 returns the corresponding URL parameter value from the request
+// routing context.
+func (x *Context) URLParamInt64(key string) int64 {
+	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
+		if x.URLParams.Keys[k] == key {
+			num, err := strconv.ParseInt(x.URLParams.Values[k], 10, 64)
+			if err != nil {
+				return 0
+			}
+			return num
+		}
+	}
+	return 0
+}
+
 // RoutePattern builds the routing pattern string for the particular
 // request, at the particular point during routing. This means, the value
 // will change throughout the execution of a request in a router. That is
@@ -105,12 +121,28 @@ func URLParam(r *http.Request, key string) string {
 	return ""
 }
 
+// URLParamInt64 returns the url parameter from a http.Request object.
+func URLParamInt64(r *http.Request, key string) int64 {
+	if rctx := RouteContext(r.Context()); rctx != nil {
+		return rctx.URLParamInt64(key)
+	}
+	return 0
+}
+
 // URLParamFromCtx returns the url parameter from a http.Request Context.
 func URLParamFromCtx(ctx context.Context, key string) string {
 	if rctx := RouteContext(ctx); rctx != nil {
 		return rctx.URLParam(key)
 	}
 	return ""
+}
+
+// URLParamInt64FromCtx returns the url parameter from a http.Request Context.
+func URLParamInt64FromCtx(ctx context.Context, key string) int64 {
+	if rctx := RouteContext(ctx); rctx != nil {
+		return rctx.URLParamInt64(key)
+	}
+	return 0
 }
 
 // RouteParams is a structure to track URL routing parameters efficiently.
