@@ -514,7 +514,7 @@ func (n *node) isLeaf() bool {
 	return n.endpoints != nil
 }
 
-func (n *node) matchPattern(pattern string) bool {
+func (n *node) findPattern(pattern string) bool {
 	nn := n
 	for _, nds := range nn.children {
 		if len(nds) == 0 {
@@ -551,7 +551,7 @@ func (n *node) matchPattern(pattern string) bool {
 			return true
 		}
 
-		return n.matchPattern(xpattern)
+		return n.findPattern(xpattern)
 	}
 	return false
 }

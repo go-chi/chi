@@ -333,7 +333,7 @@ func TestTreeRegexp(t *testing.T) {
 	}
 }
 
-func TestTreeMatchPattern(t *testing.T) {
+func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -343,22 +343,22 @@ func TestTreeMatchPattern(t *testing.T) {
 	tr.InsertRoute(mGET, "/articles/{id}/*", hStub2)
 	tr.InsertRoute(mGET, "/articles/{slug}/{uid}/*", hStub3)
 
-	if tr.matchPattern("/pages") != false {
+	if tr.findPattern("/pages") != false {
 		t.Errorf("find /pages failed")
 	}
-	if tr.matchPattern("/pages*") != false {
+	if tr.findPattern("/pages*") != false {
 		t.Errorf("find /pages* failed - should be nil")
 	}
-	if tr.matchPattern("/pages/*") == false {
+	if tr.findPattern("/pages/*") == false {
 		t.Errorf("find /pages/* failed")
 	}
-	if tr.matchPattern("/articles/{id}/*") == false {
+	if tr.findPattern("/articles/{id}/*") == false {
 		t.Errorf("find /articles/{id}/* failed")
 	}
-	if tr.matchPattern("/articles/{something}/*") == false {
+	if tr.findPattern("/articles/{something}/*") == false {
 		t.Errorf("find /articles/{something}/* failed")
 	}
-	if tr.matchPattern("/articles/{slug}/{uid}/*") == false {
+	if tr.findPattern("/articles/{slug}/{uid}/*") == false {
 		t.Errorf("find /articles/{slug}/{uid}/* failed")
 	}
 }

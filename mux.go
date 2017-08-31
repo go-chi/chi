@@ -270,7 +270,7 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	// Provide runtime safety for ensuring a pattern isn't mounted on an existing
 	// routing pattern.
-	if mx.tree.matchPattern(pattern+"*") || mx.tree.matchPattern(pattern+"/*") {
+	if mx.tree.findPattern(pattern+"*") || mx.tree.findPattern(pattern+"/*") {
 		panic(fmt.Sprintf("chi: attempting to Mount() a handler on an existing path, '%s'", pattern))
 	}
 
@@ -323,26 +323,26 @@ func (mx *Mux) Middlewares() Middlewares {
 	return mx.middlewares
 }
 
-// Find searches the routing tree for a handler that matches the method/path.
+// Match searches the routing tree for a handler that matches the method/path.
 // It's similar to routing a http request, but without executing the handler
 // thereafter.
 //
 // Note: the *Context state is updated during execution, so manage
 // the state carefully or make a NewRouteContext().
-func (mx *Mux) Find(rctx *Context, method, path string) http.Handler {
+func (mx *Mux) Match(rctx *Context, method, path string) bool {
 	m, ok := methodMap[method]
 	if !ok {
-		return nil
+		return false
 	}
 
 	node, _, h := mx.tree.FindRoute(rctx, m, path)
 
 	if node != nil && node.subroutes != nil {
 		rctx.RoutePath = mx.nextRoutePath(rctx)
-		return node.subroutes.Find(rctx, rctx.RouteMethod, rctx.RoutePath)
+		return node.subroutes.Match(rctx, method, rctx.RoutePath)
 	}
 
-	return h
+	return h != nil
 }
 
 // NotFoundHandler returns the default Mux 404 responder whenever a route

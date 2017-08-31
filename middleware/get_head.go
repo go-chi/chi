@@ -24,8 +24,7 @@ func GetHead(next http.Handler) http.Handler {
 			tctx.RouteMethod = "HEAD"
 			tctx.RoutePath = routePath
 
-			h := rctx.Routes.Find(tctx, tctx.RouteMethod, tctx.RoutePath)
-			if h == nil {
+			if !rctx.Routes.Match(tctx, tctx.RouteMethod, tctx.RoutePath) {
 				rctx.RouteMethod = "GET"
 				next.ServeHTTP(w, r)
 				return
