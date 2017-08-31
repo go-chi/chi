@@ -21,11 +21,13 @@ func GetHead(next http.Handler) http.Handler {
 
 			// Temporary routing context to look-ahead before routing the request
 			tctx := chi.NewRouteContext()
-			tctx.RouteMethod = "HEAD"
-			tctx.RoutePath = routePath
 
-			if !rctx.Routes.Match(tctx, tctx.RouteMethod, tctx.RoutePath) {
+			// Attempt to find a HEAD handler for the routing path, if not found, traverse
+			// the router as through its a GET route, but proceed with the request
+			// with the HEAD method.
+			if !rctx.Routes.Match(tctx, "HEAD", routePath) {
 				rctx.RouteMethod = "GET"
+				rctx.RoutePath = routePath
 				next.ServeHTTP(w, r)
 				return
 			}
