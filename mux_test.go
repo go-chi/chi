@@ -712,32 +712,6 @@ func TestMuxRouteGroups(t *testing.T) {
 	if stdmwInit2 != 1 || stdmwHandler2 != 1 {
 		t.Fatalf("stdmw2 counters failed, should be 1:1, got %d:%d", stdmwInit2, stdmwHandler2)
 	}
-
-}
-
-func TestMuxHeadGet(t *testing.T) {
-	r := NewRouter()
-	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Test", "yes")
-		w.Write([]byte("bye"))
-	})
-
-	ts := httptest.NewServer(r)
-	defer ts.Close()
-
-	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
-	}
-	if req, body := testRequest(t, ts, "HEAD", "/hi", nil); body != "" || req.Header.Get("X-Test") != "yes" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/", nil); body != "404 page not found\n" {
-		t.Fatalf(body)
-	}
-	if req, body := testRequest(t, ts, "HEAD", "/", nil); body != "" || req.StatusCode != 404 {
-		t.Fatalf(body)
-	}
-
 }
 
 func TestMuxBig(t *testing.T) {
@@ -1457,6 +1431,44 @@ func TestEscapedURLParams(t *testing.T) {
 
 	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
 		t.Fatalf(body)
+	}
+}
+
+func TestMuxMatch(t *testing.T) {
+	r := NewRouter()
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Test", "yes")
+		w.Write([]byte("bye"))
+	})
+	r.Route("/articles", func(r Router) {
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			id := URLParam(r, "id")
+			w.Header().Set("X-Article", id)
+			w.Write([]byte("article:" + id))
+		})
+	})
+	r.Route("/users", func(r Router) {
+		r.Head("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-User", "-")
+			w.Write([]byte("user"))
+		})
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			id := URLParam(r, "id")
+			w.Header().Set("X-User", id)
+			w.Write([]byte("user:" + id))
+		})
+	})
+
+	tctx := NewRouteContext()
+
+	tctx.Reset()
+	if r.Match(tctx, "GET", "/users/1") == false {
+		t.Fatal("expecting to find match for route:", "GET", "/users/1")
+	}
+
+	tctx.Reset()
+	if r.Match(tctx, "HEAD", "/articles/10") == true {
+		t.Fatal("not expecting to find match for route:", "HEAD", "/articles/10")
 	}
 }
 

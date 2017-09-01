@@ -24,7 +24,7 @@ included some useful/optional subpackages: [middleware](/middleware), [render](h
 
 ## Features
 
-* **Lightweight** - cloc'd in <1000 LOC for the chi router
+* **Lightweight** - cloc'd in ~1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
 * **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
@@ -316,6 +316,7 @@ with `net/http` can be used with chi's mux.
 | chi/middlware Handler | description                                                                     |
 |:----------------------|:---------------------------------------------------------------------------------
 | Compress              | Gzip compression for clients that accept compressed responses                   |
+| GetHead               | Automatically route undefined HEAD requests to GET handlers                     |
 | Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
 | Logger                | Logs the start and end of each request with the elapsed processing time         |
 | NoCache               | Sets response headers to prevent clients from caching                           |
@@ -362,26 +363,28 @@ and..
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 
-Comparison with other routers (as of June 21, 2017): https://gist.github.com/pkieltyka/c089f309abeb179cfc4deaa519956d8c
+Results as of Aug 31, 2017 on Go 1.9.0
 
 ```shell
-BenchmarkChi_Param        	 3000000	       427 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Param5       	 2000000	       631 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Param20      	 1000000	      1343 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParamWrite   	 3000000	       477 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubStatic 	 3000000	       452 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubParam  	 2000000	       616 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GithubAll    	   10000	    130637 ns/op	   61716 B/op	     406 allocs/op
-BenchmarkChi_GPlusStatic  	 3000000	       415 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlusParam   	 3000000	       465 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlus2Params 	 3000000	       548 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_GPlusAll     	  200000	      6895 ns/op	    3952 B/op	      26 allocs/op
-BenchmarkChi_ParseStatic  	 3000000	       407 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParseParam   	 3000000	       451 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_Parse2Params 	 3000000	       504 ns/op	     304 B/op	       2 allocs/op
-BenchmarkChi_ParseAll     	  100000	     13221 ns/op	    7904 B/op	      52 allocs/op
-BenchmarkChi_StaticAll    	   20000	     84327 ns/op	   47731 B/op	     314 allocs/op
+BenchmarkChi_Param        	 3000000	       607 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_Param5       	 2000000	       935 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_Param20      	 1000000	      1944 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_ParamWrite   	 2000000	       664 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_GithubStatic 	 2000000	       627 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_GithubParam  	 2000000	       847 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_GithubAll    	   10000	    175556 ns/op	   87700 B/op	     609 allocs/op
+BenchmarkChi_GPlusStatic  	 3000000	       566 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_GPlusParam   	 2000000	       652 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_GPlus2Params 	 2000000	       767 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_GPlusAll     	  200000	      9794 ns/op	    5616 B/op	      39 allocs/op
+BenchmarkChi_ParseStatic  	 3000000	       590 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_ParseParam   	 2000000	       656 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_Parse2Params 	 2000000	       715 ns/op	     432 B/op	       3 allocs/op
+BenchmarkChi_ParseAll     	  100000	     18045 ns/op	   11232 B/op	      78 allocs/op
+BenchmarkChi_StaticAll    	   10000	    108871 ns/op	   67827 B/op	     471 allocs/op
 ```
+
+Comparison with other routers: https://gist.github.com/pkieltyka/c089f309abeb179cfc4deaa519956d8c
 
 NOTE: the allocs in the benchmark above are from the calls to http.Request's
 `WithContext(context.Context)` method that clones the http.Request, sets the `Context()`

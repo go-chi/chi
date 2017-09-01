@@ -16,9 +16,12 @@ var (
 // request context to track route patterns, URL parameters and
 // an optional routing path.
 type Context struct {
-	// Routing path override used during the route search.
+	Routes Routes
+
+	// Routing path/method override used during the route search.
 	// See Mux#routeHTTP method.
-	RoutePath string
+	RoutePath   string
+	RouteMethod string
 
 	// Routing pattern stack throughout the lifecycle of the request,
 	// across all connected routers. It is a record of all matching
@@ -48,9 +51,11 @@ func NewRouteContext() *Context {
 	return &Context{}
 }
 
-// reset a routing context to its initial state.
-func (x *Context) reset() {
+// Reset a routing context to its initial state.
+func (x *Context) Reset() {
+	x.Routes = nil
 	x.RoutePath = ""
+	x.RouteMethod = ""
 	x.RoutePatterns = x.RoutePatterns[:0]
 	x.URLParams.Keys = x.URLParams.Keys[:0]
 	x.URLParams.Values = x.URLParams.Values[:0]
