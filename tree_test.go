@@ -333,6 +333,31 @@ func TestTreeRegexp(t *testing.T) {
 	}
 }
 
+func TestTreeRegexMatchWholeParam(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	rctx := NewRouteContext()
+	tr := &node{}
+	tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
+
+	tests := []struct {
+		url             string
+		expectedHandler http.Handler
+	}{
+		{url: "/13", expectedHandler: hStub1},
+		{url: "/a13", expectedHandler: nil},
+		{url: "/13.jpg", expectedHandler: nil},
+		{url: "/a13.jpg", expectedHandler: nil},
+	}
+
+	for _, tc := range tests {
+		_, _, handler := tr.FindRoute(rctx, mGET, tc.url)
+		if fmt.Sprintf("%v", tc.expectedHandler) != fmt.Sprintf("%v", handler) {
+			t.Errorf("expecting handler:%v , got:%v", tc.expectedHandler, handler)
+		}
+	}
+}
+
 func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
