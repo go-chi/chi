@@ -441,7 +441,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 		}
 
 		// did we find it yet?
-		if len(xsearch) == 0 {
+		if len(xsearch) == 0 || xsearch == "/" {
 			if xn.isLeaf() {
 				h, _ := xn.endpoints[method]
 				if h != nil && h.handler != nil {
