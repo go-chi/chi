@@ -1114,7 +1114,10 @@ func TestMuxSubroutes(t *testing.T) {
 	if routePatterns[2] != expected {
 		t.Fatalf("routePattern, expected:%s got:%s", expected, routePatterns[2])
 	}
-
+	expected = "/accounts/{accountID}/*/hi"
+	if rctx.RoutePattern() != expected {
+		t.Fatalf("rctx.RoutePattern(), expected: %s got: %s", expected, rctx.RoutePattern())
+	}
 }
 
 func TestSingleHandler(t *testing.T) {
