@@ -99,7 +99,10 @@ func (x *Context) RoutePattern() string {
 // RouteContext returns chi's routing Context object from a
 // http.Request Context.
 func RouteContext(ctx context.Context) *Context {
-	return ctx.Value(RouteCtxKey).(*Context)
+	if ctx, ok := ctx.Value(RouteCtxKey).(*Context); ok {
+		return ctx
+	}
+	return nil
 }
 
 // URLParam returns the url parameter from a http.Request object.
