@@ -530,6 +530,58 @@ func TestMuxComplicatedNotFound(t *testing.T) {
 	}
 }
 
+func TestMuxComplicatedMethodNotAllowed(t *testing.T) {
+	// sub router with groups
+	sub := NewRouter()
+	sub.Route("/resource", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("private get"))
+		})
+	})
+	sub.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("custom sub 405"))
+	})
+
+	// Root router with groups
+	r := NewRouter()
+	r.Get("/auth", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("auth get"))
+	})
+	r.Route("/public", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("public get"))
+		})
+	})
+	r.Mount("/private", sub)
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("custom root 405"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// check that we didn't broke correct routes
+	if _, body := testRequest(t, ts, "GET", "/auth", nil); body != "auth get" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/public", nil); body != "public get" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/private/resource", nil); body != "private get" {
+		t.Fatalf(body)
+	}
+	// check custom root 405 on all levels
+	if _, body := testRequest(t, ts, "PUT", "/auth", nil); body != "custom root 405" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/public", nil); body != "custom root 405" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/private/resource", nil); body != "custom sub 405" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxWith(t *testing.T) {
 	var cmwInit1, cmwHandler1 uint64
 	var cmwInit2, cmwHandler2 uint64
@@ -1496,6 +1548,47 @@ func TestServerBaseContext(t *testing.T) {
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "yes" {
 		t.Fatalf(body)
 	}
+}
+
+func TestMuxMethods(t *testing.T) {
+	mux := NewRouter()
+
+	dummyHandle := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	t.Run("invalid method panic", func(t *testing.T) {
+		invalidMethod := "INVALID_METHOD"
+		defer func() {
+			msg := recover()
+			if msg == nil {
+				t.Fatal("expected panic()")
+			} else {
+				expected := fmt.Sprintf("chi: '%s' http method is not supported.", invalidMethod)
+				if v, ok := msg.(string); !ok {
+					t.Fatal("expected panic message to be string")
+				} else if v != expected {
+					t.Fatalf("expected: %s got: %s", expected, v)
+				}
+			}
+		}()
+
+		mux.Method(invalidMethod, "/", dummyHandle)
+	})
+
+	defer func() {
+		if recover() != nil {
+			t.Fatal("expected no panic()")
+		}
+	}()
+
+	mux.Connect("/", dummyHandle)
+	mux.Delete("/", dummyHandle)
+	mux.Get("/", dummyHandle)
+	mux.Head("/", dummyHandle)
+	mux.Options("/", dummyHandle)
+	mux.Patch("/", dummyHandle)
+	mux.Post("/", dummyHandle)
+	mux.Put("/", dummyHandle)
+	mux.Trace("/", dummyHandle)
 }
 
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
