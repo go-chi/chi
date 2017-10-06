@@ -1,4 +1,4 @@
-// +build go1.8
+// +build go1.8 appengine
 
 package middleware
 
