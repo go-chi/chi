@@ -6,44 +6,59 @@ package chi
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 )
 
 type methodTyp int
 
 const (
-	mCONNECT methodTyp = 1 << iota
+	mSTUB methodTyp = 1 << iota
+	mCONNECT
 	mDELETE
 	mGET
 	mHEAD
-	mLINK
 	mOPTIONS
 	mPATCH
 	mPOST
 	mPUT
 	mTRACE
-	mUNLINK
-	mSTUB
-
-	mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD | mLINK |
-		mOPTIONS | mPATCH | mPOST | mPUT | mTRACE | mUNLINK
 )
+
+var mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD |
+	mOPTIONS | mPATCH | mPOST | mPUT | mTRACE
 
 var methodMap = map[string]methodTyp{
 	"CONNECT": mCONNECT,
 	"DELETE":  mDELETE,
 	"GET":     mGET,
 	"HEAD":    mHEAD,
-	"LINK":    mLINK,
 	"OPTIONS": mOPTIONS,
 	"PATCH":   mPATCH,
 	"POST":    mPOST,
 	"PUT":     mPUT,
 	"TRACE":   mTRACE,
-	"UNLINK":  mUNLINK,
+}
+
+func RegisterMethod(method string) {
+	if method == "" {
+		return
+	}
+	method = strings.ToUpper(method)
+	if _, ok := methodMap[method]; ok {
+		return
+	}
+	n := len(methodMap)
+	if n > strconv.IntSize {
+		panic(fmt.Sprintf("chi: max number of methods reached (%d)", strconv.IntSize))
+	}
+	mt := methodTyp(math.Exp2(float64(n)))
+	methodMap[method] = mt
+	mALL |= mt
 }
 
 type nodeTyp uint8
