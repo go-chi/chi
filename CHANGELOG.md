@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.3.0 (2017-10-10)
+
+- New chi.RegisterMethod(method) to add support for custom HTTP methods, see _examples/custom-method for usage
+- Deprecated LINK and UNLINK methods from the default list, please use `chi.RegisterMethod("LINK")` and `chi.RegisterMethod("UNLINK")` in an `init()` function
+
+
 ## v3.2.1 (2017-08-31)
 
 - Add new `Match(rctx *Context, method, path string) bool` method to `Routes` interface
