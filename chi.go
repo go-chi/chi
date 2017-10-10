@@ -78,6 +78,8 @@ type Router interface {
 	Post(pattern string, h http.HandlerFunc)
 	Put(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
+	Lock(pattern string, h http.HandlerFunc)
+	Unlock(pattern string, h http.HandlerFunc)
 
 	// NotFound defines a handler to respond whenever a route could
 	// not be found.

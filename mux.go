@@ -177,6 +177,18 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 	mx.handle(mTRACE, pattern, handlerFn)
 }
 
+// Lock adds the route `pattern` that matches a LOCK http method to
+// execute the `handlerFn` http.HandlerFunc.
+func (mx *Mux) Lock(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mLOCK, pattern, handlerFn)
+}
+
+// Unlock adds the route `pattern` that matches a UNLOCK http method to
+// execute the `handlerFn` http.HandlerFunc.
+func (mx *Mux) Unlock(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mUNLOCK, pattern, handlerFn)
+}
+
 // NotFound sets a custom http.HandlerFunc for routing paths that could
 // not be found. The default 404 handler is `http.NotFound`.
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
