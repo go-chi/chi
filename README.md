@@ -337,16 +337,19 @@ with `net/http` can be used with chi's mux.
 | WithValue             | Short-hand middleware to set a key/value on the request context                 |
 -----------------------------------------------------------------------------------------------------------
 
-### Auxiliary middlewares
+### Auxiliary middlewares & packages
 
------------------------------------------------------------------------------------------------------------
-| package                                          | description                                          |
-|:-------------------------------------------------|:------------------------------------------------------
-| [cors](https://github.com/go-chi/cors)           | Cross-origin resource sharing (CORS)                 |
-| [jwtauth](https://github.com/go-chi/jwtauth)     | JWT authentication                                   |
-| [httpcoala](https://github.com/go-chi/httpcoala) | HTTP request coalescer                               |
-| [chi-authz](https://github.com/casbin/chi-authz) | Request ACL via https://github.com/hsluoyz/casbin    | 
------------------------------------------------------------------------------------------------------------
+Please see https://github.com/go-chi for additional packages.
+
+-------------------------------------------------------------------------------------------------------------
+| package                                            | description                                          |
+|:---------------------------------------------------|:------------------------------------------------------
+| [cors](https://github.com/go-chi/cors)             | Cross-origin resource sharing (CORS)                 |
+| [jwtauth](https://github.com/go-chi/jwtauth)       | JWT authentication                                   |
+| [hostrouter](https://github.com/go-chi/hostrouter) | Domain/host based request routing                    |
+| [httpcoala](https://github.com/go-chi/httpcoala)   | HTTP request coalescer                               |
+| [chi-authz](https://github.com/casbin/chi-authz)   | Request ACL via https://github.com/hsluoyz/casbin    | 
+-------------------------------------------------------------------------------------------------------------
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware
 
