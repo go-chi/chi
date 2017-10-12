@@ -39,8 +39,7 @@ func main() {
 	}
 }
 
-// SearchArticles searches the Articles data for a matching article.
-// It's just a stub, but you get the idea.
+// Ping returns pong
 func Ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
