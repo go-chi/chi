@@ -25,12 +25,12 @@ func main() {
 	r.Put("/ping", Ping)
 
 	methodCount := make(map[string]int)
-	test := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		methodCount[method]++
 		return nil
 	}
 
-	if err := chi.Walk(r, test); err != nil {
+	if err := chi.Walk(r, walkFunc); err != nil {
 		fmt.Errorf("%+v", err)
 	}
 
