@@ -24,18 +24,13 @@ func main() {
 
 	r.Put("/ping", Ping)
 
-	methodCount := make(map[string]int)
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		methodCount[method]++
+		fmt.Printf("%s %s\n", method, route)
 		return nil
 	}
 
 	if err := chi.Walk(r, walkFunc); err != nil {
-		fmt.Errorf("%+v", err)
-	}
-
-	for k, v := range methodCount {
-		fmt.Printf("%d Routes use %s Method\n", v, k)
+		fmt.Printf("Logging err: %s\n", err.Error())
 	}
 }
 
