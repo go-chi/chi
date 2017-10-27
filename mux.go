@@ -47,7 +47,7 @@ type Mux struct {
 // NewMux returns a newly initialized Mux object that implements the Router
 // interface.
 func NewMux() *Mux {
-	mux := &Mux{tree: &node{}, pool: new(sync.Pool)}
+	mux := &Mux{tree: &node{}, pool: &sync.Pool{}}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext()
 	}
