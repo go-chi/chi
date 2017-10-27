@@ -35,7 +35,7 @@ type Mux struct {
 	handler http.Handler
 
 	// Routing context pool
-	pool sync.Pool
+	pool *sync.Pool
 
 	// Custom route not found handler
 	notFoundHandler http.HandlerFunc
@@ -47,7 +47,7 @@ type Mux struct {
 // NewMux returns a newly initialized Mux object that implements the Router
 // interface.
 func NewMux() *Mux {
-	mux := &Mux{tree: &node{}}
+	mux := &Mux{tree: &node{}, pool: &sync.Pool{}}
 	mux.pool.New = func() interface{} {
 		return NewRouteContext()
 	}
@@ -233,7 +233,8 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	}
 	mws = append(mws, middlewares...)
 
-	im := &Mux{inline: true, parent: mx, tree: mx.tree, middlewares: mws}
+	im := &Mux{pool: mx.pool, inline: true, parent: mx, tree: mx.tree, middlewares: mws}
+
 	return im
 }
 

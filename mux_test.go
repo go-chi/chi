@@ -583,6 +583,26 @@ func TestMuxWith(t *testing.T) {
 	}
 }
 
+func TestRouterFromMuxWith(t *testing.T) {
+	t.Parallel()
+
+	r := NewRouter()
+
+	with := r.With(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	with.Get("/with_middleware", func(w http.ResponseWriter, r *http.Request) {})
+
+	ts := httptest.NewServer(with)
+	defer ts.Close()
+
+	// Without the fix this test was committed with, this causes a panic.
+	testRequest(t, ts, http.MethodGet, "/with_middleware", nil)
+}
+
 func TestMuxMiddlewareStack(t *testing.T) {
 	var stdmwInit, stdmwHandler uint64
 	stdmw := func(next http.Handler) http.Handler {
