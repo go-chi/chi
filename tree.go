@@ -29,7 +29,7 @@ const (
 	mTRACE
 )
 
-var mALL methodTyp = mCONNECT | mDELETE | mGET | mHEAD |
+var mALL = mCONNECT | mDELETE | mGET | mHEAD |
 	mOPTIONS | mPATCH | mPOST | mPUT | mTRACE
 
 var methodMap = map[string]methodTyp{
@@ -44,6 +44,8 @@ var methodMap = map[string]methodTyp{
 	"TRACE":   mTRACE,
 }
 
+// RegisterMethod adds support for custom HTTP method handlers, available
+// via Router#Method and Router#MethodFunc
 func RegisterMethod(method string) {
 	if method == "" {
 		return
