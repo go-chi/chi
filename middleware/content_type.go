@@ -26,22 +26,19 @@ func AllowContentType(contentTypes ...string) func(next http.Handler) http.Handl
 
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			s := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("Content-Type"), ";")[0]))
+			s := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Type")))
+			if i := strings.Index(s, ";"); i > -1 {
+				s = s[0:i]
+			}
 
-			f := false
 			for _, t := range cT {
 				if t == s {
-					f = true
-					break
+					next.ServeHTTP(w, r)
+					return
 				}
 			}
 
-			if !f {
-				w.WriteHeader(http.StatusUnsupportedMediaType)
-				return
-			}
-
-			next.ServeHTTP(w, r)
+			w.WriteHeader(http.StatusUnsupportedMediaType)
 		}
 		return http.HandlerFunc(fn)
 	}

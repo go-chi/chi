@@ -320,6 +320,7 @@ with `net/http` can be used with chi's mux.
 -----------------------------------------------------------------------------------------------------------
 | chi/middlware Handler | description                                                                     |
 |:----------------------|:---------------------------------------------------------------------------------
+| AllowContentType      | Explicit whitelist of accepted request Content-Types                            |
 | Compress              | Gzip compression for clients that accept compressed responses                   |
 | GetHead               | Automatically route undefined HEAD requests to GET handlers                     |
 | Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
@@ -330,6 +331,7 @@ with `net/http` can be used with chi's mux.
 | Recoverer             | Gracefully absorb panics and prints the stack trace                             |
 | RequestID             | Injects a request ID into the context of each request                           |
 | RedirectSlashes       | Redirect slashes on routing paths                                               |
+| SetHeader             | Short-hand middleware to set a response header key/value                        |
 | StripSlashes          | Strip slashes on routing paths                                                  |
 | Throttle              | Puts a ceiling on the number of concurrent requests                             |
 | Timeout               | Signals to the request context when the timeout deadline is reached             |
