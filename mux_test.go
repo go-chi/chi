@@ -1357,6 +1357,26 @@ func TestMountingSimilarPattern(t *testing.T) {
 	}
 }
 
+func TestMuxEmptyParams(t *testing.T) {
+	r := NewRouter()
+	r.Get(`/users/{x}/{y}/{z}`, func(w http.ResponseWriter, r *http.Request) {
+		x := URLParam(r, "x")
+		y := URLParam(r, "y")
+		z := URLParam(r, "z")
+		w.Write([]byte(fmt.Sprintf("%s-%s-%s", x, y, z)))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/users/a/b/c", nil); body != "a-b-c" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/users///c", nil); body != "--c" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxMissingParams(t *testing.T) {
 	r := NewRouter()
 	r.Get(`/user/{userId:\d+}`, func(w http.ResponseWriter, r *http.Request) {

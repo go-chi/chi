@@ -424,7 +424,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				// label for param nodes is the delimiter byte
 				p := strings.IndexByte(xsearch, xn.tail)
 
-				if p <= 0 {
+				if p < 0 {
 					if xn.tail == '/' {
 						p = len(xsearch)
 					} else {
