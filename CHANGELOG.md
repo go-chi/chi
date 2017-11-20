@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.3.1 (2017-11-20)
+
+- middleware: new `AllowContentType` handler for explicit whitelist of accepted request Content-Types
+- middleware: new `SetHeader` handler for short-hand middleware to set a response header key/value
+- Minor bug fixes
+
+
 ## v3.3.0 (2017-10-10)
 
 - New chi.RegisterMethod(method) to add support for custom HTTP methods, see _examples/custom-method for usage
