@@ -65,6 +65,9 @@ func TestStripSlashesInRoute(t *testing.T) {
 
 	r.Route("/accounts/{accountID}", func(r chi.Router) {
 		r.Use(StripSlashes)
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("accounts index"))
+		})
 		r.Get("/query", func(w http.ResponseWriter, r *http.Request) {
 			accountID := chi.URLParam(r, "accountID")
 			w.Write([]byte(accountID))
@@ -78,6 +81,12 @@ func TestStripSlashesInRoute(t *testing.T) {
 		t.Fatalf(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/hi/", nil); resp != "nothing here" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "accounts index" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "accounts index" {
 		t.Fatalf(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query", nil); resp != "admin" {

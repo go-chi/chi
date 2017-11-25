@@ -492,11 +492,14 @@ func TestMuxComplicatedNotFound(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	// check that we didn't broke correct routes
+	// check that we didn't break correct routes
 	if _, body := testRequest(t, ts, "GET", "/auth", nil); body != "auth get" {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/public", nil); body != "public get" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/public/", nil); body != "public get" {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/private/resource", nil); body != "private get" {
@@ -517,15 +520,6 @@ func TestMuxComplicatedNotFound(t *testing.T) {
 	}
 	// check custom not-found on trailing slash routes
 	if _, body := testRequest(t, ts, "GET", "/auth/", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/public/", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/private/", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/private/resource/", nil); body != "custom not-found" {
 		t.Fatalf(body)
 	}
 }
@@ -1048,6 +1042,9 @@ func TestMuxSubroutes(t *testing.T) {
 	sr := NewRouter()
 	sr.Get("/", hHubView3)
 	r.Mount("/hubs/{hubID}/users", sr)
+	r.Get("/hubs/{hubID}/users/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hub3 override"))
+	})
 
 	sr3 := NewRouter()
 	sr3.Get("/", hAccountView1)
@@ -1069,7 +1066,6 @@ func TestMuxSubroutes(t *testing.T) {
 	defer ts.Close()
 
 	var body, expected string
-	var resp *http.Response
 
 	_, body = testRequest(t, ts, "GET", "/hubs/123/view", nil)
 	expected = "hub1"
@@ -1086,9 +1082,9 @@ func TestMuxSubroutes(t *testing.T) {
 	if body != expected {
 		t.Fatalf("expected:%s got:%s", expected, body)
 	}
-	resp, body = testRequest(t, ts, "GET", "/hubs/123/users/", nil)
-	expected = "404 page not found\n"
-	if resp.StatusCode != 404 || body != expected {
+	_, body = testRequest(t, ts, "GET", "/hubs/123/users/", nil)
+	expected = "hub3 override"
+	if body != expected {
 		t.Fatalf("expected:%s got:%s", expected, body)
 	}
 	_, body = testRequest(t, ts, "GET", "/accounts/44", nil)
