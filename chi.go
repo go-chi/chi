@@ -27,6 +27,32 @@
 //
 // See github.com/go-chi/chi/_examples/ for more in-depth examples.
 //
+// URL patterns allow for easy matching of path components in HTTP
+// requests. The matching components can then be accessed using
+// chi.URLParam(). All patterns must begin with a slash.
+//
+// A simple named placeholder {name} matches any sequence of characters
+// up to the next / or the end of the URL. Trailing slashes on paths must
+// be handled explicitly.
+//
+// A placeholder with a name followed by a colon allows a regular
+// expression match, for example {number:\\d+}. The regular expression
+// syntax is Go's normal regexp RE2 syntax, except that regular expressions
+// including { or } are not supported, and / will never be
+// matched. An anonymous regexp pattern is allowed, using an empty string
+// before the colon in the placeholder, such as {:\\d+}
+//
+// The special placeholder of asterisk matches the rest of the requested
+// URL. Any trailing characters in the pattern are ignored. This is the only
+// placeholder which will match / characters.
+//
+// Examples:
+//  "/user/{name}" matches "/user/jsmith" but not "/user/jsmith/info" or "/user/jsmith/"
+//  "/user/{name}/info" matches "/user/jsmith/info"
+//  "/page/*" matches "/page/intro/latest"
+//  "/page/*/index" also matches "/page/intro/latest"
+//  "/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"
+//
 package chi
 
 import "net/http"
