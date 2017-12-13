@@ -318,7 +318,7 @@ with `net/http` can be used with chi's mux.
 ### Core middlewares
 
 -----------------------------------------------------------------------------------------------------------
-| chi/middlware Handler | description                                                                     |
+| chi/middleware Handler | description                                                                     |
 |:----------------------|:---------------------------------------------------------------------------------
 | AllowContentType      | Explicit whitelist of accepted request Content-Types                            |
 | Compress              | Gzip compression for clients that accept compressed responses                   |
