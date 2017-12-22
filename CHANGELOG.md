@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.3.2 (2017-12-22)
+
+- Support to route trailing slashes on mounted sub-routers (#281)
+- middleware: new `ContentCharset` to check matching charsets. Thank you
+  @csucu for your community contribution!
+
+
 ## v3.3.1 (2017-11-20)
 
 - middleware: new `AllowContentType` handler for explicit whitelist of accepted request Content-Types
