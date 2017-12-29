@@ -352,6 +352,7 @@ Please see https://github.com/go-chi for additional packages.
 | [httpcoala](https://github.com/go-chi/httpcoala)   | HTTP request coalescer                                      |
 | [chi-authz](https://github.com/casbin/chi-authz)   | Request ACL via https://github.com/hsluoyz/casbin           |
 | [phi](https://github.com/fate-lovely/phi)          | Port chi to [fasthttp](https://github.com/valyala/fasthttp) |
+| [secure](https://github.com/srikrsna/security-headers)| Dynamic CSP nonce and other security headers             |
 --------------------------------------------------------------------------------------------------------------------
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware
