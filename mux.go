@@ -233,7 +233,15 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	}
 	mws = append(mws, middlewares...)
 
-	im := &Mux{pool: mx.pool, inline: true, parent: mx, tree: mx.tree, middlewares: mws}
+	im := &Mux{
+		pool:                    mx.pool,
+		inline:                  true,
+		parent:                  mx,
+		tree:                    mx.tree,
+		middlewares:             mws,
+		notFoundHandler:         mx.notFoundHandler,
+		methodNotAllowedHandler: mx.methodNotAllowedHandler,
+	}
 
 	return im
 }
