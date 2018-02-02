@@ -83,6 +83,8 @@ type flushWriter struct {
 }
 
 func (f *flushWriter) Flush() {
+	f.wroteHeader = true
+
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -102,6 +104,8 @@ func (f *httpFancyWriter) CloseNotify() <-chan bool {
 	return cn.CloseNotify()
 }
 func (f *httpFancyWriter) Flush() {
+	f.wroteHeader = true
+
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -140,6 +144,8 @@ func (f *http2FancyWriter) CloseNotify() <-chan bool {
 	return cn.CloseNotify()
 }
 func (f *http2FancyWriter) Flush() {
+	f.wroteHeader = true
+
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
