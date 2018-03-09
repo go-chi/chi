@@ -48,23 +48,22 @@ func URLFormat(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		var format string
-		path := r.URL.Path
-
-		if strings.Index(path, ".") > 0 {
-			base := strings.LastIndex(path, "/")
-			idx := strings.Index(path[base:], ".")
-
-			if idx > 0 {
-				idx += base
-				format = path[idx+1:]
-
-				rctx := chi.RouteContext(r.Context())
-				rctx.RoutePath = path[:idx]
+		rctx := chi.RouteContext(ctx)
+		routePath := rctx.RoutePath
+		if routePath == "" {
+			if r.URL.RawPath != "" {
+				routePath = r.URL.RawPath
+			} else {
+				routePath = r.URL.Path
 			}
 		}
 
-		r = r.WithContext(context.WithValue(ctx, URLFormatCtxKey, format))
+		base := strings.LastIndex(routePath, "/")
+		if idx := strings.Index(routePath[base:], "."); idx > 0 {
+			format := routePath[base+idx+1:]
+			rctx.RoutePath = routePath[:base+idx] // remove format
+			r = r.WithContext(context.WithValue(ctx, URLFormatCtxKey, format))
+		}
 
 		next.ServeHTTP(w, r)
 	}
