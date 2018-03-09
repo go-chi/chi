@@ -27,6 +27,16 @@ func setupSimpleURLFormatTestServer() *httptest.Server {
 			w.Write([]byte("/foo"))
 		}
 	}))
+	r.Get("/bar/baz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ext, ok := r.Context().Value(URLFormatCtxKey).(string)
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		if ok {
+			w.Write([]byte("/bar/baz." + ext))
+		} else {
+			w.Write([]byte("/bar/baz"))
+		}
+	}))
 	return httptest.NewServer(r)
 }
 
@@ -60,14 +70,29 @@ func TestURLFormat(t *testing.T) {
 		testShouldBeOK(t, ts.URL+"/", "root")
 		testShouldBeOK(t, ts.URL+"/foo", "/foo")
 		testShouldBeOK(t, ts.URL+"/foo.txt", "/foo.txt")
+		testShouldBeOK(t, ts.URL+"/foo.tar.gz", "/foo.tar.gz")
+		testShouldBeNotFound(t, ts.URL+"/bar")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt/")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt/baz")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt/baz.txt")
+		testShouldBeOK(t, ts.URL+"/bar/baz", "/bar/baz")
+		testShouldBeOK(t, ts.URL+"/bar/baz.txt", "/bar/baz.txt")
+		testShouldBeOK(t, ts.URL+"/bar/baz.tar.gz", "/bar/baz.tar.gz")
 	})
 
 	t.Run("Nested", func(t *testing.T) {
 		ts := setupNestedURLFormatTestServer()
 		defer ts.Close()
 		testShouldBeOK(t, ts.URL+"/", "root")
+		testShouldBeNotFound(t, ts.URL+"/bar")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt/")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt/baz")
+		testShouldBeNotFound(t, ts.URL+"/bar.txt/baz.txt")
 		testShouldBeOK(t, ts.URL+"/bar/baz", "/bar/baz")
 		testShouldBeOK(t, ts.URL+"/bar/baz.txt", "/bar/baz.txt")
+		testShouldBeOK(t, ts.URL+"/bar/baz.tar.gz", "/bar/baz.tar.gz")
 	})
 }
 
@@ -88,5 +113,16 @@ func testShouldBeOK(t *testing.T, url, expected string) {
 	}
 	if body := string(b); body != expected {
 		t.Errorf("Body should be %#v, but got %#v", expected, body)
+	}
+}
+
+func testShouldBeNotFound(t *testing.T, url string) {
+	res, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if res.StatusCode != http.StatusNotFound {
+		t.Errorf("StatusCode should be %d, but got %d", http.StatusNotFound, res.StatusCode)
 	}
 }
