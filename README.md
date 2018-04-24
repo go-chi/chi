@@ -232,7 +232,7 @@ type Router interface {
 }
 
 // Routes interface adds two methods for router traversal, which is also
-// used by the `docgen` subpackage to generation documentation for Routers.
+// used by the github.com/go-chi/docgen package to generate documentation for Routers.
 type Routes interface {
 	// Routes returns the routing tree in an easily traversable structure.
 	Routes() []Route
