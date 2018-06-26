@@ -9,6 +9,8 @@ import (
 	"net"
 	"net/http"
 	"strings"
+
+	brotli_enc "gopkg.in/kothar/brotli-go.v0/enc"
 )
 
 type encoding int
@@ -17,18 +19,19 @@ const (
 	encodingNone encoding = iota
 	encodingGzip
 	encodingDeflate
+	encodingBrotli
 )
 
 var defaultContentTypes = map[string]struct{}{
-	"text/html":                struct{}{},
-	"text/css":                 struct{}{},
-	"text/plain":               struct{}{},
-	"text/javascript":          struct{}{},
-	"application/javascript":   struct{}{},
-	"application/x-javascript": struct{}{},
-	"application/json":         struct{}{},
-	"application/atom+xml":     struct{}{},
-	"application/rss+xml":      struct{}{},
+	"text/html":                {},
+	"text/css":                 {},
+	"text/plain":               {},
+	"text/javascript":          {},
+	"application/javascript":   {},
+	"application/x-javascript": {},
+	"application/json":         {},
+	"application/atom+xml":     {},
+	"application/rss+xml":      {},
 }
 
 // DefaultCompress is a middleware that compresses response
@@ -75,9 +78,11 @@ func selectEncoding(h http.Header) encoding {
 
 	switch {
 	// TODO:
-	// case "br":    // Brotli, experimental. Firefox 2016, to-be-in Chromium.
 	// case "lzma":  // Opera.
 	// case "sdch":  // Chrome, Android. Gzip output + dictionary header.
+
+	case strings.Contains(enc, "br"):
+		return encodingBrotli
 
 	case strings.Contains(enc, "gzip"):
 		// TODO: Exception for old MSIE browsers that can't handle non-HTML?
@@ -150,6 +155,12 @@ func (w *maybeCompressResponseWriter) WriteHeader(code int) {
 
 	// Select the compress writer.
 	switch w.encoding {
+	case encodingBrotli:
+		params := brotli_enc.NewBrotliParams()
+		params.SetQuality(w.level)
+		w.w = brotli_enc.NewBrotliWriter(params, w.ResponseWriter)
+		w.ResponseWriter.Header().Set("Content-Encoding", "br")
+
 	case encodingGzip:
 		gw, err := gzip.NewWriterLevel(w.ResponseWriter, w.level)
 		if err != nil {
