@@ -1289,6 +1289,44 @@ func TestNestedGroups(t *testing.T) {
 	}
 }
 
+func TestRouteAndStandalone(t *testing.T) {
+	handlerCalled := false
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		// t.Logf("Called %s handler", r.Method)
+		handlerCalled = true
+	}
+
+	r := NewRouter()
+	r.Post("/parent", handler)
+
+	r.Route("/parent", func(r Router) {
+		r.Get("/", handler)
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, http.MethodPost, "/parent", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Failed to reach POST handler: %s", resp.Status)
+	}
+
+	if !handlerCalled {
+		t.Error("Expected to reach POST handler, but did not")
+	}
+
+	handlerCalled = false
+
+	resp, _ = testRequest(t, ts, http.MethodGet, "/parent", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Failed to reach GET handler: %s", resp.Status)
+	}
+
+	if !handlerCalled {
+		t.Error("Expected to reach GET handler, but did not")
+	}
+}
+
 func TestMiddlewarePanicOnLateUse(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello\n"))

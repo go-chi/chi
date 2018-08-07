@@ -345,7 +345,13 @@ func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern strin
 		h.pattern = pattern
 		h.paramKeys = paramKeys
 		for _, m := range methodMap {
-			h := n.endpoints.Value(m)
+			h, ok := n.endpoints[m]
+			if ok {
+				// Don't stomp on already mapped endpoints
+				continue
+			}
+
+			h = n.endpoints.Value(m)
 			h.handler = handler
 			h.pattern = pattern
 			h.paramKeys = paramKeys
