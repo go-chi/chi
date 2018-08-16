@@ -84,13 +84,13 @@ func (x *Context) URLParam(key string) string {
 //
 // For example,
 //
-// func Instrument(next http.Handler) http.Handler {
-//   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//     next.ServeHTTP(w, r)
-//     routePattern := chi.RouteContext(r.Context()).RoutePattern()
-//     measure(w, r, routePattern)
-// 	 })
-// }
+//   func Instrument(next http.Handler) http.Handler {
+//     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//       next.ServeHTTP(w, r)
+//       routePattern := chi.RouteContext(r.Context()).RoutePattern()
+//       measure(w, r, routePattern)
+//   	 })
+//   }
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
 	return strings.Replace(routePattern, "/*/", "/", -1)
