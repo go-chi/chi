@@ -800,7 +800,9 @@ func TestMuxBig(t *testing.T) {
 }
 
 func bigMux() Router {
-	var r, sr1, sr2, sr3, sr4, sr5, sr6 *Mux
+	var r *Mux
+	var sr3 *Mux
+	// var sr1, sr2, sr3, sr4, sr5, sr6 *Mux
 	r = NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -866,9 +868,9 @@ func bigMux() Router {
 		})
 
 		r.Route("/hubs", func(r Router) {
-			sr1 = r.(*Mux)
+			_ = r.(*Mux) // sr1
 			r.Route("/{hubID}", func(r Router) {
-				sr2 = r.(*Mux)
+				_ = r.(*Mux) // sr2
 				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
 					s := fmt.Sprintf("/hubs/%s reqid:%s session:%s",
@@ -890,7 +892,7 @@ func bigMux() Router {
 					w.Write([]byte(s))
 				})
 				sr3.Route("/{webhookID}", func(r Router) {
-					sr4 = r.(*Mux)
+					_ = r.(*Mux) // sr4
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
 						s := fmt.Sprintf("/hubs/%s/webhooks/%s reqid:%s session:%s", URLParam(r, "hubID"),
@@ -906,7 +908,7 @@ func bigMux() Router {
 				}).Handler(sr3))
 
 				r.Route("/posts", func(r Router) {
-					sr5 = r.(*Mux)
+					_ = r.(*Mux) // sr5
 					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 						ctx := r.Context()
 						s := fmt.Sprintf("/hubs/%s/posts reqid:%s session:%s", URLParam(r, "hubID"),
@@ -918,7 +920,7 @@ func bigMux() Router {
 		})
 
 		r.Route("/folders/", func(r Router) {
-			sr6 = r.(*Mux)
+			_ = r.(*Mux) // sr6
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				ctx := r.Context()
 				s := fmt.Sprintf("/folders/ reqid:%s session:%s",
@@ -955,14 +957,14 @@ func TestMuxSubroutesBasic(t *testing.T) {
 	})
 
 	r := NewRouter()
-	var rr1, rr2 *Mux
+	// var rr1, rr2 *Mux
 	r.Get("/", hIndex)
 	r.Route("/articles", func(r Router) {
-		rr1 = r.(*Mux)
+		// rr1 = r.(*Mux)
 		r.Get("/", hArticlesList)
 		r.Get("/search", hSearchArticles)
 		r.Route("/{id}", func(r Router) {
-			rr2 = r.(*Mux)
+			// rr2 = r.(*Mux)
 			r.Get("/", hGetArticle)
 			r.Get("/sync", hSyncArticle)
 		})
@@ -1050,9 +1052,9 @@ func TestMuxSubroutes(t *testing.T) {
 	sr3.Get("/", hAccountView1)
 	sr3.Get("/hi", hAccountView2)
 
-	var sr2 *Mux
+	// var sr2 *Mux
 	r.Route("/accounts/{accountID}", func(r Router) {
-		sr2 = r.(*Mux)
+		_ = r.(*Mux) // sr2
 		// r.Get("/", hAccountView1)
 		r.Mount("/", sr3)
 	})
