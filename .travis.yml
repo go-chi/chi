@@ -17,4 +17,8 @@ script:
   - golint ./...
   - go test ./...
   - >
-    goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :
+    go_version=$(go version);
+    if [ ${go_version:13:4} = "1.11" ]; then
+      goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; }
+    fi
+

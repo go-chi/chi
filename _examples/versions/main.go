@@ -79,9 +79,9 @@ func listArticles(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for i := 1; i <= 10; i++ {
 			article := &data.Article{
-				ID:    i,
-				Title: fmt.Sprintf("Article #%v", i),
-				Data:  []string{"one", "two", "three", "four"},
+				ID:                     i,
+				Title:                  fmt.Sprintf("Article #%v", i),
+				Data:                   []string{"one", "two", "three", "four"},
 				CustomDataForAuthUsers: "secret data for auth'd users only",
 			}
 
@@ -111,9 +111,9 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	article := &data.Article{
-		ID:    1,
-		Title: "Article #1",
-		Data:  []string{"one", "two", "three", "four"},
+		ID:                     1,
+		Title:                  "Article #1",
+		Data:                   []string{"one", "two", "three", "four"},
 		CustomDataForAuthUsers: "secret data for auth'd users only",
 	}
 
