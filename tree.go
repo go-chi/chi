@@ -32,30 +32,16 @@ const (
 var mALL = mCONNECT | mDELETE | mGET | mHEAD |
 	mOPTIONS | mPATCH | mPOST | mPUT | mTRACE
 
-// Exported http method names for help when calling functions
-// that require a litteral method name such as Method and MethodFunc
-const (
-	CONNECT = "CONNECT"
-	DELETE  = "DELETE"
-	GET     = "GET"
-	HEAD    = "HEAD"
-	OPTIONS = "OPTIONS"
-	PATCH   = "PATCH"
-	POST    = "POST"
-	PUT     = "PUT"
-	TRACE   = "TRACE"
-)
-
 var methodMap = map[string]methodTyp{
-	CONNECT: mCONNECT,
-	DELETE:  mDELETE,
-	GET:     mGET,
-	HEAD:    mHEAD,
-	OPTIONS: mOPTIONS,
-	PATCH:   mPATCH,
-	POST:    mPOST,
-	PUT:     mPUT,
-	TRACE:   mTRACE,
+	http.MethodConnect: mCONNECT,
+	http.MethodDelete:  mDELETE,
+	http.MethodGet:     mGET,
+	http.MethodHead:    mHEAD,
+	http.MethodOptions: mOPTIONS,
+	http.MethodPatch:   mPATCH,
+	http.MethodPost:    mPOST,
+	http.MethodPut:     mPUT,
+	http.MethodTrace:   mTRACE,
 }
 
 // RegisterMethod adds support for custom HTTP method handlers, available
