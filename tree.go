@@ -36,14 +36,14 @@ var mALL = mCONNECT | mDELETE | mGET | mHEAD |
 // that require a litteral method name such as Method and MethodFunc
 const (
 	CONNECT = "CONNECT"
-	DELETE = "DELETE"
-	GET = "GET"
-	HEAD = "HEAD"
+	DELETE  = "DELETE"
+	GET     = "GET"
+	HEAD    = "HEAD"
 	OPTIONS = "OPTIONS"
-	PATCH = "PATCH"
-	POST = "POST"
-	PUT = "PUT"
-	TRACE = "TRACE"
+	PATCH   = "PATCH"
+	POST    = "POST"
+	PUT     = "PUT"
+	TRACE   = "TRACE"
 )
 
 var methodMap = map[string]methodTyp{
