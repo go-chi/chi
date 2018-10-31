@@ -150,10 +150,10 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 
 func createArticle(w http.ResponseWriter, r *http.Request) {
   // Headers Content-Type:application/x-www-form-urlencoded
-  // Body username:IloveGolang
+  // Body articleName:IloveGolang
   r.ParseForm()
-  username := r.FormValue("username")
-  w.Write([]byte(fmt.Sprintf("Welcome to Golang :%s", username)))
+  username := r.FormValue("articleName")
+  w.Write([]byte(fmt.Sprintf("Article %s has been created", username)))
 }
 
 // A completely separate router for administrator routes
