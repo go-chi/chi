@@ -148,6 +148,14 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
   w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
 }
 
+func createArticle(w http.ResponseWriter, r *http.Request) {
+  // Headers Content-Type:application/x-www-form-urlencoded
+  // Body username:IloveGolang
+  r.ParseForm()
+  username := r.FormValue("username")
+  w.Write([]byte(fmt.Sprintf("Welcome to Golang :%s", username)))
+}
+
 // A completely separate router for administrator routes
 func adminRouter() http.Handler {
   r := chi.NewRouter()
