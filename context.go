@@ -69,9 +69,11 @@ func (x *Context) Reset() {
 // URLParam returns the corresponding URL parameter value from the request
 // routing context.
 func (x *Context) URLParam(key string) string {
-	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
-		if x.URLParams.Keys[k] == key {
-			return x.URLParams.Values[k]
+	if len(x.URLParams.Keys) == len(x.URLParams.Values) {
+		for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
+			if x.URLParams.Keys[k] == key {
+				return x.URLParams.Values[k]
+			}
 		}
 	}
 	return ""
