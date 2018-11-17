@@ -86,3 +86,22 @@ func GetReqID(ctx context.Context) string {
 func NextRequestID() uint64 {
 	return atomic.AddUint64(&reqid, 1)
 }
+
+// RequestIDFromHeader is a middleware similar to RequestID
+// except it uses the value from request header X-Request-Id
+// if one is available. Else revert to default behavior.
+func RequestIDFromHeader(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		var requestID string
+		if v, ok := r.Header["X-Request-Id"]; ok {
+			requestID = v[0]
+		} else {
+			myid := atomic.AddUint64(&reqid, 1)
+			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+		}
+		ctx = context.WithValue(ctx, RequestIDKey, requestID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	}
+	return http.HandlerFunc(fn)
+}
