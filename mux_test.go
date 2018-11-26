@@ -278,29 +278,17 @@ func TestMuxEmptyRoutes(t *testing.T) {
 	}
 
 	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				if r != `chi: attempting to route to a mux with no handlers.` {
-					t.Fatalf("expecting empty route panic")
-				}
-			}
-		}()
-
-		_, body := testHandler(t, mux, "GET", "/api", nil)
-		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", body)
+		resp, body := testHandler(t, mux, "GET", "/api", nil)
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatal(resp, body)
+		}
 	}()
 
 	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				if r != `chi: attempting to route to a mux with no handlers.` {
-					t.Fatalf("expecting empty route panic")
-				}
-			}
-		}()
-
-		_, body := testHandler(t, mux, "GET", "/api/abc", nil)
-		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", body)
+		resp, body := testHandler(t, mux, "GET", "/api/abc", nil)
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatal(resp, body)
+		}
 	}()
 }
 
