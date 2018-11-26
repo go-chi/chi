@@ -14,12 +14,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/_examples/versions/data"
-	"github.com/go-chi/chi/_examples/versions/presenter/v1"
-	"github.com/go-chi/chi/_examples/versions/presenter/v2"
-	"github.com/go-chi/chi/_examples/versions/presenter/v3"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v3"
+	"github.com/go-chi/chi/v3/_examples/versions/data"
+	"github.com/go-chi/chi/v3/_examples/versions/presenter/apiv1"
+	"github.com/go-chi/chi/v3/_examples/versions/presenter/apiv2"
+	"github.com/go-chi/chi/v3/_examples/versions/presenter/apiv3"
+	"github.com/go-chi/chi/v3/middleware"
 	"github.com/go-chi/render"
 )
 
@@ -88,11 +88,11 @@ func listArticles(w http.ResponseWriter, r *http.Request) {
 			apiVersion := r.Context().Value("api.version").(string)
 			switch apiVersion {
 			case "v1":
-				articles <- v1.NewArticleResponse(article)
+				articles <- apiv1.NewArticleResponse(article)
 			case "v2":
-				articles <- v2.NewArticleResponse(article)
+				articles <- apiv2.NewArticleResponse(article)
 			default:
-				articles <- v3.NewArticleResponse(article)
+				articles <- apiv3.NewArticleResponse(article)
 			}
 
 			time.Sleep(100 * time.Millisecond)
@@ -133,11 +133,11 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 	apiVersion := r.Context().Value("api.version").(string)
 	switch apiVersion {
 	case "v1":
-		payload = v1.NewArticleResponse(article)
+		payload = apiv1.NewArticleResponse(article)
 	case "v2":
-		payload = v2.NewArticleResponse(article)
+		payload = apiv2.NewArticleResponse(article)
 	default:
-		payload = v3.NewArticleResponse(article)
+		payload = apiv3.NewArticleResponse(article)
 	}
 
 	render.Render(w, r, payload)

@@ -1,11 +1,11 @@
-package v3
+package apiv3
 
 import (
 	"fmt"
 	"math/rand"
 	"net/http"
 
-	"github.com/go-chi/chi/_examples/versions/data"
+	"github.com/go-chi/chi/v3/_examples/versions/data"
 )
 
 // Article presented in API version 2.
