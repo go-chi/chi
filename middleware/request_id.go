@@ -62,9 +62,13 @@ func init() {
 // counter.
 func RequestID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		myid := atomic.AddUint64(&reqid, 1)
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, RequestIDKey, fmt.Sprintf("%s-%06d", prefix, myid))
+		requestID := r.Header.Get("X-Request-Id")
+		if requestID == "" {
+			myid := atomic.AddUint64(&reqid, 1)
+			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+		}
+		ctx = context.WithValue(ctx, RequestIDKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
