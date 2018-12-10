@@ -62,9 +62,13 @@ func init() {
 // counter.
 func RequestID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		myid := atomic.AddUint64(&reqid, 1)
 		ctx := r.Context()
-		ctx = context.WithValue(ctx, RequestIDKey, fmt.Sprintf("%s-%06d", prefix, myid))
+		requestID := r.Header.Get("X-Request-Id")
+		if requestID == "" {
+			myid := atomic.AddUint64(&reqid, 1)
+			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+		}
+		ctx = context.WithValue(ctx, RequestIDKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
@@ -85,23 +89,4 @@ func GetReqID(ctx context.Context) string {
 // NextRequestID generates the next request ID in the sequence.
 func NextRequestID() uint64 {
 	return atomic.AddUint64(&reqid, 1)
-}
-
-// RequestIDFromHeader is a middleware similar to RequestID
-// except it uses the value from request header X-Request-Id
-// if one is available. Else revert to default behavior.
-func RequestIDFromHeader(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		var requestID string
-		if v, ok := r.Header["X-Request-Id"]; ok {
-			requestID = v[0]
-		} else {
-			myid := atomic.AddUint64(&reqid, 1)
-			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
-		}
-		ctx = context.WithValue(ctx, RequestIDKey, requestID)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	}
-	return http.HandlerFunc(fn)
 }
