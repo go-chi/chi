@@ -16,9 +16,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/_examples/versions/data"
-	"github.com/go-chi/chi/_examples/versions/presenter/v1"
-	"github.com/go-chi/chi/_examples/versions/presenter/v2"
-	"github.com/go-chi/chi/_examples/versions/presenter/v3"
+	v1 "github.com/go-chi/chi/_examples/versions/presenter/v1"
+	v2 "github.com/go-chi/chi/_examples/versions/presenter/v2"
+	v3 "github.com/go-chi/chi/_examples/versions/presenter/v3"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 )
