@@ -7,9 +7,6 @@ go:
   - 1.10.x
   - 1.11.x
 
-install:
-  - go get -u golang.org/x/tools/cmd/goimports
-
 script:
   - go get -d -t ./...
   - go vet ./...
@@ -17,6 +14,7 @@ script:
   - >
     go_version=$(go version);
     if [ ${go_version:13:4} = "1.11" ]; then
+      go get -u golang.org/x/tools/cmd/goimports;
       goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :;
     fi
 
