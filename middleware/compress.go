@@ -192,8 +192,6 @@ func (w *maybeCompressResponseWriter) WriteHeader(code int) {
 	if w.ResponseWriter.Header().Get("Content-Encoding") != "" {
 		return
 	}
-	// The content-length after compression is unknown
-	w.ResponseWriter.Header().Del("Content-Length")
 
 	// Parse the first part of the Content-Type response header.
 	contentType := ""
@@ -211,6 +209,8 @@ func (w *maybeCompressResponseWriter) WriteHeader(code int) {
 		if wr := w.encoder(w.ResponseWriter, w.level); wr != nil {
 			w.w = wr
 			w.Header().Set("Content-Encoding", w.encoding)
+			// The content-length after compression is unknown
+			w.Header().Del("Content-Length")			
 		}
 	}
 }
