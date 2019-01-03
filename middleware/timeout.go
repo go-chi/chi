@@ -15,7 +15,8 @@ import (
 //
 // ie. a route/handler may look like:
 //
-//  r.Get("/long", func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+//  r.Get("/long", func(w http.ResponseWriter, r *http.Request) {
+// 	 ctx := r.Context()
 // 	 processTime := time.Duration(rand.Intn(4)+1) * time.Second
 //
 // 	 select {
