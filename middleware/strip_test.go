@@ -155,4 +155,16 @@ func TestRedirectSlashes(t *testing.T) {
 			t.Fatalf("invalid redirection, should be /accounts/someuser")
 		}
 	}
+
+	// Ensure query params are kept in tact upon redirecting a slash
+	{
+		resp, body := testRequestNoRedirect(t, ts, "GET", "/accounts/someuser/?a=1&b=2", nil)
+		if resp.StatusCode != 301 {
+			t.Fatalf(body)
+		}
+		if resp.Header.Get("Location") != "/accounts/someuser?a=1&b=2" {
+			t.Fatalf("invalid redirection, should be /accounts/someuser?a=1&b=2")
+		}
+
+	}
 }
