@@ -12,4 +12,4 @@ script:
       go get -u golang.org/x/tools/cmd/goimports;
       goimports -d -e ./ | grep '.*' && { echo; echo "Aborting due to non-empty goimports output."; exit 1; } || :;
     fi
-
+  - cd _examples && for i in */; do GO111MODULE=on go build $i/*.go; done
