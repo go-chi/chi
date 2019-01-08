@@ -2,7 +2,8 @@
 
 ## v4.0.0 (head)
 
-- ...
+- chi v4 requires Go 1.10.3+ (or Go 1.9.7+)
+- chi v4 is a Go module and thus breaks the import path; use `github.com/go-chi/chi/v4` and `github.com/go-chi/chi/v4/middleware`
 
 
 ## v3.3.4 (2019-01-07)
