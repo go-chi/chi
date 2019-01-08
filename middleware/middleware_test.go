@@ -28,10 +28,6 @@ func init() {
 
 func TestWrapWriterHTTP2(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, cn := w.(http.CloseNotifier)
-		if !cn {
-			t.Fatal("request should have been a http.CloseNotifier")
-		}
 		_, fl := w.(http.Flusher)
 		if !fl {
 			t.Fatal("request should have been a http.Flusher")

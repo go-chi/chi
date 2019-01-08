@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi"
 )
@@ -25,6 +26,7 @@ func main() {
 	r.Put("/ping", Ping)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		route = strings.Replace(route, "/*/", "/", -1)
 		fmt.Printf("%s %s\n", method, route)
 		return nil
 	}
