@@ -10,6 +10,33 @@ import (
 	"net/http"
 )
 
+// NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
+// hook into various parts of the response process.
+func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter {
+	_, cn := w.(http.CloseNotifier)
+	_, fl := w.(http.Flusher)
+
+	bw := basicWriter{ResponseWriter: w}
+
+	if protoMajor == 2 {
+		_, ps := w.(http.Pusher)
+		if cn && fl && ps {
+			return &http2FancyWriter{bw}
+		}
+	} else {
+		_, hj := w.(http.Hijacker)
+		_, rf := w.(io.ReaderFrom)
+		if cn && fl && hj && rf {
+			return &httpFancyWriter{bw}
+		}
+	}
+	if fl {
+		return &flushWriter{bw}
+	}
+
+	return &bw
+}
+
 // WrapResponseWriter is a proxy around an http.ResponseWriter that allows you to hook
 // into various parts of the response process.
 type WrapResponseWriter interface {
@@ -47,6 +74,7 @@ func (b *basicWriter) WriteHeader(code int) {
 		b.ResponseWriter.WriteHeader(code)
 	}
 }
+
 func (b *basicWriter) Write(buf []byte) (int, error) {
 	b.WriteHeader(http.StatusOK)
 	n, err := b.ResponseWriter.Write(buf)
@@ -60,20 +88,25 @@ func (b *basicWriter) Write(buf []byte) (int, error) {
 	b.bytes += n
 	return n, err
 }
+
 func (b *basicWriter) maybeWriteHeader() {
 	if !b.wroteHeader {
 		b.WriteHeader(http.StatusOK)
 	}
 }
+
 func (b *basicWriter) Status() int {
 	return b.code
 }
+
 func (b *basicWriter) BytesWritten() int {
 	return b.bytes
 }
+
 func (b *basicWriter) Tee(w io.Writer) {
 	b.tee = w
 }
+
 func (b *basicWriter) Unwrap() http.ResponseWriter {
 	return b.ResponseWriter
 }
@@ -103,16 +136,23 @@ func (f *httpFancyWriter) CloseNotify() <-chan bool {
 	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
 	return cn.CloseNotify()
 }
+
 func (f *httpFancyWriter) Flush() {
 	f.wroteHeader = true
 
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
+
 func (f *httpFancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	hj := f.basicWriter.ResponseWriter.(http.Hijacker)
 	return hj.Hijack()
 }
+
+func (f *http2FancyWriter) Push(target string, opts *http.PushOptions) error {
+	return f.basicWriter.ResponseWriter.(http.Pusher).Push(target, opts)
+}
+
 func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	if f.basicWriter.tee != nil {
 		n, err := io.Copy(&f.basicWriter, r)
@@ -129,6 +169,7 @@ func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 var _ http.CloseNotifier = &httpFancyWriter{}
 var _ http.Flusher = &httpFancyWriter{}
 var _ http.Hijacker = &httpFancyWriter{}
+var _ http.Pusher = &http2FancyWriter{}
 var _ io.ReaderFrom = &httpFancyWriter{}
 
 // http2FancyWriter is a HTTP2 writer that additionally satisfies http.CloseNotifier,
@@ -143,6 +184,7 @@ func (f *http2FancyWriter) CloseNotify() <-chan bool {
 	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
 	return cn.CloseNotify()
 }
+
 func (f *http2FancyWriter) Flush() {
 	f.wroteHeader = true
 
