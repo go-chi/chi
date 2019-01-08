@@ -3,7 +3,7 @@
 
 [![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
 
-`chi` is a lightweight, idiomatic and composable router for building Go 1.7+ HTTP services. It's
+`chi` is a lightweight, idiomatic and composable router for building Go HTTP services. It's
 especially good at helping you write large REST API services that are kept maintainable as your
 project grows and changes. `chi` is built on the new `context` package introduced in Go 1.7 to
 handle signaling, cancelation and request-scoped values across a handler chain.
@@ -31,7 +31,7 @@ included some useful/optional subpackages: [middleware](/middleware), [render](h
 * **Context control** - built on new `context` package, providing value chaining, cancelations and timeouts
 * **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
-* **No external dependencies** - plain ol' Go 1.7+ stdlib + net/http
+* **No external dependencies** - plain ol' Go stdlib + net/http
 
 
 ## Examples
@@ -261,7 +261,7 @@ friendly with any middleware in the community. This offers much better extensibi
 of packages and is at the heart of chi's purpose.
 
 Here is an example of a standard net/http middleware handler using the new request context
-available in Go 1.7+. This middleware sets a hypothetical user identifier on the request
+available in Go. This middleware sets a hypothetical user identifier on the request
 context and calls the next handler in the chain.
 
 ```go
@@ -400,7 +400,7 @@ Comparison with other routers: https://gist.github.com/pkieltyka/c089f309abeb179
 NOTE: the allocs in the benchmark above are from the calls to http.Request's
 `WithContext(context.Context)` method that clones the http.Request, sets the `Context()`
 on the duplicated (alloc'd) request and returns it the new request object. This is just
-how setting context on a request in Go 1.7+ works.
+how setting context on a request in Go works.
 
 
 ## Credits

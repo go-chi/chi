@@ -236,6 +236,13 @@ func (w *maybeCompressResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, err
 	return nil, nil, errors.New("chi/middleware: http.Hijacker is unavailable on the writer")
 }
 
+func (w *maybeCompressResponseWriter) Push(target string, opts *http.PushOptions) error {
+	if ps, ok := w.w.(http.Pusher); ok {
+		return ps.Push(target, opts)
+	}
+	return errors.New("chi/middleware: http.Pusher is unavailable on the writer")
+}
+
 func (w *maybeCompressResponseWriter) CloseNotify() <-chan bool {
 	if cn, ok := w.w.(http.CloseNotifier); ok {
 		return cn.CloseNotify()
