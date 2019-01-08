@@ -9,6 +9,9 @@ import (
 // StripSlashes is a middleware that will match request paths with a trailing
 // slash, strip it from the path and continue routing through the mux, if a route
 // matches, then it will serve the handler.
+//
+// NOTE: StripSlashes middleware is *incompatible* with http.FileServer,
+// see https://github.com/go-chi/chi/issues/343
 func StripSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		var path string
