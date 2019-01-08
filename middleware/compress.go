@@ -243,19 +243,6 @@ func (w *maybeCompressResponseWriter) Push(target string, opts *http.PushOptions
 	return errors.New("chi/middleware: http.Pusher is unavailable on the writer")
 }
 
-func (w *maybeCompressResponseWriter) CloseNotify() <-chan bool {
-	if cn, ok := w.w.(http.CloseNotifier); ok {
-		return cn.CloseNotify()
-	}
-
-	// If the underlying writer does not implement http.CloseNotifier, return
-	// a channel that never receives a value. The semantics here is that the
-	// client never disconnnects before the request is processed by the
-	// http.Handler, which is close enough to the default behavior (when
-	// CloseNotify() is not even called).
-	return make(chan bool, 1)
-}
-
 func (w *maybeCompressResponseWriter) Close() error {
 	if c, ok := w.w.(io.WriteCloser); ok {
 		return c.Close()

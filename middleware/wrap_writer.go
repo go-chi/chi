@@ -13,20 +13,19 @@ import (
 // NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
 // hook into various parts of the response process.
 func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter {
-	_, cn := w.(http.CloseNotifier)
 	_, fl := w.(http.Flusher)
 
 	bw := basicWriter{ResponseWriter: w}
 
 	if protoMajor == 2 {
 		_, ps := w.(http.Pusher)
-		if cn && fl && ps {
+		if fl && ps {
 			return &http2FancyWriter{bw}
 		}
 	} else {
 		_, hj := w.(http.Hijacker)
 		_, rf := w.(io.ReaderFrom)
-		if cn && fl && hj && rf {
+		if fl && hj && rf {
 			return &httpFancyWriter{bw}
 		}
 	}
@@ -124,17 +123,12 @@ func (f *flushWriter) Flush() {
 
 var _ http.Flusher = &flushWriter{}
 
-// httpFancyWriter is a HTTP writer that additionally satisfies http.CloseNotifier,
+// httpFancyWriter is a HTTP writer that additionally satisfies
 // http.Flusher, http.Hijacker, and io.ReaderFrom. It exists for the common case
 // of wrapping the http.ResponseWriter that package http gives you, in order to
 // make the proxied object support the full method set of the proxied object.
 type httpFancyWriter struct {
 	basicWriter
-}
-
-func (f *httpFancyWriter) CloseNotify() <-chan bool {
-	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
-	return cn.CloseNotify()
 }
 
 func (f *httpFancyWriter) Flush() {
@@ -166,23 +160,17 @@ func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	return n, err
 }
 
-var _ http.CloseNotifier = &httpFancyWriter{}
 var _ http.Flusher = &httpFancyWriter{}
 var _ http.Hijacker = &httpFancyWriter{}
 var _ http.Pusher = &http2FancyWriter{}
 var _ io.ReaderFrom = &httpFancyWriter{}
 
-// http2FancyWriter is a HTTP2 writer that additionally satisfies http.CloseNotifier,
+// http2FancyWriter is a HTTP2 writer that additionally satisfies
 // http.Flusher, and io.ReaderFrom. It exists for the common case
 // of wrapping the http.ResponseWriter that package http gives you, in order to
 // make the proxied object support the full method set of the proxied object.
 type http2FancyWriter struct {
 	basicWriter
-}
-
-func (f *http2FancyWriter) CloseNotify() <-chan bool {
-	cn := f.basicWriter.ResponseWriter.(http.CloseNotifier)
-	return cn.CloseNotify()
 }
 
 func (f *http2FancyWriter) Flush() {
@@ -192,5 +180,4 @@ func (f *http2FancyWriter) Flush() {
 	fl.Flush()
 }
 
-var _ http.CloseNotifier = &http2FancyWriter{}
 var _ http.Flusher = &http2FancyWriter{}
