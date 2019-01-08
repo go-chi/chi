@@ -651,6 +651,9 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 	}
 
 	// Sanity check
+	if ws >= 0 && ws != len(pattern)-1 {
+		panic("chi: wildcard '*' must be the last value in a route. trim trailing text or use a '{param}' instead")
+	}
 	if ps >= 0 && ws >= 0 && ws < ps {
 		panic("chi: wildcard '*' must be the last pattern in a route, otherwise use a '{param}'")
 	}

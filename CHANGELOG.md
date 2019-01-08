@@ -1,5 +1,23 @@
 # Changelog
 
+## v4.0.0 (head)
+
+- ...
+
+
+## v3.3.4 (2019-01-07)
+
+- Minor middleware improvements. No changes to core library/router. Moving v3 into its
+- own branch as a version of chi for Go 1.7, 1.8, 1.9, 1.10, 1.11
+- History of changes: see https://github.com/go-chi/chi/compare/v3.3.3...v3.3.4
+
+
+## v3.3.3 (2018-08-27)
+
+- Minor release
+- See https://github.com/go-chi/chi/compare/v3.3.2...v3.3.3
+
+
 ## v3.3.2 (2017-12-22)
 
 - Support to route trailing slashes on mounted sub-routers (#281)

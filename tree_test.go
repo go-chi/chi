@@ -61,9 +61,9 @@ func TestTree(t *testing.T) {
 	tr.InsertRoute(mGET, "/admin/user/{id}", hUserShow)
 
 	tr.InsertRoute(mGET, "/admin/apps/{id}", hAdminAppShow)
-	tr.InsertRoute(mGET, "/admin/apps/{id}/*ff", hAdminAppShowCatchall) // TODO: ALLOWED...? prob not.. panic..?
+	tr.InsertRoute(mGET, "/admin/apps/{id}/*", hAdminAppShowCatchall)
 
-	tr.InsertRoute(mGET, "/admin/*ff", hStub) // catchall segment will get replaced by next route
+	tr.InsertRoute(mGET, "/admin/*", hStub) // catchall segment will get replaced by next route
 	tr.InsertRoute(mGET, "/admin/*", hAdminCatchall)
 
 	tr.InsertRoute(mGET, "/users/{userID}/profile", hUserProfile)
@@ -194,7 +194,7 @@ func TestTreeMoar(t *testing.T) {
 	// TODO: make a separate test case for this one..
 	// tr.InsertRoute(mGET, "/articles/{id}/{id}", hStub1)                              // panic expected, we're duplicating param keys
 
-	tr.InsertRoute(mGET, "/pages/*ff", hStub) // TODO: panic, allow it..?
+	tr.InsertRoute(mGET, "/pages/*", hStub)
 	tr.InsertRoute(mGET, "/pages/*", hStub9)
 
 	tr.InsertRoute(mGET, "/users/{id}", hStub14)

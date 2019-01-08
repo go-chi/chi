@@ -1375,6 +1375,32 @@ func TestMuxMissingParams(t *testing.T) {
 	}
 }
 
+func TestMuxWildcardRoute(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	r := NewRouter()
+	r.Get("/*/wildcard/must/be/at/end", handler)
+}
+
+func TestMuxWildcardRouteCheckTwo(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	r := NewRouter()
+	r.Get("/*/wildcard/{must}/be/at/end", handler)
+}
+
 func TestMuxContextIsThreadSafe(t *testing.T) {
 	router := NewRouter()
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
