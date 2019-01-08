@@ -11,8 +11,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v4"
+	"github.com/go-chi/chi/v4/middleware"
 )
 
 func main() {

@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v4"
+	"github.com/go-chi/chi/v4/middleware"
 	"github.com/go-chi/valve"
 )
 
