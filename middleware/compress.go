@@ -210,7 +210,7 @@ func (w *maybeCompressResponseWriter) WriteHeader(code int) {
 			w.w = wr
 			w.Header().Set("Content-Encoding", w.encoding)
 			// The content-length after compression is unknown
-			w.Header().Del("Content-Length")			
+			w.Header().Del("Content-Length")
 		}
 	}
 }
