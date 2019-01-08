@@ -123,25 +123,36 @@ func TestRedirectSlashes(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if req, resp := testRequest(t, ts, "GET", "/", nil); resp != "root" && req.StatusCode != 200 {
-		t.Fatalf(resp)
+	if resp, body := testRequest(t, ts, "GET", "/", nil); body != "root" && resp.StatusCode != 200 {
+		t.Fatalf(body)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if req, resp := testRequest(t, ts, "GET", "//", nil); resp != "root" && req.StatusCode != 200 {
-		t.Fatalf(resp)
+	if resp, body := testRequest(t, ts, "GET", "//", nil); body != "root" && resp.StatusCode != 200 {
+		t.Fatalf(body)
 	}
 
-	if req, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" && req.StatusCode != 200 {
-		t.Fatalf(resp)
+	if resp, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" && resp.StatusCode != 200 {
+		t.Fatalf(body)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if req, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" && req.StatusCode != 200 {
-		t.Fatalf(resp)
+	if resp, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" && resp.StatusCode != 200 {
+		t.Fatalf(body)
 	}
 
-	if req, resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" && req.StatusCode != 200 {
-		t.Fatalf(resp)
+	if resp, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" && resp.StatusCode != 200 {
+		t.Fatalf(body)
+	}
+
+	// Ensure redirect Location url is correct
+	{
+		resp, body := testRequestNoRedirect(t, ts, "GET", "/accounts/someuser/", nil)
+		if resp.StatusCode != 301 {
+			t.Fatalf(body)
+		}
+		if resp.Header.Get("Location") != "/accounts/someuser" {
+			t.Fatalf("invalid redirection, should be /accounts/someuser")
+		}
 	}
 }
