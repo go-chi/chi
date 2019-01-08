@@ -277,31 +277,9 @@ func TestMuxEmptyRoutes(t *testing.T) {
 		t.Fatalf(body)
 	}
 
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				if r != `chi: attempting to route to a mux with no handlers.` {
-					t.Fatalf("expecting empty route panic")
-				}
-			}
-		}()
-
-		_, body := testHandler(t, mux, "GET", "/api", nil)
-		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", body)
-	}()
-
-	func() {
-		defer func() {
-			if r := recover(); r != nil {
-				if r != `chi: attempting to route to a mux with no handlers.` {
-					t.Fatalf("expecting empty route panic")
-				}
-			}
-		}()
-
-		_, body := testHandler(t, mux, "GET", "/api/abc", nil)
-		t.Fatalf("oops, we are expecting a panic instead of getting resp: %s", body)
-	}()
+	if _, body := testHandler(t, apiRouter, "GET", "/", nil); body != "404 page not found\n" {
+		t.Fatalf(body)
+	}
 }
 
 // Test a mux that routes a trailing slash, see also middleware/strip_test.go
