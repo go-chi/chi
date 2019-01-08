@@ -60,7 +60,8 @@ func NewMux() *Mux {
 func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Ensure the mux has some routes defined on the mux
 	if mx.handler == nil {
-		panic("chi: attempting to route to a mux with no handlers.")
+		mx.NotFoundHandler().ServeHTTP(w, r)
+		return
 	}
 
 	// Check if a routing context already exists from a parent router.
