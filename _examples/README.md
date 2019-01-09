@@ -16,8 +16,9 @@ chi examples
 
 ## Usage
 
-1. `cd <example>/` ie. `cd rest/`
-2. `GO111MODULE=on go run *.go` - note, example services run on port 3333
-3. Open another terminal and use curl to send some requests to your example service,
+1. `go get -v -d -u ./...` - fetch example deps
+2. `cd <example>/` ie. `cd rest/`
+3. `go run *.go` - note, example services run on port 3333
+4. Open another terminal and use curl to send some requests to your example service,
    `curl -v http://localhost:3333/`
-4. Read <example>/main.go source to learn how service works and read comments for usage
+5. Read <example>/main.go source to learn how service works and read comments for usage
