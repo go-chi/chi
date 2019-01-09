@@ -5,6 +5,16 @@
 - chi v4 requires Go 1.10.3+ (or Go 1.9.7+)
 - chi v4 is a Go module and thus breaks the import path; use `github.com/go-chi/chi/v4` and `github.com/go-chi/chi/v4/middleware`
 
+### Upgrading your codebase from chi v3.x to chi v4
+
+Example using GNU find (`brew install find`):
+```
+$ find . -type f -name '*.go' -not -path "./vendor/*" -exec sed -i 's+github.com/go-chi/chi+github.com/go-chi/chi/v4+g' {} \;
+```
+
+We recommend vendoring the dependencies via `GO111MODULE=on go mod vendor && GO111MODULE=on go mod tidy`.
+
+If your repository still pulls in the old import path, you can figure out why by running `GO111MODULE=on go mod why github.com/go-chi/chi`.
 
 ## v3.3.4 (2019-01-07)
 

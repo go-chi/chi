@@ -1,7 +1,7 @@
 //
 // Package chi is a small, idiomatic and composable router for building HTTP services.
 //
-// chi requires Go 1.7 or newer.
+// chi v4 requires Go 1.10.3+ (or Go 1.9.7+).
 //
 // Example:
 //  package main
@@ -25,7 +25,7 @@
 //  	http.ListenAndServe(":3333", r)
 //  }
 //
-// See github.com/go-chi/chi/v4/_examples/ for more in-depth examples.
+// See https://github.com/go-chi/chi/tree/master/_examples for more in-depth examples.
 //
 // URL patterns allow for easy matching of path components in HTTP
 // requests. The matching components can then be accessed using
