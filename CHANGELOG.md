@@ -1,8 +1,12 @@
 # Changelog
 
-## v4.0.0 (head)
+## v4.0.0 (head/unreleased)
 
-- ...
+- chi v4 requires Go 1.10.3+ (or Go 1.9.7+) - we have deprecated support for Go 1.7 and 1.8
+- router: respond with 404 on router with no routes (#362)
+- router: additional check to ensure wildcard is at the end of a url pattern (#333)
+- middleware: deprecate use of http.CloseNotifier (#347)
+- middleware: fix RedirectSlashes to include query params on redirect (#334)
 
 
 ## v3.3.4 (2019-01-07)
