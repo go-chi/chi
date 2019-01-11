@@ -105,6 +105,12 @@ var defaultContentTypes = map[string]struct{}{
 	"image/svg+xml":            {},
 }
 
+var defaultStatusCodes = map[int]struct{}{
+	http.StatusOK:       {},
+	http.StatusCreated:  {},
+	http.StatusAccepted: {},
+}
+
 // DefaultCompress is a middleware that compresses response
 // body of predefined content types to a data format based
 // on Accept-Encoding request header. It uses a default
@@ -209,6 +215,10 @@ func (w *compressResponseWriter) WriteHeader(code int) {
 
 	// Is the content type compressable?
 	if _, ok := w.contentTypes[contentType]; !ok {
+		return
+	}
+
+	if _, ok := defaultStatusCodes[code]; !ok {
 		return
 	}
 
