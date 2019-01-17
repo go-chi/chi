@@ -193,7 +193,7 @@ func (w *compressResponseWriter) WriteHeader(code int) {
 		return
 	}
 	w.wroteHeader = true
-	defer w.WriteHeader(code)
+	defer w.ResponseWriter.WriteHeader(code)
 
 	// Already compressed data?
 	if w.Header().Get("Content-Encoding") != "" {
@@ -225,7 +225,7 @@ func (w *compressResponseWriter) WriteHeader(code int) {
 
 func (w *compressResponseWriter) Write(p []byte) (int, error) {
 	if !w.wroteHeader {
-		w.WriteHeader(http.StatusOK)
+		w.ResponseWriter.WriteHeader(http.StatusOK)
 	}
 
 	return w.w.Write(p)
