@@ -9,7 +9,7 @@ import (
 // GetHead automatically route undefined HEAD requests to GET handlers.
 func GetHead(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "HEAD" {
+		if r.Method == http.MethodHead {
 			rctx := chi.RouteContext(r.Context())
 			routePath := rctx.RoutePath
 			if routePath == "" {
@@ -26,8 +26,8 @@ func GetHead(next http.Handler) http.Handler {
 			// Attempt to find a HEAD handler for the routing path, if not found, traverse
 			// the router as through its a GET route, but proceed with the request
 			// with the HEAD method.
-			if !rctx.Routes.Match(tctx, "HEAD", routePath) {
-				rctx.RouteMethod = "GET"
+			if !rctx.Routes.Match(tctx, http.MethodHead, routePath) {
+				rctx.RouteMethod = http.MethodGet
 				rctx.RoutePath = routePath
 				next.ServeHTTP(w, r)
 				return
