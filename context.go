@@ -71,7 +71,10 @@ func (x *Context) Reset() {
 func (x *Context) URLParam(key string) string {
 	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
 		if x.URLParams.Keys[k] == key {
-			return x.URLParams.Values[k]
+			if len(x.URLParams.Values) >= k {
+				return x.URLParams.Values[k]
+			}
+			return ""
 		}
 	}
 	return ""
