@@ -315,10 +315,9 @@ func (cw *compressResponseWriter) WriteHeader(code int) {
 	}
 
 	// Parse the first part of the Content-Type response header.
-	contentType := ""
-	parts := strings.Split(cw.Header().Get("Content-Type"), ";")
-	if len(parts) > 0 {
-		contentType = parts[0]
+	contentType := cw.Header().Get("Content-Type")
+	if idx := strings.Index(contentType, ";"); idx >= 0 {
+		contentType = contentType[0:idx]
 	}
 
 	// Is the content type compressable?
