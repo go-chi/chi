@@ -87,7 +87,7 @@ func SetEncoder(encoding string, fn EncoderFunc) {
 		}
 	}
 
-	if e != "" {
+	if e == "" {
 		encodingPrecedence = append([]string{e}, encodingPrecedence...)
 	}
 }
