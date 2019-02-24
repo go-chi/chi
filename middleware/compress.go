@@ -87,7 +87,7 @@ func SetEncoder(encoding string, fn EncoderFunc) {
 		}
 	}
 
-	if e == "" {
+	if e != "" {
 		encodingPrecedence = append([]string{e}, encodingPrecedence...)
 	}
 }
@@ -188,71 +188,71 @@ type compressResponseWriter struct {
 	wroteHeader  bool
 }
 
-func (w *compressResponseWriter) WriteHeader(code int) {
-	if w.wroteHeader {
+func (cw *compressResponseWriter) WriteHeader(code int) {
+	if cw.wroteHeader {
 		return
 	}
-	w.wroteHeader = true
-	defer w.ResponseWriter.WriteHeader(code)
+	cw.wroteHeader = true
+	defer cw.ResponseWriter.WriteHeader(code)
 
 	// Already compressed data?
-	if w.Header().Get("Content-Encoding") != "" {
+	if cw.Header().Get("Content-Encoding") != "" {
 		return
 	}
 
 	// Parse the first part of the Content-Type response header.
 	contentType := ""
-	parts := strings.Split(w.Header().Get("Content-Type"), ";")
+	parts := strings.Split(cw.Header().Get("Content-Type"), ";")
 	if len(parts) > 0 {
 		contentType = parts[0]
 	}
 
 	// Is the content type compressable?
-	if _, ok := w.contentTypes[contentType]; !ok {
+	if _, ok := cw.contentTypes[contentType]; !ok {
 		return
 	}
 
-	if w.encoder != nil && w.encoding != "" {
-		if wr := w.encoder(w.ResponseWriter, w.level); wr != nil {
-			w.w = wr
-			w.Header().Set("Content-Encoding", w.encoding)
+	if cw.encoder != nil && cw.encoding != "" {
+		if wr := cw.encoder(cw.ResponseWriter, cw.level); wr != nil {
+			cw.w = wr
+			cw.Header().Set("Content-Encoding", cw.encoding)
 
 			// The content-length after compression is unknown
-			w.Header().Del("Content-Length")
+			cw.Header().Del("Content-Length")
 		}
 	}
 }
 
-func (w *compressResponseWriter) Write(p []byte) (int, error) {
-	if !w.wroteHeader {
-		w.ResponseWriter.WriteHeader(http.StatusOK)
+func (cw *compressResponseWriter) Write(p []byte) (int, error) {
+	if !cw.wroteHeader {
+		cw.WriteHeader(http.StatusOK)
 	}
 
-	return w.w.Write(p)
+	return cw.w.Write(p)
 }
 
-func (w *compressResponseWriter) Flush() {
-	if f, ok := w.w.(http.Flusher); ok {
+func (cw *compressResponseWriter) Flush() {
+	if f, ok := cw.w.(http.Flusher); ok {
 		f.Flush()
 	}
 }
 
-func (w *compressResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hj, ok := w.w.(http.Hijacker); ok {
+func (cw *compressResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := cw.w.(http.Hijacker); ok {
 		return hj.Hijack()
 	}
 	return nil, nil, errors.New("chi/middleware: http.Hijacker is unavailable on the writer")
 }
 
-func (w *compressResponseWriter) Push(target string, opts *http.PushOptions) error {
-	if ps, ok := w.w.(http.Pusher); ok {
+func (cw *compressResponseWriter) Push(target string, opts *http.PushOptions) error {
+	if ps, ok := cw.w.(http.Pusher); ok {
 		return ps.Push(target, opts)
 	}
 	return errors.New("chi/middleware: http.Pusher is unavailable on the writer")
 }
 
-func (w *compressResponseWriter) Close() error {
-	if c, ok := w.w.(io.WriteCloser); ok {
+func (cw *compressResponseWriter) Close() error {
+	if c, ok := cw.w.(io.WriteCloser); ok {
 		return c.Close()
 	}
 	return errors.New("chi/middleware: io.WriteCloser is unavailable on the writer")
