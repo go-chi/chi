@@ -26,6 +26,12 @@ func AllowContentType(contentTypes ...string) func(next http.Handler) http.Handl
 
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+			if r.ContentLength == 0 {
+				// skip check for empty content body
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			s := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Type")))
 			if i := strings.Index(s, ";"); i > -1 {
 				s = s[0:i]
