@@ -378,8 +378,6 @@ func (rd *ArticleResponse) Render(w http.ResponseWriter, r *http.Request) error 
 	return nil
 }
 
-type ArticleListResponse []*ArticleResponse
-
 func NewArticleListResponse(articles []*Article) []render.Renderer {
 	list := []render.Renderer{}
 	for _, article := range articles {
