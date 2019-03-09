@@ -26,10 +26,6 @@ var defaultCompressibleContentTypes = []string{
 	"image/svg+xml",
 }
 
-// A default compressor that allows for the old API to use the new code.
-// DEPRECATED
-var defaultCompressor *Compressor
-
 // Compressor represents a set of encoding configurations.
 type Compressor struct {
 	level int // The compression level.
@@ -47,15 +43,20 @@ type Compressor struct {
 //
 // The level should be one of the ones defined in the flate package.
 // The types are the content types that are allowed to be compressed.
-func NewCompressor(level int, types ...string) *Compressor {
+//
+// NOTE: make sure to set the Content-Type header on your response
+// otherwise this middleware will not compress the response body. For ex, in
+// your handler you should set w.Header().Set("Content-Type", http.DetectContentType(yourBody))
+// or set it manually.
+func NewCompressor(level int, withDefaultTypes bool, types ...string) *Compressor {
 	// If types are provided, set those as the allowed types. If none are
 	// provided, use the default list.
 	allowedTypes := make(map[string]bool)
-	if len(types) > 0 {
-		for _, t := range types {
-			allowedTypes[t] = true
-		}
-	} else {
+	for _, t := range types {
+		allowedTypes[t] = true
+	}
+
+	if withDefaultTypes {
 		for _, t := range defaultCompressibleContentTypes {
 			allowedTypes[t] = true
 		}
@@ -244,54 +245,6 @@ type ioResetterWriter interface {
 	Reset(w io.Writer)
 }
 
-// SetEncoder can be used to set the implementation of a compression algorithm.
-//
-// The encoding should be a standardised identifier. See:
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
-//
-// For example, add the Brotli algortithm:
-//
-//  import brotli_enc "gopkg.in/kothar/brotli-go.v0/enc"
-//
-//  middleware.SetEncoder("br", func(w http.ResponseWriter, level int) io.Writer {
-//    params := brotli_enc.NewBrotliParams()
-//    params.SetQuality(level)
-//    return brotli_enc.NewBrotliWriter(params, w)
-//  })
-//
-//  DEPRECATED
-func SetEncoder(encoding string, fn EncoderFunc) {
-	if defaultCompressor == nil {
-		panic("no compressor to set encoders on. Call Compress() first")
-	}
-	defaultCompressor.SetEncoder(encoding, fn)
-}
-
-// DefaultCompress is a middleware that compresses response
-// body of predefined content types to a data format based
-// on Accept-Encoding request header. It uses a default
-// compression level.
-// DEPRECATED
-func DefaultCompress(next http.Handler) http.Handler {
-	return Compress(flate.DefaultCompression)(next)
-}
-
-// Compress is a middleware that compresses response
-// body of a given content types to a data format based
-// on Accept-Encoding request header. It uses a given
-// compression level.
-//
-// NOTE: make sure to set the Content-Type header on your response
-// otherwise this middleware will not compress the response body. For ex, in
-// your handler you should set w.Header().Set("Content-Type", http.DetectContentType(yourBody))
-// or set it manually.
-//
-// DEPRECATED
-func Compress(level int, types ...string) func(next http.Handler) http.Handler {
-	defaultCompressor = NewCompressor(level, types...)
-	return defaultCompressor.Handler()
-}
-
 type compressResponseWriter struct {
 	http.ResponseWriter
 	// The streaming encoder writer to be used if there is one. Otherwise,
@@ -322,6 +275,7 @@ func (cw *compressResponseWriter) WriteHeader(code int) {
 
 	// Is the content type compressable?
 	if _, ok := cw.contentTypes[contentType]; !ok {
+		cw.w = cw.ResponseWriter
 		return
 	}
 
