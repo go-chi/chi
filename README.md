@@ -412,18 +412,15 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 ## Beyond REST
 
 chi is just a http router that lets you decompose request handling into many smaller layers.
-Many companies including Pressly.com (of course) use chi to write REST services for their public
-APIs. But, REST is just a convention for managing state via HTTP, and there's a lot of other pieces
-required to write a complete client-server system or network of microservices.
+Many companies use chi to write REST services for their public APIs. But, REST is just a convention
+for managing state via HTTP, and there's a lot of other pieces required to write a complete client-server
+system or network of microservices.
 
-Looking ahead beyond REST, I also recommend some newer works in the field coming from
-[gRPC](https://github.com/grpc/grpc-go), [NATS](https://nats.io), [go-kit](https://github.com/go-kit/kit)
-and even [graphql](https://github.com/graphql-go/graphql). They're all pretty cool with their
-own unique approaches and benefits. Specifically, I'd look at gRPC since it makes client-server
-communication feel like a single program on a single computer, no need to hand-write a client library
-and the request/response payloads are typed contracts. NATS is pretty amazing too as a super
-fast and lightweight pub-sub transport that can speak protobufs, with nice service discovery -
-an excellent combination with gRPC.
+Looking beyond REST, I also recommend some newer works in the field:
+* [webrpc](https://github.com/webrpc/webrpc) - Web-focused RPC client+server framework with code-gen
+* [gRPC](https://github.com/grpc/grpc-go) - Google's RPC framework via protobufs
+* [graphql](https://github.com/99designs/gqlgen) - Declarative query language
+* [NATS](https://nats.io) - lightweight pub-sub
 
 
 ## License
