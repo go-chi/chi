@@ -47,12 +47,37 @@ func ThrottleBacklog(limit int, backlogLimit int, backlogTimeout time.Duration) 
 		t.backlogTokens <- token{}
 	}
 
-	fn := func(h http.Handler) http.Handler {
-		t.h = h
-		return &t
-	}
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			select {
+			case <-ctx.Done():
+				http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
+			case btok := <-t.backlogTokens:
+				timer := time.NewTimer(t.backlogTimeout)
 
-	return fn
+				defer func() {
+					t.backlogTokens <- btok
+				}()
+
+				select {
+				case <-timer.C:
+					http.Error(w, errTimedOut, http.StatusServiceUnavailable)
+				case <-ctx.Done():
+					http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
+				case tok := <-t.tokens:
+					defer func() {
+						t.tokens <- tok
+					}()
+					next.ServeHTTP(w, r)
+				}
+			default:
+				http.Error(w, errCapacityExceeded, http.StatusServiceUnavailable)
+			}
+		}
+
+		return http.HandlerFunc(fn)
+	}
 }
 
 // token represents a request that is being processed.
@@ -60,42 +85,7 @@ type token struct{}
 
 // throttler limits number of currently processed requests at a time.
 type throttler struct {
-	h              http.Handler
 	tokens         chan token
 	backlogTokens  chan token
 	backlogTimeout time.Duration
-}
-
-// ServeHTTP is the primary throttler request handler
-func (t *throttler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	select {
-	case <-ctx.Done():
-		http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
-		return
-	case btok := <-t.backlogTokens:
-		timer := time.NewTimer(t.backlogTimeout)
-
-		defer func() {
-			t.backlogTokens <- btok
-		}()
-
-		select {
-		case <-timer.C:
-			http.Error(w, errTimedOut, http.StatusServiceUnavailable)
-			return
-		case <-ctx.Done():
-			http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
-			return
-		case tok := <-t.tokens:
-			defer func() {
-				t.tokens <- tok
-			}()
-			t.h.ServeHTTP(w, r)
-		}
-		return
-	default:
-		http.Error(w, errCapacityExceeded, http.StatusServiceUnavailable)
-		return
-	}
 }
