@@ -179,7 +179,7 @@ type Router interface {
 	http.Handler
 	Routes
 
-	// Use appends one of more middlewares onto the Router stack.
+	// Use appends one or more middlewares onto the Router stack.
 	Use(middlewares ...func(http.Handler) http.Handler)
 
 	// With adds inline middlewares for an endpoint handler.
