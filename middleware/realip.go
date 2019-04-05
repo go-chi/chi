@@ -28,27 +28,17 @@ var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
 // how you're using RemoteAddr, vulnerable to an attack of some sort).
 func RealIP(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if rip := realIP(r); rip != "" {
-			r.RemoteAddr = rip
+		if xff := r.Header.Get(xForwardedFor); xff != "" {
+			i := strings.Index(xff, ", ")
+			if i == -1 {
+				i = len(xff)
+			}
+			r.RemoteAddr = xff[:i]
+		} else if xrip := r.Header.Get(xRealIP); xrip != "" {
+			r.RemoteAddr = xrip
 		}
 		h.ServeHTTP(w, r)
 	}
 
 	return http.HandlerFunc(fn)
-}
-
-func realIP(r *http.Request) string {
-	var ip string
-
-	if xff := r.Header.Get(xForwardedFor); xff != "" {
-		i := strings.Index(xff, ", ")
-		if i == -1 {
-			i = len(xff)
-		}
-		ip = xff[:i]
-	} else if xrip := r.Header.Get(xRealIP); xrip != "" {
-		ip = xrip
-	}
-
-	return ip
 }
