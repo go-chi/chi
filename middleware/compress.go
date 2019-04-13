@@ -322,6 +322,7 @@ func (cw *compressResponseWriter) WriteHeader(code int) {
 
 	// Is the content type compressable?
 	if _, ok := cw.contentTypes[contentType]; !ok {
+		cw.w = cw.ResponseWriter
 		return
 	}
 

@@ -152,12 +152,12 @@ func TestCompressor(t *testing.T) {
 	})
 
 	r.Get("/getcss", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/css")
 		w.Write([]byte("textstring"))
 	})
 
 	r.Get("/getplain", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set("Content-Type", "text/plain")
 		w.Write([]byte("textstring"))
 	})
 
@@ -206,6 +206,12 @@ func TestCompressor(t *testing.T) {
 			path:              "/getcss",
 			acceptedEncodings: []string{"nop, gzip, deflate"},
 			expectedEncoding:  "nop",
+		},
+		{
+			name:              "content type is not allowed",
+			path:              "/getplain",
+			acceptedEncodings: []string{"gzip", "deflate"},
+			expectedEncoding:  "",
 		},
 	}
 
