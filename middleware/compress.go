@@ -67,6 +67,7 @@ func NewCompressor(level int, types ...string) *Compressor {
 		pooledEncoders: make(map[string]*sync.Pool),
 		allowedTypes:   allowedTypes,
 	}
+
 	// Set the default encoders.  The precedence order uses the reverse
 	// ordering that the encoders were added. This means adding new encoders
 	// will move them to the front of the order.
@@ -177,6 +178,7 @@ func (c *Compressor) Handler() func(next http.Handler) http.Handler {
 				w:              w,
 				contentTypes:   c.allowedTypes,
 				encoding:       encoding,
+				compressable:   false, // determined in post-handler
 			}
 			if encoder != nil {
 				cw.w = encoder
@@ -294,12 +296,14 @@ func Compress(level int, types ...string) func(next http.Handler) http.Handler {
 
 type compressResponseWriter struct {
 	http.ResponseWriter
+
 	// The streaming encoder writer to be used if there is one. Otherwise,
 	// this is just the normal writer.
 	w            io.Writer
 	encoding     string
 	contentTypes map[string]bool
 	wroteHeader  bool
+	compressable bool
 }
 
 func (cw *compressResponseWriter) WriteHeader(code int) {
@@ -322,10 +326,12 @@ func (cw *compressResponseWriter) WriteHeader(code int) {
 
 	// Is the content type compressable?
 	if _, ok := cw.contentTypes[contentType]; !ok {
+		cw.compressable = false
 		return
 	}
 
 	if cw.encoding != "" {
+		cw.compressable = true
 		cw.Header().Set("Content-Encoding", cw.encoding)
 		cw.Header().Set("Vary", "Accept-Encoding")
 
@@ -339,31 +345,39 @@ func (cw *compressResponseWriter) Write(p []byte) (int, error) {
 		cw.WriteHeader(http.StatusOK)
 	}
 
-	return cw.w.Write(p)
+	return cw.writer().Write(p)
+}
+
+func (cw *compressResponseWriter) writer() io.Writer {
+	if cw.compressable {
+		return cw.w
+	} else {
+		return cw.ResponseWriter
+	}
 }
 
 func (cw *compressResponseWriter) Flush() {
-	if f, ok := cw.w.(http.Flusher); ok {
+	if f, ok := cw.writer().(http.Flusher); ok {
 		f.Flush()
 	}
 }
 
 func (cw *compressResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	if hj, ok := cw.w.(http.Hijacker); ok {
+	if hj, ok := cw.writer().(http.Hijacker); ok {
 		return hj.Hijack()
 	}
 	return nil, nil, errors.New("chi/middleware: http.Hijacker is unavailable on the writer")
 }
 
 func (cw *compressResponseWriter) Push(target string, opts *http.PushOptions) error {
-	if ps, ok := cw.w.(http.Pusher); ok {
+	if ps, ok := cw.writer().(http.Pusher); ok {
 		return ps.Push(target, opts)
 	}
 	return errors.New("chi/middleware: http.Pusher is unavailable on the writer")
 }
 
 func (cw *compressResponseWriter) Close() error {
-	if c, ok := cw.w.(io.WriteCloser); ok {
+	if c, ok := cw.writer().(io.WriteCloser); ok {
 		return c.Close()
 	}
 	return errors.New("chi/middleware: io.WriteCloser is unavailable on the writer")
