@@ -61,17 +61,26 @@ func init() {
 // process, and where the last number is an atomically incremented request
 // counter.
 func RequestID(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		requestID := r.Header.Get("X-Request-Id")
-		if requestID == "" {
-			myid := atomic.AddUint64(&reqid, 1)
-			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+	return ConfiguredRequestID("X-Request-Id")(next)
+}
+
+// ConfiguredRequestID is a middleware just like RequestID except that you
+// configure the header to use
+func ConfiguredRequestID(header string) func(next http.Handler) http.Handler {
+	fn := func(next http.Handler) http.Handler {
+		fn2 := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			requestID := r.Header.Get(header)
+			if requestID == "" {
+				myid := atomic.AddUint64(&reqid, 1)
+				requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+			}
+			ctx = context.WithValue(ctx, RequestIDKey, requestID)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		}
-		ctx = context.WithValue(ctx, RequestIDKey, requestID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		return http.HandlerFunc(fn2)
 	}
-	return http.HandlerFunc(fn)
+	return fn
 }
 
 // GetReqID returns a request ID from the given context if one is present.
