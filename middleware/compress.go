@@ -308,6 +308,7 @@ type compressResponseWriter struct {
 
 func (cw *compressResponseWriter) WriteHeader(code int) {
 	if cw.wroteHeader {
+		cw.ResponseWriter.WriteHeader(code) // Allow multiple calls to propagate.
 		return
 	}
 	cw.wroteHeader = true
