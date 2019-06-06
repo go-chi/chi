@@ -70,12 +70,12 @@ func (b *basicWriter) WriteHeader(code int) {
 	if !b.wroteHeader {
 		b.code = code
 		b.wroteHeader = true
-		b.ResponseWriter.WriteHeader(code)
 	}
+	b.ResponseWriter.WriteHeader(code)
 }
 
 func (b *basicWriter) Write(buf []byte) (int, error) {
-	b.WriteHeader(http.StatusOK)
+	b.maybeWriteHeader()
 	n, err := b.ResponseWriter.Write(buf)
 	if b.tee != nil {
 		_, err2 := b.tee.Write(buf[:n])
