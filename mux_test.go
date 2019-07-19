@@ -1088,7 +1088,7 @@ func TestMuxSubroutes(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	body = string(w.Body.Bytes())
+	body = w.Body.String()
 	expected = "account2"
 	if body != expected {
 		t.Fatalf("expected:%s got:%s", expected, body)
@@ -1127,7 +1127,7 @@ func TestSingleHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 
-	body := string(w.Body.Bytes())
+	body := w.Body.String()
 	expected := "hi joe"
 	if body != expected {
 		t.Fatalf("expected:%s got:%s", expected, body)
@@ -1564,7 +1564,7 @@ func testHandler(t *testing.T, h http.Handler, method, path string, body io.Read
 	r, _ := http.NewRequest(method, path, body)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
-	return w.Result(), string(w.Body.Bytes())
+	return w.Result(), w.Body.String()
 }
 
 type testFileSystem struct {
