@@ -19,7 +19,7 @@ func testRequestWithAcceptedEncodings(t *testing.T, ts *httptest.Server, method,
 		t.Fatal(err)
 		return nil, ""
 	}
-	if len(encodings) >= 0 {
+	if len(encodings) > 0 {
 		encodingsString := strings.Join(encodings, ",")
 		req.Header.Set("Accept-Encoding", encodingsString)
 	}
