@@ -105,6 +105,9 @@ func TestSplit(t *testing.T) {
 	if s1 != "type1" {
 		t.Errorf("Want \"type1\" got \"%s\"", s1)
 	}
+	if s2 != "" {
+		t.Errorf("Want empty string got \"%s\"", s2)
+	}
 }
 
 func TestContentEncoding(t *testing.T) {
