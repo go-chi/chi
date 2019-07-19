@@ -125,8 +125,8 @@ type RouteParams struct {
 
 // Add will append a URL parameter to the end of the route param
 func (s *RouteParams) Add(key, value string) {
-	(*s).Keys = append((*s).Keys, key)
-	(*s).Values = append((*s).Values, value)
+	s.Keys = append(s.Keys, key)
+	s.Values = append(s.Values, value)
 }
 
 // ServerBaseContext wraps an http.Handler to set the request context to the
