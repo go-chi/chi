@@ -698,7 +698,7 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 				rexpat = "^" + rexpat
 			}
 			if rexpat[len(rexpat)-1] != '$' {
-				rexpat = rexpat + "$"
+				rexpat += "$"
 			}
 		}
 
