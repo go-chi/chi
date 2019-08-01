@@ -795,6 +795,7 @@ func (ns nodes) findEdge(label byte) *node {
 }
 
 // Route describes the details of a routing handler.
+// Handlers map key is an HTTP method
 type Route struct {
 	Pattern   string
 	Handlers  map[string]http.Handler
