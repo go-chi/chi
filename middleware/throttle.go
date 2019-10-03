@@ -85,10 +85,12 @@ func (t *throttler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, errTimedOut, http.StatusServiceUnavailable)
 			return
 		case <-ctx.Done():
+			timer.Stop()
 			http.Error(w, errContextCanceled, http.StatusServiceUnavailable)
 			return
 		case tok := <-t.tokens:
 			defer func() {
+				timer.Stop()
 				t.tokens <- tok
 			}()
 			t.h.ServeHTTP(w, r)
