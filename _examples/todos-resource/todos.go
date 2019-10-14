@@ -1,12 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 )
 
-type todosResource struct{}
+type todosResource struct {
+	ID   int64
+	Task string
+}
+
+var todobase = make(map[int64]todosResource)
 
 // Routes creates a REST router for the todos resource
 func (rs todosResource) Routes() chi.Router {
@@ -29,25 +36,70 @@ func (rs todosResource) Routes() chi.Router {
 }
 
 func (rs todosResource) List(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("todos list of stuff.."))
+	// Display marshalled json from
+	todolist, _ := json.Marshal(todobase)
+	w.WriteHeader(200)
+	w.Write(todolist)
 }
 
 func (rs todosResource) Create(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("todos create"))
+	decoder := json.NewDecoder(r.Body)
+	var t todosResource
+	err := decoder.Decode(&t)
+	if err != nil {
+		panic(err)
+	}
+	todobase[t.ID] = t
+	id, _ := json.Marshal(t)
+	w.WriteHeader(200)
+	w.Write(id)
 }
 
 func (rs todosResource) Get(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("todo get"))
+
+	id := chi.URLParam(r, "id")
+	var idx int64
+	idx, _ = strconv.ParseInt(id, 10, 64)
+
+	var emp = todosResource{}
+
+	onetodo := todobase[idx]
+	if onetodo == emp {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("404 HTTP status code returned!"))
+
+	} else {
+		rer, _ := json.Marshal(onetodo)
+		w.Write(rer)
+	}
+
 }
 
 func (rs todosResource) Update(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("todo update"))
+	// Exactly same as Update - maybe response should differ if it's overwrite
+	// It's called Upsert
+	decoder := json.NewDecoder(r.Body)
+	var t todosResource
+	err := decoder.Decode(&t)
+	if err != nil {
+		panic(err)
+	}
+	todobase[t.ID] = t
+	id, _ := json.Marshal(t)
+	w.WriteHeader(200)
+	w.Write(id)
 }
 
 func (rs todosResource) Delete(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("todo delete"))
+	id := chi.URLParam(r, "id")
+	var idx int64
+	idx, _ = strconv.ParseInt(id, 10, 64)
+	delete(todobase, idx)
+	w.WriteHeader(200)
+	w.Write([]byte("Deleted"))
 }
 
 func (rs todosResource) Sync(w http.ResponseWriter, r *http.Request) {
+	// What should Sync do?
 	w.Write([]byte("todo sync"))
 }
