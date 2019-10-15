@@ -1537,6 +1537,93 @@ func TestServerBaseContext(t *testing.T) {
 	}
 }
 
+func TestMuxUrlParamMissing(t *testing.T) {
+	r := NewRouter()
+	r.Get("/url/{param:(\\w+)}/test", func(w http.ResponseWriter, r *http.Request) {
+		rctx := RouteContext(r.Context())
+		w.Write([]byte(rctx.URLParam("param")))
+	})
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	ctx := context.Background()
+	ts := httptest.NewServer(ServerBaseContext(ctx, r))
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/url/hello/test", nil); body != "hello" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url//test", nil); body != "" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url/123/test", nil); body != "123" {
+		t.Fatalf(body)
+	}
+
+	r.Get("/url_v1/{param:(\\d+)}/test_num", func(w http.ResponseWriter, r *http.Request) {
+		rctx := RouteContext(r.Context())
+		w.Write([]byte(rctx.URLParam("param")))
+	})
+
+	if _, body := testRequest(t, ts, "GET", "/url_v1/123321/test_num", nil); body != "123321" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v1/hello/test_num", nil); body != "nothing here" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v1//test_num", nil); body != "" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v1/12332131w/test_num", nil); body != "nothing here" {
+		t.Fatalf(body)
+	}
+
+	r.Get("/url_v2/{param}/test_param", func(w http.ResponseWriter, r *http.Request) {
+		rctx := RouteContext(r.Context())
+		w.Write([]byte(rctx.URLParam("param")))
+	})
+
+	if _, body := testRequest(t, ts, "GET", "/url_v2/hello/test_param", nil); body != "hello" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v2//test_param", nil); body != "" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v2/12323/test_param", nil); body != "12323" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v2/12323num/test_param", nil); body != "12323num" {
+		t.Fatalf(body)
+	}
+
+	r.Get("/url_v3/{param}/{param_v3}/test_param", func(w http.ResponseWriter, r *http.Request) {
+		rctx := RouteContext(r.Context())
+		w.Write([]byte(rctx.URLParam("param") + rctx.URLParam("param_v3")))
+	})
+
+	if _, body := testRequest(t, ts, "GET", "/url_v3/hello/world/test_param", nil); body != "helloworld" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v3//world/test_param", nil); body != "world" {
+		t.Fatalf(body)
+	}
+
+	if _, body := testRequest(t, ts, "GET", "/url_v3/hello//test_param", nil); body != "hello" {
+		t.Fatalf(body)
+	}
+}
+
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	if err != nil {

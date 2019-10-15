@@ -410,12 +410,14 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				continue
 			}
 			xsearch = xsearch[len(xn.prefix):]
-
 		case ntParam, ntRegexp:
 			// short-circuit and return no matching route for empty param values
 			if xsearch == "" {
 				continue
 			}
+
+			// flag that set ntParam or ntRegexp default value
+			needDefaultParam := true
 
 			// serially loop through each node grouped by the tail delimiter
 			for idx := 0; idx < len(nds); idx++ {
@@ -443,9 +445,12 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 
 				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
 				xsearch = xsearch[p:]
+				needDefaultParam = false
 				break
 			}
-
+			if needDefaultParam {
+				rctx.routeParams.Values = append(rctx.routeParams.Values, "")
+			}
 		default:
 			// catch-all nodes
 			rctx.routeParams.Values = append(rctx.routeParams.Values, search)
