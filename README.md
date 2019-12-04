@@ -1,10 +1,3 @@
-<p align="center">
-<a href="https://codefund.io/properties/450/visit-sponsor">
-<img src="https://codefund.io/properties/450/sponsor" />
-</a>
-</p>
-
-
 # <img alt="chi" src="https://cdn.rawgit.com/go-chi/chi/master/_examples/chi.svg" width="220" />
 
 
