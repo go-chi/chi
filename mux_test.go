@@ -93,6 +93,11 @@ func TestMuxBasic(t *testing.T) {
 		w.Write([]byte("woop." + URLParam(r, "iidd")))
 	}
 
+	pingPoop := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte("poop." + URLParam(r, "id")))
+	}
+
 	catchAll := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Write([]byte("catchall"))
@@ -114,6 +119,7 @@ func TestMuxBasic(t *testing.T) {
 	m.Get("/ping/{id}", pingWoop)
 	m.Get("/ping/{id}", pingOne) // expected to overwrite to pingOne handler
 	m.Get("/ping/{iidd}/woop", pingWoop)
+	m.Get("/ping/{id:(\\w+)}/poop", pingPoop)
 	m.HandleFunc("/admin/*", catchAll)
 	// m.Post("/admin/*", catchAll)
 
@@ -161,6 +167,12 @@ func TestMuxBasic(t *testing.T) {
 
 	// GET /ping/1/woop
 	if _, body := testRequest(t, ts, "GET", "/ping/1/woop", nil); body != "woop.1" {
+		t.Fatalf(body)
+	}
+
+	// GET /ping//poop
+	// Issue 426
+	if _, body := testRequest(t, ts, "GET", "/ping//poop", nil); body != "poop." {
 		t.Fatalf(body)
 	}
 
@@ -1110,7 +1122,6 @@ func TestMuxSubroutes(t *testing.T) {
 	if routePatterns[2] != expected {
 		t.Fatalf("routePattern, expected:%s got:%s", expected, routePatterns[2])
 	}
-
 }
 
 func TestSingleHandler(t *testing.T) {
@@ -1254,7 +1265,6 @@ func TestNestedGroups(t *testing.T) {
 				r.Get("/5", handlerPrintCounter)
 				// r.Handle(GET, "/6", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
 				r.With(mwIncreaseCounter).Get("/6", handlerPrintCounter)
-
 			})
 		})
 	})
