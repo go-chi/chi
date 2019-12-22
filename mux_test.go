@@ -172,7 +172,7 @@ func TestMuxBasic(t *testing.T) {
 
 	// GET /ping//poop
 	// Issue 426
-	if _, body := testRequest(t, ts, "GET", "/ping//poop", nil); body != "poop." {
+	if resp, body := testRequest(t, ts, "GET", "/ping//poop", nil); resp.StatusCode != 404 {
 		t.Fatalf(body)
 	}
 
