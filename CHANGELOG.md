@@ -1,5 +1,25 @@
 # Changelog
 
+## v4.0.3 (2020-01-09)
+
+- core: fix regexp routing to include default value when param is not matched
+- middleware: rewrite of middleware.Compress
+- middleware: suppress http.ErrAbortHandler in middleware.Recoverer
+- History of changes: see https://github.com/go-chi/chi/compare/v4.0.2...v4.0.3
+
+
+## v4.0.2 (2019-02-26)
+
+- Minor fixes
+- History of changes: see https://github.com/go-chi/chi/compare/v4.0.1...v4.0.2
+
+
+## v4.0.1 (2019-01-21)
+
+- Fixes issue with compress middleware: #382 #385
+- History of changes: see https://github.com/go-chi/chi/compare/v4.0.0...v4.0.1
+
+
 ## v4.0.0 (2019-01-10)
 
 - chi v4 requires Go 1.10.3+ (or Go 1.9.7+) - we have deprecated support for Go 1.7 and 1.8
