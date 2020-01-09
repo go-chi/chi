@@ -1401,6 +1401,38 @@ func TestMuxWildcardRouteCheckTwo(t *testing.T) {
 	r.Get("/*/wildcard/{must}/be/at/end", handler)
 }
 
+func TestMuxRegexp(t *testing.T) {
+	r := NewRouter()
+	r.Route("/{param:[0-9]+}/test", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(fmt.Sprintf("Hi: %s", URLParam(r, "param"))))
+		})
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "//test", nil); body != "Hi: " {
+		t.Fatalf(body)
+	}
+}
+
+func TestMuxRegexp2(t *testing.T) {
+	r := NewRouter()
+	r.Get("/foo-{suffix:[a-z]{2,3}}.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "suffix")))
+	})
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/foo-.json", nil); body != "" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/foo-abc.json", nil); body != "abc" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxContextIsThreadSafe(t *testing.T) {
 	router := NewRouter()
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {

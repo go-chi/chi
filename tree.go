@@ -417,6 +417,8 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				continue
 			}
 
+			found := false
+
 			// serially loop through each node grouped by the tail delimiter
 			for idx := 0; idx < len(nds); idx++ {
 				xn = nds[idx]
@@ -443,7 +445,12 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 
 				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
 				xsearch = xsearch[p:]
+				found = true
 				break
+			}
+
+			if !found {
+				rctx.routeParams.Values = append(rctx.routeParams.Values, "")
 			}
 
 		default:
