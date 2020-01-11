@@ -5,6 +5,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -38,7 +39,8 @@ type Compressor struct {
 	// The mapping of pooled encoders to pools.
 	pooledEncoders map[string]*sync.Pool
 	// The set of content types allowed to be compressed.
-	allowedTypes map[string]bool
+	allowedTypes     map[string]struct{}
+	allowedWildcards map[string]struct{}
 	// The list of encoders in order of decreasing precedence.
 	encodingPrecedence []string
 }
@@ -50,22 +52,31 @@ type Compressor struct {
 func NewCompressor(level int, types ...string) *Compressor {
 	// If types are provided, set those as the allowed types. If none are
 	// provided, use the default list.
-	allowedTypes := make(map[string]bool)
+	allowedTypes := make(map[string]struct{})
+	allowedWildcards := make(map[string]struct{})
 	if len(types) > 0 {
 		for _, t := range types {
-			allowedTypes[t] = true
+			if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
+				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '/*' supported", t))
+			}
+			if strings.HasSuffix(t, "/*") {
+				allowedWildcards[strings.TrimSuffix(t, "/*")] = struct{}{}
+			} else {
+				allowedTypes[t] = struct{}{}
+			}
 		}
 	} else {
 		for _, t := range defaultCompressibleContentTypes {
-			allowedTypes[t] = true
+			allowedTypes[t] = struct{}{}
 		}
 	}
 
 	c := &Compressor{
-		level:          level,
-		encoders:       make(map[string]EncoderFunc),
-		pooledEncoders: make(map[string]*sync.Pool),
-		allowedTypes:   allowedTypes,
+		level:            level,
+		encoders:         make(map[string]EncoderFunc),
+		pooledEncoders:   make(map[string]*sync.Pool),
+		allowedTypes:     allowedTypes,
+		allowedWildcards: allowedWildcards,
 	}
 
 	// Set the default encoders.  The precedence order uses the reverse
@@ -174,11 +185,12 @@ func (c *Compressor) Handler() func(next http.Handler) http.Handler {
 			encoder, encoding, cleanup := c.selectEncoder(r.Header, w)
 
 			cw := &compressResponseWriter{
-				ResponseWriter: w,
-				w:              w,
-				contentTypes:   c.allowedTypes,
-				encoding:       encoding,
-				compressable:   false, // determined in post-handler
+				ResponseWriter:   w,
+				w:                w,
+				contentTypes:     c.allowedTypes,
+				contentWildcards: c.allowedWildcards,
+				encoding:         encoding,
+				compressable:     false, // determined in post-handler
 			}
 			if encoder != nil {
 				cw.w = encoder
@@ -299,11 +311,31 @@ type compressResponseWriter struct {
 
 	// The streaming encoder writer to be used if there is one. Otherwise,
 	// this is just the normal writer.
-	w            io.Writer
-	encoding     string
-	contentTypes map[string]bool
-	wroteHeader  bool
-	compressable bool
+	w                io.Writer
+	encoding         string
+	contentTypes     map[string]struct{}
+	contentWildcards map[string]struct{}
+	wroteHeader      bool
+	compressable     bool
+}
+
+func (cw *compressResponseWriter) isCompressable() bool {
+	// Parse the first part of the Content-Type response header.
+	contentType := cw.Header().Get("Content-Type")
+	if idx := strings.Index(contentType, ";"); idx >= 0 {
+		contentType = contentType[0:idx]
+	}
+
+	// Is the content type compressable?
+	if _, ok := cw.contentTypes[contentType]; ok {
+		return true
+	}
+	if idx := strings.Index(contentType, "/"); idx > 0 {
+		contentType = contentType[0:idx]
+		_, ok := cw.contentWildcards[contentType]
+		return ok
+	}
+	return false
 }
 
 func (cw *compressResponseWriter) WriteHeader(code int) {
@@ -319,14 +351,7 @@ func (cw *compressResponseWriter) WriteHeader(code int) {
 		return
 	}
 
-	// Parse the first part of the Content-Type response header.
-	contentType := cw.Header().Get("Content-Type")
-	if idx := strings.Index(contentType, ";"); idx >= 0 {
-		contentType = contentType[0:idx]
-	}
-
-	// Is the content type compressable?
-	if _, ok := cw.contentTypes[contentType]; !ok {
+	if !cw.isCompressable() {
 		cw.compressable = false
 		return
 	}
