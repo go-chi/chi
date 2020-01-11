@@ -3,6 +3,7 @@ package middleware
 import (
 	"compress/flate"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -125,6 +126,66 @@ func TestOldAPI(t *testing.T) {
 
 		})
 
+	}
+}
+
+func TestCompressorWildcards(t *testing.T) {
+	tests := []struct {
+		name       string
+		types      []string
+		typesCount int
+		wcCount    int
+		recover    string
+	}{
+		{
+			name:       "defaults",
+			typesCount: 10,
+		},
+		{
+			name:       "no wildcard",
+			types:      []string{"text/plain", "text/html"},
+			typesCount: 2,
+		},
+		{
+			name:    "invalid wildcard #1",
+			types:   []string{"audio/*wav"},
+			recover: "middleware/compress: Unsupported content-type wildcard pattern 'audio/*wav'. Only '/*' supported",
+		},
+		{
+			name:    "invalid wildcard #2",
+			types:   []string{"application*/*"},
+			recover: "middleware/compress: Unsupported content-type wildcard pattern 'application*/*'. Only '/*' supported",
+		},
+		{
+			name:    "valid wildcard",
+			types:   []string{"text/*"},
+			wcCount: 1,
+		},
+		{
+			name:       "mixed",
+			types:      []string{"audio/wav", "text/*"},
+			typesCount: 1,
+			wcCount:    1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if tt.recover == "" {
+					tt.recover = "<nil>"
+				}
+				if r := recover(); tt.recover != fmt.Sprintf("%v", r) {
+					t.Errorf("Unexpected value recovered: %v", r)
+				}
+			}()
+			compressor := NewCompressor(5, tt.types...)
+			if len(compressor.allowedTypes) != tt.typesCount {
+				t.Errorf("expected %d allowedTypes, got %d", tt.typesCount, len(compressor.allowedTypes))
+			}
+			if len(compressor.allowedWildcards) != tt.wcCount {
+				t.Errorf("expected %d allowedWildcards, got %d", tt.wcCount, len(compressor.allowedWildcards))
+			}
+		})
 	}
 }
 

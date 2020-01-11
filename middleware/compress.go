@@ -5,6 +5,7 @@ import (
 	"compress/flate"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -55,6 +56,9 @@ func NewCompressor(level int, types ...string) *Compressor {
 	allowedWildcards := make(map[string]struct{})
 	if len(types) > 0 {
 		for _, t := range types {
+			if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
+				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '/*' supported", t))
+			}
 			if strings.HasSuffix(t, "/*") {
 				allowedWildcards[strings.TrimSuffix(t, "/*")] = struct{}{}
 			} else {
