@@ -444,62 +444,95 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 }
 
 func TestMuxComplicatedNotFound(t *testing.T) {
-	// sub router with groups
-	sub := NewRouter()
-	sub.Route("/resource", func(r Router) {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("private get"))
+	decorateRouter := func(r *Mux) {
+		// Root router with groups
+		r.Get("/auth", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("auth get"))
 		})
-	})
-
-	// Root router with groups
-	r := NewRouter()
-	r.Get("/auth", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("auth get"))
-	})
-	r.Route("/public", func(r Router) {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("public get"))
+		r.Route("/public", func(r Router) {
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("public get"))
+			})
 		})
-	})
-	r.Mount("/private", sub)
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("custom not-found"))
+
+		// sub router with groups
+		sub0 := NewRouter()
+		sub0.Route("/resource", func(r Router) {
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("private get"))
+			})
+		})
+		r.Mount("/private", sub0)
+
+		// sub router with groups
+		sub1 := NewRouter()
+		sub1.Route("/resource", func(r Router) {
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("private get"))
+			})
+		})
+		r.With(func(next http.Handler) http.Handler { return next }).Mount("/private_mw", sub1)
+	}
+
+	testNotFound := func(t *testing.T, r *Mux) {
+		ts := httptest.NewServer(r)
+		defer ts.Close()
+
+		// check that we didn't break correct routes
+		if _, body := testRequest(t, ts, "GET", "/auth", nil); body != "auth get" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/public", nil); body != "public get" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/public/", nil); body != "public get" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/private/resource", nil); body != "private get" {
+			t.Fatalf(body)
+		}
+		// check custom not-found on all levels
+		if _, body := testRequest(t, ts, "GET", "/nope", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/public/nope", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/private/nope", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/private/resource/nope", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/private_mw/nope", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/private_mw/resource/nope", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+		// check custom not-found on trailing slash routes
+		if _, body := testRequest(t, ts, "GET", "/auth/", nil); body != "custom not-found" {
+			t.Fatalf(body)
+		}
+	}
+
+	t.Run("pre", func(t *testing.T) {
+		r := NewRouter()
+		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("custom not-found"))
+		})
+		decorateRouter(r)
+		testNotFound(t, r)
 	})
 
-	ts := httptest.NewServer(r)
-	defer ts.Close()
-
-	// check that we didn't break correct routes
-	if _, body := testRequest(t, ts, "GET", "/auth", nil); body != "auth get" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/public", nil); body != "public get" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/public/", nil); body != "public get" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/private/resource", nil); body != "private get" {
-		t.Fatalf(body)
-	}
-	// check custom not-found on all levels
-	if _, body := testRequest(t, ts, "GET", "/nope", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/public/nope", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/private/nope", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	if _, body := testRequest(t, ts, "GET", "/private/resource/nope", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
-	// check custom not-found on trailing slash routes
-	if _, body := testRequest(t, ts, "GET", "/auth/", nil); body != "custom not-found" {
-		t.Fatalf(body)
-	}
+	t.Run("post", func(t *testing.T) {
+		r := NewRouter()
+		decorateRouter(r)
+		r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("custom not-found"))
+		})
+		testNotFound(t, r)
+	})
 }
 
 func TestMuxWith(t *testing.T) {
