@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -491,7 +492,21 @@ func TestDefaultMethodNotAllowed(t *testing.T) {
 		t.Fatalf(body)
 	}
 	res, _ = testRequest(t, ts, "GET", "/prefix2/sub2", nil)
-	if res.StatusCode != http.StatusMethodNotAllowed || res.Header.Get("Allow") != "PATCH,POST,PUT" {
+	resMethods := strings.Split(res.Header.Get("Allow"), ",")
+	if res.StatusCode != http.StatusMethodNotAllowed || len(resMethods) != 3 {
+		t.Fatal(res)
+	}
+	methods := map[string]struct{}{"PATCH": struct{}{}, "POST": struct{}{}, "PUT": struct{}{}}
+	for _, m := range resMethods {
+		if _, ok := methods[m]; !ok {
+			t.Fatalf("Method %s not present in Allow header", m)
+		}
+	}
+
+	res, _ = testRequest(t, ts, "UNDEFINED", "/prefix2/sub2", nil)
+	// Allow Header should not be present
+	_, ok := res.Header["Allow"]
+	if res.StatusCode != http.StatusMethodNotAllowed || ok {
 		t.Fatal(res)
 	}
 }

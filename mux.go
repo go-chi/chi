@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sort"
 	"strings"
 	"sync"
 )
@@ -355,11 +354,11 @@ func (mx *Mux) NotFoundHandler() http.HandlerFunc {
 
 // MethodNotAllowedHandler returns the default Mux 405 responder whenever
 // a method cannot be resolved for a route.
-func (mx *Mux) MethodNotAllowedHandler(allowedMethods ...string) http.HandlerFunc {
+func (mx *Mux) MethodNotAllowedHandler() http.HandlerFunc {
 	if mx.methodNotAllowedHandler != nil {
 		return mx.methodNotAllowedHandler
 	}
-	return methodNotAllowedHandler(allowedMethods...)
+	return methodNotAllowedHandler()
 }
 
 // buildRouteHandler builds the single mux handler that is a chain of the middleware
@@ -427,7 +426,11 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rctx.methodNotAllowed != nil {
-		mx.MethodNotAllowedHandler(rctx.methodNotAllowed...).ServeHTTP(w, r)
+		if mx.methodNotAllowedHandler != nil {
+			mx.methodNotAllowedHandler.ServeHTTP(w, r)
+		} else {
+			methodNotAllowedHandler(rctx.methodNotAllowed...).ServeHTTP(w, r)
+		}
 	} else {
 		mx.NotFoundHandler().ServeHTTP(w, r)
 	}
@@ -457,10 +460,9 @@ func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
 // method not allowed.
 func methodNotAllowedHandler(allowedMethods ...string) http.HandlerFunc {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		// sort them so they always appear in the same order
-		sort.Strings(allowedMethods)
-
-		w.Header().Set("Allow", strings.Join(allowedMethods, ","))
+		if len(allowedMethods) != 0 {
+			w.Header().Set("Allow", strings.Join(allowedMethods, ","))
+		}
 		w.WriteHeader(405)
 	}
 	return fn

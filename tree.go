@@ -480,9 +480,11 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				// supported method
 				allowedMethods := make([]string, len(xn.endpoints))
 				i := 0
-				for m, _ := range xn.endpoints {
-					allowedMethods[i] = reversedMethodMap[m]
-					i++
+				for method, mtype := range methodMap {
+					if _, ok := xn.endpoints[mtype]; ok {
+						allowedMethods[i] = method
+						i++
+					}
 				}
 				rctx.methodNotAllowed = allowedMethods
 			}
