@@ -382,9 +382,23 @@ func (cw *compressResponseWriter) writer() io.Writer {
 	}
 }
 
+type compressFlusher interface {
+	Flush() error
+}
+
 func (cw *compressResponseWriter) Flush() {
 	if f, ok := cw.writer().(http.Flusher); ok {
 		f.Flush()
+	}
+	// If the underlying writer has a compression flush signature,
+	// call this Flush() method instead
+	if f, ok := cw.writer().(compressFlusher); ok {
+		f.Flush()
+
+		// Also flush the underlying response writer
+		if f, ok := cw.ResponseWriter.(http.Flusher); ok {
+			f.Flush()
+		}
 	}
 }
 
