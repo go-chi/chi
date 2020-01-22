@@ -205,7 +205,7 @@ func TestCompressor(t *testing.T) {
 		t.Errorf("nop encoder should be stored in the encoders map")
 	}
 
-	r.Use(compressor.Handler())
+	r.Use(compressor.Handler)
 
 	r.Get("/gethtml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
