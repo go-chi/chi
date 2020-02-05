@@ -23,7 +23,7 @@ type Context struct {
 	RoutePath   string
 	RouteMethod string
 
-	// Routing pattern stack throughout the lifecycle of the request,
+	// Routing patterns stack throughout the lifecycle of the request,
 	// across all connected routers. It is a record of all matching
 	// patterns across a stack of sub-routers.
 	RoutePatterns []string
