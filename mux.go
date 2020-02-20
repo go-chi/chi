@@ -78,7 +78,11 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rctx = mx.pool.Get().(*Context)
 	rctx.Reset()
 	rctx.Routes = mx
+
+	// NOTE: r.WithContext() causes 2 allocations and context.WithValue() causes 1 allocation
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
+
+	// Serve the request and once its done, put the request context back in the sync pool
 	mx.handler.ServeHTTP(w, r)
 	mx.pool.Put(rctx)
 }
@@ -220,7 +224,7 @@ func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {
 
 // With adds inline middlewares for an endpoint handler.
 func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
-	// Similarly as in handle(), we must build the mux handler once further
+	// Similarly as in handle(), we must build the mux handler once additional
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
 		mx.buildRouteHandler()
@@ -288,7 +292,6 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		subr.MethodNotAllowed(mx.methodNotAllowedHandler)
 	}
 
-	// Wrap the sub-router in a handlerFunc to scope the request path for routing.
 	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
 		rctx.RoutePath = mx.nextRoutePath(rctx)
@@ -379,7 +382,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *n
 		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
 
-	// Build the final routing handler for this Mux.
+	// Build the computed routing handler for this routing pattern.
 	if !mx.inline && mx.handler == nil {
 		mx.buildRouteHandler()
 	}
@@ -439,7 +442,7 @@ func (mx *Mux) nextRoutePath(rctx *Context) string {
 	routePath := "/"
 	nx := len(rctx.routeParams.Keys) - 1 // index of last param in list
 	if nx >= 0 && rctx.routeParams.Keys[nx] == "*" && len(rctx.routeParams.Values) > nx {
-		routePath += rctx.routeParams.Values[nx]
+		routePath = "/" + rctx.routeParams.Values[nx]
 	}
 	return routePath
 }

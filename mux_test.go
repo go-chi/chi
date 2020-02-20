@@ -1700,21 +1700,24 @@ func BenchmarkMux(b *testing.B) {
 	mx.Get("/hi", h2)
 	mx.Get("/sup/{id}/and/{this}", h3)
 
-	mx.Route("/sharing/{hash}", func(mx Router) {
+	mx.Route("/sharing/{x}/{hash}", func(mx Router) {
 		mx.Get("/", h4)          // subrouter-1
 		mx.Get("/{network}", h5) // subrouter-1
 		mx.Get("/twitter", h5)
 		mx.Route("/direct", func(mx Router) {
 			mx.Get("/", h6) // subrouter-2
+			mx.Get("/download", h6)
 		})
 	})
 
 	routes := []string{
 		"/",
+		"/hi",
 		"/sup/123/and/this",
-		"/sharing/aBc",         // subrouter-1
-		"/sharing/aBc/twitter", // subrouter-1
-		"/sharing/aBc/direct",  // subrouter-2
+		"/sharing/z/aBc",                 // subrouter-1
+		"/sharing/z/aBc/twitter",         // subrouter-1
+		"/sharing/z/aBc/direct",          // subrouter-2
+		"/sharing/z/aBc/direct/download", // subrouter-2
 	}
 
 	for _, path := range routes {

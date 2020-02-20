@@ -525,15 +525,6 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 	}
 }
 
-func (n *node) isEmpty() bool {
-	for _, nds := range n.children {
-		if len(nds) > 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func (n *node) isLeaf() bool {
 	return n.endpoints != nil
 }
