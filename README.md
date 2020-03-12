@@ -124,7 +124,7 @@ func ArticleCtx(next http.Handler) http.Handler {
     articleID := chi.URLParam(r, "articleID")
     article, err := dbGetArticle(articleID)
     if err != nil {
-      http.Error(w, http.StatusText(404), 404)
+      http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
       return
     }
     ctx := context.WithValue(r.Context(), "article", article)
@@ -136,7 +136,7 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
   ctx := r.Context()
   article, ok := ctx.Value("article").(*Article)
   if !ok {
-    http.Error(w, http.StatusText(422), 422)
+    http.Error(w, http.StatusText(http.StatusUnprocessableEntity), http.StatusUnprocessableEntity)
     return
   }
   w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
@@ -156,7 +156,7 @@ func AdminOnly(next http.Handler) http.Handler {
     ctx := r.Context()
     perm, ok := ctx.Value("acl.permission").(YourPermissionType)
     if !ok || !perm.IsAdmin() {
-      http.Error(w, http.StatusText(403), 403)
+      http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
       return
     }
     next.ServeHTTP(w, r)
