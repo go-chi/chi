@@ -312,9 +312,10 @@ with `net/http` can be used with chi's mux.
 ### Core middlewares
 
 -----------------------------------------------------------------------------------------------------------
-| chi/middleware Handler | description                                                                     |
+| chi/middleware Handler | description                                                                    |
 |:----------------------|:---------------------------------------------------------------------------------
 | AllowContentType      | Explicit whitelist of accepted request Content-Types                            |
+| BasicAuth             | Basic HTTP authentication                                                       |
 | Compress              | Gzip compression for clients that accept compressed responses                   |
 | GetHead               | Automatically route undefined HEAD requests to GET handlers                     |
 | Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
