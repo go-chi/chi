@@ -28,7 +28,7 @@ func Recoverer(next http.Handler) http.Handler {
 					debug.PrintStack()
 				}
 
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				w.WriteHeader(http.StatusInternalServerError)
 			}
 		}()
 
