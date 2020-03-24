@@ -4,10 +4,13 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"runtime/debug"
+	"strings"
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a
@@ -24,8 +27,7 @@ func Recoverer(next http.Handler) http.Handler {
 				if logEntry != nil {
 					logEntry.Panic(rvr, debug.Stack())
 				} else {
-					fmt.Fprintf(os.Stderr, "Panic: %+v\n", rvr)
-					debug.PrintStack()
+					PrintPrettyStack(rvr)
 				}
 
 				w.WriteHeader(http.StatusInternalServerError)
@@ -36,4 +38,142 @@ func Recoverer(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+func PrintPrettyStack(rvr interface{}) {
+	debugStack := debug.Stack()
+	s := prettyStack{}
+	out, err := s.parse(debugStack, rvr)
+	if err == nil {
+		os.Stderr.Write(out)
+	} else {
+		// print stdlib output as a fallback
+		os.Stderr.Write(debugStack)
+	}
+}
+
+type prettyStack struct {
+}
+
+func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
+	var err error
+	useColor := true
+	buf := &bytes.Buffer{}
+
+	cW(buf, useColor, bBlue, "\n>>")
+	cW(buf, useColor, bRed, " panic: ")
+	cW(buf, useColor, bMagenta, "%v", rvr)
+	cW(buf, useColor, bBlue, " <<\n\n")
+
+	// process debug stack info
+	stack := strings.Split(string(debugStack), "\n")
+	lines := []string{}
+
+	// locate panic line, as we may have nested panics
+	for i := len(stack) - 1; i > 0; i-- {
+		lines = append(lines, stack[i])
+		if strings.HasPrefix(stack[i], "panic(0x") {
+			lines = lines[0 : len(lines)-2] // remove boilerplate
+			break
+		}
+	}
+
+	if strings.HasPrefix(stack[0], "goroutine") {
+		cW(buf, useColor, bBlue, "%s\n\n", stack[0])
+	}
+
+	// reverse
+	for i := len(lines)/2 - 1; i >= 0; i-- {
+		opp := len(lines) - 1 - i
+		lines[i], lines[opp] = lines[opp], lines[i]
+	}
+
+	// decorate
+	for i, line := range lines {
+		lines[i], err = s.decorateLine(line, useColor, i)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, l := range lines {
+		fmt.Fprintf(buf, "%s", l)
+	}
+	return buf.Bytes(), nil
+}
+
+func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, error) {
+	line = strings.TrimSpace(line)
+	if strings.HasPrefix(line, "\t") || strings.Contains(line, ".go:") {
+		return s.decorateSourceLine(line, useColor, num)
+	} else if strings.HasSuffix(line, ")") {
+		return s.decorateFuncCallLine(line, useColor, num)
+	} else {
+		if strings.HasPrefix(line, "\t") {
+			return strings.Replace(line, "\t", "    ", 1), nil
+		} else {
+			return fmt.Sprintf("  %s\n", line), nil
+		}
+	}
+}
+
+func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (string, error) {
+	idx := strings.LastIndex(line, "(")
+	if idx < 0 {
+		return "", errors.New("not a func call line")
+	}
+
+	buf := &bytes.Buffer{}
+	pkg := line[0:idx]
+	// addr := line[idx:]
+	method := ""
+
+	idx = strings.LastIndex(pkg, string(os.PathSeparator))
+	if idx < 0 {
+		idx = strings.Index(pkg, ".")
+		method = pkg[idx:]
+		pkg = pkg[0:idx]
+	} else {
+		method = pkg[idx+1:]
+		pkg = pkg[0 : idx+1]
+		idx = strings.Index(method, ".")
+		pkg += method[0:idx]
+		method = method[idx:]
+	}
+
+	cW(buf, useColor, nYellow, "  %s", pkg)
+	cW(buf, useColor, bGreen, "%s\n", method)
+	// cW(buf, useColor, nBlack, "%s", addr)
+	return buf.String(), nil
+}
+
+func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (string, error) {
+	idx := strings.LastIndex(line, ".go:")
+	if idx < 0 {
+		return "", errors.New("not a source line")
+	}
+
+	buf := &bytes.Buffer{}
+	path := line[0 : idx+3]
+	lineno := line[idx+3:]
+
+	idx = strings.LastIndex(path, string(os.PathSeparator))
+	dir := path[0 : idx+1]
+	file := path[idx+1:]
+
+	idx = strings.Index(lineno, " ")
+	if idx > 0 {
+		lineno = lineno[0:idx]
+	}
+
+	cW(buf, useColor, bWhite, "    %s", dir)
+	cW(buf, useColor, bCyan, "%s", file)
+	cW(buf, useColor, bGreen, "%s", lineno)
+
+	if num == 1 {
+		cW(buf, useColor, bRed, " <--")
+	}
+	cW(buf, useColor, bWhite, "\n\n")
+
+	return buf.String(), nil
 }
