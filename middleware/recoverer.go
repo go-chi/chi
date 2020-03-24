@@ -60,10 +60,10 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	useColor := true
 	buf := &bytes.Buffer{}
 
-	cW(buf, useColor, bBlue, "\n>>")
-	cW(buf, useColor, bRed, " panic: ")
-	cW(buf, useColor, bMagenta, "%v", rvr)
-	cW(buf, useColor, bBlue, " <<\n\n")
+	cW(buf, false, bRed, "\n")
+	cW(buf, useColor, bCyan, " panic: ")
+	cW(buf, useColor, bBlue, "%v", rvr)
+	cW(buf, false, bWhite, "\n \n")
 
 	// process debug stack info
 	stack := strings.Split(string(debugStack), "\n")
@@ -76,10 +76,6 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 			lines = lines[0 : len(lines)-2] // remove boilerplate
 			break
 		}
-	}
-
-	if strings.HasPrefix(stack[0], "goroutine") {
-		cW(buf, useColor, bCyan, "%s\n\n", stack[0])
 	}
 
 	// reverse
@@ -182,15 +178,15 @@ func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (st
 		fileColor = bRed
 		lineColor = bMagenta
 	} else {
-		cW(buf, useColor, bWhite, "      ")
+		cW(buf, false, bWhite, "      ")
 	}
 	cW(buf, useColor, bWhite, "%s", dir)
 	cW(buf, useColor, fileColor, "%s", file)
 	cW(buf, useColor, lineColor, "%s", lineno)
 	if num == 1 {
-		cW(buf, useColor, bRed, "\n")
+		cW(buf, false, bWhite, "\n")
 	}
-	cW(buf, useColor, bWhite, "\n")
+	cW(buf, false, bWhite, "\n")
 
 	return buf.String(), nil
 }
