@@ -110,9 +110,9 @@ func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, 
 		return s.decorateFuncCallLine(line, useColor, num)
 	} else {
 		if strings.HasPrefix(line, "\t") {
-			return strings.Replace(line, "\t", "    ", 1), nil
+			return strings.Replace(line, "\t", "      ", 1), nil
 		} else {
-			return fmt.Sprintf("  %s\n", line), nil
+			return fmt.Sprintf("    %s\n", line), nil
 		}
 	}
 }
