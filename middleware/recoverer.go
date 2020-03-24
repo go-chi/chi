@@ -97,15 +97,16 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	}
 
 	for _, l := range lines {
-		fmt.Fprintf(buf, "%s\n", l)
+		fmt.Fprintf(buf, "%s", l)
 	}
 	return buf.Bytes(), nil
 }
 
 func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, error) {
+	line = strings.TrimSpace(line)
 	if strings.HasPrefix(line, "\t") || strings.Contains(line, ".go:") {
 		return s.decorateSourceLine(line, useColor, num)
-	} else if strings.HasSuffix(strings.TrimSpace(line), ")") {
+	} else if strings.HasSuffix(line, ")") {
 		return s.decorateFuncCallLine(line, useColor, num)
 	} else {
 		if strings.HasPrefix(line, "\t") {
@@ -141,13 +142,12 @@ func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (
 	}
 
 	cW(buf, useColor, nYellow, "  %s", pkg)
-	cW(buf, useColor, bGreen, "%s", method)
+	cW(buf, useColor, bGreen, "%s\n", method)
 	// cW(buf, useColor, nBlack, "%s", addr)
 	return buf.String(), nil
 }
 
 func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (string, error) {
-	line = strings.TrimSpace(line)
 	idx := strings.LastIndex(line, ".go:")
 	if idx < 0 {
 		return "", errors.New("not a source line")
@@ -173,7 +173,7 @@ func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (st
 	if num == 1 {
 		cW(buf, useColor, bRed, " <--")
 	}
-	cW(buf, useColor, bWhite, "\n")
+	cW(buf, useColor, bWhite, "\n\n")
 
 	return buf.String(), nil
 }
