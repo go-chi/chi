@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.0.4 (2020-03-24)
+
+- middleware.Recoverer: new pretty stack trace printing (https://github.com/go-chi/chi/pull/496)
+- a few minor improvements and fixes
+- History of changes: see https://github.com/go-chi/chi/compare/v4.0.3...v4.0.4
+
+
 ## v4.0.3 (2020-01-09)
 
 - core: fix regexp routing to include default value when param is not matched
