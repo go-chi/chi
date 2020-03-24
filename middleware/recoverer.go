@@ -79,7 +79,7 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	}
 
 	if strings.HasPrefix(stack[0], "goroutine") {
-		cW(buf, useColor, bBlue, "%s\n\n", stack[0])
+		cW(buf, useColor, bCyan, "%s\n\n", stack[0])
 	}
 
 	// reverse
@@ -140,9 +140,18 @@ func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (
 		pkg += method[0:idx]
 		method = method[idx:]
 	}
+	pkgColor := nYellow
+	methodColor := bGreen
 
-	cW(buf, useColor, nYellow, "  %s", pkg)
-	cW(buf, useColor, bGreen, "%s\n", method)
+	if num == 0 {
+		cW(buf, useColor, bRed, " -> ")
+		pkgColor = bMagenta
+		methodColor = bRed
+	} else {
+		cW(buf, useColor, bWhite, "    ")
+	}
+	cW(buf, useColor, pkgColor, "%s", pkg)
+	cW(buf, useColor, methodColor, "%s\n", method)
 	// cW(buf, useColor, nBlack, "%s", addr)
 	return buf.String(), nil
 }
@@ -165,15 +174,23 @@ func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (st
 	if idx > 0 {
 		lineno = lineno[0:idx]
 	}
-
-	cW(buf, useColor, bWhite, "    %s", dir)
-	cW(buf, useColor, bCyan, "%s", file)
-	cW(buf, useColor, bGreen, "%s", lineno)
+	fileColor := bCyan
+	lineColor := bGreen
 
 	if num == 1 {
-		cW(buf, useColor, bRed, " <--")
+		cW(buf, useColor, bRed, " ->   ")
+		fileColor = bRed
+		lineColor = bMagenta
+	} else {
+		cW(buf, useColor, bWhite, "      ")
 	}
-	cW(buf, useColor, bWhite, "\n\n")
+	cW(buf, useColor, bWhite, "%s", dir)
+	cW(buf, useColor, fileColor, "%s", file)
+	cW(buf, useColor, lineColor, "%s", lineno)
+	if num == 1 {
+		cW(buf, useColor, bRed, "\n")
+	}
+	cW(buf, useColor, bWhite, "\n")
 
 	return buf.String(), nil
 }
