@@ -151,8 +151,5 @@ func (l *defaultLogEntry) Write(status, bytes int, elapsed time.Duration) {
 }
 
 func (l *defaultLogEntry) Panic(v interface{}, stack []byte) {
-	panicEntry := l.NewLogEntry(l.request).(*defaultLogEntry)
-	cW(panicEntry.buf, l.useColor, bRed, "panic: %+v", v)
-	l.Logger.Print(panicEntry.buf.String())
-	l.Logger.Print(string(stack))
+	PrintPrettyStack(v)
 }
