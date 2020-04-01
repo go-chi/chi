@@ -70,8 +70,8 @@ func (b *basicWriter) WriteHeader(code int) {
 	if !b.wroteHeader {
 		b.code = code
 		b.wroteHeader = true
+		b.ResponseWriter.WriteHeader(code)
 	}
-	b.ResponseWriter.WriteHeader(code)
 }
 
 func (b *basicWriter) Write(buf []byte) (int, error) {
@@ -116,7 +116,6 @@ type flushWriter struct {
 
 func (f *flushWriter) Flush() {
 	f.wroteHeader = true
-
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -133,7 +132,6 @@ type httpFancyWriter struct {
 
 func (f *httpFancyWriter) Flush() {
 	f.wroteHeader = true
-
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -175,7 +173,6 @@ type http2FancyWriter struct {
 
 func (f *http2FancyWriter) Flush() {
 	f.wroteHeader = true
-
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
