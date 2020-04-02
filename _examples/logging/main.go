@@ -6,9 +6,8 @@
 // logger using the amazing sirupsen/logrus package as the logging
 // backend.
 //
-// Also: check out https://github.com/pressly/lg for an improved context
-// logger with support for HTTP request logging, based on the example
-// below.
+// Also: check out https://github.com/goware/httplog for an improved context
+// logger with support for HTTP request logging, based on the example below.
 //
 package main
 
@@ -100,7 +99,7 @@ type StructuredLoggerEntry struct {
 	Logger logrus.FieldLogger
 }
 
-func (l *StructuredLoggerEntry) Write(status, bytes int, elapsed time.Duration) {
+func (l *StructuredLoggerEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	l.Logger = l.Logger.WithFields(logrus.Fields{
 		"resp_status": status, "resp_bytes_length": bytes,
 		"resp_elapsed_ms": float64(elapsed.Nanoseconds()) / 1000000.0,
