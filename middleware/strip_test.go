@@ -168,7 +168,7 @@ func TestRedirectSlashes(t *testing.T) {
 		}
 
 	}
-	
+
 	// Ensure that we don't redirect to 'evil.com', but rather to 'server.url/evil.com/'
 	{
 		resp, body := testRequest(t, ts, "GET", "//evil.com/", nil)
