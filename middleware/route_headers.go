@@ -30,13 +30,13 @@ import (
 // r := chi.NewRouter()
 //
 // r.Use(middleware.RouteHeaders().
-//   Route("Origin", "https://app.skyweaver.net", cors.Handler(cors.Optiosn{
+//   Route("Origin", "https://app.skyweaver.net", cors.Handler(cors.Options{
 // 	   AllowedOrigins:   []string{"https://api.skyweaver.net"},
 // 	   AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 // 	   AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 // 	   AllowCredentials: true, // <----------<<< allow credentials
 //   })).
-//   Route("Origin", "*", cors.Handler(cors.Optiosn{
+//   Route("Origin", "*", cors.Handler(cors.Options{
 // 	   AllowedOrigins:   []string{"*"},
 // 	   AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 // 	   AllowedHeaders:   []string{"Accept", "Content-Type"},
