@@ -1466,6 +1466,47 @@ func TestMuxRegexp2(t *testing.T) {
 	}
 }
 
+func TestMuxRegexp3(t *testing.T) {
+	r := NewRouter()
+	r.Get("/one/{firstId:[a-z0-9-]+}/{secondId:[a-z]+}/first", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("first"))
+	})
+	r.Get("/one/{firstId:[a-z0-9-_]+}/{secondId:[0-9]+}/second", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("second"))
+	})
+	r.Delete("/one/{firstId:[a-z0-9-_]+}/{secondId:[0-9]+}/second", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("third"))
+	})
+
+	r.Route("/one", func(r Router) {
+		r.Get("/{dns:[a-z-0-9_]+}", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Write([]byte("_"))
+		})
+		r.Get("/{dns:[a-z-0-9_]+}/info", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Write([]byte("_"))
+		})
+		r.Delete("/{id:[0-9]+}", func(writer http.ResponseWriter, request *http.Request) {
+			writer.Write([]byte("forth"))
+		})
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/one/hello/peter/first", nil); body != "first" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/one/hithere/123/second", nil); body != "second" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "DELETE", "/one/hithere/123/second", nil); body != "third" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "DELETE", "/one/123", nil); body != "forth" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxContextIsThreadSafe(t *testing.T) {
 	router := NewRouter()
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
