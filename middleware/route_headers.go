@@ -31,13 +31,13 @@ import (
 //
 // r.Use(middleware.RouteHeaders().
 //   Route("Origin", "https://app.skyweaver.net", cors.Handler(cors.Optiosn{
-//		 AllowedOrigins:   []string{"https://api.skyweaver.net"},
+// 	   AllowedOrigins:   []string{"https://api.skyweaver.net"},
 // 	   AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 // 	   AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 // 	   AllowCredentials: true, // <----------<<< allow credentials
 //   })).
 //   Route("Origin", "*", cors.Handler(cors.Optiosn{
-//		 AllowedOrigins:   []string{"*"},
+// 	   AllowedOrigins:   []string{"*"},
 // 	   AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 // 	   AllowedHeaders:   []string{"Accept", "Content-Type"},
 // 	   AllowCredentials: false, // <----------<<< do not allow credentials
