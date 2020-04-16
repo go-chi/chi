@@ -441,7 +441,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					continue
 				}
 
-				prevv := rctx.routeParams.Values[:]
+				prevlen := len(rctx.routeParams.Values)
 				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
 				xsearch = xsearch[p:]
 
@@ -461,7 +461,9 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					return fin
 				}
 
-				rctx.routeParams.Values = prevv
+				// not found on this branch, reset vars
+				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+				xsearch = search
 			}
 
 			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
