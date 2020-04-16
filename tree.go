@@ -417,8 +417,6 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				continue
 			}
 
-			found := false
-
 			// serially loop through each node grouped by the tail delimiter
 			for idx := 0; idx < len(nds); idx++ {
 				xn = nds[idx]
@@ -443,15 +441,32 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					continue
 				}
 
+				prevlen := len(rctx.routeParams.Values)
 				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
 				xsearch = xsearch[p:]
-				found = true
-				break
+
+				if len(xsearch) == 0 {
+					if xn.isLeaf() {
+						h := xn.endpoints[method]
+						if h != nil && h.handler != nil {
+							rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
+							return xn
+						}
+					}
+				}
+
+				// recursively find the next node on this branch
+				fin := xn.findRoute(rctx, method, xsearch)
+				if fin != nil {
+					return fin
+				}
+
+				// not found on this branch, reset vars
+				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+				xsearch = search
 			}
 
-			if !found {
-				rctx.routeParams.Values = append(rctx.routeParams.Values, "")
-			}
+			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
 
 		default:
 			// catch-all nodes

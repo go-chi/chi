@@ -333,6 +333,57 @@ func TestTreeRegexp(t *testing.T) {
 	}
 }
 
+func TestTreeRegexpRecursive(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	tr := &node{}
+	tr.InsertRoute(mGET, "/one/{firstId:[a-z0-9-]+}/{secondId:[a-z0-9-]+}/first", hStub1)
+	tr.InsertRoute(mGET, "/one/{firstId:[a-z0-9-_]+}/{secondId:[a-z0-9-_]+}/second", hStub2)
+
+	// log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
+	// debugPrintTree(0, 0, tr, 0)
+	// log.Println("~~~~~~~~~")
+	// log.Println("~~~~~~~~~")
+
+	tests := []struct {
+		r string       // input request path
+		h http.Handler // output matched handler
+		k []string     // output param keys
+		v []string     // output param values
+	}{
+		{r: "/one/hello/world/first", h: hStub1, k: []string{"firstId", "secondId"}, v: []string{"hello", "world"}},
+		{r: "/one/hi_there/ok/second", h: hStub2, k: []string{"firstId", "secondId"}, v: []string{"hi_there", "ok"}},
+		{r: "/one///first", h: nil, k: []string{}, v: []string{}},
+		{r: "/one/hi/123/second", h: hStub2, k: []string{"firstId", "secondId"}, v: []string{"hi", "123"}},
+	}
+
+	for i, tt := range tests {
+		rctx := NewRouteContext()
+
+		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
+
+		var handler http.Handler
+		if methodHandler, ok := handlers[mGET]; ok {
+			handler = methodHandler.handler
+		}
+
+		paramKeys := rctx.routeParams.Keys
+		paramValues := rctx.routeParams.Values
+
+		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
+			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
+		}
+		if !stringSliceEqual(tt.k, paramKeys) {
+			t.Errorf("input [%d]: find '%s' expecting paramKeys:(%d)%v , got:(%d)%v", i, tt.r, len(tt.k), tt.k, len(paramKeys), paramKeys)
+		}
+		if !stringSliceEqual(tt.v, paramValues) {
+			t.Errorf("input [%d]: find '%s' expecting paramValues:(%d)%v , got:(%d)%v", i, tt.r, len(tt.v), tt.v, len(paramValues), paramValues)
+		}
+	}
+}
+
 func TestTreeRegexMatchWholeParam(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
