@@ -337,7 +337,7 @@ with `net/http` can be used with chi's mux.
 | WithValue             | Short-hand middleware to set a key/value on the request context                 |
 -----------------------------------------------------------------------------------------------------------
 
-### Auxiliary middlewares & packages
+### Extra middlewares & packages
 
 Please see https://github.com/go-chi for additional packages.
 
@@ -348,8 +348,10 @@ Please see https://github.com/go-chi for additional packages.
 | [docgen](https://github.com/go-chi/docgen)         | Print chi.Router routes at runtime                          |
 | [jwtauth](https://github.com/go-chi/jwtauth)       | JWT authentication                                          |
 | [hostrouter](https://github.com/go-chi/hostrouter) | Domain/host based request routing                           |
-| [httpcoala](https://github.com/go-chi/httpcoala)   | HTTP request coalescer                                      |
-| [httplog](https://github.com/goware/httplog)       | Small but powerful structured HTTP request logging          |
+| [httplog](https://github.com/go-chi/httplog)       | Small but powerful structured HTTP request logging          |
+| [httptracer](https://github.com/go-chi/httptracer) | HTTP request APM tracing library                            |
+| [httpvcr](https://github.com/go-chi/httpvcr)       | Write deterministic tests for external sources              |
+| [stampede](https://github.com/go-chi/stampede)     | HTTP request coalescer                                      |
 --------------------------------------------------------------------------------------------------------------------
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware
