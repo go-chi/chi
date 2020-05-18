@@ -85,6 +85,14 @@ type DefaultLogFormatter struct {
 	NoColor bool
 }
 
+func requestIP(r *http.Request) string {
+	forwardedFor := r.Header.Get("X-Forwarded-For")
+	if forwardedFor == "" {
+		return r.RemoteAddr
+	}
+	return forwardedFor
+}
+
 // NewLogEntry creates a new LogEntry for the request.
 func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 	useColor := !l.NoColor
@@ -109,7 +117,7 @@ func (l *DefaultLogFormatter) NewLogEntry(r *http.Request) LogEntry {
 	cW(entry.buf, useColor, nCyan, "%s://%s%s %s\" ", scheme, r.Host, r.RequestURI, r.Proto)
 
 	entry.buf.WriteString("from ")
-	entry.buf.WriteString(r.RemoteAddr)
+	entry.buf.WriteString(requestIP(r))
 	entry.buf.WriteString(" - ")
 
 	return entry
