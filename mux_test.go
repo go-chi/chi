@@ -417,8 +417,18 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 		w.Write([]byte("sub2"))
 	})
 
+	pathVar := NewRouter()
+	pathVar.Get("/{var}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pv"))
+	})
+	pathVar.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(405)
+		w.Write([]byte("pv 405"))
+	})
+
 	r.Mount("/prefix1", sr1)
 	r.Mount("/prefix2", sr2)
+	r.Mount("/pathVar", pathVar)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -439,6 +449,12 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 		t.Fatalf(body)
 	}
 	if _, body := testRequest(t, ts, "PUT", "/prefix2/sub2", nil); body != "root 405" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/pathVar/myvar", nil); body != "pv" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "DELETE", "/pathVar/myvar", nil); body != "pv 405" {
 		t.Fatalf(body)
 	}
 }

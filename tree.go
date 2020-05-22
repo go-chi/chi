@@ -452,6 +452,10 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 							rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 							return xn
 						}
+
+						// flag that the routing context found a route, but not a corresponding
+						// supported method
+						rctx.methodNotAllowed = true
 					}
 				}
 
