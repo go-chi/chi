@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -61,7 +60,6 @@ func (l *ipLimiter) Handler(next http.Handler) http.Handler {
 		if err != nil {
 			ip = r.RemoteAddr
 		}
-		fmt.Println(ip)
 		ipLimiter := l.getLimiter(ip)
 		if !ipLimiter.Allow() {
 			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
