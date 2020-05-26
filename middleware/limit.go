@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+// Limit allows requests up to rate r and permits bursts of at most b tokens.
 func Limit(r, b int) func(next http.Handler) http.Handler {
 	limiter := rate.NewLimiter(rate.Limit(r), b)
 	return func(next http.Handler) http.Handler {
@@ -22,6 +23,7 @@ func Limit(r, b int) func(next http.Handler) http.Handler {
 	}
 }
 
+// LimitIP allows requests up to rate r and permits bursts of at most b tokens per IP.
 func LimitIP(r, b int) func(next http.Handler) http.Handler {
 	return newIpLimiter(r, b).Handler
 }
