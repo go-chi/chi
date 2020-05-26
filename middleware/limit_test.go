@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/go-chi/chi"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/go-chi/chi"
 )
 
 func TestLimit(t *testing.T) {

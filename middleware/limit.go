@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"fmt"
-	"golang.org/x/time/rate"
 	"net"
 	"net/http"
 	"sync"
+
+	"golang.org/x/time/rate"
 )
 
 // Limit allows requests up to rate r and permits bursts of at most b tokens.
