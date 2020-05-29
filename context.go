@@ -93,7 +93,7 @@ func (x *Context) URLParam(key string) string {
 //   }
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
-	return strings.ReplaceAll(routePattern, "/*", "")
+	return strings.Replace(routePattern, "/*", "", -1)
 }
 
 // RouteContext returns chi's routing Context object from a
