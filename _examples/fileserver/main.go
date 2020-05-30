@@ -63,8 +63,7 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
 		rctx := chi.RouteContext(r.Context())
-		// Trailing /* is already removed by the RoutePattern func
-		pathPrefix := rctx.RoutePattern()
+		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
 		fs.ServeHTTP(w, r)
 	})

@@ -4,12 +4,14 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
 var (
 	// RouteCtxKey is the context.Context key to store the request context.
-	RouteCtxKey = &contextKey{"RouteContext"}
+	RouteCtxKey   = &contextKey{"RouteContext"}
+	wildcardRx, _ = regexp.Compile(`\/\*\/`)
 )
 
 // Context is the default routing context set on the root node of a
@@ -93,7 +95,18 @@ func (x *Context) URLParam(key string) string {
 //   }
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
-	return strings.Replace(routePattern, "/*", "", -1)
+	return replaceWildcards(routePattern)
+}
+
+// replaceWildcards takes a path and recursively replaces all occurrences of
+// "/*/" to "/".
+func replaceWildcards(p string) string {
+	if !wildcardRx.Match([]byte(p)) {
+		return p
+	}
+
+	p = wildcardRx.ReplaceAllString(p, "/")
+	return replaceWildcards(p)
 }
 
 // RouteContext returns chi's routing Context object from a
