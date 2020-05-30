@@ -93,7 +93,17 @@ func (x *Context) URLParam(key string) string {
 //   }
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
-	return strings.Replace(routePattern, "/*/", "/", -1)
+	return replaceWildcards(routePattern)
+}
+
+// replaceWildcards takes a route pattern and recursively replaces all
+// occurrences of "/*/" to "/".
+func replaceWildcards(p string) string {
+	if strings.Contains(p, "/*/") {
+		return replaceWildcards(strings.Replace(p, "/*/", "/", -1))
+	}
+
+	return p
 }
 
 // RouteContext returns chi's routing Context object from a
