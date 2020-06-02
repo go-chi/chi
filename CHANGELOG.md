@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.1.2 (2020-06-02)
+
+- fix that handles MethodNotAllowed with path variables, thank you @caseyhadden for your contribution
+- fix to replace nested wildcards correctly in RoutePattern, thank you @@unmultimedio for your contribution
+- History of changes: see https://github.com/go-chi/chi/compare/v4.1.1...v4.1.2
+
+
 ## v4.1.1 (2020-04-16)
 
 - fix for issue https://github.com/go-chi/chi/issues/411 which allows for overlapping regexp
