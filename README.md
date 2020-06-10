@@ -338,7 +338,7 @@ with `net/http` can be used with chi's mux.
 -----------------------------------------------------------------------------------------------------------
 
 [RedirectSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
-[StripSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
+[StripSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#StripSlashes
 
 ### Extra middlewares & packages
 
