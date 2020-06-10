@@ -328,14 +328,17 @@ with `net/http` can be used with chi's mux.
 | RealIP                | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP         |
 | Recoverer             | Gracefully absorb panics and prints the stack trace                             |
 | RequestID             | Injects a request ID into the context of each request                           |
-| RedirectSlashes       | Redirect slashes on routing paths                                               |
+| [RedirectSlashes]       | Redirect slashes on routing paths                                               |
 | SetHeader             | Short-hand middleware to set a response header key/value                        |
-| StripSlashes          | Strip slashes on routing paths                                                  |
+| [StripSlashes]          | Strip slashes on routing paths                                                  |
 | Throttle              | Puts a ceiling on the number of concurrent requests                             |
 | Timeout               | Signals to the request context when the timeout deadline is reached             |
 | URLFormat             | Parse extension from url and put it on request context                          |
 | WithValue             | Short-hand middleware to set a key/value on the request context                 |
 -----------------------------------------------------------------------------------------------------------
+
+[RedirectSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
+[StripSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
 
 ### Extra middlewares & packages
 
