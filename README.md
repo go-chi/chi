@@ -314,28 +314,97 @@ with `net/http` can be used with chi's mux.
 
 ### Core middlewares
 
------------------------------------------------------------------------------------------------------------
-| chi/middleware Handler | description                                                                    |
-|:----------------------|:---------------------------------------------------------------------------------
-| AllowContentType      | Explicit whitelist of accepted request Content-Types                            |
-| BasicAuth             | Basic HTTP authentication                                                       |
-| Compress              | Gzip compression for clients that accept compressed responses                   |
-| GetHead               | Automatically route undefined HEAD requests to GET handlers                     |
-| Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
-| Logger                | Logs the start and end of each request with the elapsed processing time         |
-| NoCache               | Sets response headers to prevent clients from caching                           |
-| Profiler              | Easily attach net/http/pprof to your routers                                    |
-| RealIP                | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP         |
-| Recoverer             | Gracefully absorb panics and prints the stack trace                             |
-| RequestID             | Injects a request ID into the context of each request                           |
-| RedirectSlashes       | Redirect slashes on routing paths                                               |
-| SetHeader             | Short-hand middleware to set a response header key/value                        |
-| StripSlashes          | Strip slashes on routing paths                                                  |
-| Throttle              | Puts a ceiling on the number of concurrent requests                             |
-| Timeout               | Signals to the request context when the timeout deadline is reached             |
-| URLFormat             | Parse extension from url and put it on request context                          |
-| WithValue             | Short-hand middleware to set a key/value on the request context                 |
------------------------------------------------------------------------------------------------------------
+Please see <https://godoc.org/github.com/go-chi/chi/middleware> for the full documentation.
+
+---
+
+| chi/middleware Handler | description                                                                                                                                                                                                                                                                                                                            |
+| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AllowContentEncoding] | enforces a whitelist of request Content-Encoding otherwise responds with a 415 Unsupported Media Type status.                                                                                                                                                                                                                          |
+| [AllowContentType]     | enforces a whitelist of request Content-Types otherwise responds with a 415 Unsupported Media Type status.                                                                                                                                                                                                                             |
+| [BasicAuth]            | implements a simple middleware handler for adding basic http auth to a route.                                                                                                                                                                                                                                                          |
+| [Compress]             | is a middleware that compresses response body of a given content types to a data format based on Accept-Encoding request header. It uses a given compression level.                                                                                                                                                                    |
+| [ContentCharset]       | generates a handler that writes a 415 Unsupported Media Type response if none of the charsets match. An empty charset will allow requests with no Content-Type header or no specified charset.                                                                                                                                         |
+| [GetHead]              | automatically route undefined HEAD requests to GET handlers.                                                                                                                                                                                                                                                                           |
+| [GetReqID]             | returns a request ID from the given context if one is present. Returns the empty string if a request ID cannot be found.                                                                                                                                                                                                               |
+| [Heartbeat]            | endpoint middleware useful to setting up a path like `/ping` that load balancers or uptime testing external services can make a request before hitting any routes. It's also convenient to place this above ACL middlewares as well.                                                                                                   |
+| [Logger]               | is a middleware that logs the start and end of each request, along with some useful data about what was requested, what the response status was, and how long it took to return. When standard output is a TTY, Logger will print in color, otherwise it will print in black and white. Logger prints a request ID if one is provided. |
+| [New]                  | will create a new middleware handler from a http.Handler.                                                                                                                                                                                                                                                                              |
+| [NextRequestID]        | generates the next request ID in the sequence.                                                                                                                                                                                                                                                                                         |
+| [NoCache]              | is a simple piece of middleware that sets a number of HTTP headers to prevent a router (or subrouter) from being cached by an upstream proxy and/or client.                                                                                                                                                                            |
+| [Profiler]             | is a convenient subrouter used for mounting net/http/pprof. ie.                                                                                                                                                                                                                                                                        |
+| [RealIP]               | is a middleware that sets a http.Request's RemoteAddr to the results of parsing either the X-Forwarded-For header or the X-Real-IP header (in that order).                                                                                                                                                                             |
+| [Recoverer]            | is a middleware that recovers from panics, logs the panic (and a backtrace), and returns a HTTP 500 (Internal Server Error) status if possible. Recoverer prints a request ID if one is provided.                                                                                                                                      |
+| [RedirectSlashes]      | is a middleware that will match request paths with a trailing slash and redirect to the same path, less the trailing slash.                                                                                                                                                                                                            |
+| [RequestID]            | is a middleware that injects a request ID into the context of each request. A request ID is a string of the form "host.example.com/random-0001", where "random" is a base62 random string that uniquely identifies this go process, and where the last number is an atomically incremented request counter.                            |
+| [RequestLogger]        | returns a logger handler using a custom LogFormatter.                                                                                                                                                                                                                                                                                  |
+| [SetHeader]            | is a convenience handler to set a response header key/value                                                                                                                                                                                                                                                                            |
+| [StripSlashes]         | is a middleware that will match request paths with a trailing slash, strip it from the path and continue routing through the mux, if a route matches, then it will serve the handler.                                                                                                                                                  |
+| [Throttle]             | is a middleware that limits number of currently processed requests at a time across all users. Note: Throttle is not a rate-limiter per user, instead it just puts a ceiling on the number of currentl in-flight requests being processed from the point from where the Throttle middleware is mounted.                                |
+| [ThrottleBacklog]      | is a middleware that limits number of currently processed requests at a time and provides a backlog for holding a finite number of pending requests.                                                                                                                                                                                   |
+| [ThrottleWithOpts]     | is a middleware that limits number of currently processed requests using passed ThrottleOpts.                                                                                                                                                                                                                                          |
+| [Timeout]              | is a middleware that cancels ctx after a given timeout and return a 504 Gateway Timeout error to the client.                                                                                                                                                                                                                           |
+| [URLFormat]            | is a middleware that parses the url extension from a request path and stores it on the context as a string under the key `middleware.URLFormatCtxKey`. The middleware will trim the suffix from the routing path and continue routing.                                                                                                 |
+| [WithLogEntry]         | sets the in-context LogEntry for a request.                                                                                                                                                                                                                                                                                            |
+| [WithValue]            | is a middleware that sets a given key/value in a context chain.                                                                                                                                                                                                                                                                        |
+| [Compressor]           | represents a set of encoding configurations.                                                                                                                                                                                                                                                                                           |
+| [DefaultLogFormatter]  | is a simple logger that implements a LogFormatter.                                                                                                                                                                                                                                                                                     |
+| [LogEntry]             | records the final log when a request completes. See defaultLogEntry for an example implementation.                                                                                                                                                                                                                                     |
+| [LogFormatter]         | initiates the beginning of a new LogEntry per request. See DefaultLogFormatter for an example implementation.                                                                                                                                                                                                                          |
+| [LoggerInterface]      | accepts printing to stdlib logger or compatible logger.                                                                                                                                                                                                                                                                                |
+| [ThrottleOpts]         | represents a set of throttling options.                                                                                                                                                                                                                                                                                                |
+| [WrapResponseWriter]   | is a proxy around an http.ResponseWriter that allows you to hook into various parts of the response process.                                                                                                                                                                                                                           |
+
+---
+
+[AllowContentEncoding]: https://godoc.org/github.com/go-chi/chi/middleware#AllowContentEncoding
+[AllowContentType]: https://godoc.org/github.com/go-chi/chi/middleware#AllowContentType
+[BasicAuth]: https://godoc.org/github.com/go-chi/chi/middleware#BasicAuth
+[Compress]: https://godoc.org/github.com/go-chi/chi/middleware#Compress
+[ContentCharset]: https://godoc.org/github.com/go-chi/chi/middleware#ContentCharset
+[GetHead]: https://godoc.org/github.com/go-chi/chi/middleware#GetHead
+[GetReqID]: https://godoc.org/github.com/go-chi/chi/middleware#GetReqID
+[Heartbeat]: https://godoc.org/github.com/go-chi/chi/middleware#Heartbeat
+[Logger]: https://godoc.org/github.com/go-chi/chi/middleware#Logger
+[New]: https://godoc.org/github.com/go-chi/chi/middleware#New
+[NextRequestID]: https://godoc.org/github.com/go-chi/chi/middleware#NextRequestID
+[NoCache]: https://godoc.org/github.com/go-chi/chi/middleware#NoCache
+[Profiler]: https://godoc.org/github.com/go-chi/chi/middleware#Profiler
+[RealIP]: https://godoc.org/github.com/go-chi/chi/middleware#RealIP
+[Recoverer]: https://godoc.org/github.com/go-chi/chi/middleware#Recoverer
+[RedirectSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
+[RequestID]: https://godoc.org/github.com/go-chi/chi/middleware#RequestID
+[RequestLogger]: https://godoc.org/github.com/go-chi/chi/middleware#RequestLogger
+[SetHeader]: https://godoc.org/github.com/go-chi/chi/middleware#SetHeader
+[StripSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#StripSlashes
+[Throttle]: https://godoc.org/github.com/go-chi/chi/middleware#Throttle
+[ThrottleBacklog]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleBacklog
+[ThrottleWithOpts]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleWithOpts
+[Timeout]: https://godoc.org/github.com/go-chi/chi/middleware#Timeout
+[URLFormat]: https://godoc.org/github.com/go-chi/chi/middleware#URLFormat
+[WithLogEntry]: https://godoc.org/github.com/go-chi/chi/middleware#WithLogEntry
+[WithValue]: https://godoc.org/github.com/go-chi/chi/middleware#WithValue
+[Compressor]: https://godoc.org/github.com/go-chi/chi/middleware#Compressor
+[DefaultLogFormatter]: https://godoc.org/github.com/go-chi/chi/middleware#DefaultLogFormatter
+[LogEntry]: https://godoc.org/github.com/go-chi/chi/middleware#LogEntry
+[LogFormatter]: https://godoc.org/github.com/go-chi/chi/middleware#LogFormatter
+[LoggerInterface]: https://godoc.org/github.com/go-chi/chi/middleware#LoggerInterface
+[ThrottleOpts]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleOpts
+[WrapResponseWriter]: https://godoc.org/github.com/go-chi/chi/middleware#WrapResponseWriter
+
+<!-- the above table can be regenerated from https://godoc.org/github.com/go-chi/chi/middleware with this JavaScript:
+var links = [];
+var rows = [];
+$$('h3[id]').forEach(function ($el) {
+  var txt = $el.nextSibling.nextSibling.nextSibling.innerText;
+  if (txt && txt.startsWith($el.id + " ")) {
+    links.push('[' + $el.id + ']: https://godoc.org/github.com/go-chi/chi/middleware#' + $el.id);
+    rows.push("| [" + $el.id + "] | " + txt.replace(new RegExp('^' + $el.id + ' '), '') + " |")
+  }
+})
+var header = "---\n| chi/middleware Handler | description |\n| :--- | :--- |\n";
+console.log(header + rows.join('\n') + "\n---\n\n" + links.join('\n'));
+-->
 
 ### Extra middlewares & packages
 
