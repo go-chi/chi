@@ -314,28 +314,26 @@ with `net/http` can be used with chi's mux.
 
 ### Core middlewares
 
------------------------------------------------------------------------------------------------------------
-| chi/middleware Handler | description                                                                    |
-|:----------------------|:---------------------------------------------------------------------------------
-| AllowContentType      | Explicit whitelist of accepted request Content-Types                            |
-| BasicAuth             | Basic HTTP authentication                                                       |
-| Compress              | Gzip compression for clients that accept compressed responses                   |
-| GetHead               | Automatically route undefined HEAD requests to GET handlers                     |
-| Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
-| Logger                | Logs the start and end of each request with the elapsed processing time         |
-| NoCache               | Sets response headers to prevent clients from caching                           |
-| Profiler              | Easily attach net/http/pprof to your routers                                    |
-| RealIP                | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP         |
-| Recoverer             | Gracefully absorb panics and prints the stack trace                             |
-| RequestID             | Injects a request ID into the context of each request                           |
-| RedirectSlashes       | Redirect slashes on routing paths                                               |
-| SetHeader             | Short-hand middleware to set a response header key/value                        |
-| StripSlashes          | Strip slashes on routing paths                                                  |
-| Throttle              | Puts a ceiling on the number of concurrent requests                             |
-| Timeout               | Signals to the request context when the timeout deadline is reached             |
-| URLFormat             | Parse extension from url and put it on request context                          |
-| WithValue             | Short-hand middleware to set a key/value on the request context                 |
------------------------------------------------------------------------------------------------------------
+chi/middleware Handler | description
+--- | ---
+AllowContentType | Explicit whitelist of accepted request Content-Types
+BasicAuth        | Basic HTTP authentication
+Compress         | Gzip compression for clients that accept compressed responses
+GetHead          | Automatically route undefined HEAD requests to GET handlers
+Heartbeat        | Monitoring endpoint to check the servers pulse
+Logger           | Logs the start and end of each request with the elapsed processing time. Logger should go before any middleware that may change the response like Recoverer.
+NoCache          | Sets response headers to prevent clients from caching
+Profiler         | Easily attach net/http/pprof to your routers
+RealIP           | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP
+Recoverer        | Gracefully absorb panics and prints the stack trace
+RequestID        | Injects a request ID into the context of each request
+RedirectSlashes  | Redirect slashes on routing paths
+SetHeader        | Short-hand middleware to set a response header key/value
+StripSlashes     | Strip slashes on routing paths
+Throttle         | Puts a ceiling on the number of concurrent requests
+Timeout          | Signals to the request context when the timeout deadline is reached
+URLFormat        | Parse extension from url and put it on request context
+WithValue        | Short-hand middleware to set a key/value on the request context
 
 ### Extra middlewares & packages
 
