@@ -321,7 +321,7 @@ BasicAuth        | Basic HTTP authentication
 Compress         | Gzip compression for clients that accept compressed responses
 GetHead          | Automatically route undefined HEAD requests to GET handlers
 Heartbeat        | Monitoring endpoint to check the servers pulse
-Logger           | Logs the start and end of each request with the elapsed processing time. Logger should go before any middleware that may change the response like Recoverer.
+Logger           | HTTP request logger. Logger should go before any other middleware that may change the response like Recoverer.
 NoCache          | Sets response headers to prevent clients from caching
 Profiler         | Easily attach net/http/pprof to your routers
 RealIP           | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP
