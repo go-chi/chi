@@ -1756,6 +1756,7 @@ func BenchmarkMux(b *testing.B) {
 	mx.Get("/", h1)
 	mx.Get("/hi", h2)
 	mx.Get("/sup/{id}/and/{this}", h3)
+	mx.Get("/sup/{id}/{bar:foo}/{this}", h3)
 
 	mx.Route("/sharing/{x}/{hash}", func(mx Router) {
 		mx.Get("/", h4)          // subrouter-1
@@ -1771,6 +1772,7 @@ func BenchmarkMux(b *testing.B) {
 		"/",
 		"/hi",
 		"/sup/123/and/this",
+		"/sup/123/foo/this",
 		"/sharing/z/aBc",                 // subrouter-1
 		"/sharing/z/aBc/twitter",         // subrouter-1
 		"/sharing/z/aBc/direct",          // subrouter-2
