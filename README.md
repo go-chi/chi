@@ -337,45 +337,45 @@ with `net/http` can be used with chi's mux.
 | [WithValue]            | Short-hand middleware to set a key/value on the request context         |
 ----------------------------------------------------------------------------------------------------
 
-[AllowContentEncoding]: https://godoc.org/github.com/go-chi/chi/middleware#AllowContentEncoding
-[AllowContentType]: https://godoc.org/github.com/go-chi/chi/middleware#AllowContentType
-[BasicAuth]: https://godoc.org/github.com/go-chi/chi/middleware#BasicAuth
-[Compress]: https://godoc.org/github.com/go-chi/chi/middleware#Compress
-[ContentCharset]: https://godoc.org/github.com/go-chi/chi/middleware#ContentCharset
-[GetHead]: https://godoc.org/github.com/go-chi/chi/middleware#GetHead
-[GetReqID]: https://godoc.org/github.com/go-chi/chi/middleware#GetReqID
-[Heartbeat]: https://godoc.org/github.com/go-chi/chi/middleware#Heartbeat
-[Logger]: https://godoc.org/github.com/go-chi/chi/middleware#Logger
-[New]: https://godoc.org/github.com/go-chi/chi/middleware#New
-[NextRequestID]: https://godoc.org/github.com/go-chi/chi/middleware#NextRequestID
-[NoCache]: https://godoc.org/github.com/go-chi/chi/middleware#NoCache
-[PrintPrettyStack]: https://godoc.org/github.com/go-chi/chi/middleware#PrintPrettyStack
-[Profiler]: https://godoc.org/github.com/go-chi/chi/middleware#Profiler
-[RealIP]: https://godoc.org/github.com/go-chi/chi/middleware#RealIP
-[Recoverer]: https://godoc.org/github.com/go-chi/chi/middleware#Recoverer
-[RedirectSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
-[RequestID]: https://godoc.org/github.com/go-chi/chi/middleware#RequestID
-[RequestLogger]: https://godoc.org/github.com/go-chi/chi/middleware#RequestLogger
-[SetHeader]: https://godoc.org/github.com/go-chi/chi/middleware#SetHeader
-[StripSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#StripSlashes
-[Throttle]: https://godoc.org/github.com/go-chi/chi/middleware#Throttle
-[ThrottleBacklog]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleBacklog
-[ThrottleWithOpts]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleWithOpts
-[Timeout]: https://godoc.org/github.com/go-chi/chi/middleware#Timeout
-[URLFormat]: https://godoc.org/github.com/go-chi/chi/middleware#URLFormat
-[WithLogEntry]: https://godoc.org/github.com/go-chi/chi/middleware#WithLogEntry
-[WithValue]: https://godoc.org/github.com/go-chi/chi/middleware#WithValue
-[Compressor]: https://godoc.org/github.com/go-chi/chi/middleware#Compressor
-[DefaultLogFormatter]: https://godoc.org/github.com/go-chi/chi/middleware#DefaultLogFormatter
-[EncoderFunc]: https://godoc.org/github.com/go-chi/chi/middleware#EncoderFunc
-[HeaderRoute]: https://godoc.org/github.com/go-chi/chi/middleware#HeaderRoute
-[HeaderRouter]: https://godoc.org/github.com/go-chi/chi/middleware#HeaderRouter
-[LogEntry]: https://godoc.org/github.com/go-chi/chi/middleware#LogEntry
-[LogFormatter]: https://godoc.org/github.com/go-chi/chi/middleware#LogFormatter
-[LoggerInterface]: https://godoc.org/github.com/go-chi/chi/middleware#LoggerInterface
-[Pattern]: https://godoc.org/github.com/go-chi/chi/middleware#Pattern
-[ThrottleOpts]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleOpts
-[WrapResponseWriter]: https://godoc.org/github.com/go-chi/chi/middleware#WrapResponseWriter
+[AllowContentEncoding]: https://pkg.go.dev/github.com/go-chi/chi/middleware#AllowContentEncoding
+[AllowContentType]: https://pkg.go.dev/github.com/go-chi/chi/middleware#AllowContentType
+[BasicAuth]: https://pkg.go.dev/github.com/go-chi/chi/middleware#BasicAuth
+[Compress]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Compress
+[ContentCharset]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ContentCharset
+[GetHead]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetHead
+[GetReqID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetReqID
+[Heartbeat]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Heartbeat
+[Logger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Logger
+[New]: https://pkg.go.dev/github.com/go-chi/chi/middleware#New
+[NextRequestID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#NextRequestID
+[NoCache]: https://pkg.go.dev/github.com/go-chi/chi/middleware#NoCache
+[PrintPrettyStack]: https://pkg.go.dev/github.com/go-chi/chi/middleware#PrintPrettyStack
+[Profiler]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Profiler
+[RealIP]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RealIP
+[Recoverer]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Recoverer
+[RedirectSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RedirectSlashes
+[RequestID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RequestID
+[RequestLogger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RequestLogger
+[SetHeader]: https://pkg.go.dev/github.com/go-chi/chi/middleware#SetHeader
+[StripSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#StripSlashes
+[Throttle]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Throttle
+[ThrottleBacklog]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleBacklog
+[ThrottleWithOpts]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleWithOpts
+[Timeout]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Timeout
+[URLFormat]: https://pkg.go.dev/github.com/go-chi/chi/middleware#URLFormat
+[WithLogEntry]: https://pkg.go.dev/github.com/go-chi/chi/middleware#WithLogEntry
+[WithValue]: https://pkg.go.dev/github.com/go-chi/chi/middleware#WithValue
+[Compressor]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Compressor
+[DefaultLogFormatter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#DefaultLogFormatter
+[EncoderFunc]: https://pkg.go.dev/github.com/go-chi/chi/middleware#EncoderFunc
+[HeaderRoute]: https://pkg.go.dev/github.com/go-chi/chi/middleware#HeaderRoute
+[HeaderRouter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#HeaderRouter
+[LogEntry]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LogEntry
+[LogFormatter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LogFormatter
+[LoggerInterface]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LoggerInterface
+[Pattern]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Pattern
+[ThrottleOpts]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleOpts
+[WrapResponseWriter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#WrapResponseWriter
 
 ### Extra middlewares & packages
 
@@ -475,7 +475,7 @@ Copyright (c) 2015-present [Peter Kieltyka](https://github.com/pkieltyka)
 
 Licensed under [MIT License](./LICENSE)
 
-[GoDoc]: https://godoc.org/github.com/go-chi/chi
+[GoDoc]: https://pkg.go.dev/github.com/go-chi/chi
 [GoDoc Widget]: https://godoc.org/github.com/go-chi/chi?status.svg
 [Travis]: https://travis-ci.org/go-chi/chi
 [Travis Widget]: https://travis-ci.org/go-chi/chi.svg?branch=master
