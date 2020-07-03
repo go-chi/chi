@@ -314,28 +314,68 @@ with `net/http` can be used with chi's mux.
 
 ### Core middlewares
 
------------------------------------------------------------------------------------------------------------
-| chi/middleware Handler | description                                                                    |
-|:----------------------|:---------------------------------------------------------------------------------
-| AllowContentType      | Explicit whitelist of accepted request Content-Types                            |
-| BasicAuth             | Basic HTTP authentication                                                       |
-| Compress              | Gzip compression for clients that accept compressed responses                   |
-| GetHead               | Automatically route undefined HEAD requests to GET handlers                     |
-| Heartbeat             | Monitoring endpoint to check the servers pulse                                  |
-| Logger                | Logs the start and end of each request with the elapsed processing time         |
-| NoCache               | Sets response headers to prevent clients from caching                           |
-| Profiler              | Easily attach net/http/pprof to your routers                                    |
-| RealIP                | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP         |
-| Recoverer             | Gracefully absorb panics and prints the stack trace                             |
-| RequestID             | Injects a request ID into the context of each request                           |
-| RedirectSlashes       | Redirect slashes on routing paths                                               |
-| SetHeader             | Short-hand middleware to set a response header key/value                        |
-| StripSlashes          | Strip slashes on routing paths                                                  |
-| Throttle              | Puts a ceiling on the number of concurrent requests                             |
-| Timeout               | Signals to the request context when the timeout deadline is reached             |
-| URLFormat             | Parse extension from url and put it on request context                          |
-| WithValue             | Short-hand middleware to set a key/value on the request context                 |
------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------
+| chi/middleware Handler | description                                                             |
+| :--------------------- | :---------------------------------------------------------------------- |
+| [AllowContentType]     | Explicit whitelist of accepted request Content-Types                    |
+| [BasicAuth]            | Basic HTTP authentication                                               |
+| [Compress]             | Gzip compression for clients that accept compressed responses           |
+| [GetHead]              | Automatically route undefined HEAD requests to GET handlers             |
+| [Heartbeat]            | Monitoring endpoint to check the servers pulse                          |
+| [Logger]               | Logs the start and end of each request with the elapsed processing time |
+| [NoCache]              | Sets response headers to prevent clients from caching                   |
+| [Profiler]             | Easily attach net/http/pprof to your routers                            |
+| [RealIP]               | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP |
+| [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
+| [RequestID]            | Injects a request ID into the context of each request                   |
+| [RedirectSlashes]      | Redirect slashes on routing paths                                       |
+| [SetHeader]            | Short-hand middleware to set a response header key/value                |
+| [StripSlashes]         | Strip slashes on routing paths                                          |
+| [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
+| [Timeout]              | Signals to the request context when the timeout deadline is reached     |
+| [URLFormat]            | Parse extension from url and put it on request context                  |
+| [WithValue]            | Short-hand middleware to set a key/value on the request context         |
+----------------------------------------------------------------------------------------------------
+
+[AllowContentEncoding]: https://godoc.org/github.com/go-chi/chi/middleware#AllowContentEncoding
+[AllowContentType]: https://godoc.org/github.com/go-chi/chi/middleware#AllowContentType
+[BasicAuth]: https://godoc.org/github.com/go-chi/chi/middleware#BasicAuth
+[Compress]: https://godoc.org/github.com/go-chi/chi/middleware#Compress
+[ContentCharset]: https://godoc.org/github.com/go-chi/chi/middleware#ContentCharset
+[GetHead]: https://godoc.org/github.com/go-chi/chi/middleware#GetHead
+[GetReqID]: https://godoc.org/github.com/go-chi/chi/middleware#GetReqID
+[Heartbeat]: https://godoc.org/github.com/go-chi/chi/middleware#Heartbeat
+[Logger]: https://godoc.org/github.com/go-chi/chi/middleware#Logger
+[New]: https://godoc.org/github.com/go-chi/chi/middleware#New
+[NextRequestID]: https://godoc.org/github.com/go-chi/chi/middleware#NextRequestID
+[NoCache]: https://godoc.org/github.com/go-chi/chi/middleware#NoCache
+[PrintPrettyStack]: https://godoc.org/github.com/go-chi/chi/middleware#PrintPrettyStack
+[Profiler]: https://godoc.org/github.com/go-chi/chi/middleware#Profiler
+[RealIP]: https://godoc.org/github.com/go-chi/chi/middleware#RealIP
+[Recoverer]: https://godoc.org/github.com/go-chi/chi/middleware#Recoverer
+[RedirectSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#RedirectSlashes
+[RequestID]: https://godoc.org/github.com/go-chi/chi/middleware#RequestID
+[RequestLogger]: https://godoc.org/github.com/go-chi/chi/middleware#RequestLogger
+[SetHeader]: https://godoc.org/github.com/go-chi/chi/middleware#SetHeader
+[StripSlashes]: https://godoc.org/github.com/go-chi/chi/middleware#StripSlashes
+[Throttle]: https://godoc.org/github.com/go-chi/chi/middleware#Throttle
+[ThrottleBacklog]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleBacklog
+[ThrottleWithOpts]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleWithOpts
+[Timeout]: https://godoc.org/github.com/go-chi/chi/middleware#Timeout
+[URLFormat]: https://godoc.org/github.com/go-chi/chi/middleware#URLFormat
+[WithLogEntry]: https://godoc.org/github.com/go-chi/chi/middleware#WithLogEntry
+[WithValue]: https://godoc.org/github.com/go-chi/chi/middleware#WithValue
+[Compressor]: https://godoc.org/github.com/go-chi/chi/middleware#Compressor
+[DefaultLogFormatter]: https://godoc.org/github.com/go-chi/chi/middleware#DefaultLogFormatter
+[EncoderFunc]: https://godoc.org/github.com/go-chi/chi/middleware#EncoderFunc
+[HeaderRoute]: https://godoc.org/github.com/go-chi/chi/middleware#HeaderRoute
+[HeaderRouter]: https://godoc.org/github.com/go-chi/chi/middleware#HeaderRouter
+[LogEntry]: https://godoc.org/github.com/go-chi/chi/middleware#LogEntry
+[LogFormatter]: https://godoc.org/github.com/go-chi/chi/middleware#LogFormatter
+[LoggerInterface]: https://godoc.org/github.com/go-chi/chi/middleware#LoggerInterface
+[Pattern]: https://godoc.org/github.com/go-chi/chi/middleware#Pattern
+[ThrottleOpts]: https://godoc.org/github.com/go-chi/chi/middleware#ThrottleOpts
+[WrapResponseWriter]: https://godoc.org/github.com/go-chi/chi/middleware#WrapResponseWriter
 
 ### Extra middlewares & packages
 
