@@ -134,7 +134,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 			buf, err := ioutil.ReadAll(res.Body)
 			assertNoError(t, err)
-			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
+			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
 
 		}(i)
@@ -194,7 +194,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 			buf, err := ioutil.ReadAll(res.Body)
 			assertNoError(t, err)
-			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
+			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
 
 		}(i)
@@ -244,7 +244,7 @@ func TestThrottleRetryAfter(t *testing.T) {
 
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
-			assertEqual(t, http.StatusServiceUnavailable, res.StatusCode)
+			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, res.Header.Get("Retry-After"), "3600")
 		}(i)
 	}
