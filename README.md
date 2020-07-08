@@ -168,7 +168,7 @@ func AdminOnly(next http.Handler) http.Handler {
 ```
 
 
-## Router design
+## Router interface
 
 chi's router is based on a kind of [Patricia Radix trie](https://en.wikipedia.org/wiki/Radix_tree).
 The router is fully compatible with `net/http`.
@@ -257,15 +257,24 @@ about them, which means the router and all the tooling is designed to be compati
 friendly with any middleware in the community. This offers much better extensibility and reuse
 of packages and is at the heart of chi's purpose.
 
-Here is an example of a standard net/http middleware handler using the new request context
-available in Go. This middleware sets a hypothetical user identifier on the request
+Here is an example of a standard net/http middleware where we assign a context key `"user"`
+the value of `"123"`. This middleware sets a hypothetical user identifier on the request
 context and calls the next handler in the chain.
 
 ```go
 // HTTP middleware setting a value on the request context
 func MyMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    // create new context from `r` request context, and assign key `"user"`
+    // to value of `"123"`
     ctx := context.WithValue(r.Context(), "user", "123")
+
+    // call the next handler in the chain, passing the response writer and
+    // the updated request object with the new context value.
+    //
+    // note: context.Context values are nested, so any previously set
+    // values will be accessible as well, and the new `"user"` key
+    // will be accessible from this point forward.
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }
@@ -281,7 +290,11 @@ the user sending an authenticated request, validated+set by a previous middlewar
 ```go
 // HTTP handler accessing data from the request context.
 func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
+  // here we read from the request context and fetch out `"user"` key set in
+  // the MyMiddleware example above.
   user := r.Context().Value("user").(string)
+
+  // respond to the client
   w.Write([]byte(fmt.Sprintf("hi %s", user)))
 }
 ```
@@ -296,11 +309,15 @@ are able to access the same information.
 ```go
 // HTTP handler accessing the url routing parameters.
 func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
-  userID := chi.URLParam(r, "userID") // from a route like /users/{userID}
+  // fetch the url parameter `"userID"` from the request of a matching
+  // routing pattern. An example routing pattern could be: /users/{userID}
+  userID := chi.URLParam(r, "userID")
 
+  // fetch `"key"` from the request context
   ctx := r.Context()
   key := ctx.Value("key").(string)
 
+  // respond to the client
   w.Write([]byte(fmt.Sprintf("hi %v, %v", userID, key)))
 }
 ```
