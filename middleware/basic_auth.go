@@ -8,14 +8,14 @@ import (
 // Checks whether a user and password combination is allowed to authenticate with
 // the BasicAuthWithAuthenticator simple basic http auth middleware.
 type Authenticator interface {
-	checkPassword(user string, password string) bool
+	CheckPassword(user string, password string) bool
 }
 
 type MapAuthenticator struct {
 	creds map[string]string
 }
 
-func (authData MapAuthenticator) checkPassword(user string, password string) bool {
+func (authData MapAuthenticator) CheckPassword(user string, password string) bool {
 	credPass, credUserOk := authData.creds[user]
 	return credUserOk && password == credPass
 }
@@ -32,7 +32,7 @@ func BasicAuthWithAuthenticator(realm string, auth Authenticator) func(next http
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, pass, ok := r.BasicAuth()
-			if !ok || !auth.checkPassword(user, pass) {
+			if !ok || !auth.CheckPassword(user, pass) {
 				basicAuthFailed(w, realm)
 				return
 			}
