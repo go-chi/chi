@@ -400,17 +400,18 @@ Please see https://github.com/go-chi for additional packages.
 
 --------------------------------------------------------------------------------------------------------------------
 | package                                            | description                                                 |
-|:---------------------------------------------------|:-------------------------------------------------------------
-| [cors](https://github.com/go-chi/cors)             | Cross-origin resource sharing (CORS)                        |
-| [docgen](https://github.com/go-chi/docgen)         | Print chi.Router routes at runtime                          |
-| [jwtauth](https://github.com/go-chi/jwtauth)       | JWT authentication                                          |
-| [hostrouter](https://github.com/go-chi/hostrouter) | Domain/host based request routing                           |
-| [httplog](https://github.com/go-chi/httplog)       | Small but powerful structured HTTP request logging          |
-| [httprate](https://github.com/go-chi/httprate)     | HTTP request rate limiter                                   |
-| [httptracer](https://github.com/go-chi/httptracer) | HTTP request performance tracing library                    |
-| [httpvcr](https://github.com/go-chi/httpvcr)       | Write deterministic tests for external sources              |
-| [stampede](https://github.com/go-chi/stampede)     | HTTP request coalescer                                      |
---------------------------------------------------------------------------------------------------------------------
+|:--------------------------------------------------------|:-------------------------------------------------------------
+| [cors](https://github.com/go-chi/cors)                  | Cross-origin resource sharing (CORS)                        |
+| [docgen](https://github.com/go-chi/docgen)              | Print chi.Router routes at runtime                          |
+| [jwtauth](https://github.com/go-chi/jwtauth)            | JWT authentication                                          |
+| [hostrouter](https://github.com/go-chi/hostrouter)      | Domain/host based request routing                           |
+| [httplog](https://github.com/go-chi/httplog)            | Small but powerful structured HTTP request logging          |
+| [httprate](https://github.com/go-chi/httprate)          | HTTP request rate limiter                                   |
+| [httptracer](https://github.com/go-chi/httptracer)      | HTTP request performance tracing library                    |
+| [httpvcr](https://github.com/go-chi/httpvcr)            | Write deterministic tests for external sources              |
+| [permissions2](https://github.com/xyproto/permissions2) | Keep track of users, login states and permissions           |
+| [stampede](https://github.com/go-chi/stampede)          | HTTP request coalescer                                      |
+-------------------------------------------------------------------------------------------------------------------------
 
 please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware
 
