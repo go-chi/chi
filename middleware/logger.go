@@ -31,6 +31,11 @@ func Logger(next http.Handler) http.Handler {
 	return DefaultLogger(next)
 }
 
+// Logger4xxAnd5xx is the same with Logger, but the only difference is it only log when response got 4xx/5xx http status.
+func Logger4xxAnd5xx(next http.Handler) http.Handler {
+	return RequestLogger4xxAnd5xx((&DefaultLogFormatter{Logger: log.New(os.Stdout, "", log.LstdFlags), NoColor: false}))(next)
+}
+
 // RequestLogger returns a logger handler using a custom LogFormatter.
 func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -44,6 +49,25 @@ func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler {
 			}()
 
 			next.ServeHTTP(ww, WithLogEntry(r, entry))
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+// RequestLogger4xxAnd5xx returns a logger handler for only response with http status 4xx or 5xx.
+// This logger is using a custom LogFormatter.
+func RequestLogger4xxAnd5xx(f LogFormatter) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			entry := f.NewLogEntry(r)
+			ww := NewWrapResponseWriter(w, r.ProtoMajor)
+			t1 := time.Now()
+
+			next.ServeHTTP(ww, WithLogEntry(r, entry))
+
+			if ww.Status() >= http.StatusBadRequest {
+				entry.Write(ww.Status(), ww.BytesWritten(), ww.Header(), time.Since(t1), nil)
+			}
 		}
 		return http.HandlerFunc(fn)
 	}
