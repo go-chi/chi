@@ -412,7 +412,7 @@ Please see https://github.com/go-chi for additional packages.
 | [stampede](https://github.com/go-chi/stampede)     | HTTP request coalescer                                      |
 --------------------------------------------------------------------------------------------------------------------
 
-please [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware
+Please don't [submit a PR](./CONTRIBUTING.md) if you'd like to include a link to a chi-compatible middleware, since the pull request will be rejected without any further explanation.
 
 
 ## context?
