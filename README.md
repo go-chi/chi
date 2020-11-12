@@ -19,7 +19,7 @@ included some useful/optional subpackages: [middleware](/middleware), [render](h
 
 ## Install
 
-`go get -u github.com/go-chi/chi`
+`go get -u github.com/go-chi/chi@v4`
 
 
 ## Features
