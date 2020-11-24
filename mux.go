@@ -277,6 +277,10 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // routing at the `handler`, which in most cases is another chi.Router. As a result,
 // if you define two Mount() routes on the exact same pattern the mount will panic.
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
+	if handler == nil {
+		panic(fmt.Sprintf("chi: attempting to Mount() a nil handler on '%s'", pattern))
+	}
+
 	// Provide runtime safety for ensuring a pattern isn't mounted on an existing
 	// routing pattern.
 	if mx.tree.findPattern(pattern+"*") || mx.tree.findPattern(pattern+"/*") {
