@@ -261,10 +261,11 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 // along the `pattern` as a subrouter. Effectively, this is a short-hand
 // call to Mount. See _examples/.
 func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
-	subRouter := NewRouter()
-	if fn != nil {
-		fn(subRouter)
+	if fn == nil {
+		panic(fmt.Sprintf("chi: attempting to Route() a nil subrouter on '%s'", pattern))
 	}
+	subRouter := NewRouter()
+	fn(subRouter)
 	mx.Mount(pattern, subRouter)
 	return subRouter
 }
