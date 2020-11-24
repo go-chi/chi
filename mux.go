@@ -261,10 +261,11 @@ func (mx *Mux) Group(fn func(r Router)) Router {
 // along the `pattern` as a subrouter. Effectively, this is a short-hand
 // call to Mount. See _examples/.
 func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
-	subRouter := NewRouter()
-	if fn != nil {
-		fn(subRouter)
+	if fn == nil {
+		panic(fmt.Sprintf("chi: attempting to Route() a nil subrouter on '%s'", pattern))
 	}
+	subRouter := NewRouter()
+	fn(subRouter)
 	mx.Mount(pattern, subRouter)
 	return subRouter
 }
@@ -277,6 +278,10 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 // routing at the `handler`, which in most cases is another chi.Router. As a result,
 // if you define two Mount() routes on the exact same pattern the mount will panic.
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
+	if handler == nil {
+		panic(fmt.Sprintf("chi: attempting to Mount() a nil handler on '%s'", pattern))
+	}
+
 	// Provide runtime safety for ensuring a pattern isn't mounted on an existing
 	// routing pattern.
 	if mx.tree.findPattern(pattern+"*") || mx.tree.findPattern(pattern+"/*") {
