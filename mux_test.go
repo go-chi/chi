@@ -1523,6 +1523,38 @@ func TestMuxRegexp3(t *testing.T) {
 	}
 }
 
+func TestMuxSubrouterWildcardParam(t *testing.T) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "param:%v *:%v", URLParam(r, "param"), URLParam(r, "*"))
+	})
+
+	r := NewRouter()
+
+	r.Get("/bare/{param}", h)
+	r.Get("/bare/{param}/*", h)
+
+	r.Route("/case0", func(r Router) {
+		r.Get("/{param}", h)
+		r.Get("/{param}/*", h)
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/bare/hi", nil); body != "param:hi *:" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/bare/hi/yes", nil); body != "param:hi *:yes" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/case0/hi", nil); body != "param:hi *:" {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/case0/hi/yes", nil); body != "param:hi *:yes" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxContextIsThreadSafe(t *testing.T) {
 	router := NewRouter()
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
