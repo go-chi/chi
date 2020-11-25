@@ -299,6 +299,8 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 
 	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
+
+		// shift the url path past the previous subrouter
 		rctx.RoutePath = mx.nextRoutePath(rctx)
 
 		// reset the wildcard URLParam which connects the subrouter
