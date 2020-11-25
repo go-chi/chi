@@ -299,7 +299,16 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 
 	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
+
+		// shift the url path past the previous subrouter
 		rctx.RoutePath = mx.nextRoutePath(rctx)
+
+		// reset the wildcard URLParam which connects the subrouter
+		n := len(rctx.URLParams.Keys) - 1
+		if n >= 0 && rctx.URLParams.Keys[n] == "*" && len(rctx.URLParams.Values) > n {
+			rctx.URLParams.Values[n] = ""
+		}
+
 		handler.ServeHTTP(w, r)
 	})
 
