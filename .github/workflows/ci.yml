@@ -1,32 +1,18 @@
-name: build
-
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
-
+on: [push, pull_request]
+name: Test
 jobs:
-
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.14.x, 1.15.x]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-
-    - name: Set up Go 1.x
+    - name: Install Go
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.15
-      id: go
-
-    - name: Check out code into the Go module directory
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
       uses: actions/checkout@v2
-
-    - name: Get dependencies
-      run: go get -v -t -d ./...
-
-    - name: Build
-      run: go build -v .
-
     - name: Test
       run: go test -v ./...
