@@ -1,0 +1,32 @@
+on: [push, pull_request]
+name: Test
+jobs:
+  test:
+    env:
+      GOPATH: ${{ github.workspace }}
+      GO111MODULE: off
+
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+
+    strategy:
+      matrix:
+        go-version: [1.14.x, 1.15.x]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        path: ${{ env.GOPATH }}/src/github.com/${{ github.repository }}
+    - name: Test
+      run: |
+        go get -d -t ./...
+        go test -v ./...
