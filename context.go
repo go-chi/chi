@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // URLParam returns the url parameter from a http.Request object.
@@ -92,6 +93,9 @@ type Context struct {
 
 	// methodNotAllowed hint
 	methodNotAllowed bool
+
+	// parentCtx is the parent of this one, for using Context as a context.Context directly
+	parentCtx context.Context
 }
 
 // Reset a routing context to its initial state.
@@ -137,6 +141,29 @@ func (x *Context) URLParam(key string) string {
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
 	return replaceWildcards(routePattern)
+}
+
+type directContext Context
+
+var _ context.Context = (*directContext)(nil)
+
+func (d *directContext) Deadline() (deadline time.Time, ok bool) {
+	return d.parentCtx.Deadline()
+}
+
+func (d *directContext) Done() <-chan struct{} {
+	return d.parentCtx.Done()
+}
+
+func (d *directContext) Err() error {
+	return d.parentCtx.Err()
+}
+
+func (d *directContext) Value(key interface{}) interface{} {
+	if key == RouteCtxKey {
+		return (*Context)(d)
+	}
+	return d.parentCtx.Value(key)
 }
 
 // replaceWildcards takes a route pattern and recursively replaces all
