@@ -430,25 +430,25 @@ and..
 
 The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
 
-Results as of Jan 9, 2019 with Go 1.11.4 on Linux X1 Carbon laptop
+Results as of Nov 29, 2020 with Go 1.15.5 on Linux AMD 3950x
 
 ```shell
-BenchmarkChi_Param            3000000         475 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_Param5           2000000         696 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_Param20          1000000        1275 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_ParamWrite       3000000         505 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_GithubStatic     3000000         508 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_GithubParam      2000000         669 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_GithubAll          10000      134627 ns/op     87699 B/op    609 allocs/op
-BenchmarkChi_GPlusStatic      3000000         402 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_GPlusParam       3000000         500 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_GPlus2Params     3000000         586 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_GPlusAll          200000        7237 ns/op      5616 B/op     39 allocs/op
-BenchmarkChi_ParseStatic      3000000         408 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_ParseParam       3000000         488 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_Parse2Params     3000000         551 ns/op       432 B/op      3 allocs/op
-BenchmarkChi_ParseAll          100000       13508 ns/op     11232 B/op     78 allocs/op
-BenchmarkChi_StaticAll          20000       81933 ns/op     67826 B/op    471 allocs/op
+BenchmarkChi_Param          	3075895	        384 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_Param5         	2116603	        566 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_Param20        	 964117	       1227 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_ParamWrite     	2863413	        420 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_GithubStatic   	3045488	        395 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_GithubParam    	2204115	        540 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_GithubAll      	  10000	     113811 ns/op	    81203 B/op    406 allocs/op
+BenchmarkChi_GPlusStatic    	3337485	        359 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_GPlusParam     	2825853	        423 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_GPlus2Params   	2471697	        483 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_GPlusAll       	 194220	       5950 ns/op	     5200 B/op     26 allocs/op
+BenchmarkChi_ParseStatic    	3365324	        356 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_ParseParam     	2976614	        404 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_Parse2Params   	2638084	        439 ns/op	      400 B/op      2 allocs/op
+BenchmarkChi_ParseAll       	 109567	      11295 ns/op	    10400 B/op     52 allocs/op
+BenchmarkChi_StaticAll      	  16846	      71308 ns/op	    62802 B/op    314 allocs/op
 ```
 
 Comparison with other routers: https://gist.github.com/pkieltyka/123032f12052520aaccab752bd3e78cc

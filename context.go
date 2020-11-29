@@ -94,7 +94,9 @@ type Context struct {
 	// methodNotAllowed hint
 	methodNotAllowed bool
 
-	// parentCtx is the parent of this one, for using Context as a context.Context directly
+	// parentCtx is the parent of this one, for using Context as a
+	// context.Context directly. This is an optimization that saves
+	// 1 allocation.
 	parentCtx context.Context
 }
 
@@ -111,6 +113,7 @@ func (x *Context) Reset() {
 	x.routeParams.Keys = x.routeParams.Keys[:0]
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
+	x.parentCtx = nil
 }
 
 // URLParam returns the corresponding URL parameter value from the request
@@ -143,6 +146,30 @@ func (x *Context) RoutePattern() string {
 	return replaceWildcards(routePattern)
 }
 
+// replaceWildcards takes a route pattern and recursively replaces all
+// occurrences of "/*/" to "/".
+func replaceWildcards(p string) string {
+	if strings.Contains(p, "/*/") {
+		return replaceWildcards(strings.Replace(p, "/*/", "/", -1))
+	}
+
+	return p
+}
+
+// RouteParams is a structure to track URL routing parameters efficiently.
+type RouteParams struct {
+	Keys, Values []string
+}
+
+// Add will append a URL parameter to the end of the route param
+func (s *RouteParams) Add(key, value string) {
+	s.Keys = append(s.Keys, key)
+	s.Values = append(s.Values, value)
+}
+
+// directContext provides direct access to the routing *Context object,
+// while implementing the context.Context interface, thereby allowing
+// us to saving 1 allocation during routing.
 type directContext Context
 
 var _ context.Context = (*directContext)(nil)
@@ -164,27 +191,6 @@ func (d *directContext) Value(key interface{}) interface{} {
 		return (*Context)(d)
 	}
 	return d.parentCtx.Value(key)
-}
-
-// replaceWildcards takes a route pattern and recursively replaces all
-// occurrences of "/*/" to "/".
-func replaceWildcards(p string) string {
-	if strings.Contains(p, "/*/") {
-		return replaceWildcards(strings.Replace(p, "/*/", "/", -1))
-	}
-
-	return p
-}
-
-// RouteParams is a structure to track URL routing parameters efficiently.
-type RouteParams struct {
-	Keys, Values []string
-}
-
-// Add will append a URL parameter to the end of the route param
-func (s *RouteParams) Add(key, value string) {
-	s.Keys = append(s.Keys, key)
-	s.Values = append(s.Values, value)
 }
 
 // contextKey is a value for use with context.WithValue. It's used as
