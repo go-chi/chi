@@ -453,13 +453,6 @@ func (mx *Mux) nextRoutePath(rctx *Context) string {
 	return routePath
 }
 
-// methodNotAllowedHandler is a helper function to respond with a 405,
-// method not allowed.
-func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(405)
-	w.Write(nil)
-}
-
 // Recursively update data on child routers.
 func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
 	for _, r := range mx.tree.routes() {
@@ -477,4 +470,11 @@ func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
 // compose additional middlewares via Group()'s or using a chained middleware handler.
 func (mx *Mux) updateRouteHandler() {
 	mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+}
+
+// methodNotAllowedHandler is a helper function to respond with a 405,
+// method not allowed.
+func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(405)
+	w.Write(nil)
 }
