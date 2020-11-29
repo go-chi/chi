@@ -227,7 +227,7 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	// Similarly as in handle(), we must build the mux handler once additional
 	// middleware registration isn't allowed for this stack, like now.
 	if !mx.inline && mx.handler == nil {
-		mx.buildRouteHandler()
+		mx.updateRouteHandler()
 	}
 
 	// Copy middlewares from parent inline muxs
@@ -381,14 +381,6 @@ func (mx *Mux) MethodNotAllowedHandler() http.HandlerFunc {
 	return methodNotAllowedHandler
 }
 
-// buildRouteHandler builds the single mux handler that is a chain of the middleware
-// stack, as defined by calls to Use(), and the tree router (Mux) itself. After this
-// point, no other middlewares can be registered on this Mux's stack. But you can still
-// compose additional middlewares via Group()'s or using a chained middleware handler.
-func (mx *Mux) buildRouteHandler() {
-	mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
-}
-
 // handle registers a http.Handler in the routing tree for a particular http method
 // and routing pattern.
 func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *node {
@@ -398,7 +390,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *n
 
 	// Build the computed routing handler for this routing pattern.
 	if !mx.inline && mx.handler == nil {
-		mx.buildRouteHandler()
+		mx.updateRouteHandler()
 	}
 
 	// Build endpoint handler with inline middlewares for the route
@@ -461,6 +453,13 @@ func (mx *Mux) nextRoutePath(rctx *Context) string {
 	return routePath
 }
 
+// methodNotAllowedHandler is a helper function to respond with a 405,
+// method not allowed.
+func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(405)
+	w.Write(nil)
+}
+
 // Recursively update data on child routers.
 func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
 	for _, r := range mx.tree.routes() {
@@ -472,9 +471,10 @@ func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
 	}
 }
 
-// methodNotAllowedHandler is a helper function to respond with a 405,
-// method not allowed.
-func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(405)
-	w.Write(nil)
+// updateRouteHandler builds the single mux handler that is a chain of the middleware
+// stack, as defined by calls to Use(), and the tree router (Mux) itself. After this
+// point, no other middlewares can be registered on this Mux's stack. But you can still
+// compose additional middlewares via Group()'s or using a chained middleware handler.
+func (mx *Mux) updateRouteHandler() {
+	mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
 }
