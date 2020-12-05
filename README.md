@@ -374,6 +374,7 @@ with `net/http` can be used with chi's mux.
 [Recoverer]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Recoverer
 [RedirectSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RedirectSlashes
 [RequestLogger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RequestLogger
+[RequestID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RequestID
 [RouteHeaders]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RouteHeaders
 [SetHeader]: https://pkg.go.dev/github.com/go-chi/chi/middleware#SetHeader
 [StripSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#StripSlashes
