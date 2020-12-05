@@ -27,6 +27,16 @@ var (
 //
 // Alternatively, look at https://github.com/goware/httplog for a more in-depth
 // http logger with structured logging support.
+//
+// IMPORTANT NOTE: Logger should go before any other middleware that may change
+// the response, such as `middleware.Recoverer`. Example:
+//
+// ```go
+// r := chi.NewRouter()
+// r.Use(middleware.Logger)        // <--<< Logger should come before Recoverer
+// r.Use(middleware.Recoverer)
+// r.Get("/", handler)
+// ```
 func Logger(next http.Handler) http.Handler {
 	return DefaultLogger(next)
 }

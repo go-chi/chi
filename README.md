@@ -334,9 +334,12 @@ with `net/http` can be used with chi's mux.
 ----------------------------------------------------------------------------------------------------
 | chi/middleware Handler | description                                                             |
 | :--------------------- | :---------------------------------------------------------------------- |
+| [AllowContentEncoding] | Enforces a whitelist of request Content-Encoding headers                |
 | [AllowContentType]     | Explicit whitelist of accepted request Content-Types                    |
 | [BasicAuth]            | Basic HTTP authentication                                               |
 | [Compress]             | Gzip compression for clients that accept compressed responses           |
+| [ContentCharset]       | Ensure charset for Content-Type request headers                         |
+| [CleanPath]            | Clean double slashes from request path                                  |
 | [GetHead]              | Automatically route undefined HEAD requests to GET handlers             |
 | [Heartbeat]            | Monitoring endpoint to check the servers pulse                          |
 | [Logger]               | Logs the start and end of each request with the elapsed processing time |
@@ -346,6 +349,7 @@ with `net/http` can be used with chi's mux.
 | [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
 | [RequestID]            | Injects a request ID into the context of each request                   |
 | [RedirectSlashes]      | Redirect slashes on routing paths                                       |
+| [RouteHeaders]         | Route handling for request headers                                      |
 | [SetHeader]            | Short-hand middleware to set a response header key/value                |
 | [StripSlashes]         | Strip slashes on routing paths                                          |
 | [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
@@ -359,20 +363,18 @@ with `net/http` can be used with chi's mux.
 [BasicAuth]: https://pkg.go.dev/github.com/go-chi/chi/middleware#BasicAuth
 [Compress]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Compress
 [ContentCharset]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ContentCharset
+[CleanPath]: https://pkg.go.dev/github.com/go-chi/chi/middleware#CleanPath
 [GetHead]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetHead
 [GetReqID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetReqID
 [Heartbeat]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Heartbeat
 [Logger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Logger
-[New]: https://pkg.go.dev/github.com/go-chi/chi/middleware#New
-[NextRequestID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#NextRequestID
 [NoCache]: https://pkg.go.dev/github.com/go-chi/chi/middleware#NoCache
-[PrintPrettyStack]: https://pkg.go.dev/github.com/go-chi/chi/middleware#PrintPrettyStack
 [Profiler]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Profiler
 [RealIP]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RealIP
 [Recoverer]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Recoverer
 [RedirectSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RedirectSlashes
-[RequestID]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RequestID
 [RequestLogger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RequestLogger
+[RouteHeaders]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RouteHeaders
 [SetHeader]: https://pkg.go.dev/github.com/go-chi/chi/middleware#SetHeader
 [StripSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#StripSlashes
 [Throttle]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Throttle
@@ -390,7 +392,6 @@ with `net/http` can be used with chi's mux.
 [LogEntry]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LogEntry
 [LogFormatter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LogFormatter
 [LoggerInterface]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LoggerInterface
-[Pattern]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Pattern
 [ThrottleOpts]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleOpts
 [WrapResponseWriter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#WrapResponseWriter
 
