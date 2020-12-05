@@ -168,3 +168,43 @@ func TestRedirectSlashes(t *testing.T) {
 
 	}
 }
+
+// This tests a http.Handler that is not chi.Router
+// In these cases, the routeContext is nil
+func TestStripSlashesWithNilContext(t *testing.T) {
+	r := http.NewServeMux()
+
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("root"))
+	})
+
+	r.HandleFunc("/accounts", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("accounts"))
+	})
+
+	r.HandleFunc("/accounts/admin", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("admin"))
+	})
+
+	ts := httptest.NewServer(StripSlashes(r))
+	defer ts.Close()
+
+	if _, resp := testRequest(t, ts, "GET", "/", nil); resp != "root" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "//", nil); resp != "root" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts", nil); resp != "accounts" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/", nil); resp != "accounts" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
+		t.Fatalf(resp)
+	}
+}
