@@ -1683,7 +1683,11 @@ func TestServerBaseContext(t *testing.T) {
 
 	// Setup http Server with a base context
 	ctx := context.WithValue(context.Background(), ctxKey{"base"}, "yes")
-	ts := httptest.NewServer(ServerBaseContext(ctx, r))
+	ts := httptest.NewServer(r)
+	ts.Config.BaseContext = func(_ net.Listener) context.Context {
+		return ctx
+	}
+
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "yes" {

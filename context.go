@@ -2,7 +2,6 @@ package chi
 
 import (
 	"context"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -29,26 +28,6 @@ func URLParamFromCtx(ctx context.Context, key string) string {
 func RouteContext(ctx context.Context) *Context {
 	val, _ := ctx.Value(RouteCtxKey).(*Context)
 	return val
-}
-
-// ServerBaseContext wraps an http.Handler to set the request context to the
-// `baseCtx`.
-func ServerBaseContext(baseCtx context.Context, h http.Handler) http.Handler {
-	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		baseCtx := baseCtx
-
-		// Copy over default net/http server context keys
-		if v, ok := ctx.Value(http.ServerContextKey).(*http.Server); ok {
-			baseCtx = context.WithValue(baseCtx, http.ServerContextKey, v)
-		}
-		if v, ok := ctx.Value(http.LocalAddrContextKey).(net.Addr); ok {
-			baseCtx = context.WithValue(baseCtx, http.LocalAddrContextKey, v)
-		}
-
-		h.ServeHTTP(w, r.WithContext(baseCtx))
-	})
-	return fn
 }
 
 // NewRouteContext returns a new routing Context object.
