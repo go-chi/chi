@@ -11,13 +11,7 @@ import (
 	"runtime"
 	"testing"
 	"time"
-
-	"golang.org/x/net/http2"
 )
-
-// NOTE: we must import `golang.org/x/net/http2` in order to explicitly enable
-// http2 transports for certain tests. The runtime pkg does not have this dependency
-// though as the transport configuration happens under the hood on go 1.7+.
 
 var testdataDir string
 
@@ -28,6 +22,9 @@ func init() {
 
 func TestWrapWriterHTTP2(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Proto != "HTTP/2.0" {
+			t.Fatalf("request proto should be HTTP/2.0 but was %s", r.Proto)
+		}
 		_, fl := w.(http.Flusher)
 		if !fl {
 			t.Fatal("request should have been a http.Flusher")
@@ -65,11 +62,12 @@ func TestWrapWriterHTTP2(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	client := &http.Client{
-		Transport: &http2.Transport{
+		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				// The certificates we are using are self signed
 				InsecureSkipVerify: true,
 			},
+			ForceAttemptHTTP2: true,
 		},
 	}
 
