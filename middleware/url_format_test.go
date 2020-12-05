@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func TestUrlFormat(t *testing.T) {
+func TestURLFormat(t *testing.T) {
 	r := chi.NewRouter()
 
 	r.Use(URLFormat)
