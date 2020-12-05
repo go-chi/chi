@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/go-chi/chi"
@@ -166,6 +167,17 @@ func TestRedirectSlashes(t *testing.T) {
 			t.Fatalf("invalid redirection, should be /accounts/someuser?a=1&b=2")
 		}
 
+	}
+
+	// Ensure that we don't redirect to 'evil.com', but rather to 'server.url/evil.com/'
+	{
+		resp, body := testRequest(t, ts, "GET", "//evil.com/", nil)
+		if u, err := url.Parse(ts.URL); err != nil && resp.Request.URL.Host != u.Host {
+			t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
+		}
+		if body != "nothing here" && resp.StatusCode != 404 {
+			t.Fatalf(body)
+		}
 	}
 }
 

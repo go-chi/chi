@@ -3,6 +3,8 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi"
 )
@@ -51,6 +53,9 @@ func RedirectSlashes(next http.Handler) http.Handler {
 				path = fmt.Sprintf("%s?%s", path[:len(path)-1], r.URL.RawQuery)
 			} else {
 				path = path[:len(path)-1]
+			}
+			if u, err := url.Parse(path); err == nil && u.Host != "" && u.Host != r.Host {
+				path = fmt.Sprintf("//%s/%s", r.Host, strings.TrimLeft(strings.TrimRight(path, "/"), "/"))
 			}
 			http.Redirect(w, r, path, 301)
 			return
