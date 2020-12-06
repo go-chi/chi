@@ -15,11 +15,12 @@ public API service, which in turn powers all of our client-side applications.
 The key considerations of chi's design are: project structure, maintainability, standard http
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
 parts. The core router `github.com/go-chi/chi` is quite small (less than 1000 LOC), but we've also
-included some useful/optional subpackages: [middleware](/middleware), [render](https://github.com/go-chi/render) and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
+included some useful/optional subpackages: [middleware](/middleware), [render](https://github.com/go-chi/render)
+and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 ## Install
 
-`go get -u github.com/go-chi/chi@v4`
+`go get -u github.com/go-chi/chi`
 
 
 ## Features
@@ -27,10 +28,11 @@ included some useful/optional subpackages: [middleware](/middleware), [render](h
 * **Lightweight** - cloc'd in ~1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
 * **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
-* **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and subrouter mounting
+* **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and sub-router mounting
 * **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
 * **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
+* **Go.mod support** - v1.x of chi (starting from v1.5.0), now has go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12---now-with-gomod-support))
 * **No external dependencies** - plain ol' Go stdlib + net/http
 
 
@@ -459,6 +461,17 @@ NOTE: the allocs in the benchmark above are from the calls to http.Request's
 `WithContext(context.Context)` method that clones the http.Request, sets the `Context()`
 on the duplicated (alloc'd) request and returns it the new request object. This is just
 how setting context on a request in Go works.
+
+
+## Go module support & note on chi's versioning
+
+* Go.mod support means we reset our versioning starting from v1.5 (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12---now-with-gomod-support))
+* All older tags are preserved, are backwards-compatible and will "just work" as they
+* Brand new systems can run `go get -u github.com/go-chi/chi` as normal, or `go get -u github.com/go-chi/chi@latest`
+to install chi, which will install v1.x+ built with go.mod support, starting from v1.5.0.
+* For existing projects who want to upgrade to the latest go.mod version, run: `go get -u github.com/go-chi/chi@v1.5.0`,
+which will get you on the go.mod version line (as Go's mod cache may still remember v4.x).
+* Any breaking changes will bump a "minor" release and backwards-compatible improvements/fixes will bump a "tiny" release.
 
 
 ## Credits
