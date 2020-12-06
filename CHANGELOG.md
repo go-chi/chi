@@ -2,8 +2,6 @@
 
 ## v1.5.1 (2020-12-06)
 
-- **go module support** finally! + backwards compatibility with old versioning is preserved! yeay.
-  See (https://github.com/go-chi/chi/issues/462) for more details on the discussion.
 - Performance improvement: removing 1 allocation by foregoing context.WithValue, thank you @bouk for
   your contribution (https://github.com/go-chi/chi/pull/555). Note: new benchmarks posted in README.
 - `middleware.CleanPath`: new middleware that clean's request path of double slashes
