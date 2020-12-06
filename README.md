@@ -32,7 +32,7 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 * **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
 * **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
-* **Go.mod support** - v1.x of chi (starting from v1.5.0), now has go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12))
+* **Go.mod support** - v1.x of chi (starting from v1.5.0), now has go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12---now-with-gomod-support))
 * **No external dependencies** - plain ol' Go stdlib + net/http
 
 
@@ -465,7 +465,7 @@ how setting context on a request in Go works.
 
 ## Go module support & note on chi's versioning
 
-* Go.mod support means we reset our versioning starting from v1.5.0
+* Go.mod support means we reset our versioning starting from v1.5 (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12---now-with-gomod-support))
 * All older tags are preserved, are backwards-compatible and will "just work" as they
 * Brand new systems can run `go get -u github.com/go-chi/chi` as normal, or `go get -u github.com/go-chi/chi@latest`
 to install chi, which will install v1.x+ built with go.mod support, starting from v1.5.0.
