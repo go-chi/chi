@@ -1452,7 +1452,7 @@ func TestMuxWildcardRouteCheckTwo(t *testing.T) {
 
 func TestMuxRegexp(t *testing.T) {
 	r := NewRouter()
-	r.Route("/{param:[0-9]+}/test", func(r Router) {
+	r.Route("/{param:[0-9]*}/test", func(r Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(fmt.Sprintf("Hi: %s", URLParam(r, "param"))))
 		})

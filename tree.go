@@ -430,6 +430,8 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					} else {
 						continue
 					}
+				} else if ntyp == ntRegexp && p == 0 {
+					continue
 				}
 
 				if ntyp == ntRegexp && xn.rex != nil {
