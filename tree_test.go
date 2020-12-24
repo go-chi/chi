@@ -391,6 +391,7 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	tr := &node{}
 	tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
 	tr.InsertRoute(mGET, "/{x:.+}/foo", hStub1)
+	tr.InsertRoute(mGET, "/{param:[0-9]*}/test", hStub1)
 
 	tests := []struct {
 		url             string
@@ -402,6 +403,7 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 		{url: "/a13.jpg", expectedHandler: nil},
 		{url: "/a/foo", expectedHandler: hStub1},
 		{url: "//foo", expectedHandler: nil},
+		{url: "//test", expectedHandler: hStub1},
 	}
 
 	for _, tc := range tests {
