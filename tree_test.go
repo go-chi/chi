@@ -390,6 +390,7 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	rctx := NewRouteContext()
 	tr := &node{}
 	tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
+	tr.InsertRoute(mGET, "/{x:.+}/foo", hStub1)
 
 	tests := []struct {
 		url             string
@@ -399,12 +400,14 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 		{url: "/a13", expectedHandler: nil},
 		{url: "/13.jpg", expectedHandler: nil},
 		{url: "/a13.jpg", expectedHandler: nil},
+		{url: "/a/foo", expectedHandler: hStub1},
+		{url: "//foo", expectedHandler: nil},
 	}
 
 	for _, tc := range tests {
 		_, _, handler := tr.FindRoute(rctx, mGET, tc.url)
 		if fmt.Sprintf("%v", tc.expectedHandler) != fmt.Sprintf("%v", handler) {
-			t.Errorf("expecting handler:%v , got:%v", tc.expectedHandler, handler)
+			t.Errorf("url %v: expecting handler:%v , got:%v", tc.url, tc.expectedHandler, handler)
 		}
 	}
 }
