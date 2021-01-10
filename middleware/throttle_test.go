@@ -116,7 +116,6 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusOK, res.StatusCode)
-
 		}(i)
 	}
 
@@ -136,7 +135,6 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
-
 		}(i)
 	}
 
@@ -175,7 +173,6 @@ func TestThrottleMaximum(t *testing.T) {
 			buf, err := ioutil.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
-
 		}(i)
 	}
 
@@ -196,7 +193,6 @@ func TestThrottleMaximum(t *testing.T) {
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
-
 		}(i)
 	}
 
@@ -252,3 +248,54 @@ func TestThrottleMaximum(t *testing.T) {
 
 	wg.Wait()
 }*/
+
+func TestThrottleCustomStatusCode(t *testing.T) {
+	const timeout = time.Second * 3
+
+	wait := make(chan struct{})
+
+	r := chi.NewRouter()
+	r.Use(ThrottleWithOpts(ThrottleOpts{Limit: 1, StatusCode: http.StatusServiceUnavailable}))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-wait:
+		case <-time.After(timeout):
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	const totalRequestCount = 5
+
+	codes := make(chan int, totalRequestCount)
+	errs := make(chan error, totalRequestCount)
+	client := &http.Client{Timeout: timeout}
+	for i := 0; i < totalRequestCount; i++ {
+		go func() {
+			resp, err := client.Get(server.URL)
+			if err != nil {
+				errs <- err
+				return
+			}
+			codes <- resp.StatusCode
+		}()
+	}
+
+	waitResponse := func(wantCode int) {
+		select {
+		case err := <-errs:
+			t.Fatal(err)
+		case code := <-codes:
+			assertEqual(t, wantCode, code)
+		case <-time.After(timeout):
+			t.Fatalf("waiting %d code, timeout exceeded", wantCode)
+		}
+	}
+
+	for i := 0; i < totalRequestCount-1; i++ {
+		waitResponse(http.StatusServiceUnavailable)
+	}
+	close(wait) // Allow the last request to proceed.
+	waitResponse(http.StatusOK)
+}
