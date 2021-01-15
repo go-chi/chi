@@ -54,7 +54,7 @@ func RegisterMethod(method string) {
 		return
 	}
 	n := len(methodMap)
-	if n > strconv.IntSize-1 {
+	if n > strconv.IntSize-2 {
 		panic(fmt.Sprintf("chi: max number of methods reached (%d)", strconv.IntSize))
 	}
 	mt := methodTyp(2 << n)
