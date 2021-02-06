@@ -6,7 +6,6 @@ package chi
 
 import (
 	"fmt"
-	"math"
 	"net/http"
 	"regexp"
 	"sort"
@@ -55,10 +54,10 @@ func RegisterMethod(method string) {
 		return
 	}
 	n := len(methodMap)
-	if n > strconv.IntSize {
+	if n > strconv.IntSize-2 {
 		panic(fmt.Sprintf("chi: max number of methods reached (%d)", strconv.IntSize))
 	}
-	mt := methodTyp(math.Exp2(float64(n)))
+	mt := methodTyp(2 << n)
 	methodMap[method] = mt
 	mALL |= mt
 }
