@@ -206,17 +206,16 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {
 	// Build MethodNotAllowed handler chain
 	m := mx
-	hFn := handlerFn
+	h := Chain(mx.middlewares...).HandlerFunc(handlerFn).ServeHTTP
 	if mx.inline && mx.parent != nil {
 		m = mx.parent
-		hFn = Chain(mx.middlewares...).HandlerFunc(hFn).ServeHTTP
 	}
 
 	// Update the methodNotAllowedHandler from this point forward
-	m.methodNotAllowedHandler = hFn
+	m.methodNotAllowedHandler = h
 	m.updateSubRoutes(func(subMux *Mux) {
 		if subMux.methodNotAllowedHandler == nil {
-			subMux.MethodNotAllowed(hFn)
+			subMux.MethodNotAllowed(h)
 		}
 	})
 }
