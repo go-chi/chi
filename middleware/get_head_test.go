@@ -46,7 +46,7 @@ func TestGetHead(t *testing.T) {
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "404 page not found\n" {
 		t.Fatalf(body)
 	}
-	if req, body := testRequest(t, ts, "HEAD", "/", nil); body != "" || req.StatusCode != 404 {
+	if req, body := testRequest(t, ts, "HEAD", "/", nil); body != "" || req.StatusCode != http.StatusNotFound {
 		t.Fatalf(body)
 	}
 

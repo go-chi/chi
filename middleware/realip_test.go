@@ -23,7 +23,7 @@ func TestXRealIP(t *testing.T) {
 	})
 	r.ServeHTTP(w, req)
 
-	if w.Code != 200 {
+	if w.Code != http.StatusOK {
 		t.Fatal("Response Code should be 200")
 	}
 
@@ -47,7 +47,7 @@ func TestXForwardForIP(t *testing.T) {
 	})
 	r.ServeHTTP(w, req)
 
-	if w.Code != 200 {
+	if w.Code != http.StatusOK {
 		t.Fatal("Response Code should be 200")
 	}
 

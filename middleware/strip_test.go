@@ -18,7 +18,7 @@ func TestStripSlashes(t *testing.T) {
 	r.Use(StripSlashes)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 
@@ -57,7 +57,7 @@ func TestStripSlashesInRoute(t *testing.T) {
 	r := chi.NewRouter()
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 
@@ -107,7 +107,7 @@ func TestRedirectSlashes(t *testing.T) {
 	r.Use(RedirectSlashes)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 
@@ -125,32 +125,32 @@ func TestRedirectSlashes(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if resp, body := testRequest(t, ts, "GET", "/", nil); body != "root" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/", nil); body != "root" && resp.StatusCode != http.StatusOK {
 		t.Fatalf(body)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if resp, body := testRequest(t, ts, "GET", "//", nil); body != "root" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "//", nil); body != "root" && resp.StatusCode != http.StatusOK {
 		t.Fatalf(body)
 	}
 
-	if resp, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" && resp.StatusCode != http.StatusOK {
 		t.Fatalf(body)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if resp, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" && resp.StatusCode != http.StatusOK {
 		t.Fatalf(body)
 	}
 
-	if resp, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" && resp.StatusCode != http.StatusOK {
 		t.Fatalf(body)
 	}
 
 	// Ensure redirect Location url is correct
 	{
 		resp, body := testRequestNoRedirect(t, ts, "GET", "/accounts/someuser/", nil)
-		if resp.StatusCode != 301 {
+		if resp.StatusCode != http.StatusMovedPermanently {
 			t.Fatalf(body)
 		}
 		location := resp.Header.Get("Location")
@@ -162,7 +162,7 @@ func TestRedirectSlashes(t *testing.T) {
 	// Ensure query params are kept in tact upon redirecting a slash
 	{
 		resp, body := testRequestNoRedirect(t, ts, "GET", "/accounts/someuser/?a=1&b=2", nil)
-		if resp.StatusCode != 301 {
+		if resp.StatusCode != http.StatusMovedPermanently {
 			t.Fatalf(body)
 		}
 		location := resp.Header.Get("Location")
@@ -180,7 +180,7 @@ func TestRedirectSlashes(t *testing.T) {
 			if u, err := url.Parse(ts.URL); err != nil && resp.Request.URL.Host != u.Host {
 				t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
 			}
-			if body != "nothing here" && resp.StatusCode != 404 {
+			if body != "nothing here" && resp.StatusCode != http.StatusNotFound {
 				t.Fatalf(body)
 			}
 		}
@@ -192,7 +192,7 @@ func TestRedirectSlashes(t *testing.T) {
 		if u, err := url.Parse(ts.URL); err != nil && resp.Request.URL.Host != u.Host {
 			t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
 		}
-		if body != "nothing here" && resp.StatusCode != 404 {
+		if body != "nothing here" && resp.StatusCode != http.StatusNotFound {
 			t.Fatalf(body)
 		}
 	}

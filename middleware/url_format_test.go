@@ -14,7 +14,7 @@ func TestURLFormat(t *testing.T) {
 	r.Use(URLFormat)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 

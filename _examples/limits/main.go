@@ -79,7 +79,7 @@ func main() {
 			case <-r.Context().Done():
 				switch r.Context().Err() {
 				case context.DeadlineExceeded:
-					w.WriteHeader(504)
+					w.WriteHeader(http.StatusGatewayTimeout)
 					w.Write([]byte("Processing too slow\n"))
 				default:
 					w.Write([]byte("Canceled\n"))

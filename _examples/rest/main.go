@@ -264,7 +264,7 @@ func init() {
 
 			// We set a default error status response code if one hasn't been set.
 			if _, ok := r.Context().Value(render.StatusCtxKey).(int); !ok {
-				w.WriteHeader(400)
+				w.WriteHeader(http.StatusBadRequest)
 			}
 
 			// We log the error
@@ -418,7 +418,7 @@ func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
 func ErrInvalidRequest(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 400,
+		HTTPStatusCode: http.StatusBadRequest,
 		StatusText:     "Invalid request.",
 		ErrorText:      err.Error(),
 	}
@@ -427,13 +427,13 @@ func ErrInvalidRequest(err error) render.Renderer {
 func ErrRender(err error) render.Renderer {
 	return &ErrResponse{
 		Err:            err,
-		HTTPStatusCode: 422,
+		HTTPStatusCode: http.StatusUnprocessableEntity,
 		StatusText:     "Error rendering response.",
 		ErrorText:      err.Error(),
 	}
 }
 
-var ErrNotFound = &ErrResponse{HTTPStatusCode: 404, StatusText: "Resource not found."}
+var ErrNotFound = &ErrResponse{HTTPStatusCode: http.StatusNotFound, StatusText: "Resource not found."}
 
 //--
 // Data model objects and persistence mocks:

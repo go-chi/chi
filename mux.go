@@ -475,6 +475,6 @@ func (mx *Mux) updateRouteHandler() {
 // methodNotAllowedHandler is a helper function to respond with a 405,
 // method not allowed.
 func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(405)
+	w.WriteHeader(http.StatusMethodNotAllowed)
 	w.Write(nil)
 }

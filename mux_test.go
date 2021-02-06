@@ -53,48 +53,48 @@ func TestMuxBasic(t *testing.T) {
 	cxindex := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		user := ctx.Value(ctxKey{"user"}).(string)
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(fmt.Sprintf("hi %s", user)))
 	}
 
 	ping := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("."))
 	}
 
 	headPing := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Ping", "1")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}
 
 	createPing := func(w http.ResponseWriter, r *http.Request) {
 		// create ....
-		w.WriteHeader(201)
+		w.WriteHeader(http.StatusCreated)
 	}
 
 	pingAll := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ping all"))
 	}
 
 	pingAll2 := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ping all2"))
 	}
 
 	pingOne := func(w http.ResponseWriter, r *http.Request) {
 		idParam := URLParam(r, "id")
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(fmt.Sprintf("ping one id: %s", idParam)))
 	}
 
 	pingWoop := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("woop." + URLParam(r, "iidd")))
 	}
 
 	catchAll := func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("catchall"))
 	}
 
@@ -169,7 +169,7 @@ func TestMuxBasic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Error("head failed, should be 200")
 	}
 	if resp.Header.Get("X-Ping") == "" {
@@ -193,7 +193,7 @@ func TestMuxBasic(t *testing.T) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Error("POST failed, should be 200")
 	}
 
@@ -250,7 +250,7 @@ func TestMuxPlain(t *testing.T) {
 		w.Write([]byte("bye"))
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 
@@ -287,7 +287,7 @@ func TestMuxEmptyRoutes(t *testing.T) {
 func TestMuxTrailingSlash(t *testing.T) {
 	r := NewRouter()
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 
@@ -337,7 +337,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 	}).NotFound(func(w http.ResponseWriter, r *http.Request) {
 		chkMw := r.Context().Value(ctxKey{"mw"}).(string)
 		chkWith := r.Context().Value(ctxKey{"with"}).(string)
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(fmt.Sprintf("root 404 %s %s", chkMw, chkWith)))
 	})
 
@@ -355,7 +355,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 		})
 		sr1.NotFound(func(w http.ResponseWriter, r *http.Request) {
 			chkMw2 := r.Context().Value(ctxKey{"mw2"}).(string)
-			w.WriteHeader(404)
+			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte(fmt.Sprintf("sub 404 %s", chkMw2)))
 		})
 	})
@@ -399,7 +399,7 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 		w.Write([]byte("root"))
 	})
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(405)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("root 405"))
 	})
 
@@ -408,7 +408,7 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 		w.Write([]byte("sub1"))
 	})
 	sr1.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(405)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("sub1 405"))
 	})
 
@@ -422,7 +422,7 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 		w.Write([]byte("pv"))
 	})
 	pathVar.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(405)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Write([]byte("pv 405"))
 	})
 
@@ -1214,7 +1214,7 @@ func TestServeHTTPExistingContext(t *testing.T) {
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		s, _ := r.Context().Value(ctxKey{"testCtx"}).(string)
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(s))
 	})
 
@@ -1229,14 +1229,14 @@ func TestServeHTTPExistingContext(t *testing.T) {
 			Method:         "GET",
 			Path:           "/hi",
 			Ctx:            context.WithValue(context.Background(), ctxKey{"testCtx"}, "hi ctx"),
-			ExpectedStatus: 200,
+			ExpectedStatus: http.StatusOK,
 			ExpectedBody:   "hi ctx",
 		},
 		{
 			Method:         "GET",
 			Path:           "/hello",
 			Ctx:            context.WithValue(context.Background(), ctxKey{"testCtx"}, "nothing here ctx"),
-			ExpectedStatus: 404,
+			ExpectedStatus: http.StatusNotFound,
 			ExpectedBody:   "nothing here ctx",
 		},
 	}
@@ -1409,7 +1409,7 @@ func TestMuxMissingParams(t *testing.T) {
 		w.Write([]byte(fmt.Sprintf("userId = '%s'", userID)))
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(404)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("nothing here"))
 	})
 
@@ -1593,7 +1593,7 @@ func TestMuxContextIsThreadSafe(t *testing.T) {
 func TestEscapedURLParams(t *testing.T) {
 	m := NewRouter()
 	m.Get("/api/{identifier}/{region}/{size}/{rotation}/*", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 		rctx := RouteContext(r.Context())
 		if rctx == nil {
 			t.Error("no context")

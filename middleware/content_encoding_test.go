@@ -27,32 +27,32 @@ func TestContentEncodingMiddleware(t *testing.T) {
 		{
 			name:           "Support no encoding",
 			encodings:      []string{},
-			expectedStatus: 200,
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "Support gzip encoding",
 			encodings:      []string{"gzip"},
-			expectedStatus: 200,
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "No support for br encoding",
 			encodings:      []string{"br"},
-			expectedStatus: 415,
+			expectedStatus: http.StatusUnsupportedMediaType,
 		},
 		{
 			name:           "Support for gzip and deflate encoding",
 			encodings:      []string{"gzip", "deflate"},
-			expectedStatus: 200,
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "Support for deflate and gzip encoding",
 			encodings:      []string{"deflate", "gzip"},
-			expectedStatus: 200,
+			expectedStatus: http.StatusOK,
 		},
 		{
 			name:           "No support for deflate and br encoding",
 			encodings:      []string{"deflate", "br"},
-			expectedStatus: 415,
+			expectedStatus: http.StatusUnsupportedMediaType,
 		},
 	}
 

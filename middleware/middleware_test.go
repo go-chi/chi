@@ -75,7 +75,7 @@ func TestWrapWriterHTTP2(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not get server: %v", err)
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("non 200 response: %v", resp.StatusCode)
 	}
 }
