@@ -187,17 +187,16 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	// Build NotFound handler chain
 	m := mx
-	hFn := handlerFn
+	h := Chain(mx.middlewares...).HandlerFunc(handlerFn).ServeHTTP
 	if mx.inline && mx.parent != nil {
 		m = mx.parent
-		hFn = Chain(mx.middlewares...).HandlerFunc(hFn).ServeHTTP
 	}
 
 	// Update the notFoundHandler from this point forward
-	m.notFoundHandler = hFn
+	m.notFoundHandler = h
 	m.updateSubRoutes(func(subMux *Mux) {
 		if subMux.notFoundHandler == nil {
-			subMux.NotFound(hFn)
+			subMux.NotFound(h)
 		}
 	})
 }
