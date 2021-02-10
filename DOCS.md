@@ -103,8 +103,8 @@ r := chi.NewRouter()
 r.Get("/articles/{date}-{slug}", getArticle)
 
 func getArticle(w http.ResponseWriter, r *http.Request) {
-  dateParam := r.URLParam(r, "date")
-  slugParam := r.URL(r, "slug")
+  dateParam := chi.URLParam(r, "date")
+  slugParam := chi.URL(r, "slug")
 
   article, err := database.GetArticle(date, slug)
   if err != nil {
@@ -127,7 +127,10 @@ name in between, as `{date}` and `{slug}`. When a HTTP request is sent to the se
 the chi router, if the URL path matches the format of "/articles/{date}-{slug}", then the `getArticle`
 function will be called to send a response to the client.
 
-For instance, URL paths like `/articles/20200109-this-is-so-cool` will be routed successfully.
+For instance, URL paths like `/articles/20200109-this-is-so-cool` will match the route, however,
+`/articles/1` will not.
+
+
 
 
 ## Middlewares
