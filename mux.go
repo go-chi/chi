@@ -1,6 +1,7 @@
 package chi
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -79,8 +80,8 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rctx.Routes = mx
 	rctx.parentCtx = r.Context()
 
-	// NOTE: r.WithContext() causes 2 allocations
-	r = r.WithContext((*directContext)(rctx))
+	// NOTE: r.WithContext() causes 2 allocations and context.WithValue() causes 1 allocation
+	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
 
 	// Serve the request and once its done, put the request context back in the sync pool
 	mx.handler.ServeHTTP(w, r)
