@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.5.2 (2021-02-10)
+
+- Reverting allocation optimization as a precaution as go test -race fails.
+- Minor improvements, see history below
+- History of changes: see https://github.com/go-chi/chi/compare/v1.5.1...v1.5.2
+
+
 ## v1.5.1 (2020-12-06)
 
 - Performance improvement: removing 1 allocation by foregoing context.WithValue, thank you @bouk for
