@@ -19,14 +19,17 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 
 	if protoMajor == 2 {
 		_, ps := w.(http.Pusher)
-		if fl || ps {
+		if fl && ps {
 			return &http2FancyWriter{bw}
 		}
 	} else {
 		_, hj := w.(http.Hijacker)
-		_, rf := w.(io.ReaderFrom)
-		if fl || hj || rf {
-			return &httpFancyWriter{bw}
+		rf, _ := w.(io.ReaderFrom)
+		if fl && hj {
+			return &httpFancyWriter{
+				basicWriter: bw,
+				ReaderFrom:  rf,
+			}
 		}
 	}
 
@@ -113,6 +116,7 @@ func (b *basicWriter) Unwrap() http.ResponseWriter {
 // make the proxied object support the full method set of the proxied object.
 type httpFancyWriter struct {
 	basicWriter
+	io.ReaderFrom
 }
 
 func (f *httpFancyWriter) Flush() {
@@ -132,9 +136,15 @@ func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 		f.basicWriter.bytes += int(n)
 		return n, err
 	}
-	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
 	f.basicWriter.maybeWriteHeader()
-	n, err := rf.ReadFrom(r)
+	var n int64
+	var err error
+	rf := f.ReaderFrom
+	if rf != nil {
+		n, err = rf.ReadFrom(r)
+	} else {
+		n, err = io.Copy(&f.basicWriter, r)
+	}
 	f.basicWriter.bytes += int(n)
 	return n, err
 }
