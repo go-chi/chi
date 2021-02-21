@@ -211,7 +211,7 @@ func TestThrottleRetryAfter(t *testing.T) {
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		time.Sleep(time.Second * 3) // Expensive operation.
+		time.Sleep(time.Second * 4) // Expensive operation.
 		w.Write(testContent)
 	})
 
