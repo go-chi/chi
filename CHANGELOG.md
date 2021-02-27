@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.0.0 (2021-02-27)
+
+- ...
+- History of changes: see https://github.com/go-chi/chi/compare/v1.5.4...v5.0.0
+
+
 ## v1.5.4 (2021-02-27)
 
 - Undo prior retraction in v1.5.3 as we prepare for v5.0.0 release
