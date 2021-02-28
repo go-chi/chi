@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 
-	"github.com/go-chi/chi/_examples/versions/data"
+	"github.com/go-chi/chi/v5/_examples/versions/data"
 )
 
 // Article presented in API version 2.
