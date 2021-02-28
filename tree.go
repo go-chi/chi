@@ -631,7 +631,7 @@ func (n *node) routes() []Route {
 				hs[m] = h.handler
 			}
 
-			rt := Route{p, hs, subroutes}
+			rt := Route{subroutes, hs, p}
 			rts = append(rts, rt)
 		}
 
@@ -815,9 +815,9 @@ func (ns nodes) findEdge(label byte) *node {
 // Route describes the details of a routing handler.
 // Handlers map key is an HTTP method
 type Route struct {
-	Pattern   string
-	Handlers  map[string]http.Handler
 	SubRoutes Routes
+	Handlers  map[string]http.Handler
+	Pattern   string
 }
 
 // WalkFunc is the type of the function called for each method and route visited by Walk.
