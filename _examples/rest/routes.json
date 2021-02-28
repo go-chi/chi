@@ -2,28 +2,28 @@
   "router": {
     "middlewares": [
       {
-        "pkg": "github.com/go-chi/chi/middleware",
+        "pkg": "github.com/go-chi/chi/v5/middleware",
         "func": "RequestID",
         "comment": "RequestID is a middleware that injects a request ID into the context of each\nrequest. A request ID is a string of the form \"host.example.com/random-0001\",\nwhere \"random\" is a base62 random string that uniquely identifies this go\nprocess, and where the last number is an atomically incremented request\ncounter.\n",
         "file": "github.com/go-chi/chi/middleware/request_id.go",
         "line": 63
       },
       {
-        "pkg": "github.com/go-chi/chi/middleware",
+        "pkg": "github.com/go-chi/chi/v5/middleware",
         "func": "Logger",
         "comment": "Logger is a middleware that logs the start and end of each request, along\nwith some useful data about what was requested, what the response status was,\nand how long it took to return. When standard output is a TTY, Logger will\nprint in color, otherwise it will print in black and white. Logger prints a\nrequest ID if one is provided.\n\nAlternatively, look at https://github.com/pressly/lg and the `lg.RequestLogger`\nmiddleware pkg.\n",
         "file": "github.com/go-chi/chi/middleware/logger.go",
         "line": 26
       },
       {
-        "pkg": "github.com/go-chi/chi/middleware",
+        "pkg": "github.com/go-chi/chi/v5/middleware",
         "func": "Recoverer",
         "comment": "Recoverer is a middleware that recovers from panics, logs the panic (and a\nbacktrace), and returns a HTTP 500 (Internal Server Error) status if\npossible. Recoverer prints a request ID if one is provided.\n\nAlternatively, look at https://github.com/pressly/lg middleware pkgs.\n",
         "file": "github.com/go-chi/chi/middleware/recoverer.go",
         "line": 18
       },
       {
-        "pkg": "github.com/go-chi/chi/middleware",
+        "pkg": "github.com/go-chi/chi/v5/middleware",
         "func": "URLFormat",
         "comment": "URLFormat is a middleware that parses the url extension from a request path and stores it\non the context as a string under the key `middleware.URLFormatCtxKey`. The middleware will\ntrim the suffix from the routing path and continue routing.\n\nRouters should not include a url parameter for the suffix when using this middleware.\n\nSample usage.. for url paths: `/articles/1`, `/articles/1.json` and `/articles/1.xml`\n\n func routes() http.Handler {\n   r := chi.NewRouter()\n   r.Use(middleware.URLFormat)\n\n   r.Get(\"/articles/{id}\", ListArticles)\n\n   return r\n }\n\n func ListArticles(w http.ResponseWriter, r *http.Request) {\n\t  urlFormat, _ := r.Context().Value(middleware.URLFormatCtxKey).(string)\n\n\t  switch urlFormat {\n\t  case \"json\":\n\t  \trender.JSON(w, r, articles)\n\t  case \"xml:\"\n\t  \trender.XML(w, r, articles)\n\t  default:\n\t  \trender.JSON(w, r, articles)\n\t  }\n}\n",
         "file": "github.com/go-chi/chi/middleware/url_format.go",

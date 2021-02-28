@@ -1,5 +1,15 @@
 # Changelog
 
+## v5.0.0 (2021-02-27)
+
+- chi v5, `github.com/go-chi/chi/v5` introduces the adoption of Go's SIV to adhere to the current state-of-the-tools in Go.
+- chi v1.5.x did not work out as planned, as the Go tooling is too powerful and chi's adoption is too wide.
+  The most responsible thing to do for everyone's benefit is to just release v5 with SIV, so I present to you all,
+  chi v5 at `github.com/go-chi/chi/v5`. I hope someday the developer experience and ergonomics I've been seeking
+  will still come to fruition in some form, see https://github.com/golang/go/issues/44550
+- History of changes: see https://github.com/go-chi/chi/compare/v1.5.4...v5.0.0
+
+
 ## v1.5.4 (2021-02-27)
 
 - Undo prior retraction in v1.5.3 as we prepare for v5.0.0 release

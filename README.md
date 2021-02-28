@@ -20,7 +20,7 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 ## Install
 
-`go get -u github.com/go-chi/chi`
+`go get -u github.com/go-chi/chi/v5`
 
 
 ## Features
@@ -49,8 +49,8 @@ package main
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -76,8 +76,8 @@ above, they will show you all the features of chi and serve as a good form of do
 import (
   //...
   "context"
-  "github.com/go-chi/chi"
-  "github.com/go-chi/chi/middleware"
+  "github.com/go-chi/chi/v5"
+  "github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
