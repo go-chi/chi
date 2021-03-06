@@ -1219,11 +1219,11 @@ func TestServeHTTPExistingContext(t *testing.T) {
 	})
 
 	testcases := []struct {
+		Ctx            context.Context
 		Method         string
 		Path           string
-		Ctx            context.Context
-		ExpectedStatus int
 		ExpectedBody   string
+		ExpectedStatus int
 	}{
 		{
 			Method:         "GET",

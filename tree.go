@@ -72,17 +72,9 @@ const (
 )
 
 type node struct {
-	// node type: static, regexp, param, catchAll
-	typ nodeTyp
 
-	// first byte of the prefix
-	label byte
-
-	// first byte of the child prefix
-	tail byte
-
-	// prefix is the common prefix we ignore
-	prefix string
+	// subroutes on the leaf node
+	subroutes Routes
 
 	// regexp matcher for regexp nodes
 	rex *regexp.Regexp
@@ -90,12 +82,21 @@ type node struct {
 	// HTTP handler endpoints on the leaf node
 	endpoints endpoints
 
-	// subroutes on the leaf node
-	subroutes Routes
+	// prefix is the common prefix we ignore
+	prefix string
 
 	// child nodes should be stored in-order for iteration,
 	// in groups of the node type.
 	children [ntCatchAll + 1]nodes
+
+	// first byte of the child prefix
+	tail byte
+
+	// node type: static, regexp, param, catchAll
+	typ nodeTyp
+
+	// first byte of the prefix
+	label byte
 }
 
 // endpoints is a mapping of http method constants to handlers
