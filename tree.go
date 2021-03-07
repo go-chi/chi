@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-type methodTyp int
+type methodTyp uint
 
 const (
 	mSTUB methodTyp = 1 << iota
@@ -72,7 +72,6 @@ const (
 )
 
 type node struct {
-
 	// subroutes on the leaf node
 	subroutes Routes
 

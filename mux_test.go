@@ -1630,6 +1630,32 @@ func TestEscapedURLParams(t *testing.T) {
 	}
 }
 
+func TestCustomHTTPMethod(t *testing.T) {
+	// first we must register this method to be accepted, then we
+	// can define method handlers on the router below
+	RegisterMethod("BOO")
+
+	r := NewRouter()
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("."))
+	})
+
+	// note the custom BOO method for route /hi
+	r.MethodFunc("BOO", "/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("custom method"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/", nil); body != "." {
+		t.Fatalf(body)
+	}
+	if _, body := testRequest(t, ts, "BOO", "/hi", nil); body != "custom method" {
+		t.Fatalf(body)
+	}
+}
+
 func TestMuxMatch(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
