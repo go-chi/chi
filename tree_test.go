@@ -202,11 +202,11 @@ func TestTreeMoar(t *testing.T) {
 	tr.InsertRoute(mGET, "/users/{id}/settings/*", hStub16)
 
 	tests := []struct {
-		m methodTyp    // input request http method
-		r string       // input request path
-		h http.Handler // output matched handler
-		k []string     // output param keys
-		v []string     // output param values
+		h http.Handler
+		r string
+		k []string
+		v []string
+		m methodTyp
 	}{
 		{m: mGET, r: "/articles/search", h: hStub1, k: []string{}, v: []string{}},
 		{m: mGET, r: "/articlefun", h: hStub5, k: []string{}, v: []string{}},
@@ -394,8 +394,8 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	tr.InsertRoute(mGET, "/{param:[0-9]*}/test", hStub1)
 
 	tests := []struct {
-		url             string
 		expectedHandler http.Handler
+		url             string
 	}{
 		{url: "/13", expectedHandler: hStub1},
 		{url: "/a13", expectedHandler: nil},
