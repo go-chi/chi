@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.0.1 (201-03-10)
+
+- Small improvements
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.0...v5.0.1
+
+
 ## v5.0.0 (2021-02-27)
 
 - chi v5, `github.com/go-chi/chi/v5` introduces the adoption of Go's SIV to adhere to the current state-of-the-tools in Go.
