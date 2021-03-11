@@ -420,6 +420,9 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			routePath = r.URL.Path
 		}
+		if routePath == "" {
+			routePath = "/"
+		}
 	}
 
 	// Check if method is supported by chi
