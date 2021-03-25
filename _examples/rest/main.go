@@ -4,7 +4,8 @@
 // This example demonstrates a HTTP REST web service with some fixture data.
 // Follow along the example and patterns.
 //
-// Also check routes.json for the generated docs from passing the -routes flag
+// Also check routes.json for the generated docs from passing the -routes flag,
+// to run yourself do: `go run . -routes`
 //
 // Boot the server:
 // ----------------
