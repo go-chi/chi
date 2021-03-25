@@ -146,11 +146,11 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 func TestThrottleMaximum(t *testing.T) {
 	r := chi.NewRouter()
 
-	r.Use(ThrottleBacklog(50, 50, time.Second*5))
+	r.Use(ThrottleBacklog(10, 10, time.Second*5))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		time.Sleep(time.Second * 2) // Expensive operation.
+		time.Sleep(time.Second * 3) // Expensive operation.
 		w.Write(testContent)
 	})
 
@@ -163,7 +163,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -180,11 +180,11 @@ func TestThrottleMaximum(t *testing.T) {
 	}
 
 	// Wait less time than what the server takes to reply.
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 2)
 
 	// At this point the server is still processing, all the following request
 	// will be beyond the server capacity.
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
