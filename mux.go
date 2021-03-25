@@ -189,16 +189,17 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 	// Build NotFound handler chain
 	m := mx
-	h := Chain(mx.middlewares...).HandlerFunc(handlerFn).ServeHTTP
+	hFn := handlerFn
 	if mx.inline && mx.parent != nil {
 		m = mx.parent
+		hFn = Chain(mx.middlewares...).HandlerFunc(hFn).ServeHTTP
 	}
 
 	// Update the notFoundHandler from this point forward
-	m.notFoundHandler = h
+	m.notFoundHandler = hFn
 	m.updateSubRoutes(func(subMux *Mux) {
 		if subMux.notFoundHandler == nil {
-			subMux.NotFound(h)
+			subMux.NotFound(hFn)
 		}
 	})
 }
@@ -208,16 +209,17 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {
 	// Build MethodNotAllowed handler chain
 	m := mx
-	h := Chain(mx.middlewares...).HandlerFunc(handlerFn).ServeHTTP
+	hFn := handlerFn
 	if mx.inline && mx.parent != nil {
 		m = mx.parent
+		hFn = Chain(mx.middlewares...).HandlerFunc(hFn).ServeHTTP
 	}
 
 	// Update the methodNotAllowedHandler from this point forward
-	m.methodNotAllowedHandler = h
+	m.methodNotAllowedHandler = hFn
 	m.updateSubRoutes(func(subMux *Mux) {
 		if subMux.methodNotAllowedHandler == nil {
-			subMux.MethodNotAllowed(h)
+			subMux.MethodNotAllowed(hFn)
 		}
 	})
 }
