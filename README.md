@@ -463,17 +463,6 @@ on the duplicated (alloc'd) request and returns it the new request object. This 
 how setting context on a request in Go works.
 
 
-## Go module support & note on chi's versioning
-
-* Go.mod support means we reset our versioning starting from v1.5 (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12---now-with-gomod-support))
-* All older tags are preserved, are backwards-compatible and will "just work" as they
-* Brand new systems can run `go get -u github.com/go-chi/chi` as normal, or `go get -u github.com/go-chi/chi@latest`
-to install chi, which will install v1.x+ built with go.mod support, starting from v1.5.0.
-* For existing projects who want to upgrade to the latest go.mod version, run: `go get -u github.com/go-chi/chi@v1.5.0`,
-which will get you on the go.mod version line (as Go's mod cache may still remember v4.x).
-* Any breaking changes will bump a "minor" release and backwards-compatible improvements/fixes will bump a "tiny" release.
-
-
 ## Credits
 
 * Carl Jackson for https://github.com/zenazn/goji
