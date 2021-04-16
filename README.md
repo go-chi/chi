@@ -32,7 +32,7 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 * **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
 * **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
-* **Go.mod support** - v1.x of chi (starting from v1.5.0), now has go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md#v150-2020-11-12---now-with-gomod-support))
+* **Go.mod support** - as of v5, go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md))
 * **No external dependencies** - plain ol' Go stdlib + net/http
 
 
