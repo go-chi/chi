@@ -35,6 +35,7 @@ func Profiler() http.Handler {
 	r.HandleFunc("/pprof/symbol", pprof.Symbol)
 	r.HandleFunc("/pprof/trace", pprof.Trace)
 	r.HandleFunc("/vars", expVars)
+	r.Handle("/pprof/goroutine", pprof.Handler("goroutine"))
 
 	return r
 }
