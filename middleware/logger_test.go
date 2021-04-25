@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"bufio"
+	"bytes"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 type testLoggerWriter struct {
@@ -31,4 +33,19 @@ func TestRequestLogger(t *testing.T) {
 
 	handler := DefaultLogger(testHandler)
 	handler.ServeHTTP(w, r)
+}
+
+func TestRequestLoggerReadFrom(t *testing.T) {
+	data := []byte("file data")
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeContent(w, r, "file", time.Time{}, bytes.NewReader(data))
+	})
+
+	r := httptest.NewRequest("GET", "/", nil)
+	w := httptest.NewRecorder()
+
+	handler := DefaultLogger(testHandler)
+	handler.ServeHTTP(w, r)
+
+	assertEqual(t, data, w.Body.Bytes())
 }
