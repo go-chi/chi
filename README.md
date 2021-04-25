@@ -347,7 +347,7 @@ with `net/http` can be used with chi's mux.
 | [Logger]               | Logs the start and end of each request with the elapsed processing time |
 | [NoCache]              | Sets response headers to prevent clients from caching                   |
 | [Profiler]             | Easily attach net/http/pprof to your routers                            |
-| [RealIP]               | Sets a http.Request's RemoteAddr to either X-Forwarded-For or X-Real-IP |
+| [RealIP]               | Sets a http.Request's RemoteAddr to either X-Real-IP or X-Forwarded-For |
 | [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
 | [RequestID]            | Injects a request ID into the context of each request                   |
 | [RedirectSlashes]      | Redirect slashes on routing paths                                       |
