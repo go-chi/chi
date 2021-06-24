@@ -13,36 +13,36 @@ func (rs usersResource) Routes() chi.Router {
 	r := chi.NewRouter()
 	// r.Use() // some middleware..
 
-	r.Get("/", rs.List)    // GET /todos - read a list of todos
-	r.Post("/", rs.Create) // POST /todos - create a new todo and persist it
+	r.Get("/", rs.List)    // GET /users - read a list of users
+	r.Post("/", rs.Create) // POST /users - create a new user and persist it
 	r.Put("/", rs.Delete)
 
 	r.Route("/{id}", func(r chi.Router) {
-		// r.Use(rs.TodoCtx) // lets have a todos map, and lets actually load/manipulate
-		r.Get("/", rs.Get)       // GET /todos/{id} - read a single todo by :id
-		r.Put("/", rs.Update)    // PUT /todos/{id} - update a single todo by :id
-		r.Delete("/", rs.Delete) // DELETE /todos/{id} - delete a single todo by :id
+		// r.Use(rs.TodoCtx) // lets have a users map, and lets actually load/manipulate
+		r.Get("/", rs.Get)       // GET /users/{id} - read a single user by :id
+		r.Put("/", rs.Update)    // PUT /users/{id} - update a single user by :id
+		r.Delete("/", rs.Delete) // DELETE /users/{id} - delete a single user by :id
 	})
 
 	return r
 }
 
 func (rs usersResource) List(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("aaa list of stuff.."))
+	w.Write([]byte("users list of stuff.."))
 }
 
 func (rs usersResource) Create(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("aaa create"))
+	w.Write([]byte("users create"))
 }
 
 func (rs usersResource) Get(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("aaa get"))
+	w.Write([]byte("user get"))
 }
 
 func (rs usersResource) Update(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("aaa update"))
+	w.Write([]byte("user update"))
 }
 
 func (rs usersResource) Delete(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("aaa delete"))
+	w.Write([]byte("user delete"))
 }
