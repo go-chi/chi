@@ -423,6 +423,14 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				// label for param nodes is the delimiter byte
 				p := strings.IndexByte(xsearch, xn.tail)
 
+				// For RegexP matches we allow full-path-matches if this is the last param
+				if ntyp == ntRegexp && xn.isLeaf() && xn.tail == '/' && xn.rex != nil {
+					loc := xn.rex.FindStringIndex(xsearch)
+					if loc != nil && loc[0] == 0 {
+						p = loc[1]
+					}
+				}
+
 				if p < 0 {
 					if xn.tail == '/' {
 						p = len(xsearch)
