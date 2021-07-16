@@ -35,13 +35,23 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 * **Go.mod support** - as of v5, go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md))
 * **No external dependencies** - plain ol' Go stdlib + net/http
 
+## Getting started
+
+Getting started with chi is as easy as...
+
+1. Read the light [documentation](./DOCS.md)
+2. Check out the [_examples/](https://github.com/go-chi/chi/blob/master/_examples/)
+3. Finally, read the rest of this README for lots of little helpful tips.
+4. Read the source :)
+
+glhf
+
 
 ## Examples
 
 See [_examples/](https://github.com/go-chi/chi/blob/master/_examples/) for a variety of examples.
 
-
-**As easy as:**
+**Hello world:**
 
 ```go
 package main
@@ -57,7 +67,7 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
+		w.Write([]byte("hello world"))
 	})
 	http.ListenAndServe(":3000", r)
 }
