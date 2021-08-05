@@ -1,6 +1,8 @@
 # Chi
 
+## 👋 Hi, Let's Get You Started With Chi
 
+<!-- # Chi -->
 
 `chi` is a lightweight, idiomatic and composable router for building Go HTTP services. It's
 especially good at helping you write large REST API services that are kept maintainable as your
