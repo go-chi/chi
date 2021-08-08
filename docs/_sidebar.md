@@ -1,5 +1,5 @@
 <!-- docs/_sidebar.md -->
-- [🏃‍♂️ Quick Start Tutorial](quickstart.md)
+<!-- - [🏃‍♂️ Quick Start Tutorial](quickstart.md) -->
 <!-- - Tutorial - User Guide
     - [First Steps]()
     - [Routing Basics]()
@@ -7,5 +7,6 @@
     - [Mounting Routers and Sub Routers]()
     - [Middleware]() -->
 <!-- docs/advanced_user_guide/_sidebar.md -->
-- [📚 Advanced User Guide](advanced_user_guide/index.md)
-    - [Routing](advanced_user_guide/routing.md)
+- [📚 User Guide](user_guide/index.md)
+    - [First Steps](user_guide/first_steps.md)
+    - [Routing](user_guide/routing.md)
