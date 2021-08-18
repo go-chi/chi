@@ -8,5 +8,7 @@
     - [Middleware]() -->
 <!-- docs/advanced_user_guide/_sidebar.md -->
 - [📚 User Guide](user_guide/index.md)
-    - [First Steps](user_guide/first_steps.md)
-    - [Routing](user_guide/routing.md)
+    - [👋 First Steps](user_guide/first_steps.md)
+    - [🔌 Routing](user_guide/routing.md)
+    - [🧬 Middleware](user_guide/middleware.md)
+    - [🍳 Examples](https://github.com/go-chi/chi/tree/master/_examples)
