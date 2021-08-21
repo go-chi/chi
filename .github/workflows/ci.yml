@@ -1,4 +1,13 @@
-on: [push, pull_request]
+on:
+  push:
+    branches: '**'
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches: '**'
+    paths-ignore:
+      - 'docs/**'
+
 name: Test
 jobs:
   test:
