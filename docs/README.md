@@ -1,8 +1,8 @@
-# Chi
+# chi
 
-## 👋 Hi, Let's Get You Started With Chi
+## 👋 Hi, Let's Get You Started With chi
 
-<!-- # Chi -->
+<!-- # chi -->
 
 `chi` is a lightweight, idiomatic and composable router for building Go HTTP services. It's
 especially good at helping you write large REST API services that are kept maintainable as your
@@ -36,32 +36,6 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 ## Examples
 
 See [examples](https://github.com/go-chi/chi/blob/master/_examples/) for a variety of examples.
-
-
-
-## Credits
-
-* Carl Jackson for https://github.com/zenazn/goji
-  * Parts of chi's thinking comes from goji, and chi's middleware package
-    sources from goji.
-* Armon Dadgar for https://github.com/armon/go-radix
-* Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
-
-We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
-
-
-## Beyond REST
-
-chi is just a http router that lets you decompose request handling into many smaller layers.
-Many companies use chi to write REST services for their public APIs. But, REST is just a convention
-for managing state via HTTP, and there's a lot of other pieces required to write a complete client-server
-system or network of microservices.
-
-Looking beyond REST, I also recommend some newer works in the field:
-* [webrpc](https://github.com/webrpc/webrpc) - Web-focused RPC client+server framework with code-gen
-* [gRPC](https://github.com/grpc/grpc-go) - Google's RPC framework via protobufs
-* [graphql](https://github.com/99designs/gqlgen) - Declarative query language
-* [NATS](https://nats.io) - lightweight pub-sub
 
 
 ## License
