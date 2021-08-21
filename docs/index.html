@@ -21,6 +21,12 @@
 </head>
 <body>
   <div id="app">Loading ...</div>
+   <!-- set dark mode if not already set -->
+  <script>  
+    if (!localStorage.getItem('DARK_LIGHT_THEME')){
+      localStorage.setItem('DARK_LIGHT_THEME', 'dark');
+    }
+  </script>
   <script>
     window.$docsify = {
       name: 'chi',
