@@ -23,8 +23,7 @@
   <div id="app">Loading ...</div>
    <!-- set dark mode if not already set -->
   <script>  
-    console.log(localStorage.getItem('DARK_LIGHT_THEME'));
-    if (localStorage.getItem('DARK_LIGHT_THEME') == null){
+    if (!localStorage.getItem('DARK_LIGHT_THEME')){
       localStorage.setItem('DARK_LIGHT_THEME', 'dark');
     }
   </script>
