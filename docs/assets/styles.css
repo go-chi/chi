@@ -3,7 +3,7 @@ section.cover {
     padding-bottom: 112px; /* fixed footer (Netflix) height */
     height: auto;
     min-height: 100vh;
-    color: white;
+    color: var(--textColor);
 }
   
   section.cover .cover-main {
@@ -64,10 +64,10 @@ section.cover {
     text-align: center;
     line-height: 18px;
     color: #221f1f;
-    background: #091a28;
+    background: var(--coverBackground);
     outline: none;
     border: none;
-    background-color: #091a28;
+    background-color: var(--coverBackground);
     -webkit-appearance: none;
     -moz-appearance: none;
     cursor: pointer;
