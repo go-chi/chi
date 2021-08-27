@@ -1,0 +1,227 @@
+/****** Cover Page ******/
+section.cover {
+    padding-bottom: 112px; /* fixed footer (Netflix) height */
+    height: auto;
+    min-height: 100vh;
+    color: var(--textColor);
+}
+  
+  section.cover .cover-main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 0;
+    padding: 32px 16px 0;
+  }
+  
+  section.cover img {
+    width: 400px;
+  }
+  
+  section.cover h1 {
+    margin: 0.625rem 0 1rem;
+  }
+  
+  section.cover blockquote,
+  section.cover blockquote p {
+    margin: 0;
+  }
+  
+  section.cover ul {
+    font-size: 1.25rem;
+    line-height: 2rem;
+    display: grid;
+    text-align: left;
+    grid-column-gap: 16px;
+    grid-row-gap: 20px;
+    grid-template-columns: repeat(2, 50%);
+    list-style: none;
+    max-width: unset;
+    margin: 1.5em 0;
+  }
+  
+  section.cover ul li {
+    white-space: nowrap;
+  }
+  
+  section.cover.show ~ .sidebar,
+  section.cover.show ~ .sidebar-toggle {
+    display: none;
+  }
+  
+  
+  .cover-main .buttons {
+    width: 100%;
+  }
+  
+  .cover-main .buttons a {
+    font-weight: 700;
+    position: relative;
+    display: inline-block;
+    padding: 12px 25px;
+    font-size: 14px;
+    text-align: center;
+    line-height: 18px;
+    color: #221f1f;
+    background: var(--coverBackground);
+    outline: none;
+    border: none;
+    background-color: var(--coverBackground);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    margin: 0 1rem;
+    color: var(--theme-color);
+    overflow: hidden;
+    transition: color 0.25s cubic-bezier(0.215, 0.61, 0.355, 1);
+    vertical-align: baseline;
+    text-transform: uppercase;
+  }
+  
+  .cover-main .buttons a:before,
+  .cover-main .buttons a:after {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border: 2px solid var(--theme-color);
+    box-sizing: border-box;
+  }
+  
+  .cover-main .buttons a:after {
+    background: var(--theme-color);
+    transform: translateX(-101%);
+    transition: all 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  
+  .cover-main .buttons a:hover {
+    color: white;
+    box-shadow: 0 5px 16px rgba(229, 9, 20, 0.3);
+  }
+  
+  .cover-main .buttons a:hover:after {
+    transform: translateX(0);
+  }
+  
+  .cover-main .buttons a span {
+    position: relative;
+    z-index: 1;
+  }
+  
+  @media (max-width: 850px) {
+    section.cover ul {
+      grid-template-columns: 100%;
+      padding: 0;
+    }
+  
+    section.cover ul li {
+      text-align: center;
+    }
+  }
+  
+  @media (max-width: 450px) {
+    section.cover ul li {
+      white-space: normal;
+    }
+  
+    .cover-main .buttons a {
+      width: 100%;
+      margin: 0.2rem 0;
+    }
+  }
+
+
+  /****** Sidebar ******/
+.sidebar .app-name-link img {
+    height: 150px;
+  }
+  
+  .sidebar ul li a {
+    font-size: 15px;
+  }
+  
+  .sidebar ul li a:hover {
+    color: var(--theme-color);
+  }
+  
+  .app-sub-sidebar li:before {
+    display: none;
+  }
+  
+  .sidebar .search .clear-button {
+    cursor: pointer;
+  }
+  
+  /****** Sidebar Toggle ******/
+  .sidebar-toggle {
+    cursor: pointer;
+  }
+  
+  body .sidebar-toggle {
+    background: none;
+    top: 1.5rem;
+    left: calc(300px + 1.5rem);
+    cursor: pointer;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    transition: left 0.25s ease-out;
+  }
+  
+  body .sidebar-toggle span {
+    background-color: var(--theme-color);
+    height: 0.2rem;
+    width: 1.5rem;
+    position: absolute;
+    left: 0;
+    margin: 0;
+    transform-origin: 0;
+    border-radius: 1px;
+  }
+  
+  body.close .sidebar-toggle {
+    transition: left 0.25s ease-out;
+    width: 1.5rem;
+    height: 1.5rem;
+    left: 1.5rem;
+  }
+  
+  body.close .sidebar-toggle span {
+    transform-origin: center;
+  }
+  
+  body .sidebar-toggle span:nth-child(1) {
+    top: 0;
+  }
+  body .sidebar-toggle span:nth-child(2) {
+    top: 0.5rem;
+  }
+  body .sidebar-toggle span:nth-child(3) {
+    top: 1rem;
+  }
+  
+  .sidebar-toggle:hover {
+    opacity: 0.8;
+  }
+  .sidebar-toggle .sidebar-toggle-button:hover {
+    opacity: 1;
+  }
+  
+  @media screen and (max-width: 768px) {
+    body .sidebar-toggle {
+      left: 1rem;
+    }
+  
+    body.close .sidebar-toggle {
+      left: calc(300px + 1.5rem);
+    }
+  }
+
+  /****** COPY TO CLIPBOARD ******/
+.docsify-copy-code-button {
+    font-size: 0.7em !important;
+}
