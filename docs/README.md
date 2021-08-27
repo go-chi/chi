@@ -1,6 +1,6 @@
 # chi
 
-## 👋 Hi, Let's Get You Started With chi
+## 👋 Hi, Let's Get You Started With chi <!-- {docsify-ignore} -->
 
 <!-- # chi -->
 
@@ -19,7 +19,7 @@ parts. The core router `github.com/go-chi/chi` is quite small (less than 1000 LO
 included some useful/optional subpackages: [middleware](https://github.com/go-chi/chi/tree/master/middleware), [render](https://github.com/go-chi/render)
 and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
-## Features
+## Features <!-- {docsify-ignore} -->
 
 * **Lightweight** - cloc'd in ~1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](https://github.com/go-chi/chi#benchmarks)
@@ -33,16 +33,16 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 
 
-## Examples
+## Examples <!-- {docsify-ignore} -->
 
 See [examples](https://github.com/go-chi/chi/blob/master/_examples/) for a variety of examples.
 
 
-## License
+## License <!-- {docsify-ignore} -->
 
 Copyright (c) 2015-present [Peter Kieltyka](https://github.com/pkieltyka)
 
-Licensed under [MIT License](./LICENSE)
+Licensed under [MIT License](https://github.com/go-chi/chi/blob/master/LICENSE)
 
 [GoDoc]: https://pkg.go.dev/github.com/go-chi/chi?tab=versions
 [GoDoc Widget]: https://godoc.org/github.com/go-chi/chi?status.svg
