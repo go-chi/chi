@@ -1,11 +1,14 @@
 # 🔌 Routing
 
-> Routing refers to how an application's endpoints (URIs) respond to client requests.
+## Introduction
 
-## Handling HTTP Request Methods
+> Routing refers to how an application's endpoints (URIs) respond to client requests.
 
 `Chi` allows you to route/handle any HTTP request method, such as all the usual suspects:
 GET, POST, HEAD, PUT, PATCH, DELETE, OPTIONS, TRACE, CONNECT
+
+## Handling HTTP Request Methods
+
 
 These methods are defined on the `chi.Router` as:
 
