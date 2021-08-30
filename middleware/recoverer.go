@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -40,12 +41,14 @@ func Recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+var recovererErrorWriter io.Writer = os.Stderr
+
 func PrintPrettyStack(rvr interface{}) {
 	debugStack := debug.Stack()
 	s := prettyStack{}
 	out, err := s.parse(debugStack, rvr)
 	if err == nil {
-		os.Stderr.Write(out)
+		recovererErrorWriter.Write(out)
 	} else {
 		// print stdlib output as a fallback
 		os.Stderr.Write(debugStack)
