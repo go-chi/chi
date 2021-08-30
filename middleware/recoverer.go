@@ -75,7 +75,7 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	// locate panic line, as we may have nested panics
 	for i := len(stack) - 1; i > 0; i-- {
 		lines = append(lines, stack[i])
-		if strings.HasPrefix(stack[i], "panic(0x") {
+		if strings.HasPrefix(stack[i], "panic(") {
 			lines = lines[0 : len(lines)-2] // remove boilerplate
 			break
 		}
