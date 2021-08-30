@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -40,12 +41,15 @@ func Recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
+// for ability to test the PrintPrettyStack function
+var recovererErrorWriter io.Writer = os.Stderr
+
 func PrintPrettyStack(rvr interface{}) {
 	debugStack := debug.Stack()
 	s := prettyStack{}
 	out, err := s.parse(debugStack, rvr)
 	if err == nil {
-		os.Stderr.Write(out)
+		recovererErrorWriter.Write(out)
 	} else {
 		// print stdlib output as a fallback
 		os.Stderr.Write(debugStack)
@@ -72,7 +76,7 @@ func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	// locate panic line, as we may have nested panics
 	for i := len(stack) - 1; i > 0; i-- {
 		lines = append(lines, stack[i])
-		if strings.HasPrefix(stack[i], "panic(0x") {
+		if strings.HasPrefix(stack[i], "panic(") {
 			lines = lines[0 : len(lines)-2] // remove boilerplate
 			break
 		}
