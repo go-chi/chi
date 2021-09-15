@@ -1694,7 +1694,7 @@ func TestMuxMatch(t *testing.T) {
 	}
 
 	tctx.Reset()
-	if r.Match(tctx, "GET", "/users/john.doe@example.com") == false {
+	if r.Match(tctx, "GET", "/users/john.doe%40example.com") == false {
 		t.Fatal("expecting to find match for route:", "GET", "/users/john.doe%40example.com")
 	}
 
