@@ -156,12 +156,8 @@ func (c *Compressor) SetEncoder(encoding string, fn EncoderFunc) {
 
 	// If we are adding a new encoder that is already registered, we have to
 	// clear that one out first.
-	if _, ok := c.pooledEncoders[encoding]; ok {
-		delete(c.pooledEncoders, encoding)
-	}
-	if _, ok := c.encoders[encoding]; ok {
-		delete(c.encoders, encoding)
-	}
+	delete(c.pooledEncoders, encoding)
+	delete(c.encoders, encoding)
 
 	// If the encoder supports Resetting (IoReseterWriter), then it can be pooled.
 	encoder := fn(ioutil.Discard, c.level)
