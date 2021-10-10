@@ -80,3 +80,27 @@ func TestXForwardForXRealIPPrecedence(t *testing.T) {
 		t.Fatal("Test get real IP precedence error.")
 	}
 }
+
+func TestIvalidIP(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Add("X-Real-IP", "100.100.100.1000")
+	w := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Use(RealIP)
+
+	realIP := ""
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		realIP = r.RemoteAddr
+		w.Write([]byte("Hello World"))
+	})
+	r.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Fatal("Response Code should be 200")
+	}
+
+	if realIP != "" {
+		t.Fatal("Invalid IP used.")
+	}
+}
