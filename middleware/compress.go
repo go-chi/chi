@@ -115,7 +115,7 @@ func NewCompressor(level int, types ...string) *Compressor {
 	// https://web.archive.org/web/20120321182910/http://www.vervestudios.co/projects/compression-tests/results
 	//
 	// That's why we prefer gzip over deflate. It's just more reliable
-	// and not significantly slower than gzip.
+	// and not significantly slower than deflate.
 	c.SetEncoder("deflate", encoderDeflate)
 
 	// TODO: Exception for old MSIE browsers that can't handle non-HTML?
