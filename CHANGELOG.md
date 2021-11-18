@@ -1,5 +1,10 @@
 # Changelog
 
+## v5.0.7 (2021-11-18)
+
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.6...v5.0.7
+
+
 ## v5.0.6 (2021-11-15)
 
 - History of changes: see https://github.com/go-chi/chi/compare/v5.0.5...v5.0.6
