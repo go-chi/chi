@@ -4,6 +4,7 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
+	"net"
 	"net/http"
 	"strings"
 )
@@ -30,7 +31,7 @@ var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
 func RealIP(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if rip := realIP(r); rip != "" {
-			r.RemoteAddr = rip
+			r.RemoteAddr = net.JoinHostPort(rip, "0")
 		}
 		h.ServeHTTP(w, r)
 	}
