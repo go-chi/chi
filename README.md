@@ -333,32 +333,32 @@ with `net/http` can be used with chi's mux.
 
 ### Core middlewares
 
-----------------------------------------------------------------------------------------------------
-| chi/middleware Handler | description                                                             |
-| :--------------------- | :---------------------------------------------------------------------- |
-| [AllowContentEncoding] | Enforces a whitelist of request Content-Encoding headers                |
-| [AllowContentType]     | Explicit whitelist of accepted request Content-Types                    |
-| [BasicAuth]            | Basic HTTP authentication                                               |
-| [Compress]             | Gzip compression for clients that accept compressed responses           |
-| [ContentCharset]       | Ensure charset for Content-Type request headers                         |
-| [CleanPath]            | Clean double slashes from request path                                  |
-| [GetHead]              | Automatically route undefined HEAD requests to GET handlers             |
-| [Heartbeat]            | Monitoring endpoint to check the servers pulse                          |
-| [Logger]               | Logs the start and end of each request with the elapsed processing time |
-| [NoCache]              | Sets response headers to prevent clients from caching                   |
-| [Profiler]             | Easily attach net/http/pprof to your routers                            |
-| [RealIP]               | Sets a http.Request's RemoteAddr to either X-Real-IP or X-Forwarded-For |
-| [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
-| [RequestID]            | Injects a request ID into the context of each request                   |
-| [RedirectSlashes]      | Redirect slashes on routing paths                                       |
-| [RouteHeaders]         | Route handling for request headers                                      |
-| [SetHeader]            | Short-hand middleware to set a response header key/value                |
-| [StripSlashes]         | Strip slashes on routing paths                                          |
-| [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
-| [Timeout]              | Signals to the request context when the timeout deadline is reached     |
-| [URLFormat]            | Parse extension from url and put it on request context                  |
-| [WithValue]            | Short-hand middleware to set a key/value on the request context         |
-----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+| chi/middleware Handler | description                                                                             |
+|:---------------------- |:--------------------------------------------------------------------------------------- |
+| [AllowContentEncoding] | Enforces a whitelist of request Content-Encoding headers                                |
+| [AllowContentType]     | Explicit whitelist of accepted request Content-Types                                    |
+| [BasicAuth]            | Basic HTTP authentication                                                               |
+| [Compress]             | Gzip compression for clients that accept compressed responses                           |
+| [ContentCharset]       | Ensure charset for Content-Type request headers                                         |
+| [CleanPath]            | Clean double slashes from request path                                                  |
+| [GetHead]              | Automatically route undefined HEAD requests to GET handlers                             |
+| [Heartbeat]            | Monitoring endpoint to check the servers pulse                                          |
+| [Logger]               | Logs the start and end of each request with the elapsed processing time                 |
+| [NoCache]              | Sets response headers to prevent clients from caching                                   |
+| [Profiler]             | Easily attach net/http/pprof to your routers                                            |
+| [RealIP]               | Sets a http.Request's RemoteAddr to either True-Client-IP, X-Real-IP or X-Forwarded-For |
+| [Recoverer]            | Gracefully absorb panics and prints the stack trace                                     | 
+| [RequestID]            | Injects a request ID into the context of each request                                   |
+| [RedirectSlashes]      | Redirect slashes on routing paths                                                       |
+| [RouteHeaders]         | Route handling for request headers                                                      |
+| [SetHeader]            | Short-hand middleware to set a response header key/value                                |
+| [StripSlashes]         | Strip slashes on routing paths                                                          |
+| [Throttle]             | Puts a ceiling on the number of concurrent requests                                     |
+| [Timeout]              | Signals to the request context when the timeout deadline is reached                     |
+| [URLFormat]            | Parse extension from url and put it on request context                                  |
+| [WithValue]            | Short-hand middleware to set a key/value on the request context                         |
+--------------------------------------------------------------------------------------------------------------------
 
 [AllowContentEncoding]: https://pkg.go.dev/github.com/go-chi/chi/middleware#AllowContentEncoding
 [AllowContentType]: https://pkg.go.dev/github.com/go-chi/chi/middleware#AllowContentType
