@@ -121,7 +121,10 @@ func (x *Context) URLParam(key string) string {
 //   }
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
-	return replaceWildcards(routePattern)
+	routePattern = replaceWildcards(routePattern)
+	routePattern = strings.TrimSuffix(routePattern, "//")
+	routePattern = strings.TrimSuffix(routePattern, "/")
+	return routePattern
 }
 
 // replaceWildcards takes a route pattern and recursively replaces all
@@ -130,7 +133,6 @@ func replaceWildcards(p string) string {
 	if strings.Contains(p, "/*/") {
 		return replaceWildcards(strings.Replace(p, "/*/", "/", -1))
 	}
-
 	return p
 }
 
