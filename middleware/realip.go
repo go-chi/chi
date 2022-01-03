@@ -4,6 +4,7 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
+	"net"
 	"net/http"
 	"strings"
 )
@@ -52,6 +53,8 @@ func realIP(r *http.Request) string {
 		}
 		ip = xff[:i]
 	}
-
+	if net.ParseIP(ip) == nil {
+		return ""
+	}
 	return ip
 }
