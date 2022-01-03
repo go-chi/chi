@@ -53,7 +53,7 @@ func realIP(r *http.Request) string {
 		}
 		ip = xff[:i]
 	}
-	if net.ParseIP(ip) == nil {
+	if ip == "" || net.ParseIP(ip) == nil {
 		return ""
 	}
 	return ip
