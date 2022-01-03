@@ -29,8 +29,8 @@ type Mux struct {
 	// Custom method not allowed handler
 	methodNotAllowedHandler http.HandlerFunc
 
-	// Controls the behaviour of middleware chain generation when a mux
-	// is registered as an inline group inside another mux.
+	// A reference to the parent mux used by subrouters when mounting
+	// to a parent mux
 	parent *Mux
 
 	// Routing context pool
@@ -42,6 +42,8 @@ type Mux struct {
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
 
+	// Controls the behaviour of middleware chain generation when a mux
+	// is registered as an inline group inside another mux.
 	inline bool
 }
 
