@@ -40,3 +40,28 @@ func TestRecoverer(t *testing.T) {
 	}
 	t.Fatal("First func call line should start with ->.")
 }
+
+func TestRecovererAbortHandler(t *testing.T) {
+	defer func() {
+		rcv := recover()
+		if rcv != http.ErrAbortHandler {
+			t.Fatalf("http.ErrAbortHandler should not be recovered")
+		}
+	}()
+
+	w := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Use(Recoverer)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		panic(http.ErrAbortHandler)
+	})
+
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r.ServeHTTP(w, req)
+}
