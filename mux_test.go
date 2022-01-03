@@ -1574,7 +1574,8 @@ func TestMuxContextIsThreadSafe(t *testing.T) {
 				w := httptest.NewRecorder()
 				r, err := http.NewRequest("GET", "/ok", nil)
 				if err != nil {
-					t.Fatal(err)
+					t.Error(err)
+					return
 				}
 
 				ctx, cancel := context.WithCancel(r.Context())
