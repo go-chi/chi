@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -1752,53 +1751,6 @@ func testHandler(t *testing.T, h http.Handler, method, path string, body io.Read
 	h.ServeHTTP(w, r)
 	return w.Result(), w.Body.String()
 }
-
-type testFileSystem struct {
-	open func(name string) (http.File, error)
-}
-
-func (fs *testFileSystem) Open(name string) (http.File, error) {
-	return fs.open(name)
-}
-
-type testFile struct {
-	name     string
-	contents []byte
-}
-
-func (tf *testFile) Close() error {
-	return nil
-}
-
-func (tf *testFile) Read(p []byte) (n int, err error) {
-	copy(p, tf.contents)
-	return len(p), nil
-}
-
-func (tf *testFile) Seek(offset int64, whence int) (int64, error) {
-	return 0, nil
-}
-
-func (tf *testFile) Readdir(count int) ([]os.FileInfo, error) {
-	stat, _ := tf.Stat()
-	return []os.FileInfo{stat}, nil
-}
-
-func (tf *testFile) Stat() (os.FileInfo, error) {
-	return &testFileInfo{tf.name, int64(len(tf.contents))}, nil
-}
-
-type testFileInfo struct {
-	name string
-	size int64
-}
-
-func (tfi *testFileInfo) Name() string       { return tfi.name }
-func (tfi *testFileInfo) Size() int64        { return tfi.size }
-func (tfi *testFileInfo) Mode() os.FileMode  { return 0755 }
-func (tfi *testFileInfo) ModTime() time.Time { return time.Now() }
-func (tfi *testFileInfo) IsDir() bool        { return false }
-func (tfi *testFileInfo) Sys() interface{}   { return nil }
 
 type ctxKey struct {
 	name string
