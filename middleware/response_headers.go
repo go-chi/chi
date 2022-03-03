@@ -2,6 +2,8 @@ package middleware
 
 import "net/http"
 
+type ResponseHeaders map[string]map[string]string
+
 // AddResponseHeaders middleware adds headers to specified paths
 // It accepts a map of headers to add to the response.
 // The map should be of the form:
@@ -34,5 +36,3 @@ func AddResponseHeaders(responseHeaders ResponseHeaders) func(next http.Handler)
 		return http.HandlerFunc(fn)
 	}
 }
-
-type ResponseHeaders map[string]map[string]string
