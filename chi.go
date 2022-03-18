@@ -75,7 +75,25 @@ type Router interface {
 	With(middlewares ...func(http.Handler) http.Handler) Router
 
 	// Group adds a new inline-Router along the current routing
-	// path, with a fresh middleware stack for the inline-Router.
+	// path, with a fresh middleware stack for the inline-router.
+	//
+	// The "fresh" middleware stack will implicitly contain all
+	// of the middlewares previously applied to the parent router,
+	// and any new ones added to this stack will NOT propagate to
+	// the parent or any other routers created via Group.
+	//
+	// Conversely, Group is NOT suited to obtain a new sub-router
+	// without any middlewares if the parent has already had any
+	// middlewares applied to it.  In order to have sub-routers
+	// with fully separate stacks of middlewares, it is recommended
+	// to NOT apply any middlewares at the parent level and instead
+	// ONLY apply middlewares to sub-routers created via Group.
+	//
+	// Furthermore, defining routes on a sub-router obtained via
+	// Group and defining routes on it WILL count towards the
+	// parent routers having any routes defined, which makes it
+	// impossible to add any middlewares to the parent (but not to
+	// sub-routers obtained by calling Group on it) afterwards.
 	Group(fn func(r Router)) Router
 
 	// Route mounts a sub-Router along a `pattern`` string.
