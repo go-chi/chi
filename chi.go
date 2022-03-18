@@ -90,10 +90,10 @@ type Router interface {
 	// ONLY apply middlewares to sub-routers created via Group.
 	//
 	// Furthermore, defining routes on a sub-router obtained via
-	// Group and defining routes on it WILL count towards the
-	// parent routers having any routes defined, which makes it
-	// impossible to add any middlewares to the parent (but not to
-	// sub-routers obtained by calling Group on it) afterwards.
+	// Group WILL count towards the parent router having any routes 
+	// defined, which makes it impossible to add any middlewares to 
+	// the parent (but not to sub-routers obtained by calling Group 
+	// on it) afterwards.
 	Group(fn func(r Router)) Router
 
 	// Route mounts a sub-Router along a `pattern`` string.
