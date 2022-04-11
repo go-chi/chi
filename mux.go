@@ -45,6 +45,11 @@ type Mux struct {
 	// Controls the behaviour of middleware chain generation when a mux
 	// is registered as an inline group inside another mux.
 	inline bool
+
+	// This bit is set while Route() or Group() is descending into their
+	// specified build functions. It is used to guard against mutating this
+	// outer mux from the build function.
+	isBuildingSubRouter bool
 }
 
 // NewMux returns a newly initialized Mux object that implements the Router
@@ -101,6 +106,7 @@ func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
 	if mx.handler != nil {
 		panic("chi: all middlewares must be defined before routes on a mux")
 	}
+	mx.subRouterGuard()
 	mx.middlewares = append(mx.middlewares, middlewares...)
 }
 
@@ -256,7 +262,9 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 func (mx *Mux) Group(fn func(r Router)) Router {
 	im := mx.With().(*Mux)
 	if fn != nil {
+		mx.isBuildingSubRouter = true
 		fn(im)
+		mx.isBuildingSubRouter = false
 	}
 	return im
 }
@@ -269,7 +277,9 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 		panic(fmt.Sprintf("chi: attempting to Route() a nil subrouter on '%s'", pattern))
 	}
 	subRouter := NewRouter()
+	mx.isBuildingSubRouter = true
 	fn(subRouter)
+	mx.isBuildingSubRouter = false
 	mx.Mount(pattern, subRouter)
 	return subRouter
 }
@@ -392,6 +402,8 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *n
 		panic(fmt.Sprintf("chi: routing pattern must begin with '/' in '%s'", pattern))
 	}
 
+	mx.subRouterGuard()
+
 	// Build the computed routing handler for this routing pattern.
 	if !mx.inline && mx.handler == nil {
 		mx.updateRouteHandler()
@@ -477,6 +489,12 @@ func (mx *Mux) updateSubRoutes(fn func(subMux *Mux)) {
 // compose additional middlewares via Group()'s or using a chained middleware handler.
 func (mx *Mux) updateRouteHandler() {
 	mx.handler = chain(mx.middlewares, http.HandlerFunc(mx.routeHTTP))
+}
+
+func (mx *Mux) subRouterGuard() {
+	if mx.isBuildingSubRouter {
+		panic("chi: attempted to modify a router that is currently building a subrouter. Please check whether you are attaching to the right router or move this call out of Route() or Group()")
+	}
 }
 
 // methodNotAllowedHandler is a helper function to respond with a 405,

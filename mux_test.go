@@ -1449,6 +1449,36 @@ func TestMuxWildcardRouteCheckTwo(t *testing.T) {
 	r.Get("/*/wildcard/{must}/be/at/end", handler)
 }
 
+func TestMuxGuardOuterGroup(t *testing.T) {
+	mw := func(next http.Handler) http.Handler { return next }
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	outer := NewRouter()
+	outer.Group(func(inner Router) {
+		outer.Use(mw)
+	})
+}
+
+func TestMuxGuardOuterRoute(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("expected panic()")
+		}
+	}()
+
+	outer := NewRouter()
+	outer.Route("/foo", func(inner Router) {
+		outer.Get("/bar", handler)
+	})
+}
+
 func TestMuxRegexp(t *testing.T) {
 	r := NewRouter()
 	r.Route("/{param:[0-9]*}/test", func(r Router) {
