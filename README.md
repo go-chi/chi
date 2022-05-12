@@ -30,7 +30,7 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 * **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and sub-router mounting
 * **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
-* **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
+* **Robust** - in production at Pressly, Cloudflare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
 * **Go.mod support** - as of v5, go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md))
 * **No external dependencies** - plain ol' Go stdlib + net/http
