@@ -166,7 +166,8 @@ func (l *defaultLogEntry) Panic(v interface{}, stack []byte) {
 }
 
 func init() {
-	color := true
+	_, noColor := os.LookupEnv("NO_COLOR")
+	color := !noColor
 	if runtime.GOOS == "windows" {
 		color = false
 	}
