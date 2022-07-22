@@ -1,11 +1,10 @@
-package chi
+package chio
 
 import (
 	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -186,7 +185,7 @@ func TestMuxBasic(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1158,7 +1157,6 @@ func TestMuxSubroutes(t *testing.T) {
 	if routePatterns[2] != expected {
 		t.Fatalf("routePattern, expected:%s got:%s", expected, routePatterns[2])
 	}
-
 }
 
 func TestSingleHandler(t *testing.T) {
@@ -1181,29 +1179,6 @@ func TestSingleHandler(t *testing.T) {
 		t.Fatalf("expected:%s got:%s", expected, body)
 	}
 }
-
-// TODO: a Router wrapper test..
-//
-// type ACLMux struct {
-// 	*Mux
-// 	XX string
-// }
-//
-// func NewACLMux() *ACLMux {
-// 	return &ACLMux{Mux: NewRouter(), XX: "hihi"}
-// }
-//
-// // TODO: this should be supported...
-// func TestWoot(t *testing.T) {
-// 	var r Router = NewRouter()
-//
-// 	var r2 Router = NewACLMux() //NewRouter()
-// 	r2.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
-// 		w.Write([]byte("hi"))
-// 	})
-//
-// 	r.Mount("/", r2)
-// }
 
 func TestServeHTTPExistingContext(t *testing.T) {
 	r := NewRouter()
@@ -1248,7 +1223,7 @@ func TestServeHTTPExistingContext(t *testing.T) {
 		}
 		req = req.WithContext(tc.Ctx)
 		r.ServeHTTP(resp, req)
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatalf("%v", err)
 		}
@@ -1302,7 +1277,6 @@ func TestNestedGroups(t *testing.T) {
 				r.Get("/5", handlerPrintCounter)
 				// r.Handle(GET, "/6", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
 				r.With(mwIncreaseCounter).Get("/6", handlerPrintCounter)
-
 			})
 		})
 	})
@@ -1722,7 +1696,7 @@ func TestServerBaseContext(t *testing.T) {
 	}
 }
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) { //nolint:unparam
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	if err != nil {
 		t.Fatal(err)
@@ -1735,7 +1709,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 		return nil, ""
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 		return nil, ""
@@ -1745,7 +1719,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp, string(respBody)
 }
 
-func testHandler(t *testing.T, h http.Handler, method, path string, body io.Reader) (*http.Response, string) {
+func testHandler(t *testing.T, h http.Handler, method, path string, body io.Reader) (*http.Response, string) { //nolint:unparam
 	r, _ := http.NewRequest(method, path, body)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)

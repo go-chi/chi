@@ -1,4 +1,4 @@
-chi examples
+chio examples
 ============
 
 * [custom-handler](https://github.com/go-chi/chi/blob/master/_examples/custom-handler/main.go) - Use a custom handler function signature

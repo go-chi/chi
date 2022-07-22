@@ -1,4 +1,4 @@
-package chi
+package chio
 
 // Radix tree implementation below is a based on the original work by
 // Armon Dadgar in https://github.com/armon/go-radix/blob/master/radix.go
@@ -136,7 +136,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 
 		// We're going to be searching for a wild node next,
 		// in this case, we need to get the tail
-		var label = search[0]
+		label := search[0]
 		var segTail byte
 		var segEndIdx int
 		var segTyp nodeTyp
@@ -230,7 +230,6 @@ func (n *node) addChild(child *node, prefix string) *node {
 
 	// Add child depending on next up segment
 	switch segTyp {
-
 	case ntStatic:
 		// Search prefix is all static (that is, has no params in path)
 		// noop
@@ -275,7 +274,6 @@ func (n *node) addChild(child *node, prefix string) *node {
 				}
 				hn = child.addChild(nn, search)
 			}
-
 		} else if segStartIdx > 0 {
 			// Route has some param
 
@@ -293,7 +291,6 @@ func (n *node) addChild(child *node, prefix string) *node {
 				tail:  segTail,
 			}
 			hn = child.addChild(nn, search)
-
 		}
 	}
 
@@ -511,7 +508,6 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				rctx.routeParams.Values = rctx.routeParams.Values[:len(rctx.routeParams.Values)-1]
 			}
 		}
-
 	}
 
 	return nil
@@ -527,11 +523,15 @@ func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 		i, j := 0, num-1
 		for i <= j {
 			idx = i + (j-i)/2
-			if label > nds[idx].label {
+
+			switch {
+			case label > nds[idx].label:
 				i = idx + 1
-			} else if label < nds[idx].label {
+
+			case label < nds[idx].label:
 				j = idx - 1
-			} else {
+
+			default:
 				i = num // breaks cond
 			}
 		}
@@ -798,11 +798,12 @@ func (ns nodes) findEdge(label byte) *node {
 	i, j := 0, num-1
 	for i <= j {
 		idx = i + (j-i)/2
-		if label > ns[idx].label {
+		switch {
+		case label > ns[idx].label:
 			i = idx + 1
-		} else if label < ns[idx].label {
+		case label < ns[idx].label:
 			j = idx - 1
-		} else {
+		default:
 			i = num // breaks cond
 		}
 	}
@@ -848,7 +849,7 @@ func walk(r Routes, walkFn WalkFunc, parentRoute string, parentMw ...func(http.H
 			}
 
 			fullRoute := parentRoute + route.Pattern
-			fullRoute = strings.Replace(fullRoute, "/*/", "/", -1)
+			fullRoute = strings.ReplaceAll(fullRoute, "/*/", "/")
 
 			if chain, ok := handler.(*ChainHandler); ok {
 				if err := walkFn(method, fullRoute, chain.Endpoint, append(mws, chain.Middlewares...)...); err != nil {

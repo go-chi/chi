@@ -1,4 +1,4 @@
-package chi
+package chio
 
 import (
 	"context"
@@ -274,12 +274,12 @@ func (mx *Mux) Route(pattern string, fn func(r Router)) Router {
 	return subRouter
 }
 
-// Mount attaches another http.Handler or chi Router as a subrouter along a routing
+// Mount attaches another http.Handler or chio Router as a subrouter along a routing
 // path. It's very useful to split up a large API as many independent routers and
 // compose them as a single service using Mount. See _examples/.
 //
 // Note that Mount() simply sets a wildcard along the `pattern` that will continue
-// routing at the `handler`, which in most cases is another chi.Router. As a result,
+// routing at the `handler`, which in most cases is another chio.Router. As a result,
 // if you define two Mount() routes on the exact same pattern the mount will panic.
 func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	if handler == nil {
@@ -483,5 +483,5 @@ func (mx *Mux) updateRouteHandler() {
 // method not allowed.
 func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(405)
-	w.Write(nil)
+	w.Write(nil) //nolint:errcheck,gosec
 }

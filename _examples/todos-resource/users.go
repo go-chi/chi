@@ -3,21 +3,21 @@ package main
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/FallenTaters/chio"
 )
 
 type usersResource struct{}
 
 // Routes creates a REST router for the todos resource
-func (rs usersResource) Routes() chi.Router {
-	r := chi.NewRouter()
+func (rs usersResource) Routes() chio.Router {
+	r := chio.NewRouter()
 	// r.Use() // some middleware..
 
 	r.Get("/", rs.List)    // GET /users - read a list of users
 	r.Post("/", rs.Create) // POST /users - create a new user and persist it
 	r.Put("/", rs.Delete)
 
-	r.Route("/{id}", func(r chi.Router) {
+	r.Route("/{id}", func(r chio.Router) {
 		// r.Use(rs.TodoCtx) // lets have a users map, and lets actually load/manipulate
 		r.Get("/", rs.Get)       // GET /users/{id} - read a single user by :id
 		r.Put("/", rs.Update)    // PUT /users/{id} - update a single user by :id

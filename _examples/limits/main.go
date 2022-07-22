@@ -20,12 +20,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/FallenTaters/chio"
+	"github.com/FallenTaters/chio/middleware"
 )
 
 func main() {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
@@ -44,7 +44,7 @@ func main() {
 	})
 
 	// Slow handlers/operations.
-	r.Group(func(r chi.Router) {
+	r.Group(func(r chio.Router) {
 		// Stop processing after 2.5 seconds.
 		r.Use(middleware.Timeout(2500 * time.Millisecond))
 
@@ -67,7 +67,7 @@ func main() {
 	})
 
 	// Throttle very expensive handlers/operations.
-	r.Group(func(r chi.Router) {
+	r.Group(func(r chio.Router) {
 		// Stop processing after 30 seconds.
 		r.Use(middleware.Timeout(30 * time.Second))
 

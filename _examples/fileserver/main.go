@@ -26,12 +26,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/FallenTaters/chio"
+	"github.com/FallenTaters/chio/middleware"
 )
 
 func main() {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 	r.Use(middleware.Logger)
 
 	// Index handler
@@ -50,7 +50,7 @@ func main() {
 
 // FileServer conveniently sets up a http.FileServer handler to serve
 // static files from a http.FileSystem.
-func FileServer(r chi.Router, path string, root http.FileSystem) {
+func FileServer(r chio.Router, path string, root http.FileSystem) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")
 	}
@@ -62,7 +62,7 @@ func FileServer(r chi.Router, path string, root http.FileSystem) {
 	path += "*"
 
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
-		rctx := chi.RouteContext(r.Context())
+		rctx := chio.RouteContext(r.Context())
 		pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
 		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
 		fs.ServeHTTP(w, r)

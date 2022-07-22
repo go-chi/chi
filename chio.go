@@ -1,7 +1,6 @@
+// Package chio is a small, idiomatic and composable router for building HTTP services.
 //
-// Package chi is a small, idiomatic and composable router for building HTTP services.
-//
-// chi requires Go 1.10 or newer.
+// chio requires Go 1.10 or newer.
 //
 // Example:
 //  package main
@@ -9,12 +8,12 @@
 //  import (
 //  	"net/http"
 //
-//  	"github.com/go-chi/chi/v5"
-//  	"github.com/go-chi/chi/v5/middleware"
+//  	"github.com/FallenTaters/chio"
+//  	"github.com/FallenTaters/chio/middleware"
 //  )
 //
 //  func main() {
-//  	r := chi.NewRouter()
+//  	r := chio.NewRouter()
 //  	r.Use(middleware.Logger)
 //  	r.Use(middleware.Recoverer)
 //
@@ -25,11 +24,11 @@
 //  	http.ListenAndServe(":3333", r)
 //  }
 //
-// See github.com/go-chi/chi/_examples/ for more in-depth examples.
+// See github.com/FallenTaters/chio/_examples/ for more in-depth examples.
 //
 // URL patterns allow for easy matching of path components in HTTP
 // requests. The matching components can then be accessed using
-// chi.URLParam(). All patterns must begin with a slash.
+// chio.URLParam(). All patterns must begin with a slash.
 //
 // A simple named placeholder {name} matches any sequence of characters
 // up to the next / or the end of the URL. Trailing slashes on paths must
@@ -53,7 +52,7 @@
 //  "/page/*/index" also matches "/page/intro/latest"
 //  "/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"
 //
-package chi
+package chio
 
 import "net/http"
 

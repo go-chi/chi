@@ -1,8 +1,7 @@
-package chi
+package chio
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"testing"
 )
@@ -170,9 +169,6 @@ func TestTreeMoar(t *testing.T) {
 	hStub15 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub16 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	// TODO: panic if we see {id}{x} because we're missing a delimiter, its not possible.
-	// also {:id}* is not possible.
-
 	tr := &node{}
 
 	tr.InsertRoute(mGET, "/articlefun", hStub5)
@@ -190,9 +186,6 @@ func TestTreeMoar(t *testing.T) {
 	tr.InsertRoute(mGET, "/articles/{id}/data.json", hStub11)
 	tr.InsertRoute(mGET, "/articles/files/{file}.{ext}", hStub12)
 	tr.InsertRoute(mPUT, "/articles/me", hStub13)
-
-	// TODO: make a separate test case for this one..
-	// tr.InsertRoute(mGET, "/articles/{id}/{id}", hStub1)                              // panic expected, we're duplicating param keys
 
 	tr.InsertRoute(mGET, "/pages/*", hStub)
 	tr.InsertRoute(mGET, "/pages/*", hStub9)
@@ -442,34 +435,6 @@ func TestTreeFindPattern(t *testing.T) {
 	if tr.findPattern("/articles/{slug}/{uid}/*") == false {
 		t.Errorf("find /articles/{slug}/{uid}/* failed")
 	}
-}
-
-func debugPrintTree(parent int, i int, n *node, label byte) bool {
-	numEdges := 0
-	for _, nds := range n.children {
-		numEdges += len(nds)
-	}
-
-	// if n.handlers != nil {
-	// 	log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.handlers, n.pattern, n.paramKeys)
-	// } else {
-	// 	log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.pattern, n.paramKeys)
-	// }
-	if n.endpoints != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.endpoints)
-	} else {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf())
-	}
-	parent = i
-	for _, nds := range n.children {
-		for _, e := range nds {
-			i++
-			if debugPrintTree(parent, i, e, e.label) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func stringSliceEqual(a, b []string) bool {

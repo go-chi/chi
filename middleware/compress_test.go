@@ -5,17 +5,16 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/FallenTaters/chio"
 )
 
 func TestCompressor(t *testing.T) {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 
 	compressor := NewCompressor(5, "text/html", "text/css")
 	if len(compressor.encoders) != 0 || len(compressor.pooledEncoders) != 2 {
@@ -87,7 +86,6 @@ func TestCompressor(t *testing.T) {
 			expectedEncoding:  "deflate",
 		},
 		{
-
 			name:              "nop is preferred",
 			path:              "/getcss",
 			acceptedEncodings: []string{"nop, gzip, deflate"},
@@ -105,9 +103,7 @@ func TestCompressor(t *testing.T) {
 			if got := resp.Header.Get("Content-Encoding"); got != tc.expectedEncoding {
 				t.Errorf("expected encoding %q but got %q", tc.expectedEncoding, got)
 			}
-
 		})
-
 	}
 }
 
@@ -208,7 +204,7 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 	default:
 		reader = resp.Body
 	}
-	respBody, err := ioutil.ReadAll(reader)
+	respBody, err := io.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)
 		return ""

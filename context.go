@@ -1,4 +1,4 @@
-package chi
+package chio
 
 import (
 	"context"
@@ -34,10 +34,8 @@ func NewRouteContext() *Context {
 	return &Context{}
 }
 
-var (
-	// RouteCtxKey is the context.Context key to store the request context.
-	RouteCtxKey = &contextKey{"RouteContext"}
-)
+// RouteCtxKey is the context.Context key to store the request context.
+var RouteCtxKey = &contextKey{"RouteContext"}
 
 // Context is the default routing context set on the root node of a
 // request context to track route patterns, URL parameters and
@@ -115,7 +113,7 @@ func (x *Context) URLParam(key string) string {
 //   func Instrument(next http.Handler) http.Handler {
 //     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 //       next.ServeHTTP(w, r)
-//       routePattern := chi.RouteContext(r.Context()).RoutePattern()
+//       routePattern := chio.RouteContext(r.Context()).RoutePattern()
 //       measure(w, r, routePattern)
 //   	 })
 //   }
@@ -131,7 +129,7 @@ func (x *Context) RoutePattern() string {
 // occurrences of "/*/" to "/".
 func replaceWildcards(p string) string {
 	if strings.Contains(p, "/*/") {
-		return replaceWildcards(strings.Replace(p, "/*/", "/", -1))
+		return replaceWildcards(strings.ReplaceAll(p, "/*/", "/"))
 	}
 	return p
 }
@@ -155,5 +153,5 @@ type contextKey struct {
 }
 
 func (k *contextKey) String() string {
-	return "chi context value " + k.name
+	return "chio context value " + k.name
 }

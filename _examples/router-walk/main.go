@@ -5,16 +5,16 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/FallenTaters/chio"
 )
 
 func main() {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("root."))
 	})
 
-	r.Route("/road", func(r chi.Router) {
+	r.Route("/road", func(r chio.Router) {
 		r.Get("/left", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("left road"))
 		})
@@ -31,7 +31,7 @@ func main() {
 		return nil
 	}
 
-	if err := chi.Walk(r, walkFunc); err != nil {
+	if err := chio.Walk(r, walkFunc); err != nil {
 		fmt.Printf("Logging err: %s\n", err.Error())
 	}
 }

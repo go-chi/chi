@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
@@ -95,7 +94,7 @@ func NewCompressor(level int, types ...string) *Compressor {
 	// ordering that the encoders were added. This means adding new encoders
 	// will move them to the front of the order.
 	//
-	// TODO:
+	// not done yet:
 	// lzma: Opera.
 	// sdch: Chrome, Android. Gzip output + dictionary header.
 	// br:   Brotli, see https://github.com/go-chi/chi/pull/326
@@ -118,7 +117,7 @@ func NewCompressor(level int, types ...string) *Compressor {
 	// and not significantly slower than deflate.
 	c.SetEncoder("deflate", encoderDeflate)
 
-	// TODO: Exception for old MSIE browsers that can't handle non-HTML?
+	// Issue: Currently no exception for old MSIE browsers that can't handle non-HTML?
 	// https://zoompf.com/blog/2012/02/lose-the-wait-http-compression
 	c.SetEncoder("gzip", encoderGzip)
 
@@ -156,25 +155,20 @@ func (c *Compressor) SetEncoder(encoding string, fn EncoderFunc) {
 
 	// If we are adding a new encoder that is already registered, we have to
 	// clear that one out first.
-	if _, ok := c.pooledEncoders[encoding]; ok {
-		delete(c.pooledEncoders, encoding)
-	}
-	if _, ok := c.encoders[encoding]; ok {
-		delete(c.encoders, encoding)
-	}
+	delete(c.pooledEncoders, encoding)
+	delete(c.encoders, encoding)
 
 	// If the encoder supports Resetting (IoReseterWriter), then it can be pooled.
-	encoder := fn(ioutil.Discard, c.level)
-	if encoder != nil {
-		if _, ok := encoder.(ioResetterWriter); ok {
-			pool := &sync.Pool{
-				New: func() interface{} {
-					return fn(ioutil.Discard, c.level)
-				},
-			}
-			c.pooledEncoders[encoding] = pool
+	encoder := fn(io.Discard, c.level)
+	if _, ok := encoder.(ioResetterWriter); ok {
+		pool := &sync.Pool{
+			New: func() interface{} {
+				return fn(io.Discard, c.level)
+			},
 		}
+		c.pooledEncoders[encoding] = pool
 	}
+
 	// If the encoder is not in the pooledEncoders, add it to the normal encoders.
 	if _, ok := c.pooledEncoders[encoding]; !ok {
 		c.encoders[encoding] = fn
@@ -208,7 +202,7 @@ func (c *Compressor) Handler(next http.Handler) http.Handler {
 		}
 		// Re-add the encoder to the pool if applicable.
 		defer cleanup()
-		defer cw.Close()
+		defer cw.Close() //nolint:errcheck
 
 		next.ServeHTTP(cw, r)
 	})
@@ -231,13 +225,11 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 				}
 				encoder.Reset(w)
 				return encoder, name, cleanup
-
 			}
 			if fn, ok := c.encoders[name]; ok {
 				return fn(w, c.level), name, func() {}
 			}
 		}
-
 	}
 
 	// No encoder found to match the accepted encoding
@@ -336,9 +328,9 @@ func (cw *compressResponseWriter) Write(p []byte) (int, error) {
 func (cw *compressResponseWriter) writer() io.Writer {
 	if cw.compressable {
 		return cw.w
-	} else {
-		return cw.ResponseWriter
 	}
+
+	return cw.ResponseWriter
 }
 
 type compressFlusher interface {
@@ -352,7 +344,7 @@ func (cw *compressResponseWriter) Flush() {
 	// If the underlying writer has a compression flush signature,
 	// call this Flush() method instead
 	if f, ok := cw.writer().(compressFlusher); ok {
-		f.Flush()
+		f.Flush() //nolint:errcheck,gosec
 
 		// Also flush the underlying response writer
 		if f, ok := cw.ResponseWriter.(http.Flusher); ok {

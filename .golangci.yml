@@ -1,0 +1,58 @@
+run:
+  timeout: 1m
+  build-tags: []
+  skip-dirs: []
+  skip-files: []
+
+output:
+  format: colored-line-number
+  print-issues-lines: true
+  print-linter-name: true
+
+linters:
+  enable-all: true
+  disable:
+    - maligned
+    - interfacer
+    - golint
+    - scopelint
+    - wsl
+    - nlreturn
+    - paralleltest
+    - varnamelen
+    - testpackage
+    - thelper
+    - gomnd
+    - gochecknoglobals
+    - nonamedreturns
+    - ireturn
+    - forcetypeassert
+    - exhaustivestruct
+    - exhaustruct
+    - exhaustive
+    - cyclop
+    - containedctx
+    - nestif
+    - lll
+    - makezero
+    - godot
+    - gocognit
+    - funlen
+    - forbidigo
+    - wrapcheck
+    - goerr113
+    - gocyclo
+
+issues:
+  exclude-rules:
+    - path: _test.go
+      linters:
+        - scopelint
+        - funlen
+        - dupl
+        - gosec
+        - goconst
+        - errcheck
+  exclude-use-default: false
+  max-per-linter: 0
+  max-same-issues: 0

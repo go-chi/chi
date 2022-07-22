@@ -1,33 +1,27 @@
 package middleware
 
 import (
-	"crypto/subtle"
-	"fmt"
 	"net/http"
 )
 
 // BasicAuth implements a simple middleware handler for adding basic http auth to a route.
-func BasicAuth(realm string, creds map[string]string) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user, pass, ok := r.BasicAuth()
-			if !ok {
-				basicAuthFailed(w, realm)
-				return
-			}
+// authorize should return true if the username and password are correct, otherwise 401 will be returned.
+// The returned contextKey and contextValue can be used to set values on the request context,
+// for example a user struct. Values can be retrieved easily using middleware.GetValue.
+func BasicAuth[V any](key any, authorize func(username, password string) (contextValue V, ok bool)) func(next http.Handler) http.Handler {
+	return SetValue(key, func(w http.ResponseWriter, r *http.Request) (value V, ok bool) {
+		user, pass, ok := r.BasicAuth()
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return value, false
+		}
 
-			credPass, credUserOk := creds[user]
-			if !credUserOk || subtle.ConstantTimeCompare([]byte(pass), []byte(credPass)) != 1 {
-				basicAuthFailed(w, realm)
-				return
-			}
+		v, ok := authorize(user, pass)
+		if !ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return value, false
+		}
 
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func basicAuthFailed(w http.ResponseWriter, realm string) {
-	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
-	w.WriteHeader(http.StatusUnauthorized)
+		return v, true
+	})
 }

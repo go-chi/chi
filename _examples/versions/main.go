@@ -14,36 +14,36 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/_examples/versions/data"
-	v1 "github.com/go-chi/chi/v5/_examples/versions/presenter/v1"
-	v2 "github.com/go-chi/chi/v5/_examples/versions/presenter/v2"
-	v3 "github.com/go-chi/chi/v5/_examples/versions/presenter/v3"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/FallenTaters/chio"
+	"github.com/FallenTaters/chio/_examples/versions/data"
+	v1 "github.com/FallenTaters/chio/_examples/versions/presenter/v1"
+	v2 "github.com/FallenTaters/chio/_examples/versions/presenter/v2"
+	v3 "github.com/FallenTaters/chio/_examples/versions/presenter/v3"
+	"github.com/FallenTaters/chio/middleware"
 	"github.com/go-chi/render"
 )
 
 func main() {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	// API version 3.
-	r.Route("/v3", func(r chi.Router) {
+	r.Route("/v3", func(r chio.Router) {
 		r.Use(apiVersionCtx("v3"))
 		r.Mount("/articles", articleRouter())
 	})
 
 	// API version 2.
-	r.Route("/v2", func(r chi.Router) {
+	r.Route("/v2", func(r chio.Router) {
 		r.Use(apiVersionCtx("v2"))
 		r.Mount("/articles", articleRouter())
 	})
 
 	// API version 1.
-	r.Route("/v1", func(r chi.Router) {
+	r.Route("/v1", func(r chio.Router) {
 		r.Use(randomErrorMiddleware) // Simulate random error, ie. version 1 is buggy.
 		r.Use(apiVersionCtx("v1"))
 		r.Mount("/articles", articleRouter())
@@ -62,9 +62,9 @@ func apiVersionCtx(version string) func(next http.Handler) http.Handler {
 }
 
 func articleRouter() http.Handler {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 	r.Get("/", listArticles)
-	r.Route("/{articleID}", func(r chi.Router) {
+	r.Route("/{articleID}", func(r chio.Router) {
 		r.Get("/", getArticle)
 		// r.Put("/", updateArticle)
 		// r.Delete("/", deleteArticle)
@@ -106,7 +106,7 @@ func listArticles(w http.ResponseWriter, r *http.Request) {
 
 func getArticle(w http.ResponseWriter, r *http.Request) {
 	// Load article.
-	if chi.URLParam(r, "articleID") != "1" {
+	if chio.URLParam(r, "articleID") != "1" {
 		render.Respond(w, r, data.ErrNotFound)
 		return
 	}

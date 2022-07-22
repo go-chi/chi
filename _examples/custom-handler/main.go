@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/FallenTaters/chio"
 )
 
 type Handler func(w http.ResponseWriter, r *http.Request) error
@@ -18,7 +18,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 	r.Method("GET", "/", Handler(customHandler))
 	http.ListenAndServe(":3333", r)
 }

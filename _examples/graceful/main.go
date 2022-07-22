@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/FallenTaters/chio"
+	"github.com/FallenTaters/chio/middleware"
 )
 
 func main() {
@@ -56,7 +56,7 @@ func main() {
 }
 
 func service() http.Handler {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)

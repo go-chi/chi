@@ -1,4 +1,4 @@
-package chi
+package chio
 
 import "testing"
 
@@ -6,12 +6,12 @@ import "testing"
 // If user organizes a router like this:
 //
 // (router.go)
-// r.Route("/v1", func(r chi.Router) {
+// r.Route("/v1", func(r chio.Router) {
 // 	r.Mount("/resources", resourcesController{}.Router())
 // }
 //
 // (resources_controller.go)
-// r.Route("/", func(r chi.Router) {
+// r.Route("/", func(r chio.Router) {
 // 	r.Get("/{resource_id}", getResource())
 // 	other routes...
 // }

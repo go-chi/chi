@@ -16,13 +16,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/FallenTaters/chio"
+	"github.com/FallenTaters/chio/middleware"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-
 	// Setup the logger backend using sirupsen/logrus and configure
 	// it to use a custom JSONFormatter. See the logrus docs for how to
 	// configure the backend at github.com/sirupsen/logrus
@@ -33,7 +32,7 @@ func main() {
 	}
 
 	// Routes
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(NewStructuredLogger(logger))
 	r.Use(middleware.Recoverer)

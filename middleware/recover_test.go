@@ -2,25 +2,23 @@ package middleware
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/FallenTaters/chio"
 )
 
 func panicingHandler(http.ResponseWriter, *http.Request) { panic("foo") }
 
 func TestRecoverer(t *testing.T) {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 
-	oldRecovererErrorWriter := recovererErrorWriter
-	defer func() { recovererErrorWriter = oldRecovererErrorWriter }()
-	buf := &bytes.Buffer{}
-	recovererErrorWriter = buf
+	buf := new(bytes.Buffer)
 
-	r.Use(Recoverer)
+	r.Use(Recover(DefaultPanicLogger(buf)))
 	r.Get("/", panicingHandler)
 
 	ts := httptest.NewServer(r)
@@ -30,29 +28,24 @@ func TestRecoverer(t *testing.T) {
 	assertEqual(t, res.StatusCode, http.StatusInternalServerError)
 
 	lines := strings.Split(buf.String(), "\n")
-	for _, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "->") {
-			if !strings.Contains(line, "panicingHandler") {
-				t.Fatalf("First func call line should refer to panicingHandler, but actual line:\n%v\n", line)
-			}
-			return
-		}
-	}
-	t.Fatal("First func call line should start with ->.")
+	assertEqual(t, lines[0], `GET "/" - panic: foo`)
+	assertEqual(t, lines[1], "\tgithub.com/FallenTaters/chio/middleware.panicingHandler")
+	assertTrue(t, strings.HasPrefix(lines[2], "\t\t"), lines[2])
+	assertTrue(t, strings.HasSuffix(lines[2], "chio/middleware/recover_test.go:13"), lines[2])
 }
 
 func TestRecovererAbortHandler(t *testing.T) {
 	defer func() {
 		rcv := recover()
-		if rcv != http.ErrAbortHandler {
+		if err, _ := rcv.(error); errors.Is(err, http.ErrAbortHandler) {
 			t.Fatalf("http.ErrAbortHandler should not be recovered")
 		}
 	}()
 
 	w := httptest.NewRecorder()
 
-	r := chi.NewRouter()
-	r.Use(Recoverer)
+	r := chio.NewRouter()
+	r.Use(Recover(nil))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		panic(http.ErrAbortHandler)

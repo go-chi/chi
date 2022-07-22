@@ -3,18 +3,18 @@ package main
 import (
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/FallenTaters/chio"
+	"github.com/FallenTaters/chio/middleware"
 )
 
 func init() {
-	chi.RegisterMethod("LINK")
-	chi.RegisterMethod("UNLINK")
-	chi.RegisterMethod("WOOHOO")
+	chio.RegisterMethod("LINK")
+	chio.RegisterMethod("UNLINK")
+	chio.RegisterMethod("WOOHOO")
 }
 
 func main() {
-	r := chi.NewRouter()
+	r := chio.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
