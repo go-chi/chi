@@ -1,17 +1,17 @@
 chio examples
 ============
 
-* [custom-handler](https://github.com/go-chi/chi/blob/master/_examples/custom-handler/main.go) - Use a custom handler function signature
-* [custom-method](https://github.com/go-chi/chi/blob/master/_examples/custom-method/main.go) - Add a custom HTTP method
-* [fileserver](https://github.com/go-chi/chi/blob/master/_examples/fileserver/main.go) - Easily serve static files
-* [graceful](https://github.com/go-chi/chi/blob/master/_examples/graceful/main.go) - Graceful context signaling and server shutdown
-* [hello-world](https://github.com/go-chi/chi/blob/master/_examples/hello-world/main.go) - Hello World!
-* [limits](https://github.com/go-chi/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
-* [logging](https://github.com/go-chi/chi/blob/master/_examples/logging/main.go) - Easy structured logging for any backend
-* [rest](https://github.com/go-chi/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
-* [router-walk](https://github.com/go-chi/chi/blob/master/_examples/router-walk/main.go) - Print to stdout a router's routes
-* [todos-resource](https://github.com/go-chi/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
-* [versions](https://github.com/go-chi/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
+* [custom-handler](https://github.com/FallenTaters/chio/blob/master/_examples/custom-handler/main.go) - Use a custom handler function signature
+* [custom-method](https://github.com/FallenTaters/chio/blob/master/_examples/custom-method/main.go) - Add a custom HTTP method
+* [fileserver](https://github.com/FallenTaters/chio/blob/master/_examples/fileserver/main.go) - Easily serve static files
+* [graceful](https://github.com/FallenTaters/chio/blob/master/_examples/graceful/main.go) - Graceful context signaling and server shutdown
+* [hello-world](https://github.com/FallenTaters/chio/blob/master/_examples/hello-world/main.go) - Hello World!
+* [limits](https://github.com/FallenTaters/chio/blob/master/_examples/limits/main.go) - Timeouts and Throttling
+* [logging](https://github.com/FallenTaters/chio/blob/master/_examples/logging/main.go) - Easy structured logging for any backend
+* [rest](https://github.com/FallenTaters/chio/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
+* [router-walk](https://github.com/FallenTaters/chio/blob/master/_examples/router-walk/main.go) - Print to stdout a router's routes
+* [todos-resource](https://github.com/FallenTaters/chio/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
+* [versions](https://github.com/FallenTaters/chio/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
 
 
 ## Usage
