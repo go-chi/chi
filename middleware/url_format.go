@@ -51,6 +51,11 @@ func URLFormat(next http.Handler) http.Handler {
 		var format string
 		path := r.URL.Path
 
+		rctx := chi.RouteContext(r.Context())
+		if rctx != nil && rctx.RoutePath != "" {
+			path = rctx.RoutePath
+		}
+
 		if strings.Index(path, ".") > 0 {
 			base := strings.LastIndex(path, "/")
 			idx := strings.LastIndex(path[base:], ".")
@@ -59,7 +64,6 @@ func URLFormat(next http.Handler) http.Handler {
 				idx += base
 				format = path[idx+1:]
 
-				rctx := chi.RouteContext(r.Context())
 				rctx.RoutePath = path[:idx]
 			}
 		}
