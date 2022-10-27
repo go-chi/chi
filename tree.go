@@ -136,7 +136,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 
 		// We're going to be searching for a wild node next,
 		// in this case, we need to get the tail
-		var label = search[0]
+		label := search[0]
 		var segTail byte
 		var segEndIdx int
 		var segTyp nodeTyp
@@ -237,36 +237,31 @@ func (n *node) addChild(child *node, prefix string) *node {
 
 	default:
 		// Search prefix contains a param, regexp or wildcard
-
-		if segTyp == ntRegexp {
-			rex, err := regexp.Compile(segRexpat)
-			if err != nil {
-				panic(fmt.Sprintf("chi: invalid regexp pattern '%s' in route param", segRexpat))
-			}
-			child.prefix = segRexpat
-			child.rex = rex
-		}
-
 		if segStartIdx == 0 {
 			// Route starts with a param
 			child.typ = segTyp
 
-			if segTyp == ntCatchAll {
-				segStartIdx = -1
-			} else {
-				segStartIdx = segEndIdx
+			if segTyp == ntRegexp {
+				rex, err := regexp.Compile(segRexpat)
+				if err != nil {
+					panic(fmt.Sprintf("chi: invalid regexp pattern '%s' in route param", segRexpat))
+				}
+				child.prefix = segRexpat
+				child.rex = rex
 			}
-			if segStartIdx < 0 {
-				segStartIdx = len(search)
-			}
+
 			child.tail = segTail // for params, we set the tail
 
-			if segStartIdx != len(search) {
+			if segEndIdx != len(search) {
 				// add static edge for the remaining part, split the end.
 				// its not possible to have adjacent param nodes, so its certainly
 				// going to be a static node next.
 
-				search = search[segStartIdx:] // advance search position
+				if segTyp != ntRegexp {
+					child.prefix = search[:segEndIdx]
+				}
+
+				search = search[segEndIdx:] // advance search position
 
 				nn := &node{
 					typ:    ntStatic,
@@ -288,9 +283,10 @@ func (n *node) addChild(child *node, prefix string) *node {
 			search = search[segStartIdx:]
 
 			nn := &node{
-				typ:   segTyp,
-				label: search[0],
-				tail:  segTail,
+				typ:    segTyp,
+				label:  search[0],
+				tail:   segTail,
+				prefix: search,
 			}
 			hn = child.addChild(nn, search)
 
