@@ -4,6 +4,7 @@ chi examples
 * [custom-handler](https://github.com/go-chi/chi/blob/master/_examples/custom-handler/main.go) - Use a custom handler function signature
 * [custom-method](https://github.com/go-chi/chi/blob/master/_examples/custom-method/main.go) - Add a custom HTTP method
 * [fileserver](https://github.com/go-chi/chi/blob/master/_examples/fileserver/main.go) - Easily serve static files
+* [form](https://github.com/go-chi/chi/blob/master/_examples/form/main.go) - Get http request parameters easily from querystring, forms, headers, etc.
 * [graceful](https://github.com/go-chi/chi/blob/master/_examples/graceful/main.go) - Graceful context signaling and server shutdown
 * [hello-world](https://github.com/go-chi/chi/blob/master/_examples/hello-world/main.go) - Hello World!
 * [limits](https://github.com/go-chi/chi/blob/master/_examples/limits/main.go) - Timeouts and Throttling
