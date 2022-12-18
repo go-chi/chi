@@ -9,7 +9,7 @@ import (
 )
 
 // Unix epoch time
-var epoch = time.Unix(0, 0).Format(http.TimeFormat)
+var epoch = time.Unix(0, 0).UTC().Format(http.TimeFormat)
 
 // Taken from https://github.com/mytrile/nocache
 var noCacheHeaders = map[string]string{
