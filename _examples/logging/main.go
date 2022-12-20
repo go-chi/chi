@@ -44,14 +44,14 @@ func main() {
 	})
 	r.Get("/wait", func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(1 * time.Second)
-		StructuredLogEntrySetField(r, "wait", true)
+		LogEntrySetField(r, "wait", true)
 		w.Write([]byte("hi"))
 	})
 	r.Get("/panic", func(w http.ResponseWriter, r *http.Request) {
 		panic("oops")
 	})
 	r.Get("/add_fields", func(w http.ResponseWriter, r *http.Request) {
-		StructuredLogEntrySetFields(r, map[string]interface{}{"foo": "bar", "bar": "foo"})
+		LogEntrySetFields(r, map[string]interface{}{"foo": "bar", "bar": "foo"})
 	})
 	http.ListenAndServe(":3333", r)
 }
@@ -123,18 +123,18 @@ func (l *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
 // passes through the handler chain, which at any point can be logged
 // with a call to .Print(), .Info(), etc.
 
-func GetStructuredLogEntry(r *http.Request) *slog.Logger {
+func GetLogEntry(r *http.Request) *slog.Logger {
 	entry := middleware.GetLogEntry(r).(*StructuredLoggerEntry)
 	return entry.Logger
 }
 
-func StructuredLogEntrySetField(r *http.Request, key string, value interface{}) {
+func LogEntrySetField(r *http.Request, key string, value interface{}) {
 	if entry, ok := r.Context().Value(middleware.LogEntryCtxKey).(*StructuredLoggerEntry); ok {
 		entry.Logger = entry.Logger.With(key, value)
 	}
 }
 
-func StructuredLogEntrySetFields(r *http.Request, fields map[string]interface{}) {
+func LogEntrySetFields(r *http.Request, fields map[string]interface{}) {
 	if entry, ok := r.Context().Value(middleware.LogEntryCtxKey).(*StructuredLoggerEntry); ok {
 		for k, v := range fields {
 			entry.Logger = entry.Logger.With(k, v)
