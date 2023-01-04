@@ -172,7 +172,7 @@ func AdminOnly(next http.Handler) http.Handler {
 
 ## Router interface
 
-chi's router is based on a kind of [Patricia Radix trie](https://en.wikipedia.org/wiki/Radix_tree).
+chi's router is based on a kind of [Patricia Radix tree](https://en.wikipedia.org/wiki/Radix_tree).
 The router is fully compatible with `net/http`.
 
 Built on top of the tree is the `Router` interface:
