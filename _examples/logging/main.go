@@ -92,7 +92,7 @@ func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	entry := StructuredLoggerEntry{Logger: slog.New(handler)}
 
-	entry.Logger.LogAttrs(slog.LevelInfo, "request started", logFields...)
+	entry.Logger.LogAttrs(slog.LevelInfo, "request started")
 
 	return &entry
 }
