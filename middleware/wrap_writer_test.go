@@ -5,20 +5,11 @@ import (
 	"testing"
 )
 
-func TestHttpFancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
-	f := &httpFancyWriter{chiWriter: chiWriter{ResponseWriter: httptest.NewRecorder()}}
-	f.Flush()
+func TestChiWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
+	cw := &chiWriter{ResponseWriter: httptest.NewRecorder()}
+	cw.Flush()
 
-	if !f.wroteHeader {
-		t.Fatal("want Flush to have set wroteHeader=true")
-	}
-}
-
-func TestHttp2FancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
-	f := &http2FancyWriter{chiWriter{ResponseWriter: httptest.NewRecorder()}}
-	f.Flush()
-
-	if !f.wroteHeader {
+	if !cw.wroteHeader {
 		t.Fatal("want Flush to have set wroteHeader=true")
 	}
 }
