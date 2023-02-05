@@ -4,9 +4,7 @@ package middleware
 // https://github.com/zenazn/goji/tree/master/web/middleware
 
 import (
-	"bufio"
 	"io"
-	"net"
 	"net/http"
 )
 
@@ -14,7 +12,7 @@ import (
 // hook into various parts of the response process.
 func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter {
 	cw := &chiWriter{ResponseWriter: w}
-	flusher, hasFlusher := w.(http.Flusher)
+	_, hasFlusher := w.(http.Flusher)
 
 	if protoMajor == 2 {
 		pusher, hasPusher := w.(http.Pusher)
@@ -25,13 +23,13 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 				http.Pusher
 			}{
 				cw,
-				flusher,
+				cw,
 				pusher,
 			}
 		}
 	} else {
 		hijacker, hasHijacker := w.(http.Hijacker)
-		readerFrom, hasReaderFrom := w.(io.ReaderFrom)
+		_, hasReaderFrom := w.(io.ReaderFrom)
 		if hasFlusher && hasHijacker && hasReaderFrom {
 			return struct {
 				WrapResponseWriter
@@ -40,9 +38,9 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 				io.ReaderFrom
 			}{
 				cw,
-				flusher,
+				cw,
 				hijacker,
-				readerFrom,
+				cw,
 			}
 		}
 		if hasFlusher && hasHijacker {
@@ -52,7 +50,7 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 				http.Hijacker
 			}{
 				cw,
-				flusher,
+				cw,
 				hijacker,
 			}
 		}
@@ -73,7 +71,7 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 			http.Flusher
 		}{
 			cw,
-			flusher,
+			cw,
 		}
 	}
 
@@ -160,13 +158,7 @@ func (cw *chiWriter) Unwrap() http.ResponseWriter {
 
 func (cw *chiWriter) Flush() {
 	cw.wroteHeader = true
-	fl := cw.ResponseWriter.(http.Flusher)
-	fl.Flush()
-}
-
-func (cw *chiWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hj := cw.ResponseWriter.(http.Hijacker)
-	return hj.Hijack()
+	cw.ResponseWriter.(http.Flusher).Flush()
 }
 
 func (cw *chiWriter) ReadFrom(r io.Reader) (int64, error) {
@@ -180,8 +172,4 @@ func (cw *chiWriter) ReadFrom(r io.Reader) (int64, error) {
 	n, err := rf.ReadFrom(r)
 	cw.bytes += int(n)
 	return n, err
-}
-
-func (cw *chiWriter) Push(target string, opts *http.PushOptions) error {
-	return cw.ResponseWriter.(http.Pusher).Push(target, opts)
 }
