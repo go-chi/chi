@@ -6,7 +6,7 @@ import (
 )
 
 func TestHttpFancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
-	f := &httpFancyWriter{basicWriter: basicWriter{ResponseWriter: httptest.NewRecorder()}}
+	f := &httpFancyWriter{chiWriter: chiWriter{ResponseWriter: httptest.NewRecorder()}}
 	f.Flush()
 
 	if !f.wroteHeader {
@@ -15,7 +15,7 @@ func TestHttpFancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
 }
 
 func TestHttp2FancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
-	f := &http2FancyWriter{basicWriter{ResponseWriter: httptest.NewRecorder()}}
+	f := &http2FancyWriter{chiWriter{ResponseWriter: httptest.NewRecorder()}}
 	f.Flush()
 
 	if !f.wroteHeader {
