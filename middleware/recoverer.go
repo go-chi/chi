@@ -36,7 +36,9 @@ func Recoverer(next http.Handler) http.Handler {
 					PrintPrettyStack(rvr)
 				}
 
-				w.WriteHeader(http.StatusInternalServerError)
+				if r.Header.Get("Connection") != "Upgrade" {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 		}()
 
