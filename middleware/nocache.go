@@ -25,7 +25,7 @@ var noCacheHeaders = map[string]string{
 // As per http://wiki.nginx.org/HttpProxyModule - NoCache sets:
 //
 //	Expires: Thu, 01 Jan 1970 00:00:00 UTC
-//	Cache-Control: no-cache, private, max-age=0
+//	Cache-Control: no-cache, no-store, no-transform, must-revalidate, private, max-age=0
 //	X-Accel-Expires: 0
 //	Pragma: no-cache (for HTTP/1.0 proxies/clients)
 func NoCache(h http.Handler) http.Handler {
