@@ -232,8 +232,8 @@ func TestTreeMoar(t *testing.T) {
 		{m: mGET, r: "/articles/456/data.json", h: hStub11, k: []string{"id"}, v: []string{"456"}},
 
 		{m: mGET, r: "/articles/files/file.zip", h: hStub12, k: []string{"file", "ext"}, v: []string{"file", "zip"}},
-		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
-		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
+		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos.tar", "gz"}},
+		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos.tar", "gz"}},
 
 		{m: mPUT, r: "/articles/me", h: hStub13, k: []string{}, v: []string{}},
 		{m: mGET, r: "/articles/me", h: hStub, k: []string{"id"}, v: []string{"me"}},
