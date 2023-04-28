@@ -72,7 +72,7 @@ func service() http.Handler {
 		// so consider the work here as some background routine to fetch a long running
 		// search query to find as many results as possible, but, instead we cut it short
 		// and respond with what we have so far. How a shutdown is handled is entirely
-		// up to the developer, as some code blocks are preemptable, and others are not.
+		// up to the developer, as some code blocks are preemptible, and others are not.
 		time.Sleep(5 * time.Second)
 
 		w.Write([]byte(fmt.Sprintf("all done.\n")))
