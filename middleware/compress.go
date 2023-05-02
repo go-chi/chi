@@ -382,6 +382,10 @@ func (cw *compressResponseWriter) Close() error {
 	return errors.New("chi/middleware: io.WriteCloser is unavailable on the writer")
 }
 
+func (cw *compressResponseWriter) Unwrap() http.ResponseWriter {
+	return cw.ResponseWriter
+}
+
 func encoderGzip(w io.Writer, level int) io.Writer {
 	gw, err := gzip.NewWriterLevel(w, level)
 	if err != nil {
