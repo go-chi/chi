@@ -35,7 +35,7 @@ func TestWrapWriterHTTP2(t *testing.T) {
 		}
 		_, rf := w.(io.ReaderFrom)
 		if rf {
-			t.Fatal("request should not have been a io.ReaderFrom")
+			t.Fatal("request should not have been an io.ReaderFrom")
 		}
 		_, ps := w.(http.Pusher)
 		if !ps {

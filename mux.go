@@ -156,7 +156,7 @@ func (mx *Mux) Head(pattern string, handlerFn http.HandlerFunc) {
 	mx.handle(mHEAD, pattern, handlerFn)
 }
 
-// Options adds the route `pattern` that matches a OPTIONS http method to
+// Options adds the route `pattern` that matches an OPTIONS http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Options(pattern string, handlerFn http.HandlerFunc) {
 	mx.handle(mOPTIONS, pattern, handlerFn)

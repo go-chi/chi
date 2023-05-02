@@ -34,7 +34,7 @@ func TestThrottleBacklog(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	// The throttler proccesses 10 consecutive requests, each one of those
+	// The throttler processes 10 consecutive requests, each one of those
 	// requests lasts 1s. The maximum number of requests this can possible serve
 	// before the clients time out (5s) is 40.
 	for i := 0; i < 40; i++ {

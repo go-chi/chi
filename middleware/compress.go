@@ -135,7 +135,7 @@ func NewCompressor(level int, types ...string) *Compressor {
 // The encoding should be a standardised identifier. See:
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
 //
-// For example, add the Brotli algortithm:
+// For example, add the Brotli algorithm:
 //
 //  import brotli_enc "gopkg.in/kothar/brotli-go.v0/enc"
 //
@@ -285,7 +285,7 @@ func (cw *compressResponseWriter) isCompressable() bool {
 		contentType = contentType[0:idx]
 	}
 
-	// Is the content type compressable?
+	// Is the content type compressible?
 	if _, ok := cw.contentTypes[contentType]; ok {
 		return true
 	}
