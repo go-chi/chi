@@ -3,6 +3,8 @@ package middleware
 import (
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // Heartbeat endpoint middleware useful to setting up a path like
@@ -12,7 +14,9 @@ import (
 func Heartbeat(endpoint string) func(http.Handler) http.Handler {
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			if (r.Method == "GET" || r.Method == "HEAD") && strings.EqualFold(r.URL.Path, endpoint) {
+			rctx := chi.RouteContext(r.Context())
+			routePath := rctx.RoutePath
+			if (r.Method == "GET" || r.Method == "HEAD") && (strings.EqualFold(routePath, endpoint)) || strings.EqualFold(r.URL.Path, endpoint) {
 				w.Header().Set("Content-Type", "text/plain")
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte("."))
