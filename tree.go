@@ -43,6 +43,18 @@ var methodMap = map[string]methodTyp{
 	http.MethodTrace:   mTRACE,
 }
 
+var reverseMethodMap = map[methodTyp]string{
+	mCONNECT: http.MethodConnect,
+	mDELETE:  http.MethodDelete,
+	mGET:     http.MethodGet,
+	mHEAD:    http.MethodHead,
+	mOPTIONS: http.MethodOptions,
+	mPATCH:   http.MethodPatch,
+	mPOST:    http.MethodPost,
+	mPUT:     http.MethodPut,
+	mTRACE:   http.MethodTrace,
+}
+
 // RegisterMethod adds support for custom HTTP method handlers, available
 // via Router#Method and Router#MethodFunc
 func RegisterMethod(method string) {
@@ -454,6 +466,13 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 							return xn
 						}
 
+						for endpoints := range xn.endpoints {
+							if endpoints == mALL || endpoints == mSTUB {
+								continue
+							}
+							rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+						}
+
 						// flag that the routing context found a route, but not a corresponding
 						// supported method
 						rctx.methodNotAllowed = true
@@ -491,6 +510,13 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				if h != nil && h.handler != nil {
 					rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 					return xn
+				}
+
+				for endpoints := range xn.endpoints {
+					if endpoints == mALL || endpoints == mSTUB {
+						continue
+					}
+					rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
 				}
 
 				// flag that the routing context found a route, but not a corresponding

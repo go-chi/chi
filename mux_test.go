@@ -392,6 +392,43 @@ func TestMuxNestedNotFound(t *testing.T) {
 	}
 }
 
+func TestMethodNotAllowed(t *testing.T) {
+	r := NewRouter()
+
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi, get"))
+	})
+
+	r.Head("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi, head"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	t.Run("Registered Method", func(t *testing.T) {
+		resp, _ := testRequest(t, ts, "GET", "/hi", nil)
+		if resp.StatusCode != 200 {
+			t.Fatal(resp.Status)
+		}
+		if resp.Header.Values("Allow") != nil {
+			t.Fatal("allow should be empty when method is registered")
+		}
+	})
+
+	t.Run("Unregistered Method", func(t *testing.T) {
+		resp, _ := testRequest(t, ts, "POST", "/hi", nil)
+		if resp.StatusCode != 405 {
+			t.Fatal(resp.Status)
+		}
+		allowedMethods := resp.Header.Values("Allow")
+		if len(allowedMethods) != 2 || allowedMethods[0] != "GET" || allowedMethods[1] != "HEAD" {
+			t.Fatal("Allow header should contain 2 headers: GET, HEAD. Received: ", allowedMethods)
+
+		}
+	})
+}
+
 func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {
@@ -1771,6 +1808,7 @@ func BenchmarkMux(b *testing.B) {
 	mx := NewRouter()
 	mx.Get("/", h1)
 	mx.Get("/hi", h2)
+	mx.Post("/hi-post", h2) // used to benchmark 405 responses
 	mx.Get("/sup/{id}/and/{this}", h3)
 	mx.Get("/sup/{id}/{bar:foo}/{this}", h3)
 
@@ -1787,6 +1825,7 @@ func BenchmarkMux(b *testing.B) {
 	routes := []string{
 		"/",
 		"/hi",
+		"/hi-post",
 		"/sup/123/and/this",
 		"/sup/123/foo/this",
 		"/sharing/z/aBc",                 // subrouter-1
