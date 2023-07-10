@@ -132,6 +132,18 @@ func (mx *Mux) MethodFunc(method, pattern string, handlerFn http.HandlerFunc) {
 	mx.Method(method, pattern, handlerFn)
 }
 
+// Any adds the route `pattern` that matches all http methods to
+// execute the `handlerFn` http.HandlerFunc.
+func (mx *Mux) Any(pattern string, handlerFn http.HandlerFunc) {
+	mx.handle(mGET, pattern, handlerFn)
+	mx.handle(mHEAD, pattern, handlerFn)
+	mx.handle(mPOST, pattern, handlerFn)
+	mx.handle(mPUT, pattern, handlerFn)
+	mx.handle(mPATCH, pattern, handlerFn)
+	mx.handle(mDELETE, pattern, handlerFn)
+	mx.handle(mOPTIONS, pattern, handlerFn)
+}
+
 // Connect adds the route `pattern` that matches a CONNECT http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) Connect(pattern string, handlerFn http.HandlerFunc) {

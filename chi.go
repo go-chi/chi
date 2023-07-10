@@ -95,6 +95,7 @@ type Router interface {
 	MethodFunc(method, pattern string, h http.HandlerFunc)
 
 	// HTTP-method routing along `pattern`
+	Any(pattern string, h http.HandlerFunc)
 	Connect(pattern string, h http.HandlerFunc)
 	Delete(pattern string, h http.HandlerFunc)
 	Get(pattern string, h http.HandlerFunc)

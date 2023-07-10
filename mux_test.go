@@ -81,6 +81,11 @@ func TestMuxBasic(t *testing.T) {
 		w.Write([]byte("ping all2"))
 	}
 
+	pingAll3 := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte("ping all3"))
+	}
+
 	pingOne := func(w http.ResponseWriter, r *http.Request) {
 		idParam := URLParam(r, "id")
 		w.WriteHeader(200)
@@ -107,6 +112,7 @@ func TestMuxBasic(t *testing.T) {
 	m.MethodFunc("GET", "/pingall", pingAll)
 	m.MethodFunc("get", "/ping/all", pingAll)
 	m.Get("/ping/all2", pingAll2)
+	m.Any("/ping/all3", pingAll3)
 
 	m.Head("/ping", headPing)
 	m.Post("/ping", createPing)
@@ -143,8 +149,38 @@ func TestMuxBasic(t *testing.T) {
 		t.Fatalf(body)
 	}
 
+	// DELETE /ping/all3
+	if _, body := testRequest(t, ts, "DELETE", "/ping/all3", nil); body != "ping all3" {
+		t.Fatalf(body)
+	}
+
 	// GET /ping/all2
 	if _, body := testRequest(t, ts, "GET", "/ping/all2", nil); body != "ping all2" {
+		t.Fatalf(body)
+	}
+
+	// OPTIONS /ping/all3
+	if _, body := testRequest(t, ts, "OPTIONS", "/ping/all3", nil); body != "ping all3" {
+		t.Fatalf(body)
+	}
+
+	// PATCH /ping/all3
+	if _, body := testRequest(t, ts, "PATCH", "/ping/all3", nil); body != "ping all3" {
+		t.Fatalf(body)
+	}
+
+	// POST /ping/all3
+	if _, body := testRequest(t, ts, "POST", "/ping/all3", nil); body != "ping all3" {
+		t.Fatalf(body)
+	}
+
+	// OPTIONS /ping/all3
+	if _, body := testRequest(t, ts, "OPTIONS", "/ping/all3", nil); body != "ping all3" {
+		t.Fatalf(body)
+	}
+
+	// PUT /ping/all3
+	if _, body := testRequest(t, ts, "PUT", "/ping/all3", nil); body != "ping all3" {
 		t.Fatalf(body)
 	}
 
