@@ -76,6 +76,7 @@ type Context struct {
 
 	// methodNotAllowed hint
 	methodNotAllowed bool
+	methodsAllowed   []methodTyp // allowed methods in case of a 405
 }
 
 // Reset a routing context to its initial state.
