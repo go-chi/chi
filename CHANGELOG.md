@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.0.10 (2023-07-13)
+
+- Fixed small edge case in tests of v5.0.9 for older Go versions
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.8...v5.0.10
+
+
 ## v5.0.9 (2023-07-13)
 
 - History of changes: see https://github.com/go-chi/chi/compare/v5.0.8...v5.0.9
