@@ -422,9 +422,9 @@ func TestMethodNotAllowed(t *testing.T) {
 			t.Fatal(resp.Status)
 		}
 		allowedMethods := resp.Header.Values("Allow")
-		if len(allowedMethods) != 2 || allowedMethods[0] != "GET" || allowedMethods[1] != "HEAD" {
+		if len(allowedMethods) != 2 || ((allowedMethods[0] != "GET" || allowedMethods[1] != "HEAD") &&
+			(allowedMethods[1] != "GET" || allowedMethods[0] != "HEAD")) {
 			t.Fatal("Allow header should contain 2 headers: GET, HEAD. Received: ", allowedMethods)
-
 		}
 	})
 }
