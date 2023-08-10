@@ -8,6 +8,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	errRouteContextNil = "RouteContext was nil."
+)
+
 var (
 	// URLFormatCtxKey is the context.Context key to store the URL format data
 	// for a request.
@@ -52,7 +56,12 @@ func URLFormat(next http.Handler) http.Handler {
 		path := r.URL.Path
 
 		rctx := chi.RouteContext(r.Context())
-		if rctx != nil && rctx.RoutePath != "" {
+		if rctx == nil {
+			http.Error(w, errRouteContextNil, http.StatusInternalServerError)
+			return
+		}
+
+		if rctx.RoutePath != "" {
 			path = rctx.RoutePath
 		}
 

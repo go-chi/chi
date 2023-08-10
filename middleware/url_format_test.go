@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -65,5 +67,32 @@ func TestURLFormatInSubRouter(t *testing.T) {
 
 	if _, resp := testRequest(t, ts, "GET", "/articles/1/subroute.json", nil); resp != "1" {
 		t.Fatalf(resp)
+	}
+}
+
+func TestURLFormatWithoutChiRouteContext(t *testing.T) {
+	r := chi.NewRouter()
+
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			newCtx := context.WithValue(r.Context(), chi.RouteCtxKey, nil)
+			next.ServeHTTP(w, r.WithContext(newCtx))
+		})
+	})
+	r.Use(URLFormat)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("OK"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, respBody := testRequest(t, ts, "GET", "/", nil)
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("non 500 response: %v", resp.StatusCode)
+	}
+
+	if strings.TrimSpace(respBody) != errRouteContextNil {
+		t.Fatalf("Expected error message: %s, but got: %s", errRouteContextNil, respBody)
 	}
 }
