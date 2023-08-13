@@ -9,9 +9,11 @@ import (
 	"strings"
 )
 
-var trueClientIP = http.CanonicalHeaderKey("True-Client-IP")
-var xForwardedFor = http.CanonicalHeaderKey("X-Forwarded-For")
-var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
+const (
+	trueClientIP  = "True-Client-IP"
+	xRealIP       = "X-Real-IP"
+	xForwardedFor = "X-Forwarded-For"
+)
 
 // RealIP is a middleware that sets a http.Request's RemoteAddr to the results
 // of parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers
@@ -40,21 +42,25 @@ func RealIP(h http.Handler) http.Handler {
 }
 
 func realIP(r *http.Request) string {
-	var ip string
+	if tcip := r.Header.Get(trueClientIP); isValidIP(tcip) {
+		return tcip
+	}
 
-	if tcip := r.Header.Get(trueClientIP); tcip != "" {
-		ip = tcip
-	} else if xrip := r.Header.Get(xRealIP); xrip != "" {
-		ip = xrip
-	} else if xff := r.Header.Get(xForwardedFor); xff != "" {
+	if xrip := r.Header.Get(xRealIP); isValidIP(xrip) {
+		return xrip
+	}
+
+	if xff := r.Header.Get(xForwardedFor); xff != "" {
 		i := strings.Index(xff, ",")
 		if i == -1 {
 			i = len(xff)
 		}
-		ip = xff[:i]
+		return xff[:i]
 	}
-	if ip == "" || net.ParseIP(ip) == nil {
-		return ""
-	}
-	return ip
+
+	return ""
+}
+
+func isValidIP(ip string) bool {
+	return ip != "" && net.ParseIP(ip) != nil
 }
