@@ -11,8 +11,8 @@ import (
 
 const (
 	trueClientIP  = "True-Client-IP"
-	xRealIP       = "X-Real-IP"
 	xForwardedFor = "X-Forwarded-For"
+	xRealIP       = "X-Real-IP"
 )
 
 // RealIP is a middleware that sets a http.Request's RemoteAddr to the results
