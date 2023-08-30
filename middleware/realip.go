@@ -55,7 +55,10 @@ func realIP(r *http.Request) string {
 		if i == -1 {
 			i = len(xff)
 		}
-		return xff[:i]
+
+		if isValidIP(xff[:i]) {
+			return xff[:i]
+		}
 	}
 
 	return ""
