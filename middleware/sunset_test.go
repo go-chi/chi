@@ -18,7 +18,7 @@ func TestSunset(t *testing.T) {
 		r := chi.NewRouter()
 
 		sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
-		r.Use(Sunset(&sunsetAt))
+		r.Use(Sunset(sunsetAt))
 
 		var sunset, deprecation string
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +50,7 @@ func TestSunset(t *testing.T) {
 
 		sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
 		deprecationLink := "https://example.com/v1/deprecation-details"
-		r.Use(Sunset(&sunsetAt, deprecationLink))
+		r.Use(Sunset(sunsetAt, deprecationLink))
 
 		var sunset, deprecation, link string
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -89,10 +89,10 @@ func main() {
 	r := chi.NewRouter()
 
 	sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
-	r.Use(middleware.Sunset(&sunsetAt))
+	r.Use(middleware.Sunset(sunsetAt))
 
 	// can provide additional link for updated resource
-	// r.Use(middleware.Sunset(&sunsetAt, "https://example.com/v1/deprecation-details"))
+	// r.Use(middleware.Sunset(sunsetAt, "https://example.com/v1/deprecation-details"))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("This endpoint will be removed soon"))
