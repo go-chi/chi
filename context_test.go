@@ -75,4 +75,11 @@ func TestRoutePattern(t *testing.T) {
 	if p := x.RoutePattern(); p != "/v1/resources/*special_path/with_asterisks*/{resource_id}" {
 		t.Fatal("unexpected route pattern: " + p)
 	}
+
+	// Testing for the root route pattern
+	x.RoutePatterns = []string{"/"}
+	// It should just return "/" as the pattern.
+	if p := x.RoutePattern(); p != "/" {
+		t.Fatal("unexpected route pattern for root: " + p)
+	}
 }
