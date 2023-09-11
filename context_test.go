@@ -78,7 +78,7 @@ func TestRoutePattern(t *testing.T) {
 
 	// Testing for the root route pattern
 	x.RoutePatterns = []string{"/"}
-	// It should just return "/" as the pattern.
+	// It should just return "/" as the pattern
 	if p := x.RoutePattern(); p != "/" {
 		t.Fatal("unexpected route pattern for root: " + p)
 	}
