@@ -118,7 +118,7 @@ func getArticle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Simulate some context values:
-	// 1. ?auth=true simluates authenticated session/user.
+	// 1. ?auth=true simulates authenticated session/user.
 	// 2. ?error=true simulates random error.
 	if r.URL.Query().Get("auth") != "" {
 		r = r.WithContext(context.WithValue(r.Context(), "auth", true))

@@ -90,7 +90,7 @@ func TestXForwardForXRealIPPrecedence(t *testing.T) {
 	}
 }
 
-func TestIvalidIP(t *testing.T) {
+func TestInvalidIP(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	req.Header.Add("X-Real-IP", "100.100.100.1000")
 	w := httptest.NewRecorder()

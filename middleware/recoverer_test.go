@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func panicingHandler(http.ResponseWriter, *http.Request) { panic("foo") }
+func panickingHandler(http.ResponseWriter, *http.Request) { panic("foo") }
 
 func TestRecoverer(t *testing.T) {
 	r := chi.NewRouter()
@@ -21,7 +21,7 @@ func TestRecoverer(t *testing.T) {
 	recovererErrorWriter = buf
 
 	r.Use(Recoverer)
-	r.Get("/", panicingHandler)
+	r.Get("/", panickingHandler)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -32,8 +32,8 @@ func TestRecoverer(t *testing.T) {
 	lines := strings.Split(buf.String(), "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(strings.TrimSpace(line), "->") {
-			if !strings.Contains(line, "panicingHandler") {
-				t.Fatalf("First func call line should refer to panicingHandler, but actual line:\n%v\n", line)
+			if !strings.Contains(line, "panickingHandler") {
+				t.Fatalf("First func call line should refer to panickingHandler, but actual line:\n%v\n", line)
 			}
 			return
 		}
