@@ -11,11 +11,11 @@ import (
 // Profiler is a convenient subrouter used for mounting net/http/pprof. ie.
 //
 //	func MyService() http.Handler {
-//	  r := chi.NewRouter()
-//	  // ..middlewares
-//	  r.Mount("/debug", middleware.Profiler())
-//	  // ..routes
-//	  return r
+//		r := chi.NewRouter()
+//		// ..middlewares
+//		r.Mount("/debug", middleware.Profiler())
+//		// ..routes
+//		return r
 //	}
 func Profiler() http.Handler {
 	r := chi.NewRouter()
