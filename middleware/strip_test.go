@@ -125,25 +125,25 @@ func TestRedirectSlashes(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if resp, body := testRequest(t, ts, "GET", "/", nil); body != "root" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/", nil); body != "root" || resp.StatusCode != 200 {
 		t.Fatalf(body)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if resp, body := testRequest(t, ts, "GET", "//", nil); body != "root" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "//", nil); body != "root" || resp.StatusCode != 200 {
 		t.Fatalf(body)
 	}
 
-	if resp, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" || resp.StatusCode != 200 {
 		t.Fatalf(body)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
-	if resp, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" || resp.StatusCode != 200 {
 		t.Fatalf(body)
 	}
 
-	if resp, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" && resp.StatusCode != 200 {
+	if resp, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" || resp.StatusCode != 404 {
 		t.Fatalf(body)
 	}
 
@@ -180,7 +180,7 @@ func TestRedirectSlashes(t *testing.T) {
 			if u, err := url.Parse(ts.URL); err != nil && resp.Request.URL.Host != u.Host {
 				t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
 			}
-			if body != "nothing here" && resp.StatusCode != 404 {
+			if body != "nothing here" || resp.StatusCode != 404 {
 				t.Fatalf(body)
 			}
 		}
@@ -192,7 +192,7 @@ func TestRedirectSlashes(t *testing.T) {
 		if u, err := url.Parse(ts.URL); err != nil && resp.Request.URL.Host != u.Host {
 			t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
 		}
-		if body != "nothing here" && resp.StatusCode != 404 {
+		if body != "nothing here" || resp.StatusCode != 404 {
 			t.Fatalf(body)
 		}
 	}
