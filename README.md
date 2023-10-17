@@ -12,10 +12,10 @@ The focus of the project has been to seek out an elegant and comfortable design 
 REST API servers, written during the development of the Pressly API service that powers our
 public API service, which in turn powers all of our client-side applications.
 
-The key considerations of chi's design are: project structure, maintainability, standard http
+The key considerations of chi's design are: project structure, maintainability, standard HTTP
 handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
 parts. The core router `github.com/go-chi/chi` is quite small (less than 1000 LOC), but we've also
-included some useful/optional subpackages: [middleware](/middleware), [render](https://github.com/go-chi/render)
+included some useful/optional sub-packages: [middleware](/middleware), [render](https://github.com/go-chi/render)
 and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 ## Install
@@ -27,7 +27,7 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 * **Lightweight** - cloc'd in ~1000 LOC for the chi router
 * **Fast** - yes, see [benchmarks](#benchmarks)
-* **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
+* **100% compatible with net/http** - use any HTTP or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and sub-router mounting
 * **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
 * **Robust** - in production at Pressly, Cloudflare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
@@ -65,7 +65,7 @@ func main() {
 
 **REST Preview:**
 
-Here is a little preview of how routing looks like with chi. Also take a look at the generated routing docs
+Here is a little preview of how routing looks like with chi. Also, take a look at the generated routing docs
 in JSON ([routes.json](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.json)) and in
 Markdown ([routes.md](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.md)).
 
@@ -255,7 +255,7 @@ and `chi.URLParam(r, "*")` for a wildcard parameter.
 ### Middleware handlers
 
 chi's middlewares are just stdlib net/http middleware handlers. There is nothing special
-about them, which means the router and all the tooling is designed to be compatible and
+about them, which means the router and all the tooling are designed to be compatible and
 friendly with any middleware in the community. This offers much better extensibility and reuse
 of packages and is at the heart of chi's purpose.
 
@@ -328,7 +328,7 @@ func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
 ## Middlewares
 
 chi comes equipped with an optional `middleware` package, providing a suite of standard
-`net/http` middlewares. Please note, any middleware in the ecosystem that is also compatible
+`net/http` middlewares. Please note, that any middleware in the ecosystem that is also compatible
 with `net/http` can be used with chi's mux.
 
 ### Core middlewares
@@ -356,7 +356,7 @@ with `net/http` can be used with chi's mux.
 | [StripSlashes]         | Strip slashes on routing paths                                          |
 | [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
 | [Timeout]              | Signals to the request context when the timeout deadline is reached     |
-| [URLFormat]            | Parse extension from url and put it on request context                  |
+| [URLFormat]            | Parse extension from URL and put it on request context                  |
 | [WithValue]            | Short-hand middleware to set a key/value on the request context         |
 ----------------------------------------------------------------------------------------------------
 
@@ -419,13 +419,13 @@ Please see https://github.com/go-chi for additional packages.
 
 ## context?
 
-`context` is a tiny pkg that provides simple interface to signal context across call stacks
+`context` is a tiny pkg that provides a simple interface to signal context across call stacks
 and goroutines. It was originally written by [Sameer Ajmani](https://github.com/Sajmani)
 and is available in stdlib since go1.7.
 
 Learn more at https://blog.golang.org/context
 
-and..
+and...
 * Docs: https://golang.org/pkg/context
 * Source: https://github.com/golang/go/tree/master/src/context
 
@@ -466,7 +466,7 @@ how setting context on a request in Go works.
 ## Credits
 
 * Carl Jackson for https://github.com/zenazn/goji
-  * Parts of chi's thinking comes from goji, and chi's middleware package
+  * Parts of chi's thinking come from goji, and chi's middleware package
     sources from goji.
 * Armon Dadgar for https://github.com/armon/go-radix
 * Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
@@ -476,9 +476,9 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 ## Beyond REST
 
-chi is just a http router that lets you decompose request handling into many smaller layers.
+chi is just a HTTP router that lets you decompose request handling into many smaller layers.
 Many companies use chi to write REST services for their public APIs. But, REST is just a convention
-for managing state via HTTP, and there's a lot of other pieces required to write a complete client-server
+for managing state via HTTP, and there are a lot of other pieces required to write a complete client-server
 system or network of microservices.
 
 Looking beyond REST, I also recommend some newer works in the field:
