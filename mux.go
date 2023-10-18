@@ -254,7 +254,7 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 // for a group of handlers along the same routing path that use an additional
 // set of middlewares. See _examples/.
 func (mx *Mux) Group(fn func(r Router)) Router {
-	im := mx.With().(*Mux)
+	im := mx.With()
 	if fn != nil {
 		fn(im)
 	}
