@@ -197,7 +197,7 @@ func (c *Compressor) Handler(next http.Handler) http.Handler {
 			contentTypes:     c.allowedTypes,
 			contentWildcards: c.allowedWildcards,
 			encoding:         encoding,
-			compressable:     false, // determined in post-handler
+			compressible:     false, // determined in post-handler
 		}
 		if encoder != nil {
 			cw.w = encoder
@@ -271,10 +271,10 @@ type compressResponseWriter struct {
 	contentWildcards map[string]struct{}
 	encoding         string
 	wroteHeader      bool
-	compressable     bool
+	compressible     bool
 }
 
-func (cw *compressResponseWriter) isCompressable() bool {
+func (cw *compressResponseWriter) isCompressible() bool {
 	// Parse the first part of the Content-Type response header.
 	contentType := cw.Header().Get("Content-Type")
 	if idx := strings.Index(contentType, ";"); idx >= 0 {
@@ -306,13 +306,13 @@ func (cw *compressResponseWriter) WriteHeader(code int) {
 		return
 	}
 
-	if !cw.isCompressable() {
-		cw.compressable = false
+	if !cw.isCompressible() {
+		cw.compressible = false
 		return
 	}
 
 	if cw.encoding != "" {
-		cw.compressable = true
+		cw.compressible = true
 		cw.Header().Set("Content-Encoding", cw.encoding)
 		cw.Header().Add("Vary", "Accept-Encoding")
 
@@ -330,7 +330,7 @@ func (cw *compressResponseWriter) Write(p []byte) (int, error) {
 }
 
 func (cw *compressResponseWriter) writer() io.Writer {
-	if cw.compressable {
+	if cw.compressible {
 		return cw.w
 	} else {
 		return cw.ResponseWriter

@@ -60,7 +60,7 @@ type Context struct {
 	URLParams RouteParams
 
 	// Route parameters matched for the current sub-router. It is
-	// intentionally unexported so it cant be tampered.
+	// intentionally unexported so it can't be tampered.
 	routeParams RouteParams
 
 	// The endpoint routing pattern that matched the request URI path
