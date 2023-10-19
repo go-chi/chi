@@ -332,9 +332,8 @@ func (cw *compressResponseWriter) Write(p []byte) (int, error) {
 func (cw *compressResponseWriter) writer() io.Writer {
 	if cw.compressible {
 		return cw.w
-	} else {
-		return cw.ResponseWriter
 	}
+	return cw.ResponseWriter
 }
 
 type compressFlusher interface {
