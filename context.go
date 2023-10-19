@@ -123,8 +123,10 @@ func (x *Context) URLParam(key string) string {
 func (x *Context) RoutePattern() string {
 	routePattern := strings.Join(x.RoutePatterns, "")
 	routePattern = replaceWildcards(routePattern)
-	routePattern = strings.TrimSuffix(routePattern, "//")
-	routePattern = strings.TrimSuffix(routePattern, "/")
+	if routePattern != "/" {
+		routePattern = strings.TrimSuffix(routePattern, "//")
+		routePattern = strings.TrimSuffix(routePattern, "/")
+	}
 	return routePattern
 }
 
