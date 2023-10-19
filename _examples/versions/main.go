@@ -1,9 +1,5 @@
-//
-// Versions
-// ========
 // This example demonstrates the use of the render subpackage, with
 // a quick concept for how to support multiple api versions.
-//
 package main
 
 import (

@@ -20,30 +20,29 @@ var (
 //
 // Routers should not include a url parameter for the suffix when using this middleware.
 //
-// Sample usage.. for url paths: `/articles/1`, `/articles/1.json` and `/articles/1.xml`
+// Sample usage for url paths `/articles/1`, `/articles/1.json` and `/articles/1.xml`:
 //
-//  func routes() http.Handler {
-//    r := chi.NewRouter()
-//    r.Use(middleware.URLFormat)
+//	func routes() http.Handler {
+//		r := chi.NewRouter()
+//		r.Use(middleware.URLFormat)
 //
-//    r.Get("/articles/{id}", ListArticles)
+//		r.Get("/articles/{id}", ListArticles)
 //
-//    return r
-//  }
+//		return r
+//	}
 //
-//  func ListArticles(w http.ResponseWriter, r *http.Request) {
-// 	  urlFormat, _ := r.Context().Value(middleware.URLFormatCtxKey).(string)
+//	func ListArticles(w http.ResponseWriter, r *http.Request) {
+//		urlFormat, _ := r.Context().Value(middleware.URLFormatCtxKey).(string)
 //
-// 	  switch urlFormat {
-// 	  case "json":
-// 	  	render.JSON(w, r, articles)
-// 	  case "xml:"
-// 	  	render.XML(w, r, articles)
-// 	  default:
-// 	  	render.JSON(w, r, articles)
-// 	  }
-// }
-//
+//		switch urlFormat {
+//		case "json":
+//			render.JSON(w, r, articles)
+//		case "xml:"
+//			render.XML(w, r, articles)
+//		default:
+//			render.JSON(w, r, articles)
+//		}
+//	}
 func URLFormat(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

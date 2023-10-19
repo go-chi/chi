@@ -1,5 +1,3 @@
-// Custom Structured Logger
-// ========================
 // This example demonstrates how to use middleware.RequestLogger,
 // middleware.LogFormatter and middleware.LogEntry to build a structured
 // logger using the preview version of the new log/slog package as the logging
