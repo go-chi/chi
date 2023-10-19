@@ -13,30 +13,28 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
-	// Setup a JSON handler for the new log/slog library
-	slogJSONHandler := slog.HandlerOptions{
-		// Remove default time slog.Attr, we create our own later
-		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				return slog.Attr{}
-			}
-			return a
-		},
-	}.NewJSONHandler(os.Stdout)
+	// Setup a handler for the new log/slog library. If isJson is true,
+	// handler will be a JSONHandler and Panic() will print stack as a
+	// JSON string value. If isJson is false, handler will be a TextHandler
+	// and Panic() will pretty print the stack trace.
+	var isJson bool
+	isJson = false
+	slogHandler := NewSlogHandler(isJson)
 
 	// Routes
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(NewStructuredLogger(slogJSONHandler))
+	r.Use(NewStructuredLogger(slogHandler))
 	r.Use(middleware.Recoverer)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -54,6 +52,23 @@ func main() {
 		LogEntrySetFields(r, map[string]interface{}{"foo": "bar", "bar": "foo"})
 	})
 	http.ListenAndServe(":3333", r)
+}
+
+// NewSlogHandler returns a slog.JSONHandler or slog.TextHandler, depending on the provided boolean
+func NewSlogHandler(isJson bool) slog.Handler {
+	opts := &slog.HandlerOptions{
+		// Remove default time slog.Attr, we create our own later
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		},
+	}
+	if isJson {
+		return slog.NewJSONHandler(os.Stdout, opts)
+	}
+	return slog.NewTextHandler(os.Stdout, opts)
 }
 
 // StructuredLogger is a simple, but powerful implementation of a custom structured
@@ -92,7 +107,7 @@ func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	entry := StructuredLoggerEntry{Logger: slog.New(handler)}
 
-	entry.Logger.LogAttrs(slog.LevelInfo, "request started")
+	entry.Logger.Info("request started")
 
 	return &entry
 }
@@ -102,18 +117,17 @@ type StructuredLoggerEntry struct {
 }
 
 func (l *StructuredLoggerEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
-	l.Logger.LogAttrs(slog.LevelInfo, "request complete",
-		slog.Int("resp_status", status),
+	l.Logger.With(slog.Int("resp_status", status),
 		slog.Int("resp_byte_length", bytes),
-		slog.Float64("resp_elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0),
-	)
+		slog.Float64("resp_elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0)).Info("request complete")
 }
 
 func (l *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
-	l.Logger.LogAttrs(slog.LevelInfo, "",
-		slog.String("stack", string(stack)),
-		slog.String("panic", fmt.Sprintf("%+v", v)),
-	)
+	if reflect.TypeOf(l.Logger.Handler()) == reflect.TypeOf(&slog.JSONHandler{}) {
+		l.Logger.With(slog.String("stack", string(stack))).Error(fmt.Sprintf("%+v", v))
+	} else {
+		middleware.PrintPrettyStack(v)
+	}
 }
 
 // Helper methods used by the application to get the request-scoped
