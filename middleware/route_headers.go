@@ -150,11 +150,7 @@ func NewPattern(value string) Pattern {
 
 func (p Pattern) Match(v string) bool {
 	if !p.wildcard {
-		if p.prefix == v {
-			return true
-		} else {
-			return false
-		}
+		return p.prefix == v
 	}
 	return len(v) >= len(p.prefix+p.suffix) && strings.HasPrefix(v, p.prefix) && strings.HasSuffix(v, p.suffix)
 }
