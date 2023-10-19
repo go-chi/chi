@@ -137,14 +137,14 @@ func NewCompressor(level int, types ...string) *Compressor {
 //
 // For example, add the Brotli algorithm:
 //
-//  import brotli_enc "gopkg.in/kothar/brotli-go.v0/enc"
+//	import brotli_enc "gopkg.in/kothar/brotli-go.v0/enc"
 //
-//  compressor := middleware.NewCompressor(5, "text/html")
-//  compressor.SetEncoder("br", func(w io.Writer, level int) io.Writer {
-//    params := brotli_enc.NewBrotliParams()
-//    params.SetQuality(level)
-//    return brotli_enc.NewBrotliWriter(params, w)
-//  })
+//	compressor := middleware.NewCompressor(5, "text/html")
+//	compressor.SetEncoder("br", func(w io.Writer, level int) io.Writer {
+//		params := brotli_enc.NewBrotliParams()
+//		params.SetQuality(level)
+//		return brotli_enc.NewBrotliWriter(params, w)
+//	})
 func (c *Compressor) SetEncoder(encoding string, fn EncoderFunc) {
 	encoding = strings.ToLower(encoding)
 	if encoding == "" {
