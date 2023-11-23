@@ -1729,6 +1729,17 @@ func TestMuxMatch(t *testing.T) {
 	if r.Match(tctx, "HEAD", "/articles/10") == true {
 		t.Fatal("not expecting to find match for route:", "HEAD", "/articles/10")
 	}
+
+	tctx.Reset()
+	if r.Match(tctx, "GET", "/users") == true {
+		t.Fatal("not expecting to find match for mount point:", "GET", "/users")
+	}
+
+	tctx.Reset()
+	if r.Match(tctx, "GET", "/users/") == true {
+		t.Fatal("not expecting to find match for mount point:", "GET", "/users/")
+	}
+
 }
 
 func TestServerBaseContext(t *testing.T) {

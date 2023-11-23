@@ -47,6 +47,12 @@ type Mux struct {
 	inline bool
 }
 
+type mountHandler func(w http.ResponseWriter, r *http.Request)
+
+func (f mountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f(w, r)
+}
+
 // NewMux returns a newly initialized Mux object that implements the Router
 // interface.
 func NewMux() *Mux {
@@ -300,7 +306,7 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		subr.MethodNotAllowed(mx.methodNotAllowedHandler)
 	}
 
-	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mountHandler := mountHandler(func(w http.ResponseWriter, r *http.Request) {
 		rctx := RouteContext(r.Context())
 
 		// shift the url path past the previous subrouter
@@ -363,7 +369,12 @@ func (mx *Mux) Match(rctx *Context, method, path string) bool {
 		return node.subroutes.Match(rctx, method, rctx.RoutePath)
 	}
 
-	return h != nil
+	if h != nil {
+		_, ok := h.(mountHandler)
+		return !ok
+	}
+
+	return false
 }
 
 // NotFoundHandler returns the default Mux 404 responder whenever a route
