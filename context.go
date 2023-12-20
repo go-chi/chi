@@ -92,6 +92,7 @@ func (x *Context) Reset() {
 	x.routeParams.Keys = x.routeParams.Keys[:0]
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
+	x.methodsAllowed = x.methodsAllowed[:0]
 	x.parentCtx = nil
 }
 
