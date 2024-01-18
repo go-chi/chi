@@ -107,6 +107,20 @@ func (mx *Mux) Use(middlewares ...func(http.Handler) http.Handler) {
 // Handle adds the route `pattern` that matches any http method to
 // execute the `handler` http.Handler.
 func (mx *Mux) Handle(pattern string, handler http.Handler) {
+	parts := strings.SplitN(pattern, " ", 2)
+	if len(parts) == 2 {
+		methodStr := strings.ToUpper(parts[0])
+		path := parts[1]
+
+		method, ok := methodMap[methodStr]
+		if !ok {
+			panic("chi: invalid HTTP method specified in pattern: " + methodStr)
+		}
+
+		mx.handle(method, path, handler)
+		return
+	}
+
 	mx.handle(mALL, pattern, handler)
 }
 

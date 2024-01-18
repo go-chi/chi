@@ -640,6 +640,81 @@ func TestMuxWith(t *testing.T) {
 	}
 }
 
+func TestMuxHandlePatternValidation(t *testing.T) {
+	testCases := []struct {
+		name           string
+		pattern        string
+		shouldPanic    bool
+		method         string // Method to be used for the test request
+		path           string // Path to be used for the test request
+		expectedBody   string // Expected response body
+		expectedStatus int    // Expected HTTP status code
+	}{
+		// Valid patterns
+		{
+			name:           "Valid pattern without HTTP GET",
+			pattern:        "/user/{id}",
+			shouldPanic:    false,
+			method:         "GET",
+			path:           "/user/123",
+			expectedBody:   "without-prefix GET",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Valid pattern with HTTP POST",
+			pattern:        "POST /products/{id}",
+			shouldPanic:    false,
+			method:         "POST",
+			path:           "/products/456",
+			expectedBody:   "with-prefix POST",
+			expectedStatus: http.StatusOK,
+		},
+		// Invalid patterns
+		{
+			name:        "Invalid pattern with no method",
+			pattern:     "INVALID/user/{id}",
+			shouldPanic: true,
+		},
+		{
+			name:        "Invalid pattern with supported method",
+			pattern:     "GET/user/{id}",
+			shouldPanic: true,
+		},
+		{
+			name:        "Invalid pattern with unsupported method",
+			pattern:     "UNSUPPORTED /unsupported-method",
+			shouldPanic: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil && !tc.shouldPanic {
+					t.Errorf("Unexpected panic for pattern %s", tc.pattern)
+				}
+			}()
+
+			r := NewRouter()
+			r.Handle(tc.pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte(tc.expectedBody))
+			}))
+
+			if !tc.shouldPanic {
+				// Use testRequest for valid patterns
+				ts := httptest.NewServer(r)
+				defer ts.Close()
+
+				resp, body := testRequest(t, ts, tc.method, tc.path, nil)
+				if body != tc.expectedBody || resp.StatusCode != tc.expectedStatus {
+					t.Errorf("Expected status %d and body %s; got status %d and body %s for pattern %s",
+						tc.expectedStatus, tc.expectedBody, resp.StatusCode, body, tc.pattern)
+				}
+			}
+		})
+	}
+}
+
 func TestRouterFromMuxWith(t *testing.T) {
 	t.Parallel()
 
