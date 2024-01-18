@@ -676,7 +676,7 @@ func TestMuxHandlePatternValidation(t *testing.T) {
 			shouldPanic: true,
 		},
 		{
-			name:        "Invalid pattern with method",
+			name:        "Invalid pattern with supported method",
 			pattern:     "GET/user/{id}",
 			shouldPanic: true,
 		},
