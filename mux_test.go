@@ -695,38 +695,28 @@ func TestMuxHandlePatternValidation(t *testing.T) {
 				}
 			}()
 
-			r := NewRouter()
-			r.Handle(tc.pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r1 := NewRouter()
+			r1.Handle(tc.pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(tc.expectedBody))
 			}))
 
-			if !tc.shouldPanic {
-				// Use testRequest for valid patterns
-				ts := httptest.NewServer(r)
-				defer ts.Close()
-
-				resp, body := testRequest(t, ts, tc.method, tc.path, nil)
-				if body != tc.expectedBody || resp.StatusCode != tc.expectedStatus {
-					t.Errorf("Expected status %d and body %s; got status %d and body %s for pattern %s",
-						tc.expectedStatus, tc.expectedBody, resp.StatusCode, body, tc.pattern)
-				}
-			}
-
 			// Test that HandleFunc also handles method patterns
-			r = NewRouter()
-			r.HandleFunc(tc.pattern, func(w http.ResponseWriter, r *http.Request) {
+			r2 := NewRouter()
+			r2.HandleFunc(tc.pattern, func(w http.ResponseWriter, r *http.Request) {
 				w.Write([]byte(tc.expectedBody))
 			})
 
 			if !tc.shouldPanic {
-				// Use testRequest for valid patterns
-				ts := httptest.NewServer(r)
-				defer ts.Close()
+				for _, r := range []Router{r1, r2} {
+					// Use testRequest for valid patterns
+					ts := httptest.NewServer(r)
+					defer ts.Close()
 
-				resp, body := testRequest(t, ts, tc.method, tc.path, nil)
-				if body != tc.expectedBody || resp.StatusCode != tc.expectedStatus {
-					t.Errorf("Expected status %d and body %s; got status %d and body %s for pattern %s",
-						tc.expectedStatus, tc.expectedBody, resp.StatusCode, body, tc.pattern)
+					resp, body := testRequest(t, ts, tc.method, tc.path, nil)
+					if body != tc.expectedBody || resp.StatusCode != tc.expectedStatus {
+						t.Errorf("Expected status %d and body %s; got status %d and body %s for pattern %s",
+							tc.expectedStatus, tc.expectedBody, resp.StatusCode, body, tc.pattern)
+					}
 				}
 			}
 		})
