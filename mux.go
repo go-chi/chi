@@ -119,6 +119,12 @@ func (mx *Mux) Handle(pattern string, handler http.Handler) {
 // HandleFunc adds the route `pattern` that matches any http method to
 // execute the `handlerFn` http.HandlerFunc.
 func (mx *Mux) HandleFunc(pattern string, handlerFn http.HandlerFunc) {
+	parts := strings.SplitN(pattern, " ", 2)
+	if len(parts) == 2 {
+		mx.Method(parts[0], parts[1], handlerFn)
+		return
+	}
+
 	mx.handle(mALL, pattern, handlerFn)
 }
 
