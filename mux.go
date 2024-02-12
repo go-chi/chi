@@ -454,6 +454,10 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Find the route
 	if _, _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
+		if supportsPathValue {
+			setPathValue(rctx, r)
+		}
+
 		h.ServeHTTP(w, r)
 		return
 	}
