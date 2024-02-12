@@ -691,7 +691,7 @@ func TestMuxHandlePatternValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer func() {
 				if r := recover(); r != nil && !tc.shouldPanic {
-					t.Errorf("Unexpected panic for pattern %s", tc.pattern)
+					t.Errorf("Unexpected panic for pattern %s:\n%v", tc.pattern, r)
 				}
 			}()
 
