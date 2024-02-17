@@ -34,6 +34,21 @@ func NewRouteContext() *Context {
 	return &Context{}
 }
 
+// WithRouteContext returns the list of methods allowed for the current
+// request, based on the current routing context.
+func AllowedMethods(ctx context.Context) []string {
+	if rctx := RouteContext(ctx); rctx != nil {
+		result := make([]string, 0, len(rctx.methodsAllowed))
+		for _, method := range rctx.methodsAllowed {
+			if method := methodTypString(method); method != "" {
+				result = append(result, method)
+			}
+		}
+		return result
+	}
+	return nil
+}
+
 var (
 	// RouteCtxKey is the context.Context key to store the request context.
 	RouteCtxKey = &contextKey{"RouteContext"}
