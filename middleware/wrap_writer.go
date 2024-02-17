@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"time"
 )
 
 // NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
@@ -47,11 +48,17 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWr
 // into various parts of the response process.
 type WrapResponseWriter interface {
 	http.ResponseWriter
+
 	// Status returns the HTTP status of the request, or 0 if one has not
 	// yet been sent.
 	Status() int
+
 	// BytesWritten returns the total number of bytes sent to the client.
 	BytesWritten() int
+
+	// ElapsedWriteTime returns the total time spent writing the response.
+	ElapsedWriteTime() time.Duration
+
 	// Tee causes the response body to be written to the given io.Writer in
 	// addition to proxying the writes through. Only one io.Writer can be
 	// tee'd to at once: setting a second one will overwrite the first.
@@ -59,6 +66,7 @@ type WrapResponseWriter interface {
 	// io.Writer. It is illegal for the tee'd writer to be modified
 	// concurrently with writes.
 	Tee(io.Writer)
+
 	// Unwrap returns the original proxied target.
 	Unwrap() http.ResponseWriter
 }
@@ -70,18 +78,22 @@ type basicWriter struct {
 	wroteHeader bool
 	code        int
 	bytes       int
+	elapsedTime time.Duration
 	tee         io.Writer
 }
 
 func (b *basicWriter) WriteHeader(code int) {
 	if !b.wroteHeader {
+		startTime := time.Now()
 		b.code = code
 		b.wroteHeader = true
 		b.ResponseWriter.WriteHeader(code)
+		b.elapsedTime += time.Since(startTime)
 	}
 }
 
 func (b *basicWriter) Write(buf []byte) (int, error) {
+	startTime := time.Now()
 	b.maybeWriteHeader()
 	n, err := b.ResponseWriter.Write(buf)
 	if b.tee != nil {
@@ -91,6 +103,7 @@ func (b *basicWriter) Write(buf []byte) (int, error) {
 			err = err2
 		}
 	}
+	b.elapsedTime += time.Since(startTime)
 	b.bytes += n
 	return n, err
 }
@@ -107,6 +120,10 @@ func (b *basicWriter) Status() int {
 
 func (b *basicWriter) BytesWritten() int {
 	return b.bytes
+}
+
+func (b *basicWriter) ElapsedWriteTime() time.Duration {
+	return b.elapsedTime
 }
 
 func (b *basicWriter) Tee(w io.Writer) {
