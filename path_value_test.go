@@ -35,6 +35,14 @@ func TestPathValue(t *testing.T) {
 			requestPath:  "/users/Gojo/conversations/2948",
 			expectedBody: "Gojo 2948",
 		},
+		{
+			name:         "Wildcard path",
+			pattern:      "/users/{userID}/friends/*",
+			method:       "POST",
+			pathKeys:     []string{"userID", "*"},
+			requestPath:  "/users/Gojo/friends/all-of-them/and/more",
+			expectedBody: "Gojo all-of-them/and/more",
+		},
 	}
 
 	for _, tc := range testCases {
