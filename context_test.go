@@ -85,3 +85,17 @@ func TestRoutePattern(t *testing.T) {
 		t.Fatal("unexpected route pattern for root: " + p)
 	}
 }
+
+func TestRouteParams(t *testing.T) {
+	rp := &RouteParams{}
+	rp.Add("id", "1")
+	rp.Add("name", "n")
+	rp.Add("id", "2")
+
+	if got, want := rp.Get("id"), "2"; got != want {
+		t.Fatalf("unexpected route param value for key 'id': %s, want: %s", got, want)
+	}
+	if got, want := rp.Get("name"), "n"; got != want {
+		t.Fatalf("unexpected route param value for key 'name': %s, want: %s", got, want)
+	}
+}
