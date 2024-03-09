@@ -22,7 +22,7 @@ var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
 // RemoteAddr will see the intended value.
 //
 // You should only use this middleware if you can trust the headers passed to
-// you (in particular, the two headers this middleware uses), for example
+// you (in particular, the three headers this middleware uses), for example
 // because you have placed a reverse proxy like HAProxy or nginx in front of
 // chi. If your reverse proxies are configured to pass along arbitrary header
 // values from the client, or if you use this middleware without a reverse
