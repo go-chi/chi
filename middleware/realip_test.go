@@ -113,3 +113,52 @@ func TestInvalidIP(t *testing.T) {
 		t.Fatal("Invalid IP used.")
 	}
 }
+
+func TestCustomIPHeader(t *testing.T) {
+	var customHeaderKey = "X-CUSTOM-IP"
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Add(customHeaderKey, "100.100.100.100")
+	w := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Use(RealIPCustomHeader([]string{customHeaderKey}))
+
+	realIP := ""
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		realIP = r.RemoteAddr
+		w.Write([]byte("Hello World"))
+	})
+	r.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Fatal("Response Code should be 200")
+	}
+
+	if realIP != "100.100.100.100" {
+		t.Fatal("Test get real IP precedence error.")
+	}
+}
+
+func TestCustomIPHeaderWithoutDefault(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Add("X-REAL-IP", "100.100.100.100")
+	w := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+	r.Use(RealIPCustomHeader([]string{"X-CUSTOM-IP"}))
+
+	realIP := ""
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		realIP = r.RemoteAddr
+		w.Write([]byte("Hello World"))
+	})
+	r.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Fatal("Response Code should be 200")
+	}
+
+	if realIP != "" {
+		t.Fatal("Invalid IP used.")
+	}
+}
