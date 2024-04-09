@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-var DefaultRealIPHeaders = []string{
-	"True-Client-IP",   // Cloudflare Enterprise plan
+var defaultHeaders = []string{
+	"True-Client-IP", // Cloudflare Enterprise plan
 	"X-Real-IP",
 	"X-Forwarded-For",
 }
@@ -32,7 +32,7 @@ var DefaultRealIPHeaders = []string{
 // how you're using RemoteAddr, vulnerable to an attack of some sort).
 func RealIP(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		if rip := getRealIP(r, DefaultRealIPHeaders); rip != "" {
+		if rip := getRealIP(r, defaultHeaders); rip != "" {
 			r.RemoteAddr = rip
 		}
 		h.ServeHTTP(w, r)
@@ -45,12 +45,11 @@ func RealIP(h http.Handler) http.Handler {
 // of parsing the custom headers.
 //
 // usage:
-// r.Use(RealIPFromHeaders([]string{"CF-Connecting-IP"}))
-// r.Use(RealIPFromHeaders(append(DefaultRealIPHeaders, "CF-Connecting-IP")))
-func RealIPFromHeaders(realIPHeaders []string) func(http.Handler) http.Handler {
+// r.Use(RealIPFromHeaders("CF-Connecting-IP"))
+func RealIPFromHeaders(headers ...string) func(http.Handler) http.Handler {
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			if rip := getRealIP(r, realIPHeaders); rip != "" {
+			if rip := getRealIP(r, headers); rip != "" {
 				r.RemoteAddr = rip
 			}
 			h.ServeHTTP(w, r)
@@ -60,8 +59,8 @@ func RealIPFromHeaders(realIPHeaders []string) func(http.Handler) http.Handler {
 	return f
 }
 
-func getRealIP(r *http.Request, realIPHeaders []string) string {
-	for _, header := range realIPHeaders {
+func getRealIP(r *http.Request, headers []string) string {
+	for _, header := range headers {
 		if ip := r.Header.Get(header); ip != "" {
 			ips := strings.Split(ip, ",")
 			if ips[0] == "" || net.ParseIP(ips[0]) == nil {
