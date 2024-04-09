@@ -42,13 +42,13 @@ func RealIP(h http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-// RealIPCustomHeader is a middleware that sets a http.Request's RemoteAddr to the results
+// RealIPFromHeaders is a middleware that sets a http.Request's RemoteAddr to the results
 // of parsing the custom headers.
 //
 // usage:
-// r.Use(RealIPCustomHeader([]string{"X-CUSTOM-IP"}))
-// r.Use(RealIPCustomHeader(append(DefaultRealIPHeaders, "X-CUSTOM-IP")))
-func RealIPCustomHeader(realIPHeaders []string) func(http.Handler) http.Handler {
+// r.Use(RealIPFromHeaders([]string{"CF-Connecting-IP"}))
+// r.Use(RealIPFromHeaders(append(DefaultRealIPHeaders, "CF-Connecting-IP")))
+func RealIPFromHeaders(realIPHeaders []string) func(http.Handler) http.Handler {
 	f := func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			if rip := getRealIP(r, realIPHeaders); rip != "" {

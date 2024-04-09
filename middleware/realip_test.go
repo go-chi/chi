@@ -121,7 +121,7 @@ func TestCustomIPHeader(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	r := chi.NewRouter()
-	r.Use(RealIPCustomHeader([]string{customHeaderKey}))
+	r.Use(RealIPFromHeaders([]string{customHeaderKey}))
 
 	realIP := ""
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +145,7 @@ func TestCustomIPHeaderWithoutDefault(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	r := chi.NewRouter()
-	r.Use(RealIPCustomHeader([]string{"X-CUSTOM-IP"}))
+	r.Use(RealIPFromHeaders([]string{"X-CUSTOM-IP"}))
 
 	realIP := ""
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
