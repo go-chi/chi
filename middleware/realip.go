@@ -10,14 +10,13 @@ import (
 )
 
 var DefaultRealIPHeaders = []string{
-	"CF-Connecting-IP", // Cloudflare free plan
 	"True-Client-IP",   // Cloudflare Enterprise plan
 	"X-Real-IP",
 	"X-Forwarded-For",
 }
 
 // RealIP is a middleware that sets a http.Request's RemoteAddr to the results
-// of parsing either the CF-Connecting-IP, True-Client-IP, X-Real-IP or the X-Forwarded-For headers
+// of parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers
 // (in that order).
 //
 // This middleware should be inserted fairly early in the middleware stack to
