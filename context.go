@@ -74,9 +74,8 @@ type Context struct {
 	// patterns across a stack of sub-routers.
 	RoutePatterns []string
 
-	// methodNotAllowed hint
-	methodNotAllowed bool
 	methodsAllowed   []methodTyp // allowed methods in case of a 405
+	methodNotAllowed bool
 }
 
 // Reset a routing context to its initial state.
