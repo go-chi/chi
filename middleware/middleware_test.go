@@ -3,7 +3,6 @@ package middleware
 import (
 	"crypto/tls"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -93,7 +92,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 		return nil, ""
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 		return nil, ""
@@ -123,7 +122,7 @@ func testRequestNoRedirect(t *testing.T, ts *httptest.Server, method, path strin
 		return nil, ""
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 		return nil, ""
