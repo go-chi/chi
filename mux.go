@@ -338,8 +338,14 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	if subroutes != nil {
 		method |= mSTUB
 	}
-	n := mx.handle(method, pattern+"*", mountHandler)
 
+	var n *node
+	if pattern == "/" {
+		n = mx.handle(method, pattern, mountHandler)
+	} else {
+		n = mx.handle(method, pattern+"*", mountHandler)
+	}
+	// n = mx.handle(method, pattern+"*", mountHandler)
 	if subroutes != nil {
 		n.subroutes = subroutes
 	}
