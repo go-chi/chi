@@ -26,8 +26,13 @@ func TestCompressor(t *testing.T) {
 		return w
 	})
 
-	if len(compressor.encoders) != 1 {
-		t.Errorf("nop encoder should be stored in the encoders map")
+	var sideEffect int
+	compressor.SetEncoder("test", func(w io.Writer, _ int) io.Writer {
+		return newSideEffectWriter(w, &sideEffect)
+	})
+
+	if len(compressor.encoders) != 2 {
+		t.Errorf("nop and test encoders should be stored in the encoders map")
 	}
 
 	r.Use(compressor.Handler)
@@ -44,6 +49,11 @@ func TestCompressor(t *testing.T) {
 
 	r.Get("/getplain", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("textstring"))
+	})
+
+	r.Get("/getimage", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/png")
 		w.Write([]byte("textstring"))
 	})
 
@@ -93,6 +103,12 @@ func TestCompressor(t *testing.T) {
 			acceptedEncodings: []string{"nop, gzip, deflate"},
 			expectedEncoding:  "nop",
 		},
+		{
+			name:              "test is used and side effect is cleared after close",
+			path:              "/getimage",
+			acceptedEncodings: []string{"test"},
+			expectedEncoding:  "",
+		},
 	}
 
 	for _, tc := range tests {
@@ -107,7 +123,10 @@ func TestCompressor(t *testing.T) {
 			}
 
 		})
+	}
 
+	if sideEffect > 1 {
+		t.Errorf("side effect should be cleared after close")
 	}
 }
 
@@ -216,4 +235,27 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 	reader.Close()
 
 	return string(respBody)
+}
+
+type (
+	sideEffectWriter struct {
+		w io.Writer
+		s *int
+	}
+)
+
+func newSideEffectWriter(w io.Writer, sideEffect *int) io.Writer {
+	*sideEffect = *sideEffect + 1
+
+	return &sideEffectWriter{w: w, s: sideEffect}
+}
+
+func (w *sideEffectWriter) Write(p []byte) (n int, err error) {
+	return w.w.Write(p)
+}
+
+func (w *sideEffectWriter) Close() error {
+	*w.s = *w.s - 1
+
+	return nil
 }
