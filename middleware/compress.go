@@ -16,7 +16,6 @@ import (
 
 var defaultCompressibleContentTypes = []string{
 	"text/*",
-	"text/javascript",
 	"application/javascript",
 	"application/x-javascript",
 	"application/json",
