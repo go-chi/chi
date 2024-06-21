@@ -371,7 +371,7 @@ func (cw *compressResponseWriter) Push(target string, opts *http.PushOptions) er
 }
 
 func (cw *compressResponseWriter) Close() error {
-	if c, ok := cw.w.(io.WriteCloser); ok {
+	if c, ok := cw.writer().(io.WriteCloser); ok {
 		return c.Close()
 	}
 	return errors.New("chi/middleware: io.WriteCloser is unavailable on the writer")
