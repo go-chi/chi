@@ -6,6 +6,7 @@ package middleware
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 )
@@ -45,6 +46,7 @@ func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) wrapResponseWr
 
 // WrapResponseWriter is a proxy around an http.ResponseWriter that allows you to hook
 // into various parts of the response process.
+// Deprecated: consumers should not rely on this interface being stable.
 type WrapResponseWriter interface {
 	http.ResponseWriter
 	// Status returns the HTTP status of the request, or 0 if one has not
@@ -104,7 +106,7 @@ func (b *basicWriter) Write(buf []byte) (n int, err error) {
 	} else if b.tee != nil {
 		n, err = b.tee.Write(buf)
 	} else {
-		n, err = io.Discard.Write(buf)
+		n, err = ioutil.Discard.Write(buf)
 	}
 	b.bytes += n
 	return n, err
