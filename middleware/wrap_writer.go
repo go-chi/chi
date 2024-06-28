@@ -64,6 +64,8 @@ type WrapResponseWriter interface {
 	Unwrap() http.ResponseWriter
 	// Discard causes all writes to the original ResponseWriter be discarded,
 	// instead writing only to the tee'd writer if it's set.
+	// The caller is responsible for calling WriteHeader and Write on the
+	// original ResponseWriter once the processing is done.
 	Discard()
 }
 
@@ -82,7 +84,9 @@ func (b *basicWriter) WriteHeader(code int) {
 	if !b.wroteHeader {
 		b.code = code
 		b.wroteHeader = true
-		b.ResponseWriter.WriteHeader(code)
+		if !b.discard {
+			b.ResponseWriter.WriteHeader(code)
+		}
 	}
 }
 
