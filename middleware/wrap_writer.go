@@ -12,7 +12,7 @@ import (
 
 // NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
 // hook into various parts of the response process.
-func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter {
+func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) wrapResponseWriter {
 	_, fl := w.(http.Flusher)
 
 	bw := basicWriter{ResponseWriter: w}
@@ -61,6 +61,11 @@ type WrapResponseWriter interface {
 	Tee(io.Writer)
 	// Unwrap returns the original proxied target.
 	Unwrap() http.ResponseWriter
+}
+
+type wrapResponseWriter interface {
+	WrapResponseWriter
+
 	// Discard causes all writes to the original ResponseWriter be discarded,
 	// instead writing only to the tee'd writer if it's set.
 	Discard()
@@ -98,6 +103,8 @@ func (b *basicWriter) Write(buf []byte) (n int, err error) {
 		}
 	} else if b.tee != nil {
 		n, err = b.tee.Write(buf)
+	} else {
+		n, err = io.Discard.Write(buf)
 	}
 	b.bytes += n
 	return n, err

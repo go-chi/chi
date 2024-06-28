@@ -36,6 +36,7 @@ func TestBasicWritesTeesWritesWithoutDiscard(t *testing.T) {
 
 	assertEqual(t, []byte("hello world"), original.Body.Bytes())
 	assertEqual(t, []byte("hello world"), buf.Bytes())
+	assertEqual(t, 11, wrap.BytesWritten())
 }
 
 func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
@@ -52,6 +53,7 @@ func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
 
 		assertEqual(t, 0, original.Body.Len())
 		assertEqual(t, []byte("hello world"), buf.Bytes())
+		assertEqual(t, 11, wrap.BytesWritten())
 	})
 
 	t.Run("Without Tee", func(t *testing.T) {
@@ -63,5 +65,6 @@ func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
 		assertNoError(t, err)
 
 		assertEqual(t, 0, original.Body.Len())
+		assertEqual(t, 11, wrap.BytesWritten())
 	})
 }
