@@ -84,4 +84,10 @@ func TestRoutePattern(t *testing.T) {
 	if p := x.RoutePattern(); p != "/" {
 		t.Fatal("unexpected route pattern for root: " + p)
 	}
+
+	// Testing empty route pattern for nil context
+	var nilContext *Context
+	if p := nilContext.RoutePattern(); p != "" {
+		t.Fatalf("unexpected non-empty route pattern for nil context: %q", p)
+	}
 }
