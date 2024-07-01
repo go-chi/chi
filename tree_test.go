@@ -29,6 +29,9 @@ func TestTree(t *testing.T) {
 	hHubView1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hHubView2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hHubView3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserInfo0 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserInfo1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hUserInfoN := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &node{}
 
@@ -77,6 +80,10 @@ func TestTree(t *testing.T) {
 	tr.InsertRoute(mGET, "/hubs/{hubID}/*", sr)
 	tr.InsertRoute(mGET, "/hubs/{hubID}/users", hHubView3)
 
+	tr.InsertRoute(mGET, "/info/{user_name}", hUserInfo0)
+	tr.InsertRoute(mGET, "/info/{user_name}.info", hUserInfo1)
+	tr.InsertRoute(mGET, "/info/{user_name}.{ext}", hUserInfoN)
+
 	tests := []struct {
 		r string       // input request path
 		h http.Handler // output matched handler
@@ -118,6 +125,10 @@ func TestTree(t *testing.T) {
 		{r: "/users/123/profile", h: hUserProfile, k: []string{"userID"}, v: []string{"123"}},
 		{r: "/users/super/123/okay/yes", h: hUserSuper, k: []string{"*"}, v: []string{"123/okay/yes"}},
 		{r: "/users/123/okay/yes", h: hUserAll, k: []string{"*"}, v: []string{"123/okay/yes"}},
+
+		{r: "/info/some_user", h: hUserInfo0, k: []string{"user_name"}, v: []string{"some_user"}},
+		{r: "/info/some.user.info", h: hUserInfo1, k: []string{"user_name"}, v: []string{"some.user"}},
+		{r: "/info/some.user.ext1", h: hUserInfoN, k: []string{"user_name", "ext"}, v: []string{"some.user", "ext1"}},
 	}
 
 	// log.Println("~~~~~~~~~")
@@ -221,8 +232,8 @@ func TestTreeMoar(t *testing.T) {
 		{m: mGET, r: "/articles/456/data.json", h: hStub11, k: []string{"id"}, v: []string{"456"}},
 
 		{m: mGET, r: "/articles/files/file.zip", h: hStub12, k: []string{"file", "ext"}, v: []string{"file", "zip"}},
-		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
-		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos", "tar.gz"}},
+		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos.tar", "gz"}},
+		{m: mGET, r: "/articles/files/photos.tar.gz", h: hStub12, k: []string{"file", "ext"}, v: []string{"photos.tar", "gz"}},
 
 		{m: mPUT, r: "/articles/me", h: hStub13, k: []string{}, v: []string{}},
 		{m: mGET, r: "/articles/me", h: hStub, k: []string{"id"}, v: []string{"me"}},
