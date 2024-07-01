@@ -65,7 +65,7 @@ func main() {
 
 **REST Preview:**
 
-Here is a little preview of how routing looks like with chi. Also take a look at the generated routing docs
+Here is a little preview of what routing looks like with chi. Also take a look at the generated routing docs
 in JSON ([routes.json](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.json)) and in
 Markdown ([routes.md](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.md)).
 
