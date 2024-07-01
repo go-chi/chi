@@ -127,6 +127,10 @@ type Routes interface {
 	// the method/path - similar to routing a http request, but without
 	// executing the handler thereafter.
 	Match(rctx *Context, method, path string) bool
+
+	// Find searches the routing tree for the pattern that matches
+	// the method/path.
+	Find(rctx *Context, method, path string) string
 }
 
 // Middlewares type is a slice of standard middleware handlers with methods

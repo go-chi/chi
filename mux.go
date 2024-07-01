@@ -363,19 +363,33 @@ func (mx *Mux) Middlewares() Middlewares {
 // Note: the *Context state is updated during execution, so manage
 // the state carefully or make a NewRouteContext().
 func (mx *Mux) Match(rctx *Context, method, path string) bool {
+	return mx.Find(rctx, method, path) != ""
+}
+
+// Find searches the routing tree for the pattern that matches
+// the method/path.
+//
+// Note: the *Context state is updated during execution, so manage
+// the state carefully or make a NewRouteContext().
+func (mx *Mux) Find(rctx *Context, method, path string) string {
 	m, ok := methodMap[method]
 	if !ok {
-		return false
+		return ""
 	}
 
-	node, _, h := mx.tree.FindRoute(rctx, m, path)
+	node, _, _ := mx.tree.FindRoute(rctx, m, path)
 
 	if node != nil && node.subroutes != nil {
 		rctx.RoutePath = mx.nextRoutePath(rctx)
-		return node.subroutes.Match(rctx, method, rctx.RoutePath)
+		return node.subroutes.Find(rctx, method, rctx.RoutePath)
 	}
 
-	return h != nil
+	if node != nil {
+		e := node.endpoints[m]
+		return e.pattern
+	}
+
+	return ""
 }
 
 // NotFoundHandler returns the default Mux 404 responder whenever a route
