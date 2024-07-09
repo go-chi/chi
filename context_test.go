@@ -1,6 +1,10 @@
 package chi
 
-import "testing"
+import (
+	"context"
+	"strings"
+	"testing"
+)
 
 // TestRoutePattern tests correct in-the-middle wildcard removals.
 // If user organizes a router like this:
@@ -84,4 +88,33 @@ func TestRoutePattern(t *testing.T) {
 	if p := x.RoutePattern(); p != "/" {
 		t.Fatal("unexpected route pattern for root: " + p)
 	}
+}
+
+func TestAllowedMethods(t *testing.T) {
+	t.Run("no chi context", func(t *testing.T) {
+		got := AllowedMethods(context.Background())
+		if got != nil {
+			t.Errorf("Unexpected allowed methods: %v", got)
+		}
+	})
+	t.Run("expected methods", func(t *testing.T) {
+		want := "GET HEAD"
+		ctx := context.WithValue(context.Background(), RouteCtxKey, &Context{
+			methodsAllowed: []methodTyp{mGET, mHEAD},
+		})
+		got := strings.Join(AllowedMethods(ctx), " ")
+		if want != got {
+			t.Errorf("Unexpected allowed methods: %s, want: %s", got, want)
+		}
+	})
+	t.Run("unexpected methods", func(t *testing.T) {
+		want := "GET HEAD"
+		ctx := context.WithValue(context.Background(), RouteCtxKey, &Context{
+			methodsAllowed: []methodTyp{mGET, mHEAD, 9000},
+		})
+		got := strings.Join(AllowedMethods(ctx), " ")
+		if want != got {
+			t.Errorf("Unexpected allowed methods: %s, want: %s", got, want)
+		}
+	})
 }
