@@ -438,7 +438,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				if p < 0 {
 					if xn.tail == '/' {
 						p = len(xsearch)
-					} else {
+					} else if xn.tail != '*' {
 						continue
 					}
 				} else if ntyp == ntRegexp && p == 0 {
@@ -446,7 +446,13 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				}
 
 				if ntyp == ntRegexp && xn.rex != nil {
-					if !xn.rex.MatchString(xsearch[:p]) {
+					if xn.tail == '*' {
+						matchedString := xn.rex.FindString(xsearch)
+						if matchedString == "" {
+							continue
+						}
+						p = len(matchedString)
+					} else if !xn.rex.MatchString(xsearch[:p]) {
 						continue
 					}
 				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
@@ -741,9 +747,10 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 			if rexpat[0] != '^' {
 				rexpat = "^" + rexpat
 			}
-			if rexpat[len(rexpat)-1] != '$' {
+			if rexpat[len(rexpat)-1] != '$' && tail != '*' {
 				rexpat += "$"
 			}
+			// TODO: remove $ if it exists or throw error
 		}
 
 		return nt, key, rexpat, tail, ps, pe
@@ -811,7 +818,7 @@ func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
 // The list order determines the traversal order.
 func (ns nodes) tailSort() {
 	for i := len(ns) - 1; i >= 0; i-- {
-		if ns[i].typ > ntStatic && ns[i].tail == '/' {
+		if ns[i].typ > ntStatic && (ns[i].tail == '/' || ns[i].tail == '*') {
 			ns.Swap(i, len(ns)-1)
 			return
 		}

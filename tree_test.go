@@ -23,6 +23,8 @@ func TestTree(t *testing.T) {
 	hAdminCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hAdminAppShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hAdminAppShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppPaymentsShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppPaymentsShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hUserProfile := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hUserSuper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hUserAll := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -62,6 +64,9 @@ func TestTree(t *testing.T) {
 
 	tr.InsertRoute(mGET, "/admin/apps/{id}", hAdminAppShow)
 	tr.InsertRoute(mGET, "/admin/apps/{id}/*", hAdminAppShowCatchall)
+
+	tr.InsertRoute(mGET, "/admin/apps/payments/{id:[0-9]+}/status", hAdminAppPaymentsShow)
+	tr.InsertRoute(mGET, "/admin/apps/payments/{id:[0-9]+}*", hAdminAppPaymentsShowCatchall)
 
 	tr.InsertRoute(mGET, "/admin/*", hStub) // catchall segment will get replaced by next route
 	tr.InsertRoute(mGET, "/admin/*", hAdminCatchall)
@@ -110,6 +115,8 @@ func TestTree(t *testing.T) {
 		{r: "/admin/lots/of/:fun", h: hAdminCatchall, k: []string{"*"}, v: []string{"lots/of/:fun"}},
 		{r: "/admin/apps/333", h: hAdminAppShow, k: []string{"id"}, v: []string{"333"}},
 		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, k: []string{"id", "*"}, v: []string{"333", "woot"}},
+		{r: "/admin/apps/payments/333/status", h: hAdminAppPaymentsShow, k: []string{"id"}, v: []string{"333"}},
+		{r: "/admin/apps/payments/333/woot", h: hAdminAppPaymentsShowCatchall, k: []string{"id", "*"}, v: []string{"333", "/woot"}},
 
 		{r: "/hubs/123/view", h: hHubView1, k: []string{"hubID"}, v: []string{"123"}},
 		{r: "/hubs/123/view/index.html", h: hHubView2, k: []string{"hubID", "*"}, v: []string{"123", "index.html"}},
