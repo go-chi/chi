@@ -65,17 +65,39 @@ func init() {
 // process, and where the last number is an atomically incremented request
 // counter.
 func RequestID(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		requestID := r.Header.Get(RequestIDHeader)
-		if requestID == "" {
-			myid := atomic.AddUint64(&reqid, 1)
-			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+	return RequestIDWithGenerator(defaultGenerator)(next)
+}
+
+// RequestIDWithGenerator is a middleware that injects a request ID into the context
+// of each request where the request ID is generated externally.
+func RequestIDWithGenerator(generator func(context.Context) string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			requestID := r.Header.Get(RequestIDHeader)
+			if requestID == "" {
+				requestID = generator(ctx)
+			}
+			ctx = SetReqID(ctx, requestID)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		}
-		ctx = context.WithValue(ctx, RequestIDKey, requestID)
-		next.ServeHTTP(w, r.WithContext(ctx))
+
+		return http.HandlerFunc(fn)
 	}
-	return http.HandlerFunc(fn)
+}
+
+// The default request ID generator which supplies a request ID in the form
+// "host.example.com/random-0001", where "random" is a base62 random string that
+// uniquely identifies this go process, and where the last number is an
+// atomically incremented request counter.
+func defaultGenerator(_ context.Context) string {
+	myid := atomic.AddUint64(&reqid, 1)
+	return fmt.Sprintf("%s-%06d", prefix, myid)
+}
+
+// SetReqID sets the request ID for the given context.
+func SetReqID(ctx context.Context, requestID string) context.Context {
+	return context.WithValue(ctx, RequestIDKey, requestID)
 }
 
 // GetReqID returns a request ID from the given context if one is present.

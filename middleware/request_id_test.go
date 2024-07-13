@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -67,5 +68,32 @@ func TestRequestID(t *testing.T) {
 		if w.Body.String() != test.expectedResponse {
 			t.Fatalf("RequestID was not the expected value")
 		}
+	}
+}
+
+func generator(_ context.Context) string {
+	return "abcde"
+}
+
+func TestRequestIDWithGenerator(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	r := chi.NewRouter()
+
+	r.Use(RequestIDWithGenerator(generator))
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		requestID := GetReqID(r.Context())
+		response := fmt.Sprintf("RequestID: %s", requestID)
+
+		w.Write([]byte(response))
+	})
+	r.ServeHTTP(w, func() *http.Request {
+		req, _ := http.NewRequest("GET", "/", nil)
+		return req
+	}())
+
+	if w.Body.String() != "RequestID: abcde" {
+		t.Fatalf("RequestID was not the expected value")
 	}
 }
