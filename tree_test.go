@@ -25,6 +25,8 @@ func TestTree(t *testing.T) {
 	hAdminAppShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hAdminAppPaymentsShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hAdminAppPaymentsShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppUsersShow := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hAdminAppUsersShowCatchall := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hUserProfile := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hUserSuper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hUserAll := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -67,6 +69,8 @@ func TestTree(t *testing.T) {
 
 	tr.InsertRoute(mGET, "/admin/apps/payments/{id:[0-9]+}/status", hAdminAppPaymentsShow)
 	tr.InsertRoute(mGET, "/admin/apps/payments/{id:[0-9]+}*", hAdminAppPaymentsShowCatchall)
+	tr.InsertRoute(mGET, "/admin/apps/users/{id}/status", hAdminAppUsersShow)
+	tr.InsertRoute(mGET, "/admin/apps/users/{id}*", hAdminAppUsersShowCatchall)
 
 	tr.InsertRoute(mGET, "/admin/*", hStub) // catchall segment will get replaced by next route
 	tr.InsertRoute(mGET, "/admin/*", hAdminCatchall)
@@ -117,6 +121,12 @@ func TestTree(t *testing.T) {
 		{r: "/admin/apps/333/woot", h: hAdminAppShowCatchall, k: []string{"id", "*"}, v: []string{"333", "woot"}},
 		{r: "/admin/apps/payments/333/status", h: hAdminAppPaymentsShow, k: []string{"id"}, v: []string{"333"}},
 		{r: "/admin/apps/payments/333/woot", h: hAdminAppPaymentsShowCatchall, k: []string{"id", "*"}, v: []string{"333", "/woot"}},
+		{r: "/admin/apps/payments/333/", h: hAdminAppPaymentsShowCatchall, k: []string{"id", "*"}, v: []string{"333", "/"}},
+		{r: "/admin/apps/payments/333", h: hAdminAppPaymentsShowCatchall, k: []string{"id", "*"}, v: []string{"333", ""}},
+		{r: "/admin/apps/users/test_user/status", h: hAdminAppUsersShow, k: []string{"id"}, v: []string{"test_user"}},
+		{r: "/admin/apps/users/test_user/not_status", h: hAdminAppUsersShowCatchall, k: []string{"id", "*"}, v: []string{"test_user", "/not_status"}},
+		{r: "/admin/apps/users/test_user/", h: hAdminAppUsersShowCatchall, k: []string{"id", "*"}, v: []string{"test_user", "/"}},
+		{r: "/admin/apps/users/test_user", h: hAdminAppUsersShowCatchall, k: []string{"id", "*"}, v: []string{"test_user", ""}},
 
 		{r: "/hubs/123/view", h: hHubView1, k: []string{"hubID"}, v: []string{"123"}},
 		{r: "/hubs/123/view/index.html", h: hHubView2, k: []string{"hubID", "*"}, v: []string{"123", "index.html"}},
