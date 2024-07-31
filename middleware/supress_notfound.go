@@ -17,9 +17,9 @@ func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rctx := chi.RouteContext(r.Context())
 
-			// Match() updates rctx.RoutePath.
+			// Match() updates rctx.
 			// Save the initial value to restore it later on for the next in chain.
-			initialRoutePath := rctx.RoutePath
+			initialRctx := *rctx
 
 			match := rctx.Routes.Match(rctx, r.Method, r.URL.Path)
 			if !match {
@@ -28,7 +28,7 @@ func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler {
 			}
 
 			// Restore after modification.
-			rctx.RoutePath = initialRoutePath
+			*rctx = initialRctx
 
 			next.ServeHTTP(w, r)
 		})
