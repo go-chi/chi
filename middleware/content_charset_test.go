@@ -15,55 +15,71 @@ func TestContentCharset(t *testing.T) {
 		name                string
 		inputValue          string
 		inputContentCharset []string
+		contentLength       int64
 		want                int
 	}{
 		{
 			"should accept requests with a matching charset",
 			"application/json; charset=UTF-8",
 			[]string{"UTF-8"},
+			100,
 			http.StatusOK,
 		},
 		{
 			"should be case-insensitive",
 			"application/json; charset=utf-8",
 			[]string{"UTF-8"},
+			100,
 			http.StatusOK,
 		},
 		{
 			"should accept requests with a matching charset with extra values",
 			"application/json; foo=bar; charset=UTF-8; spam=eggs",
 			[]string{"UTF-8"},
+			100,
 			http.StatusOK,
 		},
 		{
 			"should accept requests with a matching charset when multiple charsets are supported",
 			"text/xml; charset=UTF-8",
 			[]string{"UTF-8", "Latin-1"},
+			100,
 			http.StatusOK,
 		},
 		{
 			"should accept requests with no charset if empty charset headers are allowed",
 			"text/xml",
 			[]string{"UTF-8", ""},
+			100,
 			http.StatusOK,
 		},
 		{
 			"should not accept requests with no charset if empty charset headers are not allowed",
 			"text/xml",
 			[]string{"UTF-8"},
+			100,
 			http.StatusUnsupportedMediaType,
 		},
 		{
 			"should not accept requests with a mismatching charset",
 			"text/plain; charset=Latin-1",
 			[]string{"UTF-8"},
+			100,
 			http.StatusUnsupportedMediaType,
 		},
 		{
 			"should not accept requests with a mismatching charset even if empty charsets are allowed",
 			"text/plain; charset=Latin-1",
 			[]string{"UTF-8", ""},
+			100,
 			http.StatusUnsupportedMediaType,
+		},
+		{
+			"should skip charset validation if ContentLength is 0",
+			"text/plain; charset=Latin-1",
+			[]string{"UTF-8"},
+			0,
+			http.StatusOK,
 		},
 	}
 
