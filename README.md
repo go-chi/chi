@@ -469,7 +469,8 @@ how setting context on a request in Go works.
 
 * Carl Jackson for https://github.com/zenazn/goji
   * Parts of chi's thinking comes from goji, and chi's middleware package
-    sources from goji.
+    sources from [goji](https://github.com/zenazn/goji/tree/master/web/middleware).
+  * Please see goji's [LICENSE](https://github.com/zenazn/goji/blob/master/LICENSE) (MIT)
 * Armon Dadgar for https://github.com/armon/go-radix
 * Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
 
