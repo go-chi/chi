@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -46,7 +46,7 @@ func TestThrottleBacklog(t *testing.T) {
 			assertNoError(t, err)
 
 			assertEqual(t, http.StatusOK, res.StatusCode)
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
 		}(i)
@@ -132,7 +132,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
@@ -172,7 +172,7 @@ func TestThrottleMaximum(t *testing.T) {
 			assertNoError(t, err)
 			assertEqual(t, http.StatusOK, res.StatusCode)
 
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
 
@@ -192,7 +192,7 @@ func TestThrottleMaximum(t *testing.T) {
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
