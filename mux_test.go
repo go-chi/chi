@@ -121,7 +121,7 @@ func TestMuxBasic(t *testing.T) {
 
 	// GET /
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "hi peter" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	tlogmsg, _ := logbuf.ReadString(0)
 	if tlogmsg != logmsg {
@@ -130,37 +130,37 @@ func TestMuxBasic(t *testing.T) {
 
 	// GET /ping
 	if _, body := testRequest(t, ts, "GET", "/ping", nil); body != "." {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// GET /pingall
 	if _, body := testRequest(t, ts, "GET", "/pingall", nil); body != "ping all" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// GET /ping/all
 	if _, body := testRequest(t, ts, "GET", "/ping/all", nil); body != "ping all" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// GET /ping/all2
 	if _, body := testRequest(t, ts, "GET", "/ping/all2", nil); body != "ping all2" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// GET /ping/123
 	if _, body := testRequest(t, ts, "GET", "/ping/123", nil); body != "ping one id: 123" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// GET /ping/allan
 	if _, body := testRequest(t, ts, "GET", "/ping/allan", nil); body != "ping one id: allan" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// GET /ping/1/woop
 	if _, body := testRequest(t, ts, "GET", "/ping/1/woop", nil); body != "woop.1" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// HEAD /ping
@@ -177,7 +177,7 @@ func TestMuxBasic(t *testing.T) {
 
 	// GET /admin/catch-this
 	if _, body := testRequest(t, ts, "GET", "/admin/catch-thazzzzz", nil); body != "catchall" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// POST /admin/catch-this
@@ -202,7 +202,7 @@ func TestMuxBasic(t *testing.T) {
 
 	// Custom http method DIE /ping/1/woop
 	if resp, body := testRequest(t, ts, "DIE", "/ping/1/woop", nil); body != "" || resp.StatusCode != 405 {
-		t.Fatalf(fmt.Sprintf("expecting 405 status and empty body, got %d '%s'", resp.StatusCode, body))
+		t.Fatalf("expecting 405 status and empty body, got %d '%s'", resp.StatusCode, body)
 	}
 }
 
