@@ -237,3 +237,38 @@ func TestStripSlashesWithNilContext(t *testing.T) {
 		t.Fatal(resp)
 	}
 }
+
+func TestStripPrefix(t *testing.T) {
+	r := chi.NewRouter()
+
+	r.Use(StripPrefix("/api"))
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("api root"))
+	})
+
+	r.Get("/accounts", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("api accounts"))
+	})
+
+	r.Get("/accounts/{accountID}", func(w http.ResponseWriter, r *http.Request) {
+		accountID := chi.URLParam(r, "accountID")
+		w.Write([]byte(accountID))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, resp := testRequest(t, ts, "GET", "/api/", nil); resp != "api root" {
+		t.Fatalf("got: %q, want: %q", resp, "api root")
+	}
+	if _, resp := testRequest(t, ts, "GET", "/api/accounts", nil); resp != "api accounts" {
+		t.Fatalf("got: %q, want: %q", resp, "api accounts")
+	}
+	if _, resp := testRequest(t, ts, "GET", "/api/accounts/admin", nil); resp != "admin" {
+		t.Fatalf("got: %q, want: %q", resp, "admin")
+	}
+	if _, resp := testRequest(t, ts, "GET", "/api-nope/", nil); resp != "404 page not found\n" {
+		t.Fatalf("got: %q, want: %q", resp, "404 page not found\n")
+	}
+}
