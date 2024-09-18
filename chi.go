@@ -51,7 +51,7 @@
 //	"/user/{name}" matches "/user/jsmith" but not "/user/jsmith/info" or "/user/jsmith/"
 //	"/user/{name}/info" matches "/user/jsmith/info"
 //	"/page/*" matches "/page/intro/latest"
-//	"/page/{other}/index" also matches "/page/intro/latest"
+//	"/page/{other}/latest" also matches "/page/intro/latest"
 //	"/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"
 package chi
 
