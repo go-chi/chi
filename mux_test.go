@@ -1814,6 +1814,74 @@ func TestMuxMatch(t *testing.T) {
 	}
 }
 
+func TestMuxMatch_HasBasePath(t *testing.T) {
+	r := NewRouter()
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Test", "yes")
+		w.Write([]byte(""))
+	})
+
+	tctx := NewRouteContext()
+
+	tctx.Reset()
+	if r.Match(tctx, "GET", "/") != true {
+		t.Fatal("expecting to find match for route:", "GET", "/")
+	}
+}
+
+func TestMuxMatch_DoesNotHaveBasePath(t *testing.T) {
+	r := NewRouter()
+
+	tctx := NewRouteContext()
+
+	tctx.Reset()
+	if r.Match(tctx, "GET", "/") != false {
+		t.Fatal("not expecting to find match for route:", "GET", "/")
+	}
+}
+
+func TestMuxFind(t *testing.T) {
+	r := NewRouter()
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Test", "yes")
+		w.Write([]byte(""))
+	})
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Test", "yes")
+		w.Write([]byte("bye"))
+	})
+	r.Route("/articles", func(r Router) {
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			id := URLParam(r, "id")
+			w.Header().Set("X-Article", id)
+			w.Write([]byte("article:" + id))
+		})
+	})
+	r.Route("/users", func(r Router) {
+		r.Head("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("X-User", "-")
+			w.Write([]byte("user"))
+		})
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			id := URLParam(r, "id")
+			w.Header().Set("X-User", id)
+			w.Write([]byte("user:" + id))
+		})
+	})
+
+	tctx := NewRouteContext()
+
+	tctx.Reset()
+	if r.Find(tctx, "GET", "/users/1") == "/users/{id}" {
+		t.Fatal("expecting to find match for route:", "GET", "/users/1")
+	}
+
+	tctx.Reset()
+	if r.Find(tctx, "HEAD", "/articles/10") == "/articles/{id}" {
+		t.Fatal("not expecting to find match for route:", "HEAD", "/articles/10")
+	}
+}
+
 func TestServerBaseContext(t *testing.T) {
 	r := NewRouter()
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
