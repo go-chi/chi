@@ -37,19 +37,19 @@ func TestStripSlashes(t *testing.T) {
 	defer ts.Close()
 
 	if _, resp := testRequest(t, ts, "GET", "/", nil); resp != "root" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "//", nil); resp != "root" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 }
 
@@ -80,22 +80,22 @@ func TestStripSlashesInRoute(t *testing.T) {
 	defer ts.Close()
 
 	if _, resp := testRequest(t, ts, "GET", "/hi", nil); resp != "hi" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/hi/", nil); resp != "nothing here" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "accounts index" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "accounts index" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query", nil); resp != "admin" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query/", nil); resp != "admin" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 }
 
@@ -126,32 +126,32 @@ func TestRedirectSlashes(t *testing.T) {
 	defer ts.Close()
 
 	if resp, body := testRequest(t, ts, "GET", "/", nil); body != "root" || resp.StatusCode != 200 {
-		t.Fatalf(body)
+		t.Fatal(body, resp.StatusCode)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
 	if resp, body := testRequest(t, ts, "GET", "//", nil); body != "root" || resp.StatusCode != 200 {
-		t.Fatalf(body)
+		t.Fatal(body, resp.StatusCode)
 	}
 
 	if resp, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" || resp.StatusCode != 200 {
-		t.Fatalf(body)
+		t.Fatal(body, resp.StatusCode)
 	}
 
 	// NOTE: the testRequest client will follow the redirection..
 	if resp, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" || resp.StatusCode != 200 {
-		t.Fatalf(body)
+		t.Fatal(body, resp.StatusCode)
 	}
 
 	if resp, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" || resp.StatusCode != 404 {
-		t.Fatalf(body)
+		t.Fatal(body, resp.StatusCode)
 	}
 
 	// Ensure redirect Location url is correct
 	{
 		resp, body := testRequestNoRedirect(t, ts, "GET", "/accounts/someuser/", nil)
 		if resp.StatusCode != 301 {
-			t.Fatalf(body)
+			t.Fatal(body, resp.StatusCode)
 		}
 		location := resp.Header.Get("Location")
 		if !strings.HasPrefix(location, "//") || !strings.HasSuffix(location, "/accounts/someuser") {
@@ -163,7 +163,7 @@ func TestRedirectSlashes(t *testing.T) {
 	{
 		resp, body := testRequestNoRedirect(t, ts, "GET", "/accounts/someuser/?a=1&b=2", nil)
 		if resp.StatusCode != 301 {
-			t.Fatalf(body)
+			t.Fatal(body, resp.StatusCode)
 		}
 		location := resp.Header.Get("Location")
 		if !strings.HasPrefix(location, "//") || !strings.HasSuffix(location, "/accounts/someuser?a=1&b=2") {
@@ -181,7 +181,7 @@ func TestRedirectSlashes(t *testing.T) {
 				t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
 			}
 			if body != "nothing here" || resp.StatusCode != 404 {
-				t.Fatalf(body)
+				t.Fatal(body, resp.StatusCode)
 			}
 		}
 	}
@@ -193,7 +193,7 @@ func TestRedirectSlashes(t *testing.T) {
 			t.Fatalf("host should remain the same. got: %q, want: %q", resp.Request.URL.Host, ts.URL)
 		}
 		if body != "nothing here" || resp.StatusCode != 404 {
-			t.Fatalf(body)
+			t.Fatal(body, resp.StatusCode)
 		}
 	}
 }
@@ -219,21 +219,21 @@ func TestStripSlashesWithNilContext(t *testing.T) {
 	defer ts.Close()
 
 	if _, resp := testRequest(t, ts, "GET", "/", nil); resp != "root" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "//", nil); resp != "root" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts", nil); resp != "accounts" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/", nil); resp != "accounts" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin", nil); resp != "admin" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
-		t.Fatalf(resp)
+		t.Fatal(resp)
 	}
 }
