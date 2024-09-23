@@ -1894,12 +1894,7 @@ func TestMuxFind(t *testing.T) {
 	}
 
 	tctx.Reset()
-	if r.Find(tctx, "GET", "/") != "/" {
-		t.Fatal("expecting to find pattern / for route: GET /")
-	}
-
-	tctx.Reset()
-	if r.Find(tctx, "GET", "/nope") == "/nope" {
+	if r.Find(tctx, "GET", "/nope") != "" {
 		t.Fatal("not expecting to find pattern for route: GET /nope")
 	}
 
@@ -1909,7 +1904,7 @@ func TestMuxFind(t *testing.T) {
 	}
 
 	tctx.Reset()
-	if r.Find(tctx, "HEAD", "/articles/10") == "/articles/{id}" {
+	if r.Find(tctx, "HEAD", "/articles/10") != "" {
 		t.Fatal("not expecting to find pattern for route: HEAD /articles/10")
 	}
 

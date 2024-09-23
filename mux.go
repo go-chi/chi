@@ -388,6 +388,10 @@ func (mx *Mux) Find(rctx *Context, method, path string) string {
 
 		rctx.RoutePath = mx.nextRoutePath(rctx)
 		subPattern := node.subroutes.Find(rctx, method, rctx.RoutePath)
+		if subPattern == "" {
+			return ""
+		}
+
 		pattern = strings.TrimSuffix(pattern, "/*")
 		pattern += subPattern
 	}
