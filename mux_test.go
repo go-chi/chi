@@ -1850,6 +1850,11 @@ func TestMuxFind(t *testing.T) {
 		w.Header().Set("X-Test", "yes")
 		w.Write([]byte("bye"))
 	})
+	r.Route("/yo", func(r Router) {
+		r.Get("/sup", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("sup"))
+		})
+	})
 	r.Route("/articles", func(r Router) {
 		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 			id := URLParam(r, "id")
@@ -1868,17 +1873,44 @@ func TestMuxFind(t *testing.T) {
 			w.Write([]byte("user:" + id))
 		})
 	})
+	r.Route("/api", func(r Router) {
+		r.Route("/groups", func(r Router) {
+			r.Route("/v2", func(r Router) {
+				r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("groups"))
+				})
+				r.Post("/{id}", func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("POST groups"))
+				})
+			})
+		})
+	})
 
 	tctx := NewRouteContext()
 
 	tctx.Reset()
-	if r.Find(tctx, "GET", "/users/1") == "/users/{id}" {
-		t.Fatal("expecting to find match for route:", "GET", "/users/1")
+	if pattern := r.Find(tctx, "GET", "/users/1"); pattern != "/users/{id}" {
+		t.Fatal("expecting to find pattern /users/{id} for route: GET /users/1")
 	}
 
 	tctx.Reset()
 	if r.Find(tctx, "HEAD", "/articles/10") == "/articles/{id}" {
-		t.Fatal("not expecting to find match for route:", "HEAD", "/articles/10")
+		t.Fatal("not expecting to find pattern for route: HEAD /articles/10")
+	}
+
+	tctx.Reset()
+	if r.Find(tctx, "GET", "/yo/sup") != "/yo/sup" {
+		t.Fatal("expecting to find pattern /yo/sup for route: GET /yo/sup")
+	}
+
+	tctx.Reset()
+	if r.Find(tctx, "GET", "/api/groups/v2/") != "/api/groups/v2/" {
+		t.Fatal("expecting to find pattern /api/groups/v2/ for route: GET /api/groups/v2/")
+	}
+
+	tctx.Reset()
+	if r.Find(tctx, "POST", "/api/groups/v2/1") != "/api/groups/v2/{id}" {
+		t.Fatal("expecting to find pattern /api/groups/v2/{id} for route: POST /api/groups/v2/1")
 	}
 }
 
