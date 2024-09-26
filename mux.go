@@ -378,18 +378,25 @@ func (mx *Mux) Find(rctx *Context, method, path string) string {
 	}
 
 	node, _, _ := mx.tree.FindRoute(rctx, m, path)
-
-	if node != nil && node.subroutes != nil {
-		rctx.RoutePath = mx.nextRoutePath(rctx)
-		return node.subroutes.Find(rctx, method, rctx.RoutePath)
-	}
+	pattern := rctx.routePattern
 
 	if node != nil {
-		e := node.endpoints[m]
-		return e.pattern
+		if node.subroutes == nil {
+			e := node.endpoints[m]
+			return e.pattern
+		}
+
+		rctx.RoutePath = mx.nextRoutePath(rctx)
+		subPattern := node.subroutes.Find(rctx, method, rctx.RoutePath)
+		if subPattern == "" {
+			return ""
+		}
+
+		pattern = strings.TrimSuffix(pattern, "/*")
+		pattern += subPattern
 	}
 
-	return ""
+	return pattern
 }
 
 // NotFoundHandler returns the default Mux 404 responder whenever a route
