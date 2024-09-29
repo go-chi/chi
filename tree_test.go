@@ -9,6 +9,8 @@ import (
 
 func TestTree(t *testing.T) {
 	hStub := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	misMatch1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	misMatch2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hIndex := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hFavicon := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hArticleList := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -34,6 +36,9 @@ func TestTree(t *testing.T) {
 
 	tr.InsertRoute(mGET, "/", hIndex)
 	tr.InsertRoute(mGET, "/favicon.ico", hFavicon)
+
+	tr.InsertRoute(mGET, "/{:[a-z]+}/", misMatch1)
+	tr.InsertRoute(mGET, "/{:[1-9]\\d*}/test", misMatch2)
 
 	tr.InsertRoute(mGET, "/pages/*", hStub)
 
@@ -78,13 +83,18 @@ func TestTree(t *testing.T) {
 	tr.InsertRoute(mGET, "/hubs/{hubID}/users", hHubView3)
 
 	tests := []struct {
-		r string       // input request path
-		h http.Handler // output matched handler
-		k []string     // output param keys
-		v []string     // output param values
+		r        string       // input request path
+		h        http.Handler // output matched handler
+		k        []string     // output param keys
+		v        []string     // output param values
+		mismatch bool         // if true, it means the match should fail
 	}{
 		{r: "/", h: hIndex, k: []string{}, v: []string{}},
 		{r: "/favicon.ico", h: hFavicon, k: []string{}, v: []string{}},
+
+		{r: "//", h: misMatch1, k: []string{}, v: []string{}, mismatch: true},
+		{r: "/123/test", h: misMatch2, k: []string{""}, v: []string{"123"}},
+		{r: "//test", h: misMatch2, k: []string{}, v: []string{}, mismatch: true},
 
 		{r: "/pages", h: nil, k: []string{}, v: []string{}},
 		{r: "/pages/", h: hStub, k: []string{"*"}, v: []string{""}},
@@ -129,7 +139,14 @@ func TestTree(t *testing.T) {
 	for i, tt := range tests {
 		rctx := NewRouteContext()
 
-		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
+		n, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
+		if tt.mismatch && n != nil {
+			t.Errorf("input [%d]: find '%s' should mismatch but get node(%+v)!", i, tt.r, n)
+			continue
+		}
+		if tt.mismatch {
+			continue
+		}
 
 		var handler http.Handler
 		if methodHandler, ok := handlers[mGET]; ok {
