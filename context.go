@@ -133,6 +133,18 @@ func (x *Context) RoutePattern() string {
 	return routePattern
 }
 
+// WithRouteContext returns the list of methods allowed for the current
+// request, based on the current routing context.
+func (x *Context) AllowedMethods() []string {
+	result := make([]string, 0, len(x.methodsAllowed))
+	for _, method := range x.methodsAllowed {
+		if method := methodTypString(method); method != "" {
+			result = append(result, method)
+		}
+	}
+	return result
+}
+
 // replaceWildcards takes a route pattern and recursively replaces all
 // occurrences of "/*/" to "/".
 func replaceWildcards(p string) string {
