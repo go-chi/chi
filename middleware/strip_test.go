@@ -48,8 +48,17 @@ func TestStripSlashes(t *testing.T) {
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/", nil); resp != "admin" {
 		t.Fatal(resp)
 	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/escaped%2F", nil); resp != "escaped%2F" {
+		t.Fatalf(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/escaped%2F/", nil); resp != "escaped%2F" {
+		t.Fatalf(resp)
+	}
 	if _, resp := testRequest(t, ts, "GET", "/nothing-here", nil); resp != "nothing here" {
 		t.Fatal(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/%2F", nil); resp != "nothing here" {
+		t.Fatalf(resp)
 	}
 }
 
@@ -96,6 +105,9 @@ func TestStripSlashesInRoute(t *testing.T) {
 	}
 	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query/", nil); resp != "admin" {
 		t.Fatal(resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/accounts/admin/query%2F", nil); resp != "nothing here" {
+		t.Fatalf(resp)
 	}
 }
 
