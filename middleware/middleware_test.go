@@ -9,8 +9,11 @@ import (
 	"path"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
+
+	chi "github.com/go-chi/chi/v5"
 )
 
 var testdataDir string
@@ -18,6 +21,47 @@ var testdataDir string
 func init() {
 	_, filename, _, _ := runtime.Caller(0)
 	testdataDir = path.Join(path.Dir(filename), "/../testdata")
+}
+
+type customMiddleware struct{}
+
+func (c *customMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	for name, headers := range req.Header {
+		if strings.ToLower(name) == "x-custom-header" {
+			if len(headers) == 1 {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+		}
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+}
+
+func TestNew(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(New(&customMiddleware{}))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("OK"))
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Custom-Header", "abc123")
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf("new: middleware was not register in the stack")
+	}
+}
+
+func Test_contextKey_String(t *testing.T) {
+	k := &contextKey{
+		name: "test",
+	}
+	if got := k.String(); got != "chi/middleware context value test" {
+		t.Errorf("got: %q, expected: %q", got, "chi/middleware context value test")
+	}
 }
 
 func TestWrapWriterHTTP2(t *testing.T) {
