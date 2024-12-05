@@ -8,9 +8,10 @@ import (
 var (
 	TracingCtxKey       = &contextKey{"TracingHeaders"}
 	defaultTraceHeaders = []string{
-		"X-Cloud-Trace-Context", // GCP load balancer
-		"X-Amzn-Trace-Id",       // AWS X-ray
-		"CF-ray",                // Cloudflare ray id
+		http.CanonicalHeaderKey("X-Cloud-Trace-Context"), // GCP load balancer trace id
+		http.CanonicalHeaderKey("X-Amzn-Trace-Id"),       // AWS X-ray
+		http.CanonicalHeaderKey("CF-ray"),                // Cloudflare ray id
+		http.CanonicalHeaderKey("TraceId"),               // https://github.com/go-chi/traceid
 	}
 )
 
@@ -18,6 +19,7 @@ func Tracing(traceHeaders ...string) func(next http.Handler) http.Handler {
 	if len(traceHeaders) == 0 {
 		traceHeaders = defaultTraceHeaders
 	}
+
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			headerValues := map[string]string{}
