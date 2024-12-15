@@ -6,7 +6,6 @@ package middleware
 import (
 	"bufio"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 )
@@ -108,7 +107,7 @@ func (b *basicWriter) Write(buf []byte) (n int, err error) {
 	} else if b.tee != nil {
 		n, err = b.tee.Write(buf)
 	} else {
-		n, err = ioutil.Discard.Write(buf)
+		n, err = io.Discard.Write(buf)
 	}
 	b.bytes += n
 	return n, err
