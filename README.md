@@ -88,7 +88,9 @@ func main() {
   r.Use(middleware.RealIP)
   r.Use(middleware.Logger)
   r.Use(middleware.Recoverer)
-
+  // or you can use
+  middleware.BasicMiddlewares()
+  
   // Set a timeout value on the request context (ctx), that will signal
   // through ctx.Done() that the request has timed out and further
   // processing should be stopped.
