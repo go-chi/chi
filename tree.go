@@ -441,12 +441,11 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					} else {
 						continue
 					}
-				} else if ntyp == ntRegexp && p == 0 {
-					continue
 				}
 
 				if ntyp == ntRegexp && xn.rex != nil {
 					if !xn.rex.MatchString(xsearch[:p]) {
+						xn = nil
 						continue
 					}
 				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
@@ -489,8 +488,6 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
 				xsearch = search
 			}
-
-			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
 
 		default:
 			// catch-all nodes
