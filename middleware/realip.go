@@ -47,11 +47,7 @@ func realIP(r *http.Request) string {
 	} else if xrip := r.Header.Get(xRealIP); xrip != "" {
 		ip = xrip
 	} else if xff := r.Header.Get(xForwardedFor); xff != "" {
-		i := strings.Index(xff, ",")
-		if i == -1 {
-			i = len(xff)
-		}
-		ip = xff[:i]
+		ip, _, _ = strings.Cut(xff, ",")
 	}
 	if ip == "" || net.ParseIP(ip) == nil {
 		return ""
