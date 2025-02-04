@@ -133,13 +133,7 @@ type Pattern struct {
 
 func NewPattern(value string) Pattern {
 	p := Pattern{}
-	if i := strings.IndexByte(value, '*'); i >= 0 {
-		p.wildcard = true
-		p.prefix = value[0:i]
-		p.suffix = value[i+1:]
-	} else {
-		p.prefix = value
-	}
+	p.prefix, p.suffix, p.wildcard = strings.Cut(value, "*")
 	return p
 }
 
