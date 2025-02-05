@@ -15,9 +15,9 @@ func TestPathValue(t *testing.T) {
 		name         string
 		pattern      string
 		method       string
-		pathKeys     []string
 		requestPath  string
 		expectedBody string
+		pathKeys     []string
 	}{
 		{
 			name:         "Basic path value",
