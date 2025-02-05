@@ -133,13 +133,13 @@ type defaultLogEntry struct {
 
 func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
 	switch {
-	case status < 200:
+	case status < http.StatusOK:
 		cW(l.buf, l.useColor, bBlue, "%03d", status)
-	case status < 300:
+	case status < http.StatusMultipleChoices:
 		cW(l.buf, l.useColor, bGreen, "%03d", status)
-	case status < 400:
+	case status < http.StatusBadRequest:
 		cW(l.buf, l.useColor, bCyan, "%03d", status)
-	case status < 500:
+	case status < http.StatusInternalServerError:
 		cW(l.buf, l.useColor, bYellow, "%03d", status)
 	default:
 		cW(l.buf, l.useColor, bRed, "%03d", status)
