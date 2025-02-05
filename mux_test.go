@@ -644,11 +644,11 @@ func TestMuxHandlePatternValidation(t *testing.T) {
 	testCases := []struct {
 		name           string
 		pattern        string
+		method         string
+		path           string
+		expectedBody   string
+		expectedStatus int
 		shouldPanic    bool
-		method         string // Method to be used for the test request
-		path           string // Path to be used for the test request
-		expectedBody   string // Expected response body
-		expectedStatus int    // Expected HTTP status code
 	}{
 		// Valid patterns
 		{

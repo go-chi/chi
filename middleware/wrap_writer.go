@@ -73,10 +73,10 @@ type WrapResponseWriter interface {
 // http.ResponseWriter interface.
 type basicWriter struct {
 	http.ResponseWriter
-	wroteHeader bool
+	tee         io.Writer
 	code        int
 	bytes       int
-	tee         io.Writer
+	wroteHeader bool
 	discard     bool
 }
 

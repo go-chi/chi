@@ -126,9 +126,9 @@ type token struct{}
 type throttler struct {
 	tokens         chan token
 	backlogTokens  chan token
+	retryAfterFn   func(ctxDone bool) time.Duration
 	backlogTimeout time.Duration
 	statusCode     int
-	retryAfterFn   func(ctxDone bool) time.Duration
 }
 
 // setRetryAfterHeaderIfNeeded sets Retry-After HTTP header if corresponding retryAfterFn option of throttler is initialized.
