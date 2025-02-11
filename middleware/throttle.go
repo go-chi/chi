@@ -76,7 +76,6 @@ func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler {
 			ctx := r.Context()
 
 			select {
-
 			case <-ctx.Done():
 				t.setRetryAfterHeaderIfNeeded(w, true)
 				http.Error(w, errContextCanceled, t.statusCode)

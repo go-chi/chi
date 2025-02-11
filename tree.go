@@ -242,7 +242,6 @@ func (n *node) addChild(child *node, prefix string) *node {
 
 	// Add child depending on next up segment
 	switch segTyp {
-
 	case ntStatic:
 		// Search prefix is all static (that is, has no params in path)
 		// noop
@@ -287,7 +286,6 @@ func (n *node) addChild(child *node, prefix string) *node {
 				}
 				hn = child.addChild(nn, search)
 			}
-
 		} else if segStartIdx > 0 {
 			// Route has some param
 
@@ -305,7 +303,6 @@ func (n *node) addChild(child *node, prefix string) *node {
 				tail:  segTail,
 			}
 			hn = child.addChild(nn, search)
-
 		}
 	}
 
@@ -537,7 +534,6 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				rctx.routeParams.Values = rctx.routeParams.Values[:len(rctx.routeParams.Values)-1]
 			}
 		}
-
 	}
 
 	return nil

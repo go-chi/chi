@@ -225,13 +225,11 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 				}
 				encoder.Reset(w)
 				return encoder, name, cleanup
-
 			}
 			if fn, ok := c.encoders[name]; ok {
 				return fn(w, c.level), name, func() {}
 			}
 		}
-
 	}
 
 	// No encoder found to match the accepted encoding
