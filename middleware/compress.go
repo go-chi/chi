@@ -168,6 +168,7 @@ func (c *Compressor) SetEncoder(encoding string, fn EncoderFunc) {
 		}
 		c.pooledEncoders[encoding] = pool
 	}
+
 	// If the encoder is not in the pooledEncoders, add it to the normal encoders.
 	if _, ok := c.pooledEncoders[encoding]; !ok {
 		c.encoders[encoding] = fn
