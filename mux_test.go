@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -1277,7 +1278,6 @@ func TestMuxSubroutes(t *testing.T) {
 	if routePatterns[2] != expected {
 		t.Fatalf("routePattern, expected:%s got:%s", expected, routePatterns[2])
 	}
-
 }
 
 func TestSingleHandler(t *testing.T) {
@@ -1383,7 +1383,7 @@ func TestServeHTTPExistingContext(t *testing.T) {
 func TestNestedGroups(t *testing.T) {
 	handlerPrintCounter := func(w http.ResponseWriter, r *http.Request) {
 		counter, _ := r.Context().Value(ctxKey{"counter"}).(int)
-		w.Write([]byte(fmt.Sprintf("%v", counter)))
+		w.Write([]byte(strconv.Itoa(counter)))
 	}
 
 	mwIncreaseCounter := func(next http.Handler) http.Handler {
@@ -1421,7 +1421,6 @@ func TestNestedGroups(t *testing.T) {
 				r.Get("/5", handlerPrintCounter)
 				// r.Handle(GET, "/6", Chain(mwIncreaseCounter).HandlerFunc(handlerPrintCounter))
 				r.With(mwIncreaseCounter).Get("/6", handlerPrintCounter)
-
 			})
 		})
 	})
@@ -1974,7 +1973,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 	return resp, string(respBody)
 }
 
-func testHandler(t *testing.T, h http.Handler, method, path string, body io.Reader) (*http.Response, string) {
+func testHandler(_ *testing.T, h http.Handler, method, path string, body io.Reader) (*http.Response, string) {
 	r, _ := http.NewRequest(method, path, body)
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)

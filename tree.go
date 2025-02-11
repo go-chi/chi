@@ -148,7 +148,7 @@ func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handle
 
 		// We're going to be searching for a wild node next,
 		// in this case, we need to get the tail
-		var label = search[0]
+		label := search[0]
 		var segTail byte
 		var segEndIdx int
 		var segTyp nodeTyp

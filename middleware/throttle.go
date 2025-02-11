@@ -12,9 +12,7 @@ const (
 	errContextCanceled  = "Context was canceled."
 )
 
-var (
-	defaultBacklogTimeout = time.Second * 60
-)
+var defaultBacklogTimeout = time.Second * 60
 
 // ThrottleOpts represents a set of throttling options.
 type ThrottleOpts struct {

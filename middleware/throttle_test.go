@@ -39,7 +39,7 @@ func TestThrottleBacklog(t *testing.T) {
 	// before the clients time out (5s) is 40.
 	for i := 0; i < 40; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
@@ -49,7 +49,7 @@ func TestThrottleBacklog(t *testing.T) {
 			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
-		}(i)
+		}()
 	}
 
 	wg.Wait()
@@ -77,11 +77,11 @@ func TestThrottleClientTimeout(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 			_, err := client.Get(server.URL)
 			assertError(t, err)
-		}(i)
+		}()
 	}
 
 	wg.Wait()
@@ -110,13 +110,13 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	// These requests will be processed normally until they finish.
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusOK, res.StatusCode)
-		}(i)
+		}()
 	}
 
 	time.Sleep(time.Second * 1)
@@ -125,7 +125,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	// too much time, so they will eventually receive a timeout error.
 	for i := 0; i < 50; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
@@ -135,7 +135,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
-		}(i)
+		}()
 	}
 
 	wg.Wait()
@@ -163,7 +163,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 	for i := 0; i < 20; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
@@ -173,7 +173,7 @@ func TestThrottleMaximum(t *testing.T) {
 			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
-		}(i)
+		}()
 	}
 
 	// Wait less time than what the server takes to reply.
@@ -183,7 +183,7 @@ func TestThrottleMaximum(t *testing.T) {
 	// will be beyond the server capacity.
 	for i := 0; i < 20; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
 
 			res, err := client.Get(server.URL)
@@ -193,7 +193,7 @@ func TestThrottleMaximum(t *testing.T) {
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
-		}(i)
+		}()
 	}
 
 	wg.Wait()
