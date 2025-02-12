@@ -232,13 +232,13 @@ func TestMuxMounts(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/sharing/aBc", nil); body != "/aBc" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/sharing/aBc/share", nil); body != "/aBc/share" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/sharing/aBc/share/twitter", nil); body != "/aBc/share/twitter" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -256,10 +256,10 @@ func TestMuxPlain(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -272,11 +272,11 @@ func TestMuxEmptyRoutes(t *testing.T) {
 	mux.Handle("/api*", apiRouter)
 
 	if _, body := testHandler(t, mux, "GET", "/", nil); body != "404 page not found\n" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	if _, body := testHandler(t, apiRouter, "GET", "/", nil); body != "404 page not found\n" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -303,13 +303,13 @@ func TestMuxTrailingSlash(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/accounts/admin", nil); body != "admin" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/accounts/admin/", nil); body != "admin" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "nothing here" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -370,24 +370,24 @@ func TestMuxNestedNotFound(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/nothing-here", nil); body != "root 404 mw with" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/admin1/sub", nil); body != "sub" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/admin1/nope", nil); body != "sub 404 mw2" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/admin2/sub", nil); body != "sub2" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	// Not found pages should bubble up to the root.
 	if _, body := testRequest(t, ts, "GET", "/admin2/nope", nil); body != "root 404 mw with" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -469,28 +469,28 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/root", nil); body != "root" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "PUT", "/root", nil); body != "root 405" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/prefix1/sub1", nil); body != "sub1" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "PUT", "/prefix1/sub1", nil); body != "sub1 405" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/prefix2/sub2", nil); body != "sub2" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "PUT", "/prefix2/sub2", nil); body != "root 405" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/pathVar/myvar", nil); body != "pv" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "DELETE", "/pathVar/myvar", nil); body != "pv 405" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -531,39 +531,39 @@ func TestMuxComplicatedNotFound(t *testing.T) {
 
 		// check that we didn't break correct routes
 		if _, body := testRequest(t, ts, "GET", "/auth", nil); body != "auth get" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/public", nil); body != "public get" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/public/", nil); body != "public get" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/private/resource", nil); body != "private get" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		// check custom not-found on all levels
 		if _, body := testRequest(t, ts, "GET", "/nope", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/public/nope", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/private/nope", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/private/resource/nope", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/private_mw/nope", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		if _, body := testRequest(t, ts, "GET", "/private_mw/resource/nope", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 		// check custom not-found on trailing slash routes
 		if _, body := testRequest(t, ts, "GET", "/auth/", nil); body != "custom not-found" {
-			t.Fatalf(body)
+			t.Fatal(body)
 		}
 	}
 
@@ -620,10 +620,10 @@ func TestMuxWith(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/inline", nil); body != "inline yes yes" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if cmwInit1 != 1 {
 		t.Fatalf("expecting cmwInit1 to be 1, got %d", cmwInit1)
@@ -643,11 +643,11 @@ func TestMuxHandlePatternValidation(t *testing.T) {
 	testCases := []struct {
 		name           string
 		pattern        string
+		method         string
+		path           string
+		expectedBody   string
+		expectedStatus int
 		shouldPanic    bool
-		method         string // Method to be used for the test request
-		path           string // Path to be used for the test request
-		expectedBody   string // Expected response body
-		expectedStatus int    // Expected HTTP status code
 	}{
 		// Valid patterns
 		{
@@ -1496,7 +1496,7 @@ func TestMountingSimilarPattern(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1513,10 +1513,10 @@ func TestMuxEmptyParams(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/users/a/b/c", nil); body != "a-b-c" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/users///c", nil); body != "--c" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1535,10 +1535,10 @@ func TestMuxMissingParams(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/user/123", nil); body != "userId = '123'" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/user/", nil); body != "nothing here" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1580,7 +1580,7 @@ func TestMuxRegexp(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "//test", nil); body != "Hi: " {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1593,10 +1593,10 @@ func TestMuxRegexp2(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/foo-.json", nil); body != "" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/foo-abc.json", nil); body != "abc" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1628,16 +1628,16 @@ func TestMuxRegexp3(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/one/hello/peter/first", nil); body != "first" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/one/hithere/123/second", nil); body != "second" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "DELETE", "/one/hithere/123/second", nil); body != "third" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "DELETE", "/one/123", nil); body != "forth" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1660,16 +1660,16 @@ func TestMuxSubrouterWildcardParam(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/bare/hi", nil); body != "param:hi *:" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/bare/hi/yes", nil); body != "param:hi *:yes" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/case0/hi", nil); body != "param:hi *:" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/case0/hi/yes", nil); body != "param:hi *:yes" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1745,7 +1745,7 @@ func TestEscapedURLParams(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1768,10 +1768,10 @@ func TestCustomHTTPMethod(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "." {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "BOO", "/hi", nil); body != "custom method" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 
@@ -1947,7 +1947,7 @@ func TestServerBaseContext(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "yes" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 }
 

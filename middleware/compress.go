@@ -274,16 +274,13 @@ type compressResponseWriter struct {
 func (cw *compressResponseWriter) isCompressible() bool {
 	// Parse the first part of the Content-Type response header.
 	contentType := cw.Header().Get("Content-Type")
-	if idx := strings.Index(contentType, ";"); idx >= 0 {
-		contentType = contentType[0:idx]
-	}
+	contentType, _, _ = strings.Cut(contentType, ";")
 
 	// Is the content type compressible?
 	if _, ok := cw.contentTypes[contentType]; ok {
 		return true
 	}
-	if idx := strings.Index(contentType, "/"); idx > 0 {
-		contentType = contentType[0:idx]
+	if contentType, _, hadSlash := strings.Cut(contentType, "/"); hadSlash {
 		_, ok := cw.contentWildcards[contentType]
 		return ok
 	}

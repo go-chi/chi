@@ -72,15 +72,19 @@ type WrapResponseWriter interface {
 // http.ResponseWriter interface.
 type basicWriter struct {
 	http.ResponseWriter
-	wroteHeader bool
+	tee         io.Writer
 	code        int
 	bytes       int
-	tee         io.Writer
+	wroteHeader bool
 	discard     bool
 }
 
 func (b *basicWriter) WriteHeader(code int) {
-	if !b.wroteHeader {
+	if code >= 100 && code <= 199 && code != http.StatusSwitchingProtocols {
+		if !b.discard {
+			b.ResponseWriter.WriteHeader(code)
+		}
+	} else if !b.wroteHeader {
 		b.code = code
 		b.wroteHeader = true
 		if !b.discard {
