@@ -180,8 +180,10 @@ func (f *flushHijackWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return hj.Hijack()
 }
 
-var _ http.Flusher = &flushHijackWriter{}
-var _ http.Hijacker = &flushHijackWriter{}
+var (
+	_ http.Flusher  = &flushHijackWriter{}
+	_ http.Hijacker = &flushHijackWriter{}
+)
 
 // httpFancyWriter is a HTTP writer that additionally satisfies
 // http.Flusher, http.Hijacker, and io.ReaderFrom. It exists for the common case

@@ -2,7 +2,6 @@ package chi
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"testing"
 )
@@ -442,34 +441,6 @@ func TestTreeFindPattern(t *testing.T) {
 	if tr.findPattern("/articles/{slug}/{uid}/*") == false {
 		t.Errorf("find /articles/{slug}/{uid}/* failed")
 	}
-}
-
-func debugPrintTree(parent int, i int, n *node, label byte) bool {
-	numEdges := 0
-	for _, nds := range n.children {
-		numEdges += len(nds)
-	}
-
-	// if n.handlers != nil {
-	// 	log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.handlers, n.pattern, n.paramKeys)
-	// } else {
-	// 	log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v pat:%s keys:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.pattern, n.paramKeys)
-	// }
-	if n.endpoints != nil {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v handler:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf(), n.endpoints)
-	} else {
-		log.Printf("[node %d parent:%d] typ:%d prefix:%s label:%s tail:%s numEdges:%d isLeaf:%v\n", i, parent, n.typ, n.prefix, string(label), string(n.tail), numEdges, n.isLeaf())
-	}
-	parent = i
-	for _, nds := range n.children {
-		for _, e := range nds {
-			i++
-			if debugPrintTree(parent, i, e, e.label) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func stringSliceEqual(a, b []string) bool {

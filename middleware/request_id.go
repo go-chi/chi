@@ -20,12 +20,13 @@ type ctxKeyRequestID int
 // RequestIDKey is the key that holds the unique request ID in a request context.
 const RequestIDKey ctxKeyRequestID = 0
 
-// RequestIDHeader is the name of the HTTP Header which contains the request id.
-// Exported so that it can be changed by developers
-var RequestIDHeader = "X-Request-Id"
-
-var prefix string
-var reqid uint64
+var (
+	// RequestIDHeader is the name of the HTTP Header which contains the request id.
+	// Exported so that it can be changed by developers
+	RequestIDHeader = "X-Request-Id"
+	prefix          string
+	reqid           uint64
+)
 
 // A quick note on the statistics here: we're trying to calculate the chance that
 // two randomly generated base62 prefixes will collide. We use the formula from

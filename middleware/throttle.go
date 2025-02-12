@@ -12,9 +12,7 @@ const (
 	errContextCanceled  = "Context was canceled."
 )
 
-var (
-	defaultBacklogTimeout = time.Second * 60
-)
+var defaultBacklogTimeout = time.Second * 60
 
 // ThrottleOpts represents a set of throttling options.
 type ThrottleOpts struct {
@@ -76,7 +74,6 @@ func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler {
 			ctx := r.Context()
 
 			select {
-
 			case <-ctx.Done():
 				t.setRetryAfterHeaderIfNeeded(w, true)
 				http.Error(w, errContextCanceled, t.statusCode)

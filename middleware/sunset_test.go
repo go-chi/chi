@@ -10,7 +10,6 @@ import (
 )
 
 func TestSunset(t *testing.T) {
-
 	t.Run("Sunset without link", func(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/", nil)
 		w := httptest.NewRecorder()
@@ -80,7 +79,6 @@ func TestSunset(t *testing.T) {
 			t.Fatal("Test get deprecation link error.")
 		}
 	})
-
 }
 
 /**

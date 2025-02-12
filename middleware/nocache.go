@@ -39,7 +39,6 @@ var etagHeaders = []string{
 //	Pragma: no-cache (for HTTP/1.0 proxies/clients)
 func NoCache(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-
 		// Delete any ETag headers that may have been set
 		for _, v := range etagHeaders {
 			if r.Header.Get(v) != "" {

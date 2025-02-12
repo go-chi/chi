@@ -42,4 +42,3 @@ func AllowContentType(contentTypes ...string) func(http.Handler) http.Handler {
 		})
 	}
 }
-

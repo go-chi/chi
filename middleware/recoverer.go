@@ -63,8 +63,7 @@ func PrintPrettyStack(rvr interface{}) {
 	}
 }
 
-type prettyStack struct {
-}
+type prettyStack struct{}
 
 func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	var err error

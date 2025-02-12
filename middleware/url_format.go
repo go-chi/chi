@@ -8,11 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var (
-	// URLFormatCtxKey is the context.Context key to store the URL format data
-	// for a request.
-	URLFormatCtxKey = &contextKey{"URLFormat"}
-)
+// URLFormatCtxKey is the context.Context key to store the URL format data
+// for a request.
+var URLFormatCtxKey = &contextKey{"URLFormat"}
 
 // URLFormat is a middleware that parses the url extension from a request path and stores it
 // on the context as a string under the key `middleware.URLFormatCtxKey`. The middleware will
