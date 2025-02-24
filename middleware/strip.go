@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -12,20 +13,19 @@ import (
 // matches, then it will serve the handler.
 func StripSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		var path string
 		rctx := chi.RouteContext(r.Context())
-		if rctx != nil && rctx.RoutePath != "" {
-			path = rctx.RoutePath
-		} else {
-			path = r.URL.Path
-		}
-		if len(path) > 1 && path[len(path)-1] == '/' {
-			newPath := path[:len(path)-1]
-			if rctx == nil {
-				r.URL.Path = newPath
-			} else {
-				rctx.RoutePath = newPath
+
+		if rctx != nil && len(rctx.RoutePath) > 1 {
+			rctx.RoutePath = strings.TrimSuffix(rctx.RoutePath, "/")
+		} else if len(r.URL.RawPath) > 1 {
+			if r.URL.RawPath[len(r.URL.RawPath)-1] == '/' {
+				// Always update RawPath and Path in sync to make sure
+				// there are no unexpected mismatches
+				r.URL.RawPath = strings.TrimSuffix(r.URL.RawPath, "/")
+				r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 			}
+		} else if len(r.URL.Path) > 1 {
+			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 		}
 		next.ServeHTTP(w, r)
 	}
