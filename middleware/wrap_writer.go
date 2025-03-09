@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -66,6 +67,18 @@ type WrapResponseWriter interface {
 	// The caller is responsible for calling WriteHeader and Write on the
 	// original ResponseWriter once the processing is done.
 	Discard()
+	// CaptureErr captures an error associated with this response.
+	// If multiple errors are captured during request processing, they will be
+	// joined together.
+	// This allows handlers to provide middleware with context about errors
+	// that occurred during request processing, which is particularly useful
+	// for centralized error logging and monitoring middleware.
+	// The captured errors have no effect on the response itself - handlers
+	// are still responsible for setting appropriate status codes and
+	// writing response bodies.
+	CaptureErr(err error)
+	// Err returns the error captured via CaptureErr, if any.
+	Err() error
 }
 
 // basicWriter wraps a http.ResponseWriter that implements the minimal
@@ -77,6 +90,7 @@ type basicWriter struct {
 	bytes       int
 	wroteHeader bool
 	discard     bool
+	err         error
 }
 
 func (b *basicWriter) WriteHeader(code int) {
@@ -137,6 +151,14 @@ func (b *basicWriter) Unwrap() http.ResponseWriter {
 
 func (b *basicWriter) Discard() {
 	b.discard = true
+}
+
+func (b *basicWriter) CaptureErr(err error) {
+	b.err = errors.Join(b.err, err)
+}
+
+func (b *basicWriter) Err() error {
+	return b.err
 }
 
 // flushWriter ...
