@@ -40,11 +40,10 @@ func contentEncoding(ce string, charsets ...string) bool {
 
 // Split a string in two parts, cleaning any whitespace.
 func split(str, sep string) (string, string) {
-	var a, b string
-	var parts = strings.SplitN(str, sep, 2)
-	a = strings.TrimSpace(parts[0])
-	if len(parts) == 2 {
-		b = strings.TrimSpace(parts[1])
+	a, b, found := strings.Cut(str, sep)
+	a = strings.TrimSpace(a)
+	if found {
+		b = strings.TrimSpace(b)
 	}
 
 	return a, b
