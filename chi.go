@@ -37,8 +37,7 @@
 //
 // A placeholder with a name followed by a colon allows a regular
 // expression match, for example {number:\\d+}. The regular expression
-// syntax is Go's normal regexp RE2 syntax, except that regular expressions
-// including { or } are not supported, and / will never be
+// syntax is Go's normal regexp RE2 syntax, except that / will never be
 // matched. An anonymous regexp pattern is allowed, using an empty string
 // before the colon in the placeholder, such as {:\\d+}
 //
