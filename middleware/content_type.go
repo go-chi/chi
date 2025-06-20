@@ -31,7 +31,8 @@ func AllowContentType(contentTypes ...string) func(http.Handler) http.Handler {
 				return
 			}
 
-			s := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("Content-Type"), ";")[0]))
+			s, _, _ := strings.Cut(r.Header.Get("Content-Type"), ";")
+			s = strings.ToLower(strings.TrimSpace(s))
 
 			if _, ok := allowedContentTypes[s]; ok {
 				next.ServeHTTP(w, r)
@@ -42,4 +43,3 @@ func AllowContentType(contentTypes ...string) func(http.Handler) http.Handler {
 		})
 	}
 }
-
