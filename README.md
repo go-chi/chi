@@ -20,7 +20,9 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 ## Install
 
-`go get -u github.com/go-chi/chi/v5`
+```sh
+go get -u github.com/go-chi/chi/v5
+```
 
 
 ## Features
