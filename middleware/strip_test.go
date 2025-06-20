@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -154,7 +153,7 @@ func TestRedirectSlashes(t *testing.T) {
 			t.Fatal(body, resp.StatusCode)
 		}
 		location := resp.Header.Get("Location")
-		if !strings.HasPrefix(location, "//") || !strings.HasSuffix(location, "/accounts/someuser") {
+		if location != "/accounts/someuser" {
 			t.Fatalf("invalid redirection, should be /accounts/someuser")
 		}
 	}
@@ -166,7 +165,7 @@ func TestRedirectSlashes(t *testing.T) {
 			t.Fatal(body, resp.StatusCode)
 		}
 		location := resp.Header.Get("Location")
-		if !strings.HasPrefix(location, "//") || !strings.HasSuffix(location, "/accounts/someuser?a=1&b=2") {
+		if location != "/accounts/someuser?a=1&b=2" {
 			t.Fatalf("invalid redirection, should be /accounts/someuser?a=1&b=2")
 		}
 	}
