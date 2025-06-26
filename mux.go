@@ -199,6 +199,11 @@ func (mx *Mux) Trace(pattern string, handlerFn http.HandlerFunc) {
 // NotFound sets a custom http.HandlerFunc for routing paths that could
 // not be found. The default 404 handler is `http.NotFound`.
 func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
+	// Build the computed routing handler for this routing pattern.
+	if !mx.inline && mx.handler == nil {
+		mx.updateRouteHandler()
+	}
+
 	// Build NotFound handler chain
 	m := mx
 	hFn := handlerFn
@@ -219,6 +224,11 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 // MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the
 // method is unresolved. The default handler returns a 405 with an empty body.
 func (mx *Mux) MethodNotAllowed(handlerFn http.HandlerFunc) {
+	// Build the computed routing handler for this routing pattern.
+	if !mx.inline && mx.handler == nil {
+		mx.updateRouteHandler()
+	}
+
 	// Build MethodNotAllowed handler chain
 	m := mx
 	hFn := handlerFn
