@@ -1,7 +1,6 @@
 //go:build go1.22 && !tinygo
 // +build go1.22,!tinygo
 
-
 package chi
 
 import "net/http"
