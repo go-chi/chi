@@ -365,6 +365,9 @@ func (cw *compressResponseWriter) Push(target string, opts *http.PushOptions) er
 }
 
 func (cw *compressResponseWriter) Close() error {
+	if !cw.compressible {
+		return nil
+	}
 	if c, ok := cw.writer().(io.WriteCloser); ok {
 		return c.Close()
 	}
