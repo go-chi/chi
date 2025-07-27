@@ -18,17 +18,19 @@ func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler {
 			rctx := chi.RouteContext(r.Context())
 
 			// Match() updates rctx.
-			// Save the initial value to restore it later on for the next in chain.
-			initialRctx := *rctx
+			// Use a temporary route context to look ahead.
+			tctx := chi.NewRouteContext()
 
-			match := rctx.Routes.Match(rctx, r.Method, r.URL.Path)
+			// rctx.Routes is the original *chi.Mux.
+			// This starts a new traversal from the top.
+
+			// Unfortunately, this makes valid paths with incorrect methods return 404 instead of 405.
+			// TODO: Identify invalid path vs valid path with invalid method.
+			match := rctx.Routes.Match(tctx, r.Method, r.URL.Path)
 			if !match {
 				router.NotFoundHandler().ServeHTTP(w, r)
 				return
 			}
-
-			// Restore after modification.
-			*rctx = initialRctx
 
 			next.ServeHTTP(w, r)
 		})
