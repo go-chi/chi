@@ -91,3 +91,14 @@ func TestRoutePattern(t *testing.T) {
 		t.Fatalf("unexpected non-empty route pattern for nil context: %q", p)
 	}
 }
+
+// TestReplaceWildcardsConsecutive ensures multiple consecutive wildcards are
+// collapsed into a single slash.
+func TestReplaceWildcardsConsecutive(t *testing.T) {
+	if p := replaceWildcards("/foo/*/*/*/bar"); p != "/foo/bar" {
+		t.Fatalf("unexpected wildcard replacement: %s", p)
+	}
+	if p := replaceWildcards("/foo/*/*/*/bar/*"); p != "/foo/bar/*" {
+		t.Fatalf("unexpected trailing wildcard behavior: %s", p)
+	}
+}
