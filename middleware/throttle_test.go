@@ -202,49 +202,47 @@ func TestThrottleMaximum(t *testing.T) {
 func TestThrottleRetryAfter(t *testing.T) {
 	r := chi.NewRouter()
 
-	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour * 1 }
-	r.Use(ThrottleWithOpts(ThrottleOpts{Limit: 10, RetryAfterFn: retryAfterFn}))
+	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour }
+	r.Use(ThrottleWithOpts(ThrottleOpts{
+		Limit:        10,
+		BacklogLimit: 0,
+		RetryAfterFn: retryAfterFn,
+	}))
 
+	blockCh := make(chan struct{})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		<-blockCh
 		w.WriteHeader(http.StatusOK)
-		time.Sleep(time.Second * 4) // Expensive operation.
-		w.Write(testContent)
+		w.Write([]byte("ok"))
 	})
 
 	server := httptest.NewServer(r)
 	defer server.Close()
 
-	client := http.Client{
-		Timeout: time.Second * 60, // Maximum waiting time.
-	}
+	client := http.Client{}
 
 	var wg sync.WaitGroup
 
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
-
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusOK, res.StatusCode)
-		}(i)
+		}()
 	}
 
-	time.Sleep(time.Second * 1)
+	time.Sleep(100 * time.Millisecond)
 
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-
-			res, err := client.Get(server.URL)
-			assertNoError(t, err)
-			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
-			assertEqual(t, res.Header.Get("Retry-After"), "3600")
-		}(i)
+	for i := 0; i < 5; i++ {
+		res, err := client.Get(server.URL)
+		assertNoError(t, err)
+		assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
+		assertEqual(t, res.Header.Get("Retry-After"), "3600")
 	}
 
+	close(blockCh)
 	wg.Wait()
 }
 
