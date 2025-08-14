@@ -201,51 +201,64 @@ func TestThrottleMaximum(t *testing.T) {
 
 func TestThrottleRetryAfter(t *testing.T) {
 	r := chi.NewRouter()
+	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour }
 
-	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour * 1 }
-	r.Use(ThrottleWithOpts(ThrottleOpts{Limit: 10, RetryAfterFn: retryAfterFn}))
+	r.Use(ThrottleWithOpts(ThrottleOpts{
+		Limit:        5,
+		BacklogLimit: 0,
+		RetryAfterFn: retryAfterFn,
+	}))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Second * 1) // Expensive operation.
 		w.WriteHeader(http.StatusOK)
-		time.Sleep(time.Second * 4) // Expensive operation.
-		w.Write(testContent)
+		w.Write([]byte("ok"))
 	})
 
 	server := httptest.NewServer(r)
 	defer server.Close()
+	client := http.Client{}
 
-	client := http.Client{
-		Timeout: time.Second * 60, // Maximum waiting time.
+	type result struct {
+		status int
+		header http.Header
 	}
 
 	var wg sync.WaitGroup
+	totalRequests := 10
+	resultsCh := make(chan result, totalRequests)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < totalRequests; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
-
-			res, err := client.Get(server.URL)
-			assertNoError(t, err)
-			assertEqual(t, http.StatusOK, res.StatusCode)
-		}(i)
-	}
-
-	time.Sleep(time.Second * 1)
-
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-
-			res, err := client.Get(server.URL)
-			assertNoError(t, err)
-			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
-			assertEqual(t, res.Header.Get("Retry-After"), "3600")
-		}(i)
+			res, _ := client.Get(server.URL)
+			resultsCh <- result{status: res.StatusCode, header: res.Header}
+		}()
 	}
 
 	wg.Wait()
+	close(resultsCh)
+
+	count200 := 0
+	count429 := 0
+	for res := range resultsCh {
+		switch res.status {
+		case http.StatusOK:
+			count200++
+			continue
+		case http.StatusTooManyRequests:
+			count429++
+			assertEqual(t, "3600", res.header.Get("Retry-After"))
+			continue
+		default:
+			t.Fatalf("Unexpected status code: %d", res.status)
+			continue
+		}
+	}
+
+	assertEqual(t, 5, count200)
+	assertEqual(t, 5, count429)
 }
 
 func TestThrottleCustomStatusCode(t *testing.T) {
