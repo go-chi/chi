@@ -668,6 +668,15 @@ func TestMuxHandlePatternValidation(t *testing.T) {
 			expectedBody:   "with-prefix POST",
 			expectedStatus: http.StatusOK,
 		},
+		{
+			name:           "Valid pattern with multiple whitespace after method",
+			pattern:        "PATCH \t /",
+			shouldPanic:    false,
+			method:         "PATCH",
+			path:           "/",
+			expectedBody:   "extended-whitespace PATCH",
+			expectedStatus: http.StatusOK,
+		},
 		// Invalid patterns
 		{
 			name:        "Invalid pattern with no method",
