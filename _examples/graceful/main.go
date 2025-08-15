@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -18,41 +18,28 @@ func main() {
 	// The HTTP Server
 	server := &http.Server{Addr: "0.0.0.0:3333", Handler: service()}
 
-	// Server run context
-	serverCtx, serverStopCtx := context.WithCancel(context.Background())
+	// Create context that listens for the interrupt signal
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	// Listen for syscall signals for process to interrupt/quit
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	// Run server in the background
 	go func() {
-		<-sig
-
-		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 30*time.Second)
-
-		go func() {
-			<-shutdownCtx.Done()
-			if shutdownCtx.Err() == context.DeadlineExceeded {
-				log.Fatal("graceful shutdown timed out.. forcing exit.")
-			}
-		}()
-
-		// Trigger graceful shutdown
-		err := server.Shutdown(shutdownCtx)
-		if err != nil {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
-		serverStopCtx()
 	}()
 
-	// Run the server
-	err := server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	// Listen for the interrupt signal
+	<-ctx.Done()
+
+	// Create shutdown context with 30-second timeout
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Trigger graceful shutdown
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		log.Fatal(err)
 	}
-
-	// Wait for server context to be stopped
-	<-serverCtx.Done()
 }
 
 func service() http.Handler {
@@ -69,7 +56,7 @@ func service() http.Handler {
 		// Simulates some hard work.
 		//
 		// We want this handler to complete successfully during a shutdown signal,
-		// so consider the work here as some background routine to fetch a long running
+		// so consider the work here as some background routine to fetch a long-running
 		// search query to find as many results as possible, but, instead we cut it short
 		// and respond with what we have so far. How a shutdown is handled is entirely
 		// up to the developer, as some code blocks are preemptible, and others are not.
