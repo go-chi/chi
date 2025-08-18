@@ -328,7 +328,7 @@ func (n *node) replaceChild(label, tail byte, child *node) {
 
 func (n *node) getEdge(ntyp nodeTyp, label, tail byte, prefix string) *node {
 	nds := n.children[ntyp]
-	for i := 0; i < len(nds); i++ {
+	for i := range nds {
 		if nds[i].label == label && nds[i].tail == tail {
 			if ntyp == ntRegexp && nds[i].prefix != prefix {
 				continue
@@ -429,9 +429,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 			}
 
 			// serially loop through each node grouped by the tail delimiter
-			for idx := 0; idx < len(nds); idx++ {
-				xn = nds[idx]
-
+			for _, xn = range nds {
 				// label for param nodes is the delimiter byte
 				p := strings.IndexByte(xsearch, xn.tail)
 
@@ -772,20 +770,14 @@ func patParamKeys(pattern string) []string {
 	}
 }
 
-// longestPrefix finds the length of the shared prefix
-// of two strings
-func longestPrefix(k1, k2 string) int {
-	max := len(k1)
-	if l := len(k2); l < max {
-		max = l
-	}
-	var i int
-	for i = 0; i < max; i++ {
+// longestPrefix finds the length of the shared prefix of two strings
+func longestPrefix(k1, k2 string) (i int) {
+	for i = 0; i < min(len(k1), len(k2)); i++ {
 		if k1[i] != k2[i] {
 			break
 		}
 	}
-	return i
+	return
 }
 
 func methodTypString(method methodTyp) string {
