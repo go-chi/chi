@@ -470,6 +470,9 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		if supportsPathValue {
 			setPathValue(rctx, r)
 		}
+		if supportsPattern {
+			setPattern(rctx, r)
+		}
 
 		h.ServeHTTP(w, r)
 		return
