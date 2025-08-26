@@ -311,3 +311,20 @@ func TestThrottleCustomStatusCode(t *testing.T) {
 	close(wait) // Allow the last request to proceed.
 	waitResponse(http.StatusOK)
 }
+
+func BenchmarkThrottle(b *testing.B) {
+	throttleMiddleware := ThrottleBacklog(1000, 50, time.Second)
+
+	handler := throttleMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/", nil)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+	}
+}

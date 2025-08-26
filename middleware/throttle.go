@@ -83,12 +83,23 @@ func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler {
 				return
 
 			case btok := <-t.backlogTokens:
-				timer := time.NewTimer(t.backlogTimeout)
-
 				defer func() {
 					t.backlogTokens <- btok
 				}()
 
+				// Try to get a processing token immediately first
+				select {
+				case tok := <-t.tokens:
+					defer func() {
+						t.tokens <- tok
+					}()
+					next.ServeHTTP(w, r)
+					return
+				default:
+					// No immediate token available, need to wait with timer
+				}
+
+				timer := time.NewTimer(t.backlogTimeout)
 				select {
 				case <-timer.C:
 					t.setRetryAfterHeaderIfNeeded(w, false)
