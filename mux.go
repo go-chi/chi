@@ -467,8 +467,10 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Find the route
 	if _, _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
-		if supportsPathValue {
-			setPathValue(rctx, r)
+		// Set http.Request path values from our request context
+		for i, key := range rctx.URLParams.Keys {
+			value := rctx.URLParams.Values[i]
+			r.SetPathValue(key, value)
 		}
 		if supportsPattern {
 			setPattern(rctx, r)

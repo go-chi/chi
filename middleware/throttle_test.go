@@ -37,7 +37,7 @@ func TestThrottleBacklog(t *testing.T) {
 	// The throttler processes 10 consecutive requests, each one of those
 	// requests lasts 1s. The maximum number of requests this can possible serve
 	// before the clients time out (5s) is 40.
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -75,7 +75,7 @@ func TestThrottleClientTimeout(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -108,7 +108,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// These requests will be processed normally until they finish.
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -123,7 +123,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 	// These requests will wait for the first batch to complete but it will take
 	// too much time, so they will eventually receive a timeout error.
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -161,7 +161,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -181,7 +181,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 	// At this point the server is still processing, all the following request
 	// will be beyond the server capacity.
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -283,7 +283,7 @@ func TestThrottleCustomStatusCode(t *testing.T) {
 	codes := make(chan int, totalRequestCount)
 	errs := make(chan error, totalRequestCount)
 	client := &http.Client{Timeout: timeout}
-	for i := 0; i < totalRequestCount; i++ {
+	for range totalRequestCount {
 		go func() {
 			resp, err := client.Get(server.URL)
 			if err != nil {
@@ -305,7 +305,7 @@ func TestThrottleCustomStatusCode(t *testing.T) {
 		}
 	}
 
-	for i := 0; i < totalRequestCount-1; i++ {
+	for range totalRequestCount - 1 {
 		waitResponse(http.StatusServiceUnavailable)
 	}
 	close(wait) // Allow the last request to proceed.
