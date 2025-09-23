@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 // URLParam returns the url parameter from a http.Request object.
@@ -39,16 +40,28 @@ var (
 	RouteCtxKey = &contextKey{"RouteContext"}
 )
 
+var contextPool = sync.Pool{
+	New: func() interface{} {
+		return NewRouteContext()
+	},
+}
+
+func GetRouteContext(mx *Mux) *Context {
+	rctx := contextPool.Get().(*Context)
+	rctx.Routes = mx
+	return rctx
+}
+
+func PutRouteContext(rctx *Context) {
+	rctx.Reset()
+	contextPool.Put(rctx)
+}
+
 // Context is the default routing context set on the root node of a
 // request context to track route patterns, URL parameters and
 // an optional routing path.
 type Context struct {
 	Routes Routes
-
-	// parentCtx is the parent of this one, for using Context as a
-	// context.Context directly. This is an optimization that saves
-	// 1 allocation.
-	parentCtx context.Context
 
 	// Routing path/method override used during the route search.
 	// See Mux#routeHTTP method.
@@ -92,7 +105,6 @@ func (x *Context) Reset() {
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
 	x.methodsAllowed = x.methodsAllowed[:0]
-	x.parentCtx = nil
 }
 
 // URLParam returns the corresponding URL parameter value from the request
