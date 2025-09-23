@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -19,6 +20,20 @@ import (
 //		Handler)
 //	r.Get("/", h)
 //	rSubdomain.Get("/", h2)
+//
+// Another example, lets say you'd like to route through some middleware based on
+// presence of specific cookie and in request there are multiple cookies e.g.
+// "firstcookie=one; secondcookie=two; thirdcookie=three", then you might use
+// RouteHeadersContainsMatcher to be able to route this request:
+//
+//	 r := chi.NewRouter()
+//	 routeMiddleware := middleware.RouteHeaders().
+//			SetMatcherType(middleware.RouteHeadersContainsMatcher).
+//			Route("Cookie", "secondcookie", MyCustomMiddleware).
+//			Handler
+//
+//	 r.Use(routeMiddleware)
+//	 r.Get("/", h)
 //
 // Another example, imagine you want to setup multiple CORS handlers, where for
 // your origin servers you allow authorized requests, but for third-party public
@@ -39,70 +54,114 @@ import (
 //			AllowCredentials: false, // <----------<<< do not allow credentials
 //		})).
 //		Handler)
-func RouteHeaders() HeaderRouter {
-	return HeaderRouter{}
+func RouteHeaders() *HeaderRouter {
+	return &HeaderRouter{
+		routes:       map[string][]HeaderRoute{},
+		matchingType: RouteHeadersClassicMatcher,
+	}
 }
 
-type HeaderRouter map[string][]HeaderRoute
+type MatcherType int
 
-func (hr HeaderRouter) Route(header, match string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter {
-	header = strings.ToLower(header)
-	k := hr[header]
-	if k == nil {
-		hr[header] = []HeaderRoute{}
-	}
-	hr[header] = append(hr[header], HeaderRoute{MatchOne: NewPattern(match), Middleware: middlewareHandler})
+const (
+	RouteHeadersClassicMatcher MatcherType = iota
+	RouteHeadersContainsMatcher
+	RouteHeadersRegexMatcher
+)
+
+type HeaderRouter struct {
+	routes       map[string][]HeaderRoute
+	matchingType MatcherType
+}
+
+func (hr *HeaderRouter) SetMatchingType(matchingType MatcherType) *HeaderRouter {
+	hr.matchingType = matchingType
 	return hr
 }
 
-func (hr HeaderRouter) RouteAny(header string, match []string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter {
+func (hr *HeaderRouter) Route(
+	header,
+	match string,
+	middlewareHandler func(next http.Handler) http.Handler,
+) *HeaderRouter {
 	header = strings.ToLower(header)
-	k := hr[header]
+
+	k := hr.routes[header]
 	if k == nil {
-		hr[header] = []HeaderRoute{}
+		hr.routes[header] = []HeaderRoute{}
 	}
+
+	hr.routes[header] = append(
+		hr.routes[header],
+		HeaderRoute{
+			MatchOne:   NewPattern(strings.ToLower(match), hr.matchingType),
+			Middleware: middlewareHandler,
+		},
+	)
+	return hr
+}
+
+func (hr *HeaderRouter) RouteAny(
+	header string,
+	match []string,
+	middlewareHandler func(next http.Handler) http.Handler,
+) *HeaderRouter {
+	header = strings.ToLower(header)
+
+	k := hr.routes[header]
+	if k == nil {
+		hr.routes[header] = []HeaderRoute{}
+	}
+
 	patterns := []Pattern{}
 	for _, m := range match {
-		patterns = append(patterns, NewPattern(m))
+		patterns = append(patterns, NewPattern(m, hr.matchingType))
 	}
-	hr[header] = append(hr[header], HeaderRoute{MatchAny: patterns, Middleware: middlewareHandler})
+
+	hr.routes[header] = append(
+		hr.routes[header],
+		HeaderRoute{MatchAny: patterns, Middleware: middlewareHandler},
+	)
+
 	return hr
 }
 
-func (hr HeaderRouter) RouteDefault(handler func(next http.Handler) http.Handler) HeaderRouter {
-	hr["*"] = []HeaderRoute{{Middleware: handler}}
+func (hr *HeaderRouter) RouteDefault(handler func(next http.Handler) http.Handler) *HeaderRouter {
+	hr.routes["*"] = []HeaderRoute{{Middleware: handler}}
 	return hr
 }
 
-func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if len(hr) == 0 {
+func (hr *HeaderRouter) Handler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(wrt http.ResponseWriter, req *http.Request) {
+		if len(hr.routes) == 0 {
 			// skip if no routes set
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(wrt, req)
 		}
 
 		// find first matching header route, and continue
-		for header, matchers := range hr {
-			headerValue := r.Header.Get(header)
+		for header, matchers := range hr.routes {
+			headerValue := req.Header.Get(header)
 			if headerValue == "" {
 				continue
 			}
+
 			headerValue = strings.ToLower(headerValue)
 			for _, matcher := range matchers {
 				if matcher.IsMatch(headerValue) {
-					matcher.Middleware(next).ServeHTTP(w, r)
+					matcher.Middleware(next).ServeHTTP(wrt, req)
 					return
 				}
 			}
 		}
 
 		// if no match, check for "*" default route
-		matcher, ok := hr["*"]
+		matcher, ok := hr.routes["*"]
 		if !ok || matcher[0].Middleware == nil {
-			next.ServeHTTP(w, r)
+			next.ServeHTTP(wrt, req)
 			return
 		}
-		matcher[0].Middleware(next).ServeHTTP(w, r)
+
+		matcher[0].Middleware(next).ServeHTTP(wrt, req)
 	})
 }
 
@@ -126,20 +185,40 @@ func (r HeaderRoute) IsMatch(value string) bool {
 }
 
 type Pattern struct {
-	prefix   string
-	suffix   string
-	wildcard bool
+	prefix       string
+	suffix       string
+	wildcard     bool
+	value        string
+	matchingType MatcherType
 }
 
-func NewPattern(value string) Pattern {
-	p := Pattern{}
-	p.prefix, p.suffix, p.wildcard = strings.Cut(value, "*")
-	return p
-}
-
-func (p Pattern) Match(v string) bool {
-	if !p.wildcard {
-		return p.prefix == v
+func NewPattern(value string, matchingType MatcherType) Pattern {
+	pat := Pattern{matchingType: matchingType}
+	switch matchingType {
+	case RouteHeadersClassicMatcher:
+		pat.prefix, pat.suffix, pat.wildcard = strings.Cut(value, "*")
+	case RouteHeadersContainsMatcher:
+		pat.value = value
+	case RouteHeadersRegexMatcher:
+		pat.value = value
 	}
-	return len(v) >= len(p.prefix+p.suffix) && strings.HasPrefix(v, p.prefix) && strings.HasSuffix(v, p.suffix)
+	return pat
+}
+
+func (p Pattern) Match(mVal string) bool {
+	switch p.matchingType {
+	case RouteHeadersClassicMatcher:
+		if !p.wildcard {
+			return p.prefix == mVal
+		}
+		return len(mVal) >= len(p.prefix+p.suffix) &&
+			strings.HasPrefix(mVal, p.prefix) &&
+			strings.HasSuffix(mVal, p.suffix)
+	case RouteHeadersContainsMatcher:
+		return strings.Contains(mVal, p.value)
+	case RouteHeadersRegexMatcher:
+		reg := regexp.MustCompile(p.value)
+		return reg.MatchString(mVal)
+	}
+	return false
 }
