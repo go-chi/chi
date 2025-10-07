@@ -71,6 +71,7 @@ func RegisterMethod(method string) {
 	}
 	mt := methodTyp(2 << n)
 	methodMap[method] = mt
+	reverseMethodMap[mt] = method
 	mALL |= mt
 }
 
