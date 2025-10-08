@@ -1782,6 +1782,26 @@ func TestCustomHTTPMethod(t *testing.T) {
 	if _, body := testRequest(t, ts, "BOO", "/hi", nil); body != "custom method" {
 		t.Fatal(body)
 	}
+
+	var expectRoutes = map[string]string{
+		"GET": "/",
+		"BOO": "/hi",
+	}
+	Walk(r, func(method string, route string, handler http.Handler, _ ...func(http.Handler) http.Handler) error {
+		r, ok := expectRoutes[method]
+		if !ok {
+			t.Fatalf("unexpected method %s", method)
+		}
+		if r != route {
+			t.Fatalf("expected route %s, got %s", r, route)
+		}
+		delete(expectRoutes, method)
+
+		return nil
+	})
+	if len(expectRoutes) != 0 {
+		t.Fatalf("missing expected methods: %v", expectRoutes)
+	}
 }
 
 func TestMuxMatch(t *testing.T) {
