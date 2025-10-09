@@ -1,6 +1,6 @@
 // Package chi is a small, idiomatic and composable router for building HTTP services.
 //
-// chi requires Go 1.14 or newer.
+// chi supports the four most recent major versions of Go.
 //
 // Example:
 //
