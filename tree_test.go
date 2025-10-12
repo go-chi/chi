@@ -275,8 +275,12 @@ func TestTreeRegexp(t *testing.T) {
 	hStub5 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub6 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub7 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub8 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub9 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	tr := &node{}
+	tr.InsertRoute(mGET, "/articles/{path:[a-z/]+}", hStub8)
+	tr.InsertRoute(mGET, "/articles/{path:[a-z/]+}.json", hStub9)
 	tr.InsertRoute(mGET, "/articles/{rid:^[0-9]{5,6}}", hStub7)
 	tr.InsertRoute(mGET, "/articles/{zid:^0[0-9]+}", hStub3)
 	tr.InsertRoute(mGET, "/articles/{name:^@[a-z]+}/posts", hStub4)
@@ -297,6 +301,8 @@ func TestTreeRegexp(t *testing.T) {
 		k []string     // output param keys
 		v []string     // output param values
 	}{
+		{r: "/articles/a/b/c", h: hStub8, k: []string{"path"}, v: []string{"a/b/c"}},
+		{r: "/articles/a/b/c.json", h: hStub9, k: []string{"path"}, v: []string{"a/b/c"}},
 		{r: "/articles", h: nil, k: []string{}, v: []string{}},
 		{r: "/articles/12345", h: hStub7, k: []string{"rid"}, v: []string{"12345"}},
 		{r: "/articles/123", h: hStub1, k: []string{"id"}, v: []string{"123"}},
