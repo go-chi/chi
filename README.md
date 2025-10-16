@@ -325,6 +325,24 @@ func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
   w.Write([]byte(fmt.Sprintf("hi %v, %v", userID, key)))
 }
 ```
+chi supports the path parameter mechanism introduced in Go’s standard library (Go 1.22+).
+During routing, chi populates path values, and you can access them directly through methods on `*http.Request`.
+```go
+// Read a path parameter net/http
+r.Get("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id") // same as chi.URLParam(r, "id")
+
+	// normalize: trim optional "u_" prefix, then set back
+	if strings.HasPrefix(id, "u_") {
+		id = strings.TrimPrefix(id, "u_")
+		r = r.SetPathValue("id", id)
+	}
+
+	w.Write([]byte("user=" + id))
+})
+```
+Requires Go 1.22 or newer.
+For older versions, use chi.URLParam.
 
 
 ## Middlewares
@@ -407,17 +425,17 @@ with `net/http` can be used with chi's mux.
 Please see https://github.com/go-chi for additional packages.
 
 --------------------------------------------------------------------------------------------------------------------
-| package                                            | description                                                 |
-|:---------------------------------------------------|:-------------------------------------------------------------
-| [cors](https://github.com/go-chi/cors)             | Cross-origin resource sharing (CORS)                        |
-| [docgen](https://github.com/go-chi/docgen)         | Print chi.Router routes at runtime                          |
-| [jwtauth](https://github.com/go-chi/jwtauth)       | JWT authentication                                          |
-| [hostrouter](https://github.com/go-chi/hostrouter) | Domain/host based request routing                           |
-| [httplog](https://github.com/go-chi/httplog)       | Small but powerful structured HTTP request logging          |
-| [httprate](https://github.com/go-chi/httprate)     | HTTP request rate limiter                                   |
-| [httptracer](https://github.com/go-chi/httptracer) | HTTP request performance tracing library                    |
-| [httpvcr](https://github.com/go-chi/httpvcr)       | Write deterministic tests for external sources              |
-| [stampede](https://github.com/go-chi/stampede)     | HTTP request coalescer                                      |
+| package                                            | description                                        |
+| :------------------------------------------------- | :------------------------------------------------- |
+| [cors](https://github.com/go-chi/cors)             | Cross-origin resource sharing (CORS)               |
+| [docgen](https://github.com/go-chi/docgen)         | Print chi.Router routes at runtime                 |
+| [jwtauth](https://github.com/go-chi/jwtauth)       | JWT authentication                                 |
+| [hostrouter](https://github.com/go-chi/hostrouter) | Domain/host based request routing                  |
+| [httplog](https://github.com/go-chi/httplog)       | Small but powerful structured HTTP request logging |
+| [httprate](https://github.com/go-chi/httprate)     | HTTP request rate limiter                          |
+| [httptracer](https://github.com/go-chi/httptracer) | HTTP request performance tracing library           |
+| [httpvcr](https://github.com/go-chi/httpvcr)       | Write deterministic tests for external sources     |
+| [stampede](https://github.com/go-chi/stampede)     | HTTP request coalescer                             |
 --------------------------------------------------------------------------------------------------------------------
 
 
