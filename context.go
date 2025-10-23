@@ -76,6 +76,12 @@ type Context struct {
 
 	methodsAllowed   []methodTyp // allowed methods in case of a 405
 	methodNotAllowed bool
+	poisoned         bool // prevents returning to pool
+}
+
+// PreventReuse marks the routing context as being unable to be returned to the pool.
+func (x *Context) PreventReuse() {
+	x.poisoned = true
 }
 
 // Reset a routing context to its initial state.
