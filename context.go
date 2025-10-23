@@ -79,7 +79,8 @@ type Context struct {
 	poisoned         bool // prevents returning to pool
 }
 
-// PreventReuse marks the routing context as being unable to be returned to the pool.
+// PreventReuse marks the Context as being unable to be returned to the pool
+// and allowing it to be safely used outside of the running request.
 func (x *Context) PreventReuse() {
 	x.poisoned = true
 }
