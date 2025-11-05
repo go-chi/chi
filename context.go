@@ -95,6 +95,22 @@ func (x *Context) Reset() {
 	x.parentCtx = nil
 }
 
+// Clone a routing context so that it may be used outside of the request/response lifecycle.
+func (c *Context) Clone() *Context {
+	clone := *c
+
+	clone.URLParams.Keys = append([]string(nil), c.URLParams.Keys...)
+	clone.URLParams.Values = append([]string(nil), c.URLParams.Values...)
+
+	clone.routeParams.Keys = append([]string(nil), c.routeParams.Keys...)
+	clone.routeParams.Values = append([]string(nil), c.routeParams.Values...)
+
+	clone.RoutePatterns = append([]string(nil), c.RoutePatterns...)
+	clone.methodsAllowed = append([]methodTyp(nil), c.methodsAllowed...)
+
+	return &clone
+}
+
 // URLParam returns the corresponding URL parameter value from the request
 // routing context.
 func (x *Context) URLParam(key string) string {
