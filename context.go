@@ -3,6 +3,7 @@ package chi
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -99,14 +100,14 @@ func (x *Context) Reset() {
 func (c *Context) Clone() *Context {
 	clone := *c
 
-	clone.URLParams.Keys = append([]string(nil), c.URLParams.Keys...)
-	clone.URLParams.Values = append([]string(nil), c.URLParams.Values...)
+	clone.URLParams.Keys = slices.Clone(c.URLParams.Keys)
+	clone.URLParams.Values = slices.Clone(c.URLParams.Values)
 
-	clone.routeParams.Keys = append([]string(nil), c.routeParams.Keys...)
-	clone.routeParams.Values = append([]string(nil), c.routeParams.Values...)
+	clone.routeParams.Keys = slices.Clone(c.routeParams.Keys)
+	clone.routeParams.Values = slices.Clone(c.routeParams.Values)
 
-	clone.RoutePatterns = append([]string(nil), c.RoutePatterns...)
-	clone.methodsAllowed = append([]methodTyp(nil), c.methodsAllowed...)
+	clone.RoutePatterns = slices.Clone(c.RoutePatterns)
+	clone.methodsAllowed = slices.Clone(c.methodsAllowed)
 
 	return &clone
 }
