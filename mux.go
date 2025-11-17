@@ -3,7 +3,9 @@ package chi
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
@@ -524,5 +526,42 @@ func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWr
 		}
 		w.WriteHeader(405)
 		w.Write(nil)
+	}
+}
+
+// PrintRoutes prints all registered routes to stdout in a readable format.
+// This is useful for debugging and development purposes.
+//
+// Example output:
+//
+//	[GET]    /
+//	[POST]   /users
+//	[GET]    /users/{id}
+func (mx *Mux) PrintRoutes() {
+	mx.PrintRoutesWithWriter(os.Stdout)
+}
+
+// PrintRoutesWithWriter prints all registered routes to the specified writer.
+// This allows flexibility for testing and custom output destinations.
+func (mx *Mux) PrintRoutesWithWriter(w io.Writer) {
+	// Track routes we've already printed to avoid duplicates
+	printed := make(map[string]bool)
+
+	err := Walk(mx, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		// Create unique key for this route
+		key := fmt.Sprintf("%s %s", method, route)
+
+		// Skip if already printed (can happen with route groups)
+		if printed[key] {
+			return nil
+		}
+		printed[key] = true
+
+		// Print in aligned format
+		fmt.Fprintf(w, "[%-7s] %s\n", method, route)
+		return nil
+	})
+	if err != nil {
+		fmt.Fprintf(w, "Error walking routes: %v\n", err)
 	}
 }
