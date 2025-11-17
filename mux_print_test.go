@@ -169,3 +169,61 @@ func TestMux_PrintRoutesFormat(t *testing.T) {
 		t.Errorf("Expected output to contain '] ', got: %s", output)
 	}
 }
+
+func TestMux_PrintRoutesFunc(t *testing.T) {
+	r := NewRouter()
+
+	// Register routes
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {})
+	r.Post("/users", func(w http.ResponseWriter, r *http.Request) {})
+	r.Get("/users/{id}", func(w http.ResponseWriter, r *http.Request) {})
+
+	// Capture output using custom logging function
+	var lines []string
+	r.PrintRoutesFunc(func(s string) {
+		lines = append(lines, s)
+	})
+
+	// Verify we got routes
+	if len(lines) < 3 {
+		t.Errorf("Expected at least 3 lines, got %d", len(lines))
+	}
+
+	// Join all lines for easy checking
+	output := strings.Join(lines, "\n")
+
+	// Check that routes are present
+	expectedComponents := []string{"GET", "POST", "/", "/users", "/{id}"}
+	for _, expected := range expectedComponents {
+		if !strings.Contains(output, expected) {
+			t.Errorf("Expected component not found: %s\nOutput:\n%s", expected, output)
+		}
+	}
+}
+
+func TestMux_PrintRoutesFunc_Integration(t *testing.T) {
+	r := NewRouter()
+
+	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {})
+	r.Post("/api/users", func(w http.ResponseWriter, r *http.Request) {})
+
+	// Simulate integration with a logging library
+	var loggedMessages []string
+	customLogger := func(msg string) {
+		// Simulate logger.Info() behavior
+		loggedMessages = append(loggedMessages, "[INFO] "+msg)
+	}
+
+	r.PrintRoutesFunc(customLogger)
+
+	if len(loggedMessages) < 2 {
+		t.Errorf("Expected at least 2 logged messages, got %d", len(loggedMessages))
+	}
+
+	// Verify format includes [INFO] prefix
+	for _, msg := range loggedMessages {
+		if !strings.HasPrefix(msg, "[INFO]") {
+			t.Errorf("Expected message to have [INFO] prefix, got: %s", msg)
+		}
+	}
+}

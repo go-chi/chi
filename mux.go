@@ -565,3 +565,41 @@ func (mx *Mux) PrintRoutesWithWriter(w io.Writer) {
 		fmt.Fprintf(w, "Error walking routes: %v\n", err)
 	}
 }
+
+// PrintRoutesFunc prints all registered routes using a custom logging function.
+// This is useful when you want to integrate with existing logging infrastructure.
+//
+// Example with standard log:
+//
+//	r.PrintRoutesFunc(func(s string) { log.Println(s) })
+//
+// Example with logrus:
+//
+//	r.PrintRoutesFunc(logger.Info)
+//
+// Example with slog:
+//
+//	r.PrintRoutesFunc(slog.Info)
+func (mx *Mux) PrintRoutesFunc(logFunc func(string)) {
+	// Track routes we've already printed to avoid duplicates
+	printed := make(map[string]bool)
+
+	// Use chi.Walk to traverse all routes
+	err := Walk(mx, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		// Create unique key for this route
+		key := fmt.Sprintf("%s %s", method, route)
+
+		// Skip if already printed (can happen with route groups)
+		if printed[key] {
+			return nil
+		}
+		printed[key] = true
+
+		// Format and pass to custom logging function
+		logFunc(fmt.Sprintf("[%-7s] %s", method, route))
+		return nil
+	})
+	if err != nil {
+		logFunc(fmt.Sprintf("Error walking routes: %v", err))
+	}
+}
