@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+//URLQueryParam returns the url query parameter from a http.Request object
+func URLQueryParam(r *http.Request, key string){
+	var value string = r.URL.Query().Get(key)
+	return value
+}
+
 // URLParam returns the url parameter from a http.Request object.
 func URLParam(r *http.Request, key string) string {
 	if rctx := RouteContext(r.Context()); rctx != nil {
