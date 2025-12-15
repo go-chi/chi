@@ -68,7 +68,7 @@ type WrapResponseWriter interface {
 	Discard()
 }
 
-// basicWriter wraps a http.ResponseWriter that implements the minimal
+// basicWriter wraps an http.ResponseWriter that implements the minimal
 // http.ResponseWriter interface.
 type basicWriter struct {
 	http.ResponseWriter
@@ -183,7 +183,7 @@ func (f *flushHijackWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 var _ http.Flusher = &flushHijackWriter{}
 var _ http.Hijacker = &flushHijackWriter{}
 
-// httpFancyWriter is a HTTP writer that additionally satisfies
+// httpFancyWriter is an HTTP writer that additionally satisfies
 // http.Flusher, http.Hijacker, and io.ReaderFrom. It exists for the common case
 // of wrapping the http.ResponseWriter that package http gives you, in order to
 // make the proxied object support the full method set of the proxied object.
