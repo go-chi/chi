@@ -268,7 +268,7 @@ Cheers all, happy coding!
 - Move `docgen` sub-pkg to https://github.com/go-chi/docgen
 - Move `render` sub-pkg to https://github.com/go-chi/render
 - Add new `URLFormat` handler to chi/middleware sub-pkg to make working with url mime 
-  suffixes easier, ie. parsing `/articles/1.json` and `/articles/1.xml`. See comments in
+  suffixes easier, i.e. parsing `/articles/1.json` and `/articles/1.xml`. See comments in
   https://github.com/go-chi/chi/blob/master/middleware/url_format.go for example usage.
 
 

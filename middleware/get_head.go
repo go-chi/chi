@@ -24,7 +24,7 @@ func GetHead(next http.Handler) http.Handler {
 			tctx := chi.NewRouteContext()
 
 			// Attempt to find a HEAD handler for the routing path, if not found, traverse
-			// the router as through its a GET route, but proceed with the request
+			// the router as though it's a GET route, but proceed with the request
 			// with the HEAD method.
 			if !rctx.Routes.Match(tctx, "HEAD", routePath) {
 				rctx.RouteMethod = "GET"

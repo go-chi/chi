@@ -26,11 +26,11 @@ func TestWrapWriterHTTP2(t *testing.T) {
 		}
 		_, fl := w.(http.Flusher)
 		if !fl {
-			t.Fatal("request should have been a http.Flusher")
+			t.Fatal("request should have been an http.Flusher")
 		}
 		_, hj := w.(http.Hijacker)
 		if hj {
-			t.Fatal("request should not have been a http.Hijacker")
+			t.Fatal("request should not have been an http.Hijacker")
 		}
 		_, rf := w.(io.ReaderFrom)
 		if rf {
@@ -38,7 +38,7 @@ func TestWrapWriterHTTP2(t *testing.T) {
 		}
 		_, ps := w.(http.Pusher)
 		if !ps {
-			t.Fatal("request should have been a http.Pusher")
+			t.Fatal("request should have been an http.Pusher")
 		}
 
 		w.Write([]byte("OK"))

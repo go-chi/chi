@@ -1,4 +1,4 @@
-// This example demonstrates a HTTP REST web service with some fixture data.
+// This example demonstrates an HTTP REST web service with some fixture data.
 // Follow along the example and patterns.
 //
 // Also check routes.json for the generated docs from passing the -routes flag,
@@ -346,7 +346,7 @@ func (a *ArticleRequest) Bind(r *http.Request) error {
 //
 // In the ArticleResponse object, first a Render() is called on itself,
 // then the next field, and so on, all the way down the tree.
-// Render is called in top-down order, like a http handler middleware chain.
+// Render is called in top-down order, like an HTTP handler middleware chain.
 type ArticleResponse struct {
 	*Article
 

@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Profiler is a convenient subrouter used for mounting net/http/pprof. ie.
+// Profiler is a convenient subrouter used for mounting net/http/pprof. I.e.
 //
 //	func MyService() http.Handler {
 //		r := chi.NewRouter()

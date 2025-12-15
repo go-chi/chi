@@ -7,19 +7,19 @@ func Chain(middlewares ...func(http.Handler) http.Handler) Middlewares {
 	return Middlewares(middlewares)
 }
 
-// Handler builds and returns a http.Handler from the chain of middlewares,
+// Handler builds and returns an http.Handler from the chain of middlewares,
 // with `h http.Handler` as the final handler.
 func (mws Middlewares) Handler(h http.Handler) http.Handler {
 	return &ChainHandler{h, chain(mws, h), mws}
 }
 
-// HandlerFunc builds and returns a http.Handler from the chain of middlewares,
+// HandlerFunc builds and returns an http.Handler from the chain of middlewares,
 // with `h http.Handler` as the final handler.
 func (mws Middlewares) HandlerFunc(h http.HandlerFunc) http.Handler {
 	return &ChainHandler{h, chain(mws, h), mws}
 }
 
-// ChainHandler is a http.Handler with support for handler composition and
+// ChainHandler is an http.Handler with support for handler composition and
 // execution.
 type ChainHandler struct {
 	Endpoint    http.Handler
@@ -31,7 +31,7 @@ func (c *ChainHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.chain.ServeHTTP(w, r)
 }
 
-// chain builds a http.Handler composed of an inline middleware stack and endpoint
+// chain builds an http.Handler composed of an inline middleware stack and endpoint
 // handler in the order they are passed.
 func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler) http.Handler {
 	// Return ahead of time if there aren't any middlewares for the chain

@@ -198,7 +198,7 @@ func TestRedirectSlashes(t *testing.T) {
 	}
 }
 
-// This tests a http.Handler that is not chi.Router
+// This tests an http.Handler that is not chi.Router
 // In these cases, the routeContext is nil
 func TestStripSlashesWithNilContext(t *testing.T) {
 	r := http.NewServeMux()

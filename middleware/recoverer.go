@@ -15,7 +15,7 @@ import (
 )
 
 // Recoverer is a middleware that recovers from panics, logs the panic (and a
-// backtrace), and returns a HTTP 500 (Internal Server Error) status if
+// backtrace), and returns an HTTP 500 (Internal Server Error) status if
 // possible. Recoverer prints a request ID if one is provided.
 //
 // Alternatively, look at https://github.com/go-chi/httplog middleware pkgs.

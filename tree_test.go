@@ -170,7 +170,7 @@ func TestTreeMoar(t *testing.T) {
 	hStub15 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub16 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	// TODO: panic if we see {id}{x} because we're missing a delimiter, its not possible.
+	// TODO: panic if we see {id}{x} because we're missing a delimiter, it's not possible.
 	// also {:id}* is not possible.
 
 	tr := &node{}

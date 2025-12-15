@@ -43,8 +43,8 @@ func main() {
 	http.ListenAndServe(":3333", r)
 }
 
-// FileServer conveniently sets up a http.FileServer handler to serve
-// static files from a http.FileSystem.
+// FileServer conveniently sets up an http.FileServer handler to serve
+// static files from an http.FileSystem.
 func FileServer(r chi.Router, path string, root http.FileSystem) {
 	if strings.ContainsAny(path, "{}*") {
 		panic("FileServer does not permit any URL parameters.")

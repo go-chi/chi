@@ -40,7 +40,7 @@ func main() {
 
 	// API version 1.
 	r.Route("/v1", func(r chi.Router) {
-		r.Use(randomErrorMiddleware) // Simulate random error, ie. version 1 is buggy.
+		r.Use(randomErrorMiddleware) // Simulate random error, i.e. version 1 is buggy.
 		r.Use(apiVersionCtx("v1"))
 		r.Mount("/articles", articleRouter())
 	})

@@ -242,14 +242,14 @@ type Routes interface {
 	Middlewares() Middlewares
 
 	// Match searches the routing tree for a handler that matches
-	// the method/path - similar to routing a http request, but without
+	// the method/path - similar to routing an HTTP request, but without
 	// executing the handler thereafter.
 	Match(rctx *Context, method, path string) bool
 }
 ```
 
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
-supports named params (ie. `/users/{userID}`) and wildcards (ie. `/admin/*`). URL parameters
+supports named params (i.e. `/users/{userID}`) and wildcards (i.e. `/admin/*`). URL parameters
 can be fetched at runtime by calling `chi.URLParam(r, "userID")` for named parameters
 and `chi.URLParam(r, "*")` for a wildcard parameter.
 
@@ -287,7 +287,7 @@ func MyMiddleware(next http.Handler) http.Handler {
 
 ### Request handlers
 
-chi uses standard net/http request handlers. This little snippet is an example of a http.Handler
+chi uses standard net/http request handlers. This little snippet is an example of an http.Handler
 func that reads a user identifier from the request context - hypothetically, identifying
 the user sending an authenticated request, validated+set by a previous middleware handler.
 
@@ -547,7 +547,7 @@ We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
 
 ## Beyond REST
 
-chi is just a http router that lets you decompose request handling into many smaller layers.
+chi is just an HTTP router that lets you decompose request handling into many smaller layers.
 Many companies use chi to write REST services for their public APIs. But, REST is just a convention
 for managing state via HTTP, and there's a lot of other pieces required to write a complete client-server
 system or network of microservices.
