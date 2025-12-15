@@ -2,7 +2,7 @@ package middleware
 
 import "net/http"
 
-// New will create a new middleware handler from a http.Handler.
+// New will create a new middleware handler from an http.Handler.
 func New(h http.Handler) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

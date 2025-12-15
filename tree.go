@@ -2,7 +2,7 @@ package chi
 
 // Radix tree implementation below is a based on the original work by
 // Armon Dadgar in https://github.com/armon/go-radix/blob/master/radix.go
-// (MIT licensed). It's been heavily modified for use as a HTTP routing tree.
+// (MIT licensed). It's been heavily modified for use as an HTTP routing tree.
 
 import (
 	"fmt"
@@ -276,7 +276,7 @@ func (n *node) addChild(child *node, prefix string) *node {
 
 			if segStartIdx != len(search) {
 				// add static edge for the remaining part, split the end.
-				// its not possible to have adjacent param nodes, so its certainly
+				// it's not possible to have adjacent param nodes, so it's certainly
 				// going to be a static node next.
 
 				search = search[segStartIdx:] // advance search position
