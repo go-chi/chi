@@ -13,11 +13,19 @@ import (
 //
 //	r := chi.NewRouter()
 //	rSubdomain := chi.NewRouter()
+//
+//	// Use RouteHeaders to direct traffic based on Host header.
+//	// Note: The Host header is handled specially - Go's http server promotes it
+//	// to r.Host, and this middleware accounts for that.
+//	// Requests matching "*.example.com" go to rSubdomain, others fall through to r.
 //	r.Use(middleware.RouteHeaders().
-//		Route("Host", "example.com", middleware.New(r)).
 //		Route("Host", "*.example.com", middleware.New(rSubdomain)).
 //		Handler)
+//
+//	// Define routes on the main router (handles non-subdomain requests)
 //	r.Get("/", h)
+//
+//	// Define routes on the subdomain router
 //	rSubdomain.Get("/", h2)
 //
 // Another example, imagine you want to setup multiple CORS handlers, where for
@@ -83,7 +91,15 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 
 		// find first matching header route, and continue
 		for header, matchers := range hr {
-			headerValue := r.Header.Get(header)
+			var headerValue string
+			// Special handling for Host header: Go's http server promotes
+			// the Host header to r.Host and removes it from the Header map.
+			// See: https://pkg.go.dev/net/http#Request
+			if header == "host" {
+				headerValue = r.Host
+			} else {
+				headerValue = r.Header.Get(header)
+			}
 			if headerValue == "" {
 				continue
 			}
