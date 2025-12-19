@@ -428,6 +428,48 @@ func TestMethodNotAllowed(t *testing.T) {
 	})
 }
 
+// TestMethodNotAllowedDuplicateMethods tests that the Allow header does not
+// contain duplicate HTTP methods when multiple overlapping wildcard routes exist.
+// See: https://github.com/go-chi/chi/issues/996
+func TestMethodNotAllowedDuplicateMethods(t *testing.T) {
+	r := NewRouter()
+
+	// Register multiple POST routes with overlapping wildcard patterns
+	r.Post("/article/1-2-3", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	r.Post("/article/{a}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	r.Post("/article/{b}-{c}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	r.Post("/article/{b}-{c}-{d}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// Send a GET request to a path that matches multiple wildcard patterns
+	resp, _ := testRequest(t, ts, "GET", "/article/1-2-3", nil)
+	if resp.StatusCode != 405 {
+		t.Fatalf("expected status 405, got %d", resp.StatusCode)
+	}
+
+	// The Allow header should only contain POST once, not multiple times
+	allowedMethods := resp.Header.Values("Allow")
+	if len(allowedMethods) != 1 {
+		t.Fatalf("Allow header should contain exactly 1 method (POST), got %d: %v", len(allowedMethods), allowedMethods)
+	}
+	if allowedMethods[0] != "POST" {
+		t.Fatalf("Allow header should be POST, got %s", allowedMethods[0])
+	}
+}
+
 func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {
