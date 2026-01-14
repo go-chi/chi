@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -269,5 +270,60 @@ func TestStripPrefix(t *testing.T) {
 	}
 	if _, resp := testRequest(t, ts, "GET", "/api-nope/", nil); resp != "404 page not found\n" {
 		t.Fatalf("got: %q, want: %q", resp, "404 page not found\n")
+	}
+}
+
+func TestRedirectSlashes_PreventBackslashRelativeOpenRedirect(t *testing.T) {
+	h := RedirectSlashes(http.NotFoundHandler())
+
+	tests := []struct {
+		name   string
+		target string
+	}{
+		{
+			name:   `raw backslash: /\evil.com/`,
+			target: `/\evil.com/`,
+		},
+		{
+			name:   `encoded backslash: /%5Cevil.com/`,
+			target: "/%5Cevil.com/",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "http://example.test"+tc.target, nil)
+			rr := httptest.NewRecorder()
+
+			h.ServeHTTP(rr, req)
+			res := rr.Result()
+			defer res.Body.Close()
+
+			if res.StatusCode != http.StatusMovedPermanently {
+				t.Fatalf("expected %d, got %d", http.StatusMovedPermanently, res.StatusCode)
+			}
+
+			loc := res.Header.Get("Location")
+			if loc == "" {
+				t.Fatalf("expected Location header to be set")
+			}
+
+			// The core security assertions:
+			if strings.Contains(loc, `\`) {
+				t.Fatalf("Location must not contain backslashes: %q", loc)
+			}
+			if strings.HasPrefix(loc, "//") {
+				t.Fatalf("Location must not be protocol-relative: %q", loc)
+			}
+			if !strings.HasPrefix(loc, "/") {
+				t.Fatalf("Location must be an absolute-path reference starting with '/': %q", loc)
+			}
+
+			// Optional stronger assertion if your middleware normalizes to /evil.com exactly:
+			// (Keep or remove depending on your chosen behavior.)
+			if loc != "/evil.com" {
+				t.Fatalf("expected Location %q, got %q", "/evil.com", loc)
+			}
+		})
 	}
 }

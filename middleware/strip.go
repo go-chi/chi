@@ -47,15 +47,22 @@ func RedirectSlashes(next http.Handler) http.Handler {
 		} else {
 			path = r.URL.Path
 		}
+
 		if len(path) > 1 && path[len(path)-1] == '/' {
-			// Trim all leading and trailing slashes (e.g., "//evil.com", "/some/path//")
-			path = "/" + strings.Trim(path, "/")
+			// Normalize backslashes to forward slashes to prevent "/\evil.com" style redirects
+			// that some clients may interpret as protocol-relative.
+			path = strings.ReplaceAll(path, `\`, `/`)
+
+			// Collapse leading/trailing slashes and force a single leading slash.
+			path := "/" + strings.Trim(path, "/")
+
 			if r.URL.RawQuery != "" {
 				path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
 			}
 			http.Redirect(w, r, path, 301)
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	}
 	return http.HandlerFunc(fn)
