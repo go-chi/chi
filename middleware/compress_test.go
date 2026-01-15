@@ -120,7 +120,7 @@ func TestCompressorWildcards(t *testing.T) {
 	}{
 		{
 			name:       "defaults",
-			typesCount: 10,
+			typesCount: 11,
 		},
 		{
 			name:       "no wildcard",
