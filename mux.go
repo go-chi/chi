@@ -519,7 +519,15 @@ func (mx *Mux) updateRouteHandler() {
 // methods for the route.
 func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Deduplicate methods to avoid duplicate Allow headers when
+		// multiple overlapping wildcard routes match the same path.
+		// See: https://github.com/go-chi/chi/issues/996
+		seen := make(map[methodTyp]struct{})
 		for _, m := range methodsAllowed {
+			if _, exists := seen[m]; exists {
+				continue
+			}
+			seen[m] = struct{}{}
 			w.Header().Add("Allow", reverseMethodMap[m])
 		}
 		w.WriteHeader(405)
