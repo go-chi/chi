@@ -79,6 +79,7 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 		if len(hr) == 0 {
 			// skip if no routes set
 			next.ServeHTTP(w, r)
+			return
 		}
 
 		// find first matching header route, and continue
