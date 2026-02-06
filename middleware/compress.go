@@ -24,6 +24,7 @@ var defaultCompressibleContentTypes = []string{
 	"application/atom+xml",
 	"application/rss+xml",
 	"image/svg+xml",
+	"application/graphql-response+json",
 }
 
 // Compress is a middleware that compresses response
