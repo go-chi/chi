@@ -26,7 +26,7 @@ func main() {
 	r.Put("/ping", Ping)
 
 	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		route = strings.Replace(route, "/*/", "/", -1)
+		route = strings.ReplaceAll(route, "/*/", "/")
 		fmt.Printf("%s %s\n", method, route)
 		return nil
 	}
