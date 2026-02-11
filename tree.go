@@ -841,6 +841,12 @@ func walk(r Routes, walkFn WalkFunc, parentRoute string, parentMw ...func(http.H
 		mws = append(mws, r.Middlewares()...)
 
 		if route.SubRoutes != nil {
+			if handler, ok := route.Handlers["*"]; ok {
+				if chain, ok := handler.(*ChainHandler); ok {
+					mws = append(mws, chain.Middlewares...)
+				}
+			}
+
 			if err := walk(route.SubRoutes, walkFn, parentRoute+route.Pattern, mws...); err != nil {
 				return err
 			}
