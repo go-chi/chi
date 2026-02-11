@@ -521,3 +521,59 @@ func TestWalker(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestWalkInlineMiddlewaresAcrossSubrouter(t *testing.T) {
+	mw := func(next http.Handler) http.Handler { return next }
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	tests := []struct {
+		name     string
+		setup    func() Router
+		expected int
+	}{
+		{
+			name: "With+Group wrapping Route+With",
+			setup: func() Router {
+				r := NewMux()
+				r.With(mw).Group(func(r Router) {
+					r.Route("/foo", func(r Router) {
+						r.With(mw).Post("/bar", handler)
+					})
+				})
+				return r
+			},
+			expected: 2,
+		},
+		{
+			name: "Use on subrouter combined with outer With",
+			setup: func() Router {
+				r := NewMux()
+				r.With(mw).Group(func(r Router) {
+					r.Route("/foo", func(r Router) {
+						r.Use(mw)
+						r.With(mw).Post("/bar", handler)
+					})
+				})
+				return r
+			},
+			expected: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := tt.setup()
+			var middlewareCount int
+			err := Walk(r, func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+				middlewareCount = len(middlewares)
+				return nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if middlewareCount != tt.expected {
+				t.Fatalf("expected %d middlewares, got %d", tt.expected, middlewareCount)
+			}
+		})
+	}
+}
