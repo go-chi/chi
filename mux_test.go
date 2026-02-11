@@ -428,6 +428,39 @@ func TestMethodNotAllowed(t *testing.T) {
 	})
 }
 
+func TestMethodNotAllowedDuplicateAllow(t *testing.T) {
+	r := NewRouter()
+
+	// Register multiple overlapping wildcard routes with the same method.
+	// When a request uses an unsupported method, the Allow header should
+	// list each method only once, not once per matching route.
+	r.Post("/article/1-2-3", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Post("/article/{a}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Post("/article/{b}-{c}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Post("/article/{b}-{c}-{d}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, "GET", "/article/1-2-3", nil)
+	if resp.StatusCode != 405 {
+		t.Fatalf("expected 405, got %d", resp.StatusCode)
+	}
+
+	allowedMethods := resp.Header.Values("Allow")
+	if len(allowedMethods) != 1 || allowedMethods[0] != "POST" {
+		t.Fatalf("Allow header should contain exactly one POST entry, got: %v", allowedMethods)
+	}
+}
+
 func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {
