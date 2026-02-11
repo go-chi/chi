@@ -437,7 +437,7 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				if p < 0 {
 					if xn.tail == '/' {
 						p = len(xsearch)
-					} else {
+					} else if xn.tail != '*' {
 						continue
 					}
 				} else if ntyp == ntRegexp && p == 0 {
@@ -445,8 +445,21 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				}
 
 				if ntyp == ntRegexp && xn.rex != nil {
-					if !xn.rex.MatchString(xsearch[:p]) {
+					// check if the pattern ends with wildcard, like {id}*
+					if xn.tail == '*' {
+						matchedString := xn.rex.FindString(xsearch)
+						if matchedString == "" {
+							continue
+						}
+						p = len(matchedString)
+					} else if !xn.rex.MatchString(xsearch[:p]) {
 						continue
+					}
+				} else if ntyp == ntParam && xn.tail == '*' {
+					// p will until / is encountered
+					p = strings.IndexByte(xsearch, '/')
+					if p == -1 {
+						p = len(xsearch)
 					}
 				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
 					// avoid a match across path segments
@@ -736,7 +749,13 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 			if rexpat[0] != '^' {
 				rexpat = "^" + rexpat
 			}
-			if rexpat[len(rexpat)-1] != '$' {
+
+			if tail == '*' && rexpat[len(rexpat)-1] == '$' {
+				panic("chi: invalid pattern, wildcard '*' is not allowed if the regex just before ends with $")
+			}
+
+			// don't add end marker if the tail is '*' as that will make the wildcard invalid during matching
+			if rexpat[len(rexpat)-1] != '$' && tail != '*' {
 				rexpat += "$"
 			}
 		}
@@ -787,11 +806,11 @@ func (ns nodes) Len() int           { return len(ns) }
 func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
 func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
 
-// tailSort pushes nodes with '/' as the tail to the end of the list for param nodes.
+// tailSort pushes nodes with '/' or '*' as the tail to the end of the list for param nodes.
 // The list order determines the traversal order.
 func (ns nodes) tailSort() {
 	for i := len(ns) - 1; i >= 0; i-- {
-		if ns[i].typ > ntStatic && ns[i].tail == '/' {
+		if ns[i].typ > ntStatic && (ns[i].tail == '/' || ns[i].tail == '*') {
 			ns.Swap(i, len(ns)-1)
 			return
 		}
