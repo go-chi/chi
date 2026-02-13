@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 )
@@ -519,8 +520,20 @@ func (mx *Mux) updateRouteHandler() {
 // methods for the route.
 func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// deduplicate and sort allowed methods for a stable Allow header set
+		seen := make(map[string]struct{}, len(methodsAllowed))
+		ordered := make([]string, 0, len(methodsAllowed))
 		for _, m := range methodsAllowed {
-			w.Header().Add("Allow", reverseMethodMap[m])
+			name := reverseMethodMap[m]
+			if _, ok := seen[name]; ok {
+				continue
+			}
+			seen[name] = struct{}{}
+			ordered = append(ordered, name)
+		}
+		slices.Sort(ordered)
+		for _, name := range ordered {
+			w.Header().Add("Allow", name)
 		}
 		w.WriteHeader(405)
 		w.Write(nil)
