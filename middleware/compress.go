@@ -14,13 +14,11 @@ import (
 )
 
 var defaultCompressibleContentTypes = []string{
-	"text/html",
-	"text/css",
-	"text/plain",
-	"text/javascript",
+	"text/*",
 	"application/javascript",
 	"application/x-javascript",
 	"application/json",
+	"application/xml",
 	"application/atom+xml",
 	"application/rss+xml",
 	"image/svg+xml",
@@ -65,19 +63,18 @@ func NewCompressor(level int, types ...string) *Compressor {
 	// provided, use the default list.
 	allowedTypes := make(map[string]struct{})
 	allowedWildcards := make(map[string]struct{})
-	if len(types) > 0 {
-		for _, t := range types {
-			if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
-				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '/*' supported", t))
-			}
-			if strings.HasSuffix(t, "/*") {
-				allowedWildcards[strings.TrimSuffix(t, "/*")] = struct{}{}
-			} else {
-				allowedTypes[t] = struct{}{}
-			}
+
+	if len(types) == 0 {
+		types = defaultCompressibleContentTypes
+	}
+
+	for _, t := range types {
+		if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
+			panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '/*' supported", t))
 		}
-	} else {
-		for _, t := range defaultCompressibleContentTypes {
+		if strings.HasSuffix(t, "/*") {
+			allowedWildcards[strings.TrimSuffix(t, "/*")] = struct{}{}
+		} else {
 			allowedTypes[t] = struct{}{}
 		}
 	}
