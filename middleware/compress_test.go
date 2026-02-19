@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -207,7 +206,7 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 	default:
 		reader = resp.Body
 	}
-	respBody, err := ioutil.ReadAll(reader)
+	respBody, err := io.ReadAll(reader)
 	if err != nil {
 		t.Fatal(err)
 		return ""
