@@ -472,9 +472,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 			value := rctx.URLParams.Values[i]
 			r.SetPathValue(key, value)
 		}
-		if supportsPattern {
-			setPattern(rctx, r)
-		}
+		r.Pattern = rctx.routePattern
 
 		h.ServeHTTP(w, r)
 		return
