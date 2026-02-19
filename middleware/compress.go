@@ -70,8 +70,8 @@ func NewCompressor(level int, types ...string) *Compressor {
 			if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
 				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '/*' supported", t))
 			}
-			if strings.HasSuffix(t, "/*") {
-				allowedWildcards[strings.TrimSuffix(t, "/*")] = struct{}{}
+			if before, ok := strings.CutSuffix(t, "/*"); ok {
+				allowedWildcards[before] = struct{}{}
 			} else {
 				allowedTypes[t] = struct{}{}
 			}
