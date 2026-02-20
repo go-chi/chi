@@ -3,6 +3,7 @@ package chi
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -93,6 +94,22 @@ func (x *Context) Reset() {
 	x.methodNotAllowed = false
 	x.methodsAllowed = x.methodsAllowed[:0]
 	x.parentCtx = nil
+}
+
+// Clone a routing context so that it may be used outside of the request/response lifecycle.
+func (c *Context) Clone() *Context {
+	clone := *c
+
+	clone.URLParams.Keys = slices.Clone(c.URLParams.Keys)
+	clone.URLParams.Values = slices.Clone(c.URLParams.Values)
+
+	clone.routeParams.Keys = slices.Clone(c.routeParams.Keys)
+	clone.routeParams.Values = slices.Clone(c.routeParams.Values)
+
+	clone.RoutePatterns = slices.Clone(c.RoutePatterns)
+	clone.methodsAllowed = slices.Clone(c.methodsAllowed)
+
+	return &clone
 }
 
 // URLParam returns the corresponding URL parameter value from the request
