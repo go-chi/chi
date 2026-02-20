@@ -88,7 +88,10 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Serve the request and once its done, put the request context back in the sync pool
 	mx.handler.ServeHTTP(w, r)
-	mx.pool.Put(rctx)
+
+	if !rctx.poisoned {
+		mx.pool.Put(rctx)
+	}
 }
 
 // Use appends a middleware handler to the Mux middleware stack.
