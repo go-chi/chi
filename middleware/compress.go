@@ -27,8 +27,8 @@ var defaultCompressibleContentTypes = []string{
 }
 
 // Compress is a middleware that compresses response
-// body of a given content types to a data format based
-// on Accept-Encoding request header. It uses a given
+// bodies of given content types to data formats based
+// on the Accept-Encoding request header. It uses a given
 // compression level.
 //
 // NOTE: make sure to set the Content-Type header on your response
@@ -36,7 +36,7 @@ var defaultCompressibleContentTypes = []string{
 // your handler you should set w.Header().Set("Content-Type", http.DetectContentType(yourBody))
 // or set it manually.
 //
-// Passing a compression level of 5 is sensible value
+// Passing a compression level of 5 is a sensible value
 func Compress(level int, types ...string) func(next http.Handler) http.Handler {
 	compressor := NewCompressor(level, types...)
 	return compressor.Handler
