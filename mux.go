@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 )
@@ -516,8 +517,12 @@ func (mx *Mux) updateRouteHandler() {
 
 // methodNotAllowedHandler is a helper function to respond with a 405,
 // method not allowed. It sets the Allow header with the list of allowed
-// methods for the route.
+// methods for the route. It deduplicates methods that may appear multiple
+// times when overlapping wildcard routes match the same path.
 func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
+	slices.Sort(methodsAllowed)
+	methodsAllowed = slices.Compact(methodsAllowed)
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, m := range methodsAllowed {
 			w.Header().Add("Allow", reverseMethodMap[m])
