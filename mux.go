@@ -86,7 +86,7 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// NOTE: r.WithContext() causes 2 allocations and context.WithValue() causes 1 allocation
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
 
-	// Serve the request and once its done, put the request context back in the sync pool
+	// Serve the request and once it's done, put the request context back in the sync pool
 	mx.handler.ServeHTTP(w, r)
 	mx.pool.Put(rctx)
 }
@@ -351,7 +351,7 @@ func (mx *Mux) Middlewares() Middlewares {
 }
 
 // Match searches the routing tree for a handler that matches the method/path.
-// It's similar to routing a http request, but without executing the handler
+// It's similar to routing an HTTP request, but without executing the handler
 // thereafter.
 //
 // Note: the *Context state is updated during execution, so manage
@@ -411,7 +411,7 @@ func (mx *Mux) MethodNotAllowedHandler(methodsAllowed ...methodTyp) http.Handler
 	return methodNotAllowedHandler(methodsAllowed...)
 }
 
-// handle registers a http.Handler in the routing tree for a particular http method
+// handle registers an http.Handler in the routing tree for a particular http method
 // and routing pattern.
 func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *node {
 	if len(pattern) == 0 || pattern[0] != '/' {
@@ -436,7 +436,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *n
 	return mx.tree.InsertRoute(method, pattern, h)
 }
 
-// routeHTTP routes a http.Request through the Mux routing tree to serve
+// routeHTTP routes an http.Request through the Mux routing tree to serve
 // the matching handler for a particular http method.
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Grab the route context object

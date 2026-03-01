@@ -13,7 +13,7 @@ import (
 // if the context has reached its deadline and return, otherwise the timeout
 // signal will be just ignored.
 //
-// ie. a route/handler may look like:
+// I.e. a route/handler may look like:
 //
 //	r.Get("/long", func(w http.ResponseWriter, r *http.Request) {
 //		ctx := r.Context()
