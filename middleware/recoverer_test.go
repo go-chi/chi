@@ -12,6 +12,10 @@ import (
 
 func panickingHandler(http.ResponseWriter, *http.Request) { panic("foo") }
 
+type testLogger struct{ t *testing.T }
+
+func (l testLogger) Print(v ...interface{}) {}
+
 func TestRecoverer(t *testing.T) {
 	r := chi.NewRouter()
 
@@ -39,6 +43,37 @@ func TestRecoverer(t *testing.T) {
 		}
 	}
 	t.Fatal("First func call line should start with ->.")
+}
+
+func TestRecovererNoColor(t *testing.T) {
+	oldIsTTY := IsTTY
+	IsTTY = true
+	defer func() { IsTTY = oldIsTTY }()
+
+	r := chi.NewRouter()
+
+	oldRecovererErrorWriter := recovererErrorWriter
+	defer func() { recovererErrorWriter = oldRecovererErrorWriter }()
+	buf := &bytes.Buffer{}
+	recovererErrorWriter = buf
+
+	r.Use(RequestLogger(&DefaultLogFormatter{Logger: testLogger{t}, NoColor: true}))
+	r.Use(Recoverer)
+	r.Get("/", panickingHandler)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	res, _ := testRequest(t, ts, "GET", "/", nil)
+	assertEqual(t, res.StatusCode, http.StatusInternalServerError)
+
+	output := buf.String()
+	if len(output) == 0 {
+		t.Fatal("expected panic output, got nothing")
+	}
+	if strings.Contains(output, "\033[") {
+		t.Fatal("expected no ANSI escape codes in panic output when NoColor is set")
+	}
 }
 
 func TestRecovererAbortHandler(t *testing.T) {
