@@ -15,10 +15,10 @@ import (
 )
 
 // Key to use when setting the request ID.
-type ctxKeyRequestID int
+type ctxKeyRequestID any
 
-// RequestIDKey is the key that holds the unique request ID in a request context.
-const RequestIDKey ctxKeyRequestID = 0
+// requestIDKey is the key that holds the unique request ID in a request context.
+var requestIDKey ctxKeyRequestID = 0
 
 // RequestIDHeader is the name of the HTTP Header which contains the request id.
 // Exported so that it can be changed by developers
@@ -59,6 +59,30 @@ func init() {
 	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
 }
 
+// RequestIDWithCustomKey is a middleware that injects a request ID into the context of each
+// request, storing it under both the default RequestIDKey and the provided custom key.
+// This allows retrieving the request ID via GetReqID(ctx) as well as via the custom key.
+// Panics if requestIDKey is empty.
+func RequestIDWithCustomKey(reqIDKey string) func(http.Handler) http.Handler {
+	if reqIDKey == "" {
+		panic("chi/middleware: RequestIDWithCustomKey expects a non-empty key")
+	}
+
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			// Set the request ID under the custom key as well as the default RequestIDKey
+			// to permit to get the request ID via GetReqID(ctx) as well as via the custom key.
+			requestIDKey = reqIDKey
+			myid := reqid.Add(1)
+			requestID := fmt.Sprintf("%s-%06d", prefix, myid)
+			ctx = context.WithValue(ctx, reqIDKey, requestID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
 // RequestID is a middleware that injects a request ID into the context of each
 // request. A request ID is a string of the form "host.example.com/random-0001",
 // where "random" is a base62 random string that uniquely identifies this go
@@ -72,7 +96,7 @@ func RequestID(next http.Handler) http.Handler {
 			myid := reqid.Add(1)
 			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
 		}
-		ctx = context.WithValue(ctx, RequestIDKey, requestID)
+		ctx = context.WithValue(ctx, requestIDKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 	return http.HandlerFunc(fn)
@@ -84,7 +108,7 @@ func GetReqID(ctx context.Context) string {
 	if ctx == nil {
 		return ""
 	}
-	if reqID, ok := ctx.Value(RequestIDKey).(string); ok {
+	if reqID, ok := ctx.Value(requestIDKey).(string); ok {
 		return reqID
 	}
 	return ""
