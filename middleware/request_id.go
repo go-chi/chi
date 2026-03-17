@@ -59,6 +59,28 @@ func init() {
 	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
 }
 
+// RequestIDWithCustomKey is a middleware that injects a request ID into the context of each
+// request, storing it under both the default RequestIDKey and the provided custom key.
+// This allows retrieving the request ID via GetReqID(ctx) as well as via the custom key.
+// Panics if requestIDKey is empty.
+func RequestIDWithCustomKey(requestIDKey string) func(http.Handler) http.Handler {
+	if requestIDKey == "" {
+		panic("chi/middleware: RequestIDWithCustomKey expects a non-empty key")
+	}
+
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
+			myid := reqid.Add(1)
+			requestID := fmt.Sprintf("%s-%06d", prefix, myid)
+			ctx = context.WithValue(ctx, RequestIDKey, requestID)
+			ctx = context.WithValue(ctx, requestIDKey, requestID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
 // RequestID is a middleware that injects a request ID into the context of each
 // request. A request ID is a string of the form "host.example.com/random-0001",
 // where "random" is a base62 random string that uniquely identifies this go
