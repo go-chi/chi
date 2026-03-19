@@ -291,6 +291,12 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		panic(fmt.Sprintf("chi: attempting to Mount() a nil handler on '%s'", pattern))
 	}
 
+	// Prevent self-mounting: mounting a router on itself (or its Group) causes
+	// infinite recursion because the handler routes back into the same tree.
+	if subr, ok := handler.(*Mux); ok && subr.tree == mx.tree {
+		panic("chi: Mount() handler shares the same routing tree; self-mounting causes infinite recursion")
+	}
+
 	// Provide runtime safety for ensuring a pattern isn't mounted on an existing
 	// routing pattern.
 	if mx.tree.findPattern(pattern+"*") || mx.tree.findPattern(pattern+"/*") {
