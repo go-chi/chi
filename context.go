@@ -3,6 +3,7 @@ package chi
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -96,11 +97,16 @@ func (x *Context) Reset() {
 }
 
 // URLParam returns the corresponding URL parameter value from the request
-// routing context.
+// routing context. Values are decoded with url.PathUnescape for consistent
+// behavior regardless of whether r.URL.RawPath is set.
 func (x *Context) URLParam(key string) string {
 	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
 		if x.URLParams.Keys[k] == key {
-			return x.URLParams.Values[k]
+			decoded, err := url.PathUnescape(x.URLParams.Values[k])
+			if err != nil {
+				return x.URLParams.Values[k]
+			}
+			return decoded
 		}
 	}
 	return ""

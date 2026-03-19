@@ -1728,7 +1728,7 @@ func TestEscapedURLParams(t *testing.T) {
 			return
 		}
 		identifier := URLParam(r, "identifier")
-		if identifier != "http:%2f%2fexample.com%2fimage.png" {
+		if identifier != "http://example.com/image.png" {
 			t.Errorf("identifier path parameter incorrect %s", identifier)
 			return
 		}
@@ -1755,6 +1755,22 @@ func TestEscapedURLParams(t *testing.T) {
 
 	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
 		t.Fatal(body)
+	}
+}
+
+func TestURLParamDecodesEncodedPath(t *testing.T) {
+	m := NewRouter()
+	m.Get("/users/{name}", func(w http.ResponseWriter, r *http.Request) {
+		name := URLParam(r, "name")
+		if name != "hello world" {
+			t.Errorf("URLParam should return decoded value, got %q", name)
+		}
+		w.Write([]byte(name))
+	})
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+	if _, body := testRequest(t, ts, "GET", "/users/hello%20world", nil); body != "hello world" {
+		t.Fatalf("expected decoded 'hello world', got %q", body)
 	}
 }
 
