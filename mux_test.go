@@ -1482,6 +1482,32 @@ func TestMountingExistingPath(t *testing.T) {
 	r.Mount("/hi", http.HandlerFunc(handler))
 }
 
+func TestMountSelfMountPanic(t *testing.T) {
+	t.Run("Group", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for self-mount via Group")
+			} else if msg, ok := r.(string); !ok || msg != "chi: Mount() handler shares the same routing tree; self-mounting causes infinite recursion" {
+				t.Errorf("expected self-mount panic message, got: %v", r)
+			}
+		}()
+
+		r := NewRouter()
+		r.Mount("/", r.Group(func(r Router) {}))
+	})
+
+	t.Run("Direct", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for direct self-mount")
+			}
+		}()
+
+		r := NewRouter()
+		r.Mount("/", r)
+	})
+}
+
 func TestMountingSimilarPattern(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
@@ -1728,7 +1754,7 @@ func TestEscapedURLParams(t *testing.T) {
 			return
 		}
 		identifier := URLParam(r, "identifier")
-		if identifier != "http:%2f%2fexample.com%2fimage.png" {
+		if identifier != "http://example.com/image.png" {
 			t.Errorf("identifier path parameter incorrect %s", identifier)
 			return
 		}
@@ -1755,6 +1781,41 @@ func TestEscapedURLParams(t *testing.T) {
 
 	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
 		t.Fatal(body)
+	}
+}
+
+func TestURLParamDecodesEncodedPath(t *testing.T) {
+	m := NewRouter()
+	m.Get("/users/{name}", func(w http.ResponseWriter, r *http.Request) {
+		name := URLParam(r, "name")
+		if name != "hello world" {
+			t.Errorf("URLParam should return decoded value, got %q", name)
+		}
+		w.Write([]byte(name))
+	})
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+	if _, body := testRequest(t, ts, "GET", "/users/hello%20world", nil); body != "hello world" {
+		t.Fatalf("expected decoded 'hello world', got %q", body)
+	}
+}
+
+func TestURLParamPreservesDoubleEncoded(t *testing.T) {
+	// When path is /users/hello%2520world, caller wants literal %20 in param.
+	// We decode only when matched against RawPath; Path is already decoded by net/http.
+	// So we must not double-decode: %2520 -> %20, not space.
+	m := NewRouter()
+	m.Get("/users/{name}", func(w http.ResponseWriter, r *http.Request) {
+		name := URLParam(r, "name")
+		if name != "hello%20world" {
+			t.Errorf("URLParam should decode once for double-encoded, got %q", name)
+		}
+		w.Write([]byte(name))
+	})
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+	if _, body := testRequest(t, ts, "GET", "/users/hello%2520world", nil); body != "hello%20world" {
+		t.Fatalf("expected hello%%20world (one decode), got %q", body)
 	}
 }
 

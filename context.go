@@ -3,6 +3,7 @@ package chi
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -76,6 +77,8 @@ type Context struct {
 
 	methodsAllowed   []methodTyp // allowed methods in case of a 405
 	methodNotAllowed bool
+
+	urlParamsFromRawPath bool
 }
 
 // Reset a routing context to its initial state.
@@ -92,15 +95,27 @@ func (x *Context) Reset() {
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
 	x.methodsAllowed = x.methodsAllowed[:0]
+	x.urlParamsFromRawPath = false
 	x.parentCtx = nil
 }
 
 // URLParam returns the corresponding URL parameter value from the request
-// routing context.
+// routing context. When the route was matched against RawPath (encoded),
+// values are decoded once with url.PathUnescape. When matched against Path
+// (already decoded by net/http), values are returned as-is so double-encoded
+// inputs like %2520 are preserved as %20.
 func (x *Context) URLParam(key string) string {
 	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
 		if x.URLParams.Keys[k] == key {
-			return x.URLParams.Values[k]
+			v := x.URLParams.Values[k]
+			if !x.urlParamsFromRawPath {
+				return v
+			}
+			decoded, err := url.PathUnescape(v)
+			if err != nil {
+				return v
+			}
+			return decoded
 		}
 	}
 	return ""
