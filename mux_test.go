@@ -1800,6 +1800,25 @@ func TestURLParamDecodesEncodedPath(t *testing.T) {
 	}
 }
 
+func TestURLParamPreservesDoubleEncoded(t *testing.T) {
+	// When path is /users/hello%2520world, caller wants literal %20 in param.
+	// We decode only when matched against RawPath; Path is already decoded by net/http.
+	// So we must not double-decode: %2520 -> %20, not space.
+	m := NewRouter()
+	m.Get("/users/{name}", func(w http.ResponseWriter, r *http.Request) {
+		name := URLParam(r, "name")
+		if name != "hello%20world" {
+			t.Errorf("URLParam should decode once for double-encoded, got %q", name)
+		}
+		w.Write([]byte(name))
+	})
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+	if _, body := testRequest(t, ts, "GET", "/users/hello%2520world", nil); body != "hello%20world" {
+		t.Fatalf("expected hello%%20world (one decode), got %q", body)
+	}
+}
+
 func TestCustomHTTPMethod(t *testing.T) {
 	// first we must register this method to be accepted, then we
 	// can define method handlers on the router below
