@@ -1482,6 +1482,32 @@ func TestMountingExistingPath(t *testing.T) {
 	r.Mount("/hi", http.HandlerFunc(handler))
 }
 
+func TestMountSelfMountPanic(t *testing.T) {
+	t.Run("Group", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for self-mount via Group")
+			} else if msg, ok := r.(string); !ok || msg != "chi: Mount() handler shares the same routing tree; self-mounting causes infinite recursion" {
+				t.Errorf("expected self-mount panic message, got: %v", r)
+			}
+		}()
+
+		r := NewRouter()
+		r.Mount("/", r.Group(func(r Router) {}))
+	})
+
+	t.Run("Direct", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Error("expected panic for direct self-mount")
+			}
+		}()
+
+		r := NewRouter()
+		r.Mount("/", r)
+	})
+}
+
 func TestMountingSimilarPattern(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
