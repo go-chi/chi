@@ -35,7 +35,7 @@ func TestPanicOnInvalidRegexp(t *testing.T) {
 	}()
 
 	r := NewRouter()
-	r.Get("/{id:[invalid}", func(w http.ResponseWriter, r *http.Request) {})
+	r.Get("/{id:(abc}", func(w http.ResponseWriter, r *http.Request) {})
 }
 
 func TestPanicOnNilRouteHandler(t *testing.T) {
