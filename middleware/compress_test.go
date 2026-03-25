@@ -109,6 +109,89 @@ func TestCompressor(t *testing.T) {
 	}
 }
 
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{
+			name:     "exact match",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "match with whitespace",
+			accepted: []string{" gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "match with quality value",
+			accepted: []string{"gzip;q=1.0"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "no match",
+			accepted: []string{"deflate"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "encoding excluded with q=0",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "should not substring match",
+			accepted: []string{"br"},
+			encoding: "b",
+			want:     false,
+		},
+		{
+			name:     "should not substring match prefix",
+			accepted: []string{"bgzip"},
+			encoding: "gzip",
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tt.accepted, tt.encoding)
+			if got != tt.want {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v, want %v", tt.accepted, tt.encoding, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCompressorRespectsQualityZero(t *testing.T) {
+	// When a client sends Accept-Encoding: gzip;q=0, the server must not
+	// compress the response with gzip (q=0 means "not acceptable").
+	r := chi.NewRouter()
+	compressor := NewCompressor(5, "text/html")
+	r.Use(compressor.Handler)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("hello"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// gzip;q=0 means "I do NOT accept gzip"
+	resp, _ := testRequestWithAcceptedEncodings(t, ts, "GET", "/", "gzip;q=0, deflate")
+	if got := resp.Header.Get("Content-Encoding"); got == "gzip" {
+		t.Errorf("server used gzip despite q=0; Content-Encoding = %q", got)
+	}
+}
+
 func TestCompressorWildcards(t *testing.T) {
 	tests := []struct {
 		name       string
