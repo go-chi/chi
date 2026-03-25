@@ -208,8 +208,9 @@ func (f *http2FancyWriter) Push(target string, opts *http.PushOptions) error {
 
 func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	if f.basicWriter.tee != nil {
+		// io.Copy will call basicWriter.Write, which already
+		// increments basicWriter.bytes, so we must not add again.
 		n, err := io.Copy(&f.basicWriter, r)
-		f.basicWriter.bytes += int(n)
 		return n, err
 	}
 	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
