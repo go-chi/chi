@@ -158,6 +158,42 @@ func TestMatchAcceptEncoding(t *testing.T) {
 			encoding: "gzip",
 			want:     false,
 		},
+		{
+			name:     "q=0 in decimal form",
+			accepted: []string{"gzip;q=0.0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 max precision",
+			accepted: []string{"gzip;q=0.000"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "smallest non-zero quality",
+			accepted: []string{"gzip;q=0.001"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "whitespace around semicolon",
+			accepted: []string{"gzip ; q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 with trailing params",
+			accepted: []string{"gzip;q=0;ext=foo"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "explicit full quality",
+			accepted: []string{"gzip;q=1"},
+			encoding: "gzip",
+			want:     true,
+		},
 	}
 
 	for _, tt := range tests {

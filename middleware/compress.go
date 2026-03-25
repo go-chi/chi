@@ -254,7 +254,10 @@ func matchAcceptEncoding(accepted []string, encoding string) bool {
 		if params != "" {
 			params = strings.TrimSpace(params)
 			if qval, ok := strings.CutPrefix(params, "q="); ok {
-				if q, err := strconv.ParseFloat(strings.TrimSpace(qval), 32); err == nil && q == 0 {
+				// Strip any trailing parameters after the quality value.
+				qval, _, _ = strings.Cut(qval, ";")
+				qval = strings.TrimSpace(qval)
+				if q, err := strconv.ParseFloat(qval, 32); err == nil && q == 0 {
 					continue
 				}
 			}
