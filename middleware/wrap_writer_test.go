@@ -2,8 +2,10 @@ package middleware
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -43,6 +45,57 @@ func TestBasicWritesTeesWritesWithoutDiscard(t *testing.T) {
 	assertEqual(t, []byte("hello world"), original.Body.Bytes())
 	assertEqual(t, []byte("hello world"), buf.Bytes())
 	assertEqual(t, 11, wrap.BytesWritten())
+}
+
+func TestFancyWriterReadFromBytesCounting(t *testing.T) {
+	t.Run("With Tee", func(t *testing.T) {
+		original := &httptest.ResponseRecorder{
+			HeaderMap: make(http.Header),
+			Body:      new(bytes.Buffer),
+		}
+		f := &httpFancyWriter{basicWriter: basicWriter{ResponseWriter: original}}
+
+		var tee bytes.Buffer
+		f.Tee(&tee)
+
+		data := "hello world"
+		n, err := f.ReadFrom(strings.NewReader(data))
+		assertNoError(t, err)
+		assertEqual(t, int64(len(data)), n)
+
+		// BytesWritten must equal the actual data length, not double it.
+		assertEqual(t, len(data), f.BytesWritten())
+		assertEqual(t, []byte(data), original.Body.Bytes())
+		assertEqual(t, []byte(data), tee.Bytes())
+	})
+
+	t.Run("Without Tee", func(t *testing.T) {
+		recorder := &readerFromRecorder{
+			ResponseRecorder: httptest.ResponseRecorder{
+				HeaderMap: make(http.Header),
+				Body:      new(bytes.Buffer),
+			},
+		}
+		f := &httpFancyWriter{basicWriter: basicWriter{ResponseWriter: recorder}}
+
+		data := "hello world"
+		n, err := f.ReadFrom(strings.NewReader(data))
+		assertNoError(t, err)
+		assertEqual(t, int64(len(data)), n)
+
+		assertEqual(t, len(data), f.BytesWritten())
+		assertEqual(t, []byte(data), recorder.Body.Bytes())
+	})
+}
+
+// readerFromRecorder wraps httptest.ResponseRecorder and implements io.ReaderFrom.
+// This satisfies the type assertion in the non-tee path of httpFancyWriter.ReadFrom.
+type readerFromRecorder struct {
+	httptest.ResponseRecorder
+}
+
+func (r *readerFromRecorder) ReadFrom(src io.Reader) (int64, error) {
+	return io.Copy(r.Body, src)
 }
 
 func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
