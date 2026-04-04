@@ -36,7 +36,7 @@ func Recoverer(next http.Handler) http.Handler {
 					PrintPrettyStack(rvr)
 				}
 
-				if r.Header.Get("Connection") != "Upgrade" {
+				if !headerContainsToken(r.Header, "Connection", "Upgrade") {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			}
@@ -200,4 +200,17 @@ func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (st
 	cW(buf, false, bWhite, "\n")
 
 	return buf.String(), nil
+}
+
+// headerContainsToken checks whether a comma-separated, case-insensitive
+// HTTP header contains a specific token (RFC 7230 §3.2.6).
+func headerContainsToken(h http.Header, headerName, token string) bool {
+	for _, v := range h[http.CanonicalHeaderKey(headerName)] {
+		for _, s := range strings.Split(v, ",") {
+			if strings.EqualFold(strings.TrimSpace(s), token) {
+				return true
+			}
+		}
+	}
+	return false
 }
