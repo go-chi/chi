@@ -169,6 +169,61 @@ func TestCompressorWildcards(t *testing.T) {
 	}
 }
 
+// TestMatchAcceptEncoding verifies that Accept-Encoding negotiation uses
+// proper token matching rather than substring matching. The current
+// implementation uses strings.Contains, which incorrectly matches:
+//   - "gzip;q=0" as gzip (client explicitly refused gzip)
+//   - "xgzip" as gzip (not a real encoding, but contains "gzip" as a substring)
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{
+			name:     "exact match",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "q=0 means refused",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "substring should not match",
+			accepted: []string{"xgzip"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "encoding with positive q-value",
+			accepted: []string{"gzip;q=0.5"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "encoding with whitespace",
+			accepted: []string{" gzip "},
+			encoding: "gzip",
+			want:     true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tc.accepted, tc.encoding)
+			if got != tc.want {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v, want %v",
+					tc.accepted, tc.encoding, got, tc.want)
+			}
+		})
+	}
+}
+
 func testRequestWithAcceptedEncodings(t *testing.T, ts *httptest.Server, method, path string, encodings ...string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
 	if err != nil {
