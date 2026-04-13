@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -83,4 +84,28 @@ func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
 		assertEqual(t, 0, original.Body.Len())
 		assertEqual(t, 11, wrap.BytesWritten())
 	})
+}
+
+// TestHttpFancyWriterReadFromByteCountWithTee is a regression test for
+// https://github.com/go-chi/chi/issues/1067.
+// httpFancyWriter.ReadFrom was adding n to basicWriter.bytes even when the
+// write went through basicWriter.Write (which already increments the counter),
+// resulting in double-counting the bytes when a Tee writer was set.
+func TestHttpFancyWriterReadFromByteCountWithTee(t *testing.T) {
+	original := &httptest.ResponseRecorder{
+		HeaderMap: make(http.Header),
+		Body:      new(bytes.Buffer),
+	}
+	f := &httpFancyWriter{basicWriter: basicWriter{ResponseWriter: original}}
+
+	var teeBuf bytes.Buffer
+	f.Tee(&teeBuf)
+
+	const input = "hello world"
+	n, err := f.ReadFrom(strings.NewReader(input))
+	assertNoError(t, err)
+	assertEqual(t, int64(len(input)), n)
+	// Before the fix, BytesWritten() returned 22 (double-counted).
+	assertEqual(t, len(input), f.BytesWritten())
+	assertEqual(t, []byte(input), teeBuf.Bytes())
 }
