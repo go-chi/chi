@@ -160,7 +160,7 @@ func (l *defaultLogEntry) Write(status, bytes int, header http.Header, elapsed t
 }
 
 func (l *defaultLogEntry) Panic(v interface{}, stack []byte) {
-	PrintPrettyStack(v)
+	PrintPrettyStackColor(v, l.useColor)
 }
 
 func init() {
