@@ -3,11 +3,11 @@
 ## Prerequisites
 
 1. [Install Go][go-install].
-2. Download the sources and switch the working directory:
+2. Clone the repository and switch the working directory:
 
     ```bash
-    go get -u -d github.com/go-chi/chi
-    cd $GOPATH/src/github.com/go-chi/chi
+    git clone https://github.com/go-chi/chi.git
+    cd chi
     ```
 
 ## Submitting a Pull Request
@@ -16,10 +16,10 @@ A typical workflow is:
 
 1. [Fork the repository.][fork]
 2. [Create a topic branch.][branch]
-3. Add tests for your change.
-4. Run `go test`. If your tests pass, return to the step 3.
-5. Implement the change and ensure the steps from the previous step pass.
-6. Run `goimports -w .`, to ensure the new code conforms to Go formatting guideline.
+3. Implement the change.
+4. Add tests for your change.
+5. Run `go test ./...`. If your tests fail, return to steps 3 and 4.
+6. Run `goimports -w .` to ensure the new code conforms to Go formatting guidelines.
 7. [Add, commit and push your changes.][git-help]
 8. [Submit a pull request.][pull-req]
 
@@ -28,4 +28,3 @@ A typical workflow is:
 [branch]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-branches 
 [git-help]: https://docs.github.com/en
 [pull-req]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests
-
