@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -83,4 +84,26 @@ func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
 		assertEqual(t, 0, original.Body.Len())
 		assertEqual(t, 11, wrap.BytesWritten())
 	})
+}
+
+// httpFancyWriter.ReadFrom used to double-count BytesWritten when a Tee
+// was set: io.Copy goes through basicWriter.Write which already adds to
+// bytes, and ReadFrom added n on top.
+func TestHttpFancyWriterReadFromWithTeeCountsBytesOnce(t *testing.T) {
+	original := &httptest.ResponseRecorder{
+		HeaderMap: make(http.Header),
+		Body:      new(bytes.Buffer),
+	}
+	f := &httpFancyWriter{basicWriter: basicWriter{ResponseWriter: original}}
+
+	var teeBuf bytes.Buffer
+	f.Tee(&teeBuf)
+
+	n, err := f.ReadFrom(strings.NewReader("hello world"))
+	assertNoError(t, err)
+
+	assertEqual(t, int64(11), n)
+	assertEqual(t, 11, f.BytesWritten())
+	assertEqual(t, []byte("hello world"), original.Body.Bytes())
+	assertEqual(t, []byte("hello world"), teeBuf.Bytes())
 }
