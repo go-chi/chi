@@ -160,6 +160,10 @@ func (c *Compressor) SetEncoder(encoding string, fn EncoderFunc) {
 
 	// If the encoder supports Resetting (IoReseterWriter), then it can be pooled.
 	encoder := fn(io.Discard, c.level)
+	// Release resources of the created encoder
+	if enc, ok := encoder.(io.WriteCloser); ok {
+		defer enc.Close()
+	}
 	if _, ok := encoder.(ioResetterWriter); ok {
 		pool := &sync.Pool{
 			New: func() interface{} {
@@ -186,21 +190,18 @@ func (c *Compressor) SetEncoder(encoding string, fn EncoderFunc) {
 // current Compressor.
 func (c *Compressor) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		encoder, encoding, cleanup := c.selectEncoder(r.Header, w)
+		encoder, encoding := c.selectEncoder(r.Header, w)
 
 		cw := &compressResponseWriter{
 			ResponseWriter:   w,
-			w:                w,
 			contentTypes:     c.allowedTypes,
 			contentWildcards: c.allowedWildcards,
 			encoding:         encoding,
 			compressible:     false, // determined in post-handler
 		}
 		if encoder != nil {
-			cw.w = encoder
+			cw.encoder = encoder
 		}
-		// Re-add the encoder to the pool if applicable.
-		defer cleanup()
 		defer cw.Close()
 
 		next.ServeHTTP(cw, r)
@@ -208,7 +209,7 @@ func (c *Compressor) Handler(next http.Handler) http.Handler {
 }
 
 // selectEncoder returns the encoder, the name of the encoder, and a closer function.
-func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, string, func()) {
+func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (func() io.Writer, string) {
 	header := h.Get("Accept-Encoding")
 
 	// Parse the names of all accepted algorithms from the header.
@@ -218,23 +219,31 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 	for _, name := range c.encodingPrecedence {
 		if matchAcceptEncoding(accepted, name) {
 			if pool, ok := c.pooledEncoders[name]; ok {
-				encoder := pool.Get().(ioResetterWriter)
-				cleanup := func() {
-					pool.Put(encoder)
+				fn := func() io.Writer {
+					enc := pool.Get().(ioResetterWriter)
+					enc.Reset(w)
+					return &pooledEncoder{
+						Writer: enc,
+						pool:   pool,
+					}
 				}
-				encoder.Reset(w)
-				return encoder, name, cleanup
+				return fn, name
 
 			}
 			if fn, ok := c.encoders[name]; ok {
-				return fn(w, c.level), name, func() {}
+				fn := func() io.Writer {
+					return &encoder{
+						Writer: fn(w, c.level),
+					}
+				}
+				return fn, name
 			}
 		}
 
 	}
 
 	// No encoder found to match the accepted encoding
-	return nil, "", func() {}
+	return nil, ""
 }
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
@@ -269,6 +278,8 @@ type compressResponseWriter struct {
 	encoding         string
 	wroteHeader      bool
 	compressible     bool
+
+	encoder func() io.Writer
 }
 
 func (cw *compressResponseWriter) isCompressible() bool {
@@ -325,6 +336,9 @@ func (cw *compressResponseWriter) Write(p []byte) (int, error) {
 
 func (cw *compressResponseWriter) writer() io.Writer {
 	if cw.compressible {
+		if cw.w == nil {
+			cw.w = cw.encoder()
+		}
 		return cw.w
 	}
 	return cw.ResponseWriter
@@ -373,6 +387,33 @@ func (cw *compressResponseWriter) Close() error {
 
 func (cw *compressResponseWriter) Unwrap() http.ResponseWriter {
 	return cw.ResponseWriter
+}
+
+type (
+	encoder struct {
+		io.Writer
+	}
+
+	pooledEncoder struct {
+		io.Writer
+		pool *sync.Pool
+	}
+)
+
+func (e *encoder) Close() error {
+	if c, ok := e.Writer.(io.WriteCloser); ok {
+		return c.Close()
+	}
+	return nil
+}
+
+func (e *pooledEncoder) Close() error {
+	var err error
+	if w, ok := e.Writer.(io.WriteCloser); ok {
+		err = w.Close()
+	}
+	e.pool.Put(e.Writer)
+	return err
 }
 
 func encoderGzip(w io.Writer, level int) io.Writer {
