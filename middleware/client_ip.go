@@ -8,178 +8,215 @@ import (
 	"strings"
 )
 
-var (
-	// clientIPCtxKey is the context key used to store the client IP address.
-	clientIPCtxKey = &contextKey{"clientIP"}
-)
+// clientIPCtxKey stores the client IP set by any of the ClientIPFrom* middlewares.
+var clientIPCtxKey = &contextKey{"clientIP"}
 
-// ClientIPFromHeader parses the client IP address from a specified HTTP header
-// (e.g., X-Real-IP, CF-Connecting-IP) and injects it into the request context
-// if it is not already set. The parsed IP address can be retrieved using GetClientIP().
+// ClientIPFromHeader stores the client IP read from a single-IP HTTP header
+// set by your reverse proxy. Read the IP with [GetClientIP].
 //
-// The middleware validates the IP address to ignore loopback, private, and unspecified addresses.
+// Use this when your reverse proxy sets one of these headers for every
+// request and overwrites any client-supplied value:
 //
-// ### Important Notice:
-// - Use this middleware only when your infrastructure sets a trusted header containing the client IP.
-// - If the specified header is not securely set by your infrastructure, malicious clients could spoof it.
+//   - X-Real-IP        — Nginx with ngx_http_realip_module
+//   - X-Client-IP      — Apache with mod_remoteip
+//   - CF-Connecting-IP — Cloudflare
 //
-// Example trusted headers:
-// - "X-Real-IP"        - Nginx (ngx_http_realip_module)
-// - "X-Client-IP"      - Apache (mod_remoteip)
-// - "CF-Connecting-IP" - Cloudflare
-// - "True-Client-IP"   - Akamai, Cloudflare Enterprise
-// - "X-Azure-ClientIP" - Azure Front Door
-// - "Fastly-Client-IP" - Fastly
+// DO NOT use this with headers your infrastructure does not overwrite
+// (True-Client-IP, X-Azure-ClientIP, Fastly-Client-IP by default, etc.).
+// Those can be supplied by the client and are trivially spoofable.
 func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-
-			// Check if the client IP is already set in the context.
-			if _, ok := ctx.Value(clientIPCtxKey).(netip.Addr); ok {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if hasClientIP(r.Context()) {
 				h.ServeHTTP(w, r)
 				return
 			}
-
-			// Parse the IP address from the trusted header.
-			ip, err := netip.ParseAddr(r.Header.Get(trustedHeader))
-			if err != nil || ip.IsLoopback() || ip.IsUnspecified() || ip.IsPrivate() {
-				// Ignore invalid or private IPs.
-				h.ServeHTTP(w, r)
-				return
+			if ip, err := netip.ParseAddr(r.Header.Get(trustedHeader)); err == nil {
+				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 			}
-
-			// Store the valid client IP in the context.
-			ctx = context.WithValue(ctx, clientIPCtxKey, ip)
-			h.ServeHTTP(w, r.WithContext(ctx))
-		}
-		return http.HandlerFunc(fn)
-	}
-}
-
-// ClientIPFromXFFHeader parses the client IP address from the X-Forwarded-For
-// header and injects it into the request context if it is not already set. The
-// parsed IP address can be retrieved using GetClientIP().
-//
-// The middleware traverses the X-Forwarded-For chain (rightmost untrusted IP)
-// and excludes loopback, private, unspecified, and trusted IP ranges.
-//
-// ### Important Notice:
-// - Use this middleware only when your infrastructure sets and validates the X-Forwarded-For header.
-// - Malicious clients can spoof the header unless a trusted reverse proxy or load balancer sanitizes it.
-//
-// Parameters:
-// - `trustedIPPrefixes`: A list of CIDR prefixes that define trusted proxy IP ranges.
-//
-// Example trusted IP ranges:
-// - "203.0.113.0/24"     - Example corporate proxy
-// - "198.51.100.0/24"    - Example data center or hosting provider
-// - "2400:cb00::/32"     - Cloudflare IPv6 range
-// - "2606:4700::/32"     - Cloudflare IPv6 range
-// - "192.0.2.0/24"       - Example VPN gateway
-//
-// Note: Private IP ranges (e.g., "10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12")
-// are automatically excluded by netip.Addr.IsPrivate() and do not need to be added here.
-func ClientIPFromXFFHeader(trustedIPPrefixes ...string) func(http.Handler) http.Handler {
-	// Pre-parse trusted prefixes.
-	trustedPrefixes := make([]netip.Prefix, len(trustedIPPrefixes))
-	for i, ipRange := range trustedIPPrefixes {
-		trustedPrefixes[i] = netip.MustParsePrefix(ipRange)
-	}
-
-	return func(h http.Handler) http.Handler {
-		fn := func(w http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
-
-			// Check if the client IP is already set in the context.
-			if _, ok := ctx.Value(clientIPCtxKey).(netip.Addr); ok {
-				h.ServeHTTP(w, r)
-				return
-			}
-
-			// Parse and split the X-Forwarded-For header(s).
-			xff := strings.Split(strings.Join(r.Header.Values("X-Forwarded-For"), ","), ",")
-		nextValue:
-			for i := len(xff) - 1; i >= 0; i-- {
-				ip, err := netip.ParseAddr(strings.TrimSpace(xff[i]))
-				if err != nil {
-					continue
-				}
-
-				// Ignore loopback, private, or unspecified addresses.
-				if ip.IsLoopback() || ip.IsPrivate() || ip.IsUnspecified() {
-					continue
-				}
-
-				// Ignore trusted IPs within the given ranges.
-				for _, prefix := range trustedPrefixes {
-					if prefix.Contains(ip) {
-						continue nextValue
-					}
-				}
-
-				// Store the valid client IP in the context.
-				ctx = context.WithValue(ctx, clientIPCtxKey, ip)
-				h.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-
 			h.ServeHTTP(w, r)
-		}
-		return http.HandlerFunc(fn)
+		})
 	}
 }
 
-// ClientIPFromRemoteAddr extracts the client IP address from the RemoteAddr
-// field of the HTTP request and injects it into the request context if it is
-// not already set. The parsed IP address can be retrieved using GetClientIP().
+// ClientIPFromXFF stores the client IP read from the X-Forwarded-For header,
+// walking the chain right-to-left and skipping any IP that falls within one
+// of the given trusted CIDR prefixes. The first IP that is not trusted is
+// the client. Read it with [GetClientIP].
 //
-// The middleware ignores invalid or private IPs.
+// Use this when you sit behind one or more reverse proxies whose IP ranges
+// you can enumerate as CIDRs:
 //
-// ### Use Case:
-// This middleware is useful when the client IP cannot be determined from headers
-// such as X-Forwarded-For or X-Real-IP, and you need to fall back to RemoteAddr.
-func ClientIPFromRemoteAddr(h http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+//	r.Use(middleware.ClientIPFromXFF(
+//	    "13.32.0.0/15",   // CloudFront IPv4
+//	    "52.46.0.0/18",   // CloudFront IPv4
+//	    "2600:9000::/28", // CloudFront IPv6
+//	))
+//
+// Calling with no arguments returns the rightmost parseable XFF IP — safe
+// only if you have exactly one trusted hop directly in front of this server
+// (e.g., nginx on localhost).
+//
+// If you know the number of trusted proxies but not their IPs, use
+// [ClientIPFromXFFTrustedProxies] instead.
+//
+// Panics at startup if any prefix is invalid.
+func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handler {
+	prefixes := make([]netip.Prefix, len(trustedIPPrefixes))
+	for i, p := range trustedIPPrefixes {
+		prefixes[i] = netip.MustParsePrefix(p)
+	}
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if hasClientIP(r.Context()) {
+				h.ServeHTTP(w, r)
+				return
+			}
+			if ip, ok := rightmostUntrustedXFF(r.Header.Values("X-Forwarded-For"), prefixes); ok {
+				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+}
 
-		// Check if the client IP is already set in the context.
-		if _, ok := ctx.Value(clientIPCtxKey).(netip.Addr); ok {
+// ClientIPFromXFFTrustedProxies stores the client IP read from the
+// X-Forwarded-For header, given the exact number of trusted reverse proxies
+// between this server and the public internet. It returns the IP at position
+// len(xff) - numTrustedProxies in the merged X-Forwarded-For list — the IP
+// added by the outermost of your trusted proxies, the only IP in the chain
+// that none of your proxies have allowed an attacker to forge. Read it with
+// [GetClientIP].
+//
+// Use this when:
+//   - You know exactly how many proxies you sit behind, AND
+//   - Their IP addresses are dynamic (autoscaling proxy pools, ephemeral
+//     containers, dynamic CDN edges) so listing CIDRs with [ClientIPFromXFF]
+//     is impractical.
+//
+// WARNING: This variant is brittle to network architecture changes. If you
+// add or remove a proxy level, numTrustedProxies silently becomes wrong and
+// you may start trusting an attacker-supplied IP. Prefer [ClientIPFromXFF]
+// with explicit trusted CIDRs whenever you can.
+//
+// If the XFF chain has fewer than numTrustedProxies entries (header missing
+// or architecture changed), no client IP is set; chain [ClientIPFromRemoteAddr]
+// after this middleware if you want a fallback.
+//
+// Panics at startup if numTrustedProxies < 1.
+func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler {
+	if numTrustedProxies < 1 {
+		panic("middleware.ClientIPFromXFFTrustedProxies: numTrustedProxies must be >= 1")
+	}
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if hasClientIP(r.Context()) {
+				h.ServeHTTP(w, r)
+				return
+			}
+			xff := mergeXFF(r.Header.Values("X-Forwarded-For"))
+			if i := len(xff) - numTrustedProxies; i >= 0 {
+				if ip, err := netip.ParseAddr(xff[i]); err == nil {
+					r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
+				}
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+// ClientIPFromRemoteAddr stores the client IP read from the TCP RemoteAddr
+// of the incoming request — the IP address of whoever opened the connection
+// to this server. Read it with [GetClientIP].
+//
+// Use this when this server is directly connected to the public internet
+// with NO reverse proxy in front of it. Behind a reverse proxy, RemoteAddr
+// is the proxy's IP, not the client's — use [ClientIPFromHeader] or
+// [ClientIPFromXFF] instead.
+func ClientIPFromRemoteAddr(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if hasClientIP(r.Context()) {
 			h.ServeHTTP(w, r)
 			return
 		}
-
-		// Extract the IP from request RemoteAddr.
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
-			h.ServeHTTP(w, r)
-			return
+			host = r.RemoteAddr // RemoteAddr may already be a bare IP (e.g. in tests).
 		}
-
-		ip, err := netip.ParseAddr(host)
-		if err != nil {
-			h.ServeHTTP(w, r)
-			return
+		if ip, err := netip.ParseAddr(host); err == nil {
+			r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 		}
-
-		// Store the valid client IP in the context.
-		ctx = context.WithValue(ctx, clientIPCtxKey, ip)
-		h.ServeHTTP(w, r.WithContext(ctx))
-	}
-	return http.HandlerFunc(fn)
+		h.ServeHTTP(w, r)
+	})
 }
 
-// GetClientIP retrieves the client IP address from the given context.
-// The IP address is set by one of the following middlewares:
-// - ClientIPFromHeader
-// - ClientIPFromXFFHeader
-// - ClientIPFromRemoteAddr
-//
-// Returns an empty string if no valid IP is found.
+// GetClientIP returns the client IP as a string, as set by one of the
+// ClientIPFrom* middlewares. Returns "" if no valid IP was set.
+// Convenient for logging, rate-limit keys, etc.
 func GetClientIP(ctx context.Context) string {
-	ip, ok := ctx.Value(clientIPCtxKey).(netip.Addr)
-	if !ok || !ip.IsValid() {
+	ip := GetClientIPAddr(ctx)
+	if !ip.IsValid() {
 		return ""
 	}
 	return ip.String()
+}
+
+// GetClientIPAddr returns the client IP as a [netip.Addr], as set by one of
+// the ClientIPFrom* middlewares. The returned Addr is the zero value if not
+// set; use [netip.Addr.IsValid] to check. Useful when you need typed work —
+// prefix containment, Is4/Is6, etc. — without re-parsing the string.
+func GetClientIPAddr(ctx context.Context) netip.Addr {
+	ip, _ := ctx.Value(clientIPCtxKey).(netip.Addr)
+	return ip
+}
+
+// hasClientIP reports whether an upstream ClientIPFrom* middleware has
+// already set a valid client IP on the context.
+func hasClientIP(ctx context.Context) bool {
+	return GetClientIPAddr(ctx).IsValid()
+}
+
+// mergeXFF merges all X-Forwarded-For header values into a single ordered
+// list of trimmed entries (left-to-right, in the order received). Empty
+// entries are dropped. Entries are not validated as IPs here.
+//
+// Merging all instances is required for security: per RFC 2616, multiple
+// XFF headers MUST be processed in order. Reading only the first or last
+// header value lets an attacker pick which value security logic sees by
+// sending duplicate headers.
+func mergeXFF(headers []string) []string {
+	out := make([]string, 0, len(headers))
+	for _, h := range headers {
+		for _, v := range strings.Split(h, ",") {
+			if v = strings.TrimSpace(v); v != "" {
+				out = append(out, v)
+			}
+		}
+	}
+	return out
+}
+
+// rightmostUntrustedXFF walks merged XFF right-to-left, skipping IPs that
+// match trustedPrefixes (and unparseable entries), and returns the first
+// remaining valid IP.
+func rightmostUntrustedXFF(headers []string, trustedPrefixes []netip.Prefix) (netip.Addr, bool) {
+	xff := mergeXFF(headers)
+	for i := len(xff) - 1; i >= 0; i-- {
+		ip, err := netip.ParseAddr(xff[i])
+		if err != nil || inAnyPrefix(ip, trustedPrefixes) {
+			continue
+		}
+		return ip, true
+	}
+	return netip.Addr{}, false
+}
+
+// inAnyPrefix reports whether ip falls within any of the given prefixes.
+func inAnyPrefix(ip netip.Addr, prefixes []netip.Prefix) bool {
+	for _, p := range prefixes {
+		if p.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
