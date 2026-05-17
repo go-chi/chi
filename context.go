@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// URLParam returns the url parameter from a http.Request object.
+// URLParam returns the url parameter from an http.Request object.
 func URLParam(r *http.Request, key string) string {
 	if rctx := RouteContext(r.Context()); rctx != nil {
 		return rctx.URLParam(key)
@@ -14,7 +14,7 @@ func URLParam(r *http.Request, key string) string {
 	return ""
 }
 
-// URLParamFromCtx returns the url parameter from a http.Request Context.
+// URLParamFromCtx returns the url parameter from an http.Request Context.
 func URLParamFromCtx(ctx context.Context, key string) string {
 	if rctx := RouteContext(ctx); rctx != nil {
 		return rctx.URLParam(key)
@@ -22,7 +22,7 @@ func URLParamFromCtx(ctx context.Context, key string) string {
 	return ""
 }
 
-// RouteContext returns chi's routing Context object from a
+// RouteContext returns chi's routing Context object from an
 // http.Request Context.
 func RouteContext(ctx context.Context) *Context {
 	val, _ := ctx.Value(RouteCtxKey).(*Context)
