@@ -29,10 +29,7 @@ import (
 //
 // Read the resulting IP with [middleware.GetClientIP] (string) or
 // [middleware.GetClientIPAddr] ([net/netip.Addr]). These middlewares never
-// mutate [net/http.Request.RemoteAddr]. If a middleware earlier in the chain
-// already set a client IP, later ClientIPFrom* middlewares are no-ops; this
-// lets you chain a primary with a fallback, e.g. ClientIPFromXFF("10.0.0.0/8")
-// followed by ClientIPFromRemoteAddr.
+// mutate [net/http.Request.RemoteAddr].
 //
 // The legacy [middleware.RealIP] middleware is deprecated; it is vulnerable
 // to IP spoofing (GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf).

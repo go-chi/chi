@@ -247,13 +247,16 @@ func TestClientIPFromRemoteAddr(t *testing.T) {
 	}
 }
 
-// Chaining (the first middleware to set wins; later ones are no-ops)
+// Chaining: each ClientIPFrom* middleware always runs and overwrites if it
+// finds a value; the last one with a value wins. To get primary+fallback
+// behavior, order is "fallback first, preferred last".
 func TestClientIPChaining(t *testing.T) {
-	t.Run("header_wins_over_xff", func(t *testing.T) {
+	// Preferred middleware runs LAST and overrides the fallback.
+	t.Run("header_overrides_xff_when_set", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
-				ClientIPFromHeader("CF-Connecting-IP"),
-				ClientIPFromXFF(),
+				ClientIPFromXFF(),                      // fallback.
+				ClientIPFromHeader("CF-Connecting-IP"), // preferred.
 			},
 			func(r *http.Request) {
 				r.Header.Set("CF-Connecting-IP", "1.1.1.1")
@@ -264,33 +267,35 @@ func TestClientIPChaining(t *testing.T) {
 		}
 	})
 
-	t.Run("xff_falls_through_to_remoteaddr", func(t *testing.T) {
+	// Preferred middleware finds nothing, so the fallback's value persists.
+	t.Run("xff_persists_when_header_missing", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
-				ClientIPFromXFF("10.0.0.0/8"),
-				ClientIPFromRemoteAddr,
-			},
-			func(r *http.Request) {
-				// XFF contains only trusted values → no IP set by ClientIPFromXFF.
-				r.Header.Set("X-Forwarded-For", "10.0.0.1, 10.0.0.2")
-				r.RemoteAddr = "192.0.2.1:1234"
-			})
-		if got != "192.0.2.1" {
-			t.Errorf("want 192.0.2.1 (RemoteAddr fallback), got %q", got)
-		}
-	})
-
-	t.Run("missing_header_falls_through_to_xff", func(t *testing.T) {
-		got := runChain(t,
-			[]func(http.Handler) http.Handler{
-				ClientIPFromHeader("CF-Connecting-IP"),
 				ClientIPFromXFF(),
+				ClientIPFromHeader("CF-Connecting-IP"), // missing → no-op.
 			},
 			func(r *http.Request) {
 				r.Header.Set("X-Forwarded-For", "8.8.8.8")
 			})
 		if got != "8.8.8.8" {
-			t.Errorf("want 8.8.8.8 (XFF fallback), got %q", got)
+			t.Errorf("want 8.8.8.8, got %q", got)
+		}
+	})
+
+	// RemoteAddr as last-resort baseline; XFF would override but finds only
+	// trusted IPs, so the baseline persists.
+	t.Run("remoteaddr_fills_in_when_xff_finds_nothing", func(t *testing.T) {
+		got := runChain(t,
+			[]func(http.Handler) http.Handler{
+				ClientIPFromRemoteAddr,
+				ClientIPFromXFF("10.0.0.0/8"), // all trusted → no-op.
+			},
+			func(r *http.Request) {
+				r.Header.Set("X-Forwarded-For", "10.0.0.1, 10.0.0.2")
+				r.RemoteAddr = "192.0.2.1:1234"
+			})
+		if got != "192.0.2.1" {
+			t.Errorf("want 192.0.2.1, got %q", got)
 		}
 	})
 }

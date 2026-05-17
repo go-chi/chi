@@ -27,10 +27,6 @@ var clientIPCtxKey = &contextKey{"clientIP"}
 func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if hasClientIP(r.Context()) {
-				h.ServeHTTP(w, r)
-				return
-			}
 			if ip, err := netip.ParseAddr(r.Header.Get(trustedHeader)); err == nil {
 				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 			}
@@ -68,10 +64,6 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if hasClientIP(r.Context()) {
-				h.ServeHTTP(w, r)
-				return
-			}
 			if ip, ok := rightmostUntrustedXFF(r.Header.Values("X-Forwarded-For"), prefixes); ok {
 				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 			}
@@ -110,10 +102,6 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if hasClientIP(r.Context()) {
-				h.ServeHTTP(w, r)
-				return
-			}
 			xff := mergeXFF(r.Header.Values("X-Forwarded-For"))
 			if i := len(xff) - numTrustedProxies; i >= 0 {
 				if ip, err := netip.ParseAddr(xff[i]); err == nil {
@@ -135,10 +123,6 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 // [ClientIPFromXFF] instead.
 func ClientIPFromRemoteAddr(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if hasClientIP(r.Context()) {
-			h.ServeHTTP(w, r)
-			return
-		}
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			host = r.RemoteAddr // RemoteAddr may already be a bare IP (e.g. in tests).
@@ -168,12 +152,6 @@ func GetClientIP(ctx context.Context) string {
 func GetClientIPAddr(ctx context.Context) netip.Addr {
 	ip, _ := ctx.Value(clientIPCtxKey).(netip.Addr)
 	return ip
-}
-
-// hasClientIP reports whether an upstream ClientIPFrom* middleware has
-// already set a valid client IP on the context.
-func hasClientIP(ctx context.Context) bool {
-	return GetClientIPAddr(ctx).IsValid()
 }
 
 // mergeXFF merges all X-Forwarded-For header values into a single ordered
