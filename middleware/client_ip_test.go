@@ -247,16 +247,18 @@ func TestClientIPFromRemoteAddr(t *testing.T) {
 	}
 }
 
-// Chaining: each ClientIPFrom* middleware always runs and overwrites if it
-// finds a value; the last one with a value wins. To get primary+fallback
-// behavior, order is "fallback first, preferred last".
-func TestClientIPChaining(t *testing.T) {
-	// Preferred middleware runs LAST and overrides the fallback.
-	t.Run("header_overrides_xff_when_set", func(t *testing.T) {
+// TestClientIPLastWriteWins locks down the implementation property that each
+// ClientIPFrom* middleware unconditionally overwrites the context value when
+// it finds a valid IP, while leaving any previously stored value alone when
+// it doesn't. Application code should pick exactly one ClientIPFrom*
+// middleware; this test only guards against an accidental return to
+// first-write-wins semantics.
+func TestClientIPLastWriteWins(t *testing.T) {
+	t.Run("later_overrides_earlier", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
-				ClientIPFromXFF(),                      // fallback.
-				ClientIPFromHeader("CF-Connecting-IP"), // preferred.
+				ClientIPFromXFF(),
+				ClientIPFromHeader("CF-Connecting-IP"),
 			},
 			func(r *http.Request) {
 				r.Header.Set("CF-Connecting-IP", "1.1.1.1")
@@ -267,8 +269,7 @@ func TestClientIPChaining(t *testing.T) {
 		}
 	})
 
-	// Preferred middleware finds nothing, so the fallback's value persists.
-	t.Run("xff_persists_when_header_missing", func(t *testing.T) {
+	t.Run("earlier_persists_when_later_finds_nothing", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
 				ClientIPFromXFF(),
@@ -282,9 +283,7 @@ func TestClientIPChaining(t *testing.T) {
 		}
 	})
 
-	// RemoteAddr as last-resort baseline; XFF would override but finds only
-	// trusted IPs, so the baseline persists.
-	t.Run("remoteaddr_fills_in_when_xff_finds_nothing", func(t *testing.T) {
+	t.Run("earlier_persists_when_later_xff_all_trusted", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
 				ClientIPFromRemoteAddr,

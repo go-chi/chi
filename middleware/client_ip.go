@@ -92,8 +92,7 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 // with explicit trusted CIDRs whenever you can.
 //
 // If the XFF chain has fewer than numTrustedProxies entries (header missing
-// or architecture changed), no client IP is set; chain [ClientIPFromRemoteAddr]
-// after this middleware if you want a fallback.
+// or architecture changed), no client IP is set and [GetClientIP] returns "".
 //
 // Panics at startup if numTrustedProxies < 1.
 func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler {
