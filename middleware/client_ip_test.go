@@ -67,15 +67,16 @@ func TestClientIPFromXFF_NoTrustedPrefixes(t *testing.T) {
 		{"multi_header_with_commas", []string{"5.5.5.5, 6.6.6.6", "7.7.7.7, 4.4.4.4"}, "4.4.4.4"},
 		{"ipv6", []string{"2001:db8::1"}, "2001:db8::1"},
 		{"mixed_v4_v6_rightmost_wins", []string{"203.0.113.1, 2001:db8::1"}, "2001:db8::1"},
-		{"unparseable_rightmost_skipped", []string{"1.1.1.1, garbage"}, "1.1.1.1"},
 
 		// Normalization at the entry point: v4-mapped IPv6 folds to v4, zone stripped.
 		{"v4_mapped_rightmost_folded", []string{"::ffff:1.2.3.4"}, "1.2.3.4"},
 		{"zone_stripped_rightmost", []string{"2001:db8::1%eth0"}, "2001:db8::1"},
 
 		// A header like "oh, hi,,127.0.0.1,,,," can be injected by the client.
+		// The walker reaches 127.0.0.1 from the right before encountering the
+		// unparseable tokens, so fail-closed never trips here.
 		// See https://adam-p.ca/blog/2022/03/x-forwarded-for/ for more details.
-		{"weird_with_empties_and_garbage", []string{"oh, hi,,127.0.0.1,,,,"}, "127.0.0.1"},
+		{"weird_with_empties_then_valid_rightmost", []string{"oh, hi,,127.0.0.1,,,,"}, "127.0.0.1"},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
@@ -578,6 +579,75 @@ func TestClientIPFromRemoteAddr_V4MappedIsUnmapped(t *testing.T) {
 			})
 			if got != tc.out {
 				t.Errorf("want %q (unmapped v4 form), got %q", tc.out, got)
+			}
+		})
+	}
+}
+
+// TestXFF_FailClosedOnUnparseable pins the fail-closed contract for the
+// rightmost-untrusted XFF walk (PR #967 review issue #6, adam-p): if the
+// walker encounters an entry that does not parse as an IP, it MUST abandon
+// the walk and leave no client IP set. Rightmost-untrusted relies on being
+// able to read every hop to the right of the client; an unparseable hop is
+// indistinguishable from a hostile or missing one, so we cannot safely keep
+// walking past it.
+//
+// Empty / whitespace-only entries are NOT parse failures — they are dropped
+// by trim before parsing, and do not trip fail-closed.
+//
+// These tests are EXPECTED TO FAIL until the fail-closed change lands in
+// rightmostUntrustedXFF.
+func TestXFF_FailClosedOnUnparseable(t *testing.T) {
+	tt := []struct {
+		name     string
+		prefixes []string
+		xff      []string
+		out      string
+	}{
+		// Rightmost entry is garbage — walker fails closed before reaching the
+		// otherwise-valid 1.1.1.1 to the left. Without fail-closed, garbage
+		// to the right of a real client could be silently elided.
+		{
+			name: "garbage_rightmost_no_prefixes",
+			xff:  []string{"1.1.1.1, garbage"},
+			out:  "",
+		},
+		// Garbage between the client and a trusted proxy hop. Without fail-
+		// closed, the walker would skip the trusted hop, silently skip the
+		// garbage, and return 203.0.113.7 — a spoofable result.
+		{
+			name:     "garbage_between_client_and_trusted_proxy",
+			prefixes: []string{"10.0.0.0/8"},
+			xff:      []string{"203.0.113.7, garbage, 10.0.0.1"},
+			out:      "",
+		},
+		// Garbage past a multi-hop trusted chain. Same shape with more
+		// trusted hops in front; behaviour must be identical.
+		{
+			name:     "garbage_past_trusted_chain",
+			prefixes: []string{"10.0.0.0/8"},
+			xff:      []string{"203.0.113.7, garbage, 10.0.0.1, 10.0.0.2"},
+			out:      "",
+		},
+		// Negative case: garbage sits in a left-hand header that the walker
+		// never reaches because it returns at a valid untrusted entry first.
+		// Fail-closed must NOT over-trigger here.
+		{
+			name:     "garbage_in_unreachable_left_header",
+			prefixes: []string{"10.0.0.0/8"},
+			xff:      []string{"garbage", "203.0.113.7, 10.0.0.1"},
+			out:      "203.0.113.7",
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got := run(t, ClientIPFromXFF(tc.prefixes...), func(r *http.Request) {
+				for _, v := range tc.xff {
+					r.Header.Add("X-Forwarded-For", v)
+				}
+			})
+			if got != tc.out {
+				t.Errorf("want %q, got %q", tc.out, got)
 			}
 		})
 	}
