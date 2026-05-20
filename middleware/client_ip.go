@@ -11,6 +11,10 @@ import (
 // clientIPCtxKey stores the client IP set by any of the ClientIPFrom* middlewares.
 var clientIPCtxKey = &contextKey{"clientIP"}
 
+// xForwardedForHeader is the canonical form of the X-Forwarded-For header
+// name, used by the XFF-based middlewares.
+const xForwardedForHeader = "X-Forwarded-For"
+
 // ClientIPFromHeader stores the client IP read from a single-IP HTTP header
 // set by your reverse proxy. Read the IP with [GetClientIP].
 //
@@ -24,10 +28,16 @@ var clientIPCtxKey = &contextKey{"clientIP"}
 // DO NOT use this with headers your infrastructure does not overwrite
 // (True-Client-IP, X-Azure-ClientIP, Fastly-Client-IP by default, etc.).
 // Those can be supplied by the client and are trivially spoofable.
+//
+// IPv4 addresses written in IPv4-mapped IPv6 notation (::ffff:a.b.c.d) are
+// folded to their plain IPv4 form, and any IPv6 zone identifier is stripped,
+// so the stored value is a single canonical form regardless of how the
+// upstream proxy chose to encode it.
 func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
+	header := http.CanonicalHeaderKey(trustedHeader)
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ip, err := netip.ParseAddr(r.Header.Get(trustedHeader)); err == nil {
+			if ip, ok := parseHeaderAddr(r.Header.Get(header)); ok {
 				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 			}
 			h.ServeHTTP(w, r)
@@ -53,6 +63,11 @@ func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 // only if you have exactly one trusted hop directly in front of this server
 // (e.g., nginx on localhost).
 //
+// IPv4 addresses written in IPv4-mapped IPv6 notation (::ffff:a.b.c.d) are
+// folded to their plain IPv4 form, and any IPv6 zone identifier is stripped,
+// before the prefix check and storage — both notations are otherwise
+// attacker-controllable aliases that escape a naive prefix match.
+//
 // If you know the number of trusted proxies but not their IPs, use
 // [ClientIPFromXFFTrustedProxies] instead.
 //
@@ -64,7 +79,7 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ip, ok := rightmostUntrustedXFF(r.Header.Values("X-Forwarded-For"), prefixes); ok {
+			if ip, ok := rightmostUntrustedXFF(r.Header.Values(xForwardedForHeader), prefixes); ok {
 				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 			}
 			h.ServeHTTP(w, r)
@@ -94,6 +109,11 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 // If the XFF chain has fewer than numTrustedProxies entries (header missing
 // or architecture changed), no client IP is set and [GetClientIP] returns "".
 //
+// As with [ClientIPFromXFF], an IPv4-mapped IPv6 entry at the chosen slot is
+// folded to its plain IPv4 form and any IPv6 zone identifier is stripped, so
+// the stored value is a single canonical form regardless of how the upstream
+// proxy chose to encode it.
+//
 // Panics at startup if numTrustedProxies < 1.
 func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler {
 	if numTrustedProxies < 1 {
@@ -101,9 +121,9 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			xff := mergeXFF(r.Header.Values("X-Forwarded-For"))
+			xff := mergeXFF(r.Header.Values(xForwardedForHeader))
 			if i := len(xff) - numTrustedProxies; i >= 0 {
-				if ip, err := netip.ParseAddr(xff[i]); err == nil {
+				if ip, ok := parseHeaderAddr(xff[i]); ok {
 					r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 				}
 			}
@@ -120,6 +140,12 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 // with NO reverse proxy in front of it. Behind a reverse proxy, RemoteAddr
 // is the proxy's IP, not the client's — use [ClientIPFromHeader] or
 // [ClientIPFromXFF] instead.
+//
+// IPv4 clients accepted on a dual-stack listener surface as IPv4-mapped IPv6
+// (::ffff:a.b.c.d); they are folded to plain IPv4 before storage so one
+// logical client maps to one rate-limit key / log entry regardless of how
+// the listener is configured. Any IPv6 zone identifier is preserved (it may
+// legitimately be set for link-local connections).
 func ClientIPFromRemoteAddr(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -127,7 +153,7 @@ func ClientIPFromRemoteAddr(h http.Handler) http.Handler {
 			host = r.RemoteAddr // RemoteAddr may already be a bare IP (e.g. in tests).
 		}
 		if ip, err := netip.ParseAddr(host); err == nil {
-			r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
+			r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip.Unmap()))
 		}
 		h.ServeHTTP(w, r)
 	})
@@ -179,8 +205,8 @@ func mergeXFF(headers []string) []string {
 func rightmostUntrustedXFF(headers []string, trustedPrefixes []netip.Prefix) (netip.Addr, bool) {
 	xff := mergeXFF(headers)
 	for i := len(xff) - 1; i >= 0; i-- {
-		ip, err := netip.ParseAddr(xff[i])
-		if err != nil || inAnyPrefix(ip, trustedPrefixes) {
+		ip, ok := parseHeaderAddr(xff[i])
+		if !ok || inAnyPrefix(ip, trustedPrefixes) {
 			continue
 		}
 		return ip, true
@@ -196,4 +222,28 @@ func inAnyPrefix(ip netip.Addr, prefixes []netip.Prefix) bool {
 		}
 	}
 	return false
+}
+
+// parseHeaderAddr parses s as a [netip.Addr] and normalizes it to its
+// canonical wire form: IPv4-mapped IPv6 (::ffff:a.b.c.d) is folded to plain
+// IPv4, and any IPv6 zone identifier is stripped.
+//
+// Both normalizations defend the trust-prefix check (and downstream rate-
+// limit keys, log keys, and ACLs) against attacker-injected aliases of
+// trusted addresses: [netip.Prefix.Contains] returns false for v4-mapped
+// addresses checked against IPv4 prefixes, and false for any zoned address,
+// so without folding/stripping an attacker could escape an otherwise valid
+// trust list. Zone identifiers carry no meaning on the wire; v4-mapped
+// notation is just an alternate spelling of the same IPv4 address.
+//
+// Used for IPs that arrive via HTTP headers (XFF, single-IP trusted header).
+// [ClientIPFromRemoteAddr] normalizes separately: it Unmaps the address but
+// preserves the zone, because RemoteAddr can legitimately be a link-local
+// IPv6 address with a meaningful zone identifier.
+func parseHeaderAddr(s string) (netip.Addr, bool) {
+	ip, err := netip.ParseAddr(s)
+	if err != nil {
+		return netip.Addr{}, false
+	}
+	return ip.Unmap().WithZone(""), true
 }

@@ -31,6 +31,11 @@ func TestClientIPFromHeader(t *testing.T) {
 		{"private_v4_accepted", "10.0.1.10", "10.0.1.10"},
 		{"private_v6_accepted", "fc00::1", "fc00::1"},
 		{"unspecified_accepted", "0.0.0.0", "0.0.0.0"},
+
+		// Normalization: v4-mapped IPv6 folds to plain v4, IPv6 zone is stripped.
+		// Same logical client → same canonical string regardless of upstream notation.
+		{"v4_mapped_ipv6_folded_to_v4", "::ffff:1.2.3.4", "1.2.3.4"},
+		{"ipv6_zone_stripped", "2001:db8::1%eth0", "2001:db8::1"},
 	}
 
 	for _, tc := range tt {
@@ -63,6 +68,10 @@ func TestClientIPFromXFF_NoTrustedPrefixes(t *testing.T) {
 		{"ipv6", []string{"2001:db8::1"}, "2001:db8::1"},
 		{"mixed_v4_v6_rightmost_wins", []string{"203.0.113.1, 2001:db8::1"}, "2001:db8::1"},
 		{"unparseable_rightmost_skipped", []string{"1.1.1.1, garbage"}, "1.1.1.1"},
+
+		// Normalization at the entry point: v4-mapped IPv6 folds to v4, zone stripped.
+		{"v4_mapped_rightmost_folded", []string{"::ffff:1.2.3.4"}, "1.2.3.4"},
+		{"zone_stripped_rightmost", []string{"2001:db8::1%eth0"}, "2001:db8::1"},
 
 		// A header like "oh, hi,,127.0.0.1,,,," can be injected by the client.
 		// See https://adam-p.ca/blog/2022/03/x-forwarded-for/ for more details.
@@ -199,6 +208,16 @@ func TestClientIPFromXFFTrustedProxies(t *testing.T) {
 
 		// Merging across multiple header instances.
 		{"multi_header", 2, []string{"1.1.1.1", "2.2.2.2", "3.3.3.3"}, "2.2.2.2"},
+
+		// Empty entries dropped by mergeXFF must not shift the slot index. The
+		// slot is computed from the right, where trusted proxies append, so an
+		// attacker prepending commas can't slide their chosen value into the
+		// trusted slot.
+		{"empties_dont_shift_slot", 2, []string{",,, 3.3.3.3, 1.1.1.1, 2.2.2.2"}, "1.1.1.1"},
+
+		// Normalization at the chosen slot: v4-mapped IPv6 folds to v4, zone stripped.
+		{"v4_mapped_at_slot_folded", 1, []string{"::ffff:1.2.3.4"}, "1.2.3.4"},
+		{"zone_stripped_at_slot", 1, []string{"2001:db8::1%eth0"}, "2001:db8::1"},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
