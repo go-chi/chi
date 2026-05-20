@@ -192,17 +192,34 @@ func mergeXFF(headers []string) []string {
 	return out
 }
 
-// rightmostUntrustedXFF walks merged XFF right-to-left, skipping IPs that
-// match trustedPrefixes (and unparseable entries), and returns the first
-// remaining valid IP.
+// rightmostUntrustedXFF walks all X-Forwarded-For header values right-to-left
+// across the merged chain, skipping IPs that match trustedPrefixes (and
+// unparseable / empty entries), and returns the first remaining valid IP.
+//
+// Walks the headers lazily rather than calling [mergeXFF] so the common case
+// — one trusted hop, the rightmost entry is the client — returns on the very
+// first iteration without materializing the full chain. Zero allocations
+// beyond what [netip.ParseAddr] does internally.
 func rightmostUntrustedXFF(headers []string, trustedPrefixes []netip.Prefix) (netip.Addr, bool) {
-	xff := mergeXFF(headers)
-	for i := len(xff) - 1; i >= 0; i-- {
-		ip, ok := parseHeaderAddr(xff[i])
-		if !ok || inAnyPrefix(ip, trustedPrefixes) {
-			continue
+	for hi := len(headers) - 1; hi >= 0; hi-- {
+		h := headers[hi]
+		for h != "" {
+			var v string
+			if i := strings.LastIndexByte(h, ','); i >= 0 {
+				v, h = h[i+1:], h[:i]
+			} else {
+				v, h = h, ""
+			}
+			v = strings.TrimSpace(v)
+			if v == "" {
+				continue
+			}
+			ip, ok := parseHeaderAddr(v)
+			if !ok || inAnyPrefix(ip, trustedPrefixes) {
+				continue
+			}
+			return ip, true
 		}
-		return ip, true
 	}
 	return netip.Addr{}, false
 }
