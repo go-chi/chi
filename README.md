@@ -85,6 +85,7 @@ func main() {
 
   // A good base middleware stack
   r.Use(middleware.RequestID)
+  r.Use(middleware.ClientIPFromRemoteAddr) // pick one ClientIPFrom* based on your infra, see below
   r.Use(middleware.Logger)
   r.Use(middleware.Recoverer)
 

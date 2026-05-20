@@ -17,17 +17,14 @@ var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
 // of parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers
 // (in that order).
 //
-// Deprecated: RealIP is vulnerable to IP spoofing in any deployment where it
-// can be reached by a client able to set these headers (see GHSA-3fxj-6jh8-hvhx,
-// GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf). It blindly takes the leftmost
-// X-Forwarded-For value (trivially spoofable) and also trusts True-Client-IP
-// and X-Real-IP whether or not your infrastructure actually sets them.
+// Deprecated: RealIP is vulnerable to IP spoofing — it mutates r.RemoteAddr
+// to the leftmost X-Forwarded-For value, or to True-Client-IP / X-Real-IP
+// whether or not your infrastructure actually sets them. See
+// GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf.
 //
-// Use one of [ClientIPFromHeader], [ClientIPFromXFF],
-// [ClientIPFromXFFTrustedProxies] or [ClientIPFromRemoteAddr] instead — pick
-// exactly one based on your network setup — and read the resulting IP with
-// [GetClientIP] or [GetClientIPAddr]. Unlike RealIP, these never mutate
-// r.RemoteAddr.
+// Use [ClientIPFromHeader], [ClientIPFromXFF], [ClientIPFromXFFTrustedProxies]
+// or [ClientIPFromRemoteAddr] and read the IP with [GetClientIP] instead.
+// These never mutate r.RemoteAddr.
 func RealIP(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if rip := realIP(r); rip != "" {
