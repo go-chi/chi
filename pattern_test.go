@@ -34,15 +34,29 @@ func TestPattern(t *testing.T) {
 			method:      "POST",
 			requestPath: "/users/Gojo/friends/all-of-them/and/more",
 		},
+		{
+			name:        "Nested sub-router",
+			pattern:     "/accounts/{accountID}/hi",
+			method:      "GET",
+			requestPath: "/accounts/44/hi",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			r := NewRouter()
 
-			r.Handle(tc.method+" "+tc.pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Write([]byte(r.Pattern))
-			}))
+			if tc.name == "Nested sub-router" {
+				r.Route("/accounts/{accountID}", func(r Router) {
+					r.Handle(tc.method+" /hi", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						w.Write([]byte(r.Pattern))
+					}))
+				})
+			} else {
+				r.Handle(tc.method+" "+tc.pattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte(r.Pattern))
+				}))
+			}
 
 			ts := httptest.NewServer(r)
 			defer ts.Close()
