@@ -467,6 +467,103 @@ func TestXFF_MultipleHeadersMerged(t *testing.T) {
 	}
 }
 
+// TestXFF_V4MappedIPv6BypassesTrustedV4Prefix demonstrates a gap in
+// rightmostUntrustedXFF: netip.Prefix.Contains returns false when an
+// IPv4-mapped IPv6 address (::ffff:a.b.c.d) is checked against a plain v4
+// prefix. So an attacker who can inject the v4-mapped form of an internal
+// address into XFF — and whose own connecting IP happens to be in the
+// trusted range (e.g. a compromised host inside an internal VPC) — gets a
+// trusted-looking value returned as "the client IP". Any downstream code
+// that treats internal IPs as privileged (rate-limit exemptions, internal
+// admin allowlists, audit pipelines) then mis-classifies the request.
+//
+// The expected post-fix behavior is to Unmap() before the prefix check, so
+// ::ffff:10.0.0.5 is recognized as 10.0.0.5 and skipped along with the rest
+// of the trusted chain — leaving no untrusted IP and an empty GetClientIP.
+//
+// This test is EXPECTED TO FAIL until the Unmap fix lands.
+func TestXFF_V4MappedIPv6BypassesTrustedV4Prefix(t *testing.T) {
+	tt := []struct {
+		name     string
+		prefixes []string
+		xff      string
+		out      string
+	}{
+		{
+			name:     "internal_address_via_v4_mapped",
+			prefixes: []string{"10.0.0.0/8"},
+			xff:      "::ffff:10.0.0.5, 10.0.0.1",
+			out:      "",
+		},
+		{
+			name:     "loopback_via_v4_mapped",
+			prefixes: []string{"127.0.0.0/8", "10.0.0.0/8"},
+			xff:      "::ffff:127.0.0.1, 10.0.0.1",
+			out:      "",
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got := run(t, ClientIPFromXFF(tc.prefixes...), func(r *http.Request) {
+				r.Header.Set("X-Forwarded-For", tc.xff)
+			})
+			if got != tc.out {
+				t.Errorf("VULNERABLE: v4-mapped IPv6 escaped v4 trusted prefix — want %q, got %q", tc.out, got)
+			}
+		})
+	}
+}
+
+// TestXFF_IPv6ZoneIDBypassesTrustedV6Prefix demonstrates the same shape of
+// gap for IPv6 trust prefixes: netip.Prefix.Contains returns false for any
+// zoned IPv6 address, so an attacker-injected zone suffix escapes the trust
+// check and the value is returned as "the client IP". Zone IDs are
+// link-local concepts; they have no meaning on the wire and should never
+// appear in a real XFF chain.
+//
+// The expected post-fix behavior is to strip the zone before the prefix
+// check (or reject zoned addresses as parse failures), so 2606:4700::1%foo
+// is recognized as in 2606:4700::/32 and skipped.
+//
+// This test is EXPECTED TO FAIL until the zone-strip fix lands.
+func TestXFF_IPv6ZoneIDBypassesTrustedV6Prefix(t *testing.T) {
+	got := run(t, ClientIPFromXFF("2606:4700::/32"), func(r *http.Request) {
+		r.Header.Set("X-Forwarded-For", "2606:4700::1%attacker, 2606:4700::5")
+	})
+	if got != "" {
+		t.Errorf("VULNERABLE: zoned IPv6 escaped v6 trusted prefix — want %q, got %q", "", got)
+	}
+}
+
+// TestClientIPFromRemoteAddr_V4MappedIsUnmapped pins the desired
+// normalization for v4 connections accepted on a dual-stack listener:
+// Go's net/http surfaces those as ::ffff:a.b.c.d in r.RemoteAddr, and
+// returning them in that v6 form splits one logical client across two
+// rate-limit buckets, log keys, and prefix-check buckets depending on
+// listener configuration. The fix is to Unmap() before storing.
+//
+// This test is EXPECTED TO FAIL until the Unmap fix lands.
+func TestClientIPFromRemoteAddr_V4MappedIsUnmapped(t *testing.T) {
+	tt := []struct {
+		name       string
+		remoteAddr string
+		out        string
+	}{
+		{"v4_mapped_with_port", "[::ffff:1.2.3.4]:1234", "1.2.3.4"},
+		{"v4_mapped_bare", "::ffff:1.2.3.4", "1.2.3.4"},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got := run(t, ClientIPFromRemoteAddr, func(r *http.Request) {
+				r.RemoteAddr = tc.remoteAddr
+			})
+			if got != tc.out {
+				t.Errorf("want %q (unmapped v4 form), got %q", tc.out, got)
+			}
+		})
+	}
+}
+
 // run invokes mw with the request constructed by buildReq and returns the
 // client IP captured inside the handler (or "" if none was set).
 func run(t *testing.T, mw func(http.Handler) http.Handler, buildReq func(*http.Request)) string {
