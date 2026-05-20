@@ -48,6 +48,9 @@ func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 // of the given trusted CIDR prefixes. The first IP that is not trusted is
 // the client. Read it with [GetClientIP].
 //
+// An unparseable entry mid-chain aborts the walk and leaves no client IP
+// set (fail-closed) — we can't safely trust anything left of garbage.
+//
 // Use this when you sit behind one or more reverse proxies whose IP ranges
 // you can enumerate as CIDRs:
 //
@@ -193,8 +196,11 @@ func mergeXFF(headers []string) []string {
 }
 
 // rightmostUntrustedXFF walks all X-Forwarded-For header values right-to-left
-// across the merged chain, skipping IPs that match trustedPrefixes (and
-// unparseable / empty entries), and returns the first remaining valid IP.
+// across the merged chain, skipping trusted-prefix and empty entries, and
+// returns the first remaining valid IP. An unparseable entry encountered
+// mid-walk fails closed: the walk is abandoned and no IP is returned, since
+// an unparseable hop is indistinguishable from a hostile or missing one and
+// we cannot safely keep walking past it.
 //
 // Walks the headers lazily rather than calling [mergeXFF] so the common case
 // — one trusted hop, the rightmost entry is the client — returns on the very
@@ -215,7 +221,10 @@ func rightmostUntrustedXFF(headers []string, trustedPrefixes []netip.Prefix) (ne
 				continue
 			}
 			ip, ok := parseHeaderAddr(v)
-			if !ok || inAnyPrefix(ip, trustedPrefixes) {
+			if !ok {
+				return netip.Addr{}, false
+			}
+			if inAnyPrefix(ip, trustedPrefixes) {
 				continue
 			}
 			return ip, true
