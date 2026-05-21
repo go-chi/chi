@@ -487,24 +487,19 @@ func TestXFF_MultipleHeadersMerged(t *testing.T) {
 	}
 }
 
-// TestClientIPFromHeader_MultiValueLastWins demonstrates a defense-in-depth
-// gap in ClientIPFromHeader: it reads the trusted single-IP header with
-// r.Header.Get(), which returns only the FIRST header value Go saw on the
-// wire. If a misconfigured proxy appends to the trusted header (or sits
-// downstream of another proxy that already set it), Go's net/http preserves
-// both as separate values in r.Header[CanonicalKey]. Today we surface
-// values[0] — and an attacker who sent the trusted header themselves can
-// place themselves in that slot.
+// TestClientIPFromHeader_MultiValueLastWins is a regression pin for the
+// defense-in-depth gap fixed in a8e3dbf. The pre-fix implementation read
+// the trusted single-IP header with r.Header.Get(), which returns only
+// the first header value Go saw on the wire — so a misconfigured proxy
+// that appended (instead of overwriting) the trusted header, or any
+// chain where another proxy already set it, could surface an attacker-
+// controlled values[0].
 //
-// The trusted hop is the one CLOSEST to us, which means the LAST value
-// added (rightmost). Same rightmost-untrusted spirit as ClientIPFromXFF:
-// values from hops further from us are more spoofable, so the right hop
-// to trust is the one nearest to us in the chain.
-//
-// Pinned post-fix behavior: ClientIPFromHeader reads r.Header.Values()
-// and uses the last entry. Multi-value headers fail-close on garbage at
-// the last position (we do NOT fall back to earlier values — those could
-// be attacker-supplied).
+// Pinned post-fix contract: ClientIPFromHeader reads r.Header.Values()
+// and uses the LAST entry (closest hop = most trusted, same
+// rightmost-untrusted spirit as ClientIPFromXFF). Fail-closed on garbage
+// at the last position; we do NOT fall back to earlier values — those
+// came from hops further from us and are less trustworthy by definition.
 func TestClientIPFromHeader_MultiValueLastWins(t *testing.T) {
 	tt := []struct {
 		name   string
