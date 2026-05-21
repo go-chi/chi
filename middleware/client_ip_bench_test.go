@@ -8,8 +8,8 @@ import (
 
 // BenchmarkWalkXFF measures the cost of walking a merged X-Forwarded-For
 // chain end-to-end (visitor never stops). Exercises the worst case for
-// rightmostUntrustedXFF when every entry is in the trusted prefix list,
-// and bounds the absolute cost of a pathologically large attacker-supplied
+// ClientIPFromXFF when every entry is in the trusted prefix list, and
+// bounds the absolute cost of a pathologically large attacker-supplied
 // XFF header (subject to http.Server.MaxHeaderBytes).
 //
 // n varies the number of comma-separated entries in a single XFF header.
