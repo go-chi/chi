@@ -90,7 +90,7 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var found netip.Addr
-			walkXFF(r.Header.Values(xForwardedForHeader), func(v string) bool {
+			walkXFF(r.Header[xForwardedForHeader], func(v string) bool {
 				ip, ok := parseHeaderAddr(v)
 				if !ok {
 					return true // fail-closed; leave found unset
@@ -143,7 +143,7 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			n := numTrustedProxies
 			var entry string
-			walkXFF(r.Header.Values(xForwardedForHeader), func(v string) bool {
+			walkXFF(r.Header[xForwardedForHeader], func(v string) bool {
 				n--
 				if n == 0 {
 					entry = v
