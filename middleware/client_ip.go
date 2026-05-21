@@ -70,9 +70,9 @@ func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 //	    "2600:9000::/28", // CloudFront IPv6
 //	))
 //
-// Calling with no arguments returns the rightmost parseable XFF IP — safe
-// only if you have exactly one trusted hop directly in front of this server
-// (e.g., nginx on localhost).
+// Calling with no arguments returns the rightmost XFF entry, or no IP if
+// that entry doesn't parse (fail-closed) — safe only if you have exactly
+// one trusted hop directly in front of this server (e.g., nginx on localhost).
 //
 // v4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are
 // stripped before the prefix check and storage; otherwise an attacker
