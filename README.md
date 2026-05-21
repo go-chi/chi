@@ -421,7 +421,7 @@ exactly one based on your network setup — and read the resulting IP with
 | Your setup | Use |
 |---|---|
 | Directly on the public internet, no proxy | `middleware.ClientIPFromRemoteAddr` |
-| Behind nginx (`X-Real-IP`), Cloudflare (`CF-Connecting-IP`), Apache (`X-Client-IP`) | `middleware.ClientIPFromHeader("CF-Connecting-IP")` |
+| Behind nginx (`X-Real-IP`), Cloudflare (`CF-Connecting-IP`), Apache (`X-Client-IP`) | `middleware.ClientIPFromHeader("<your-trusted-header>")` |
 | Behind one or more proxies whose IP ranges you can list | `middleware.ClientIPFromXFF("10.0.0.0/8", ...)` |
 | Behind a known, fixed number of proxies with dynamic IPs | `middleware.ClientIPFromXFFTrustedProxies(2)` |
 
