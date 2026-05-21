@@ -497,11 +497,10 @@ func TestXFF_MultipleHeadersMerged(t *testing.T) {
 // that treats internal IPs as privileged (rate-limit exemptions, internal
 // admin allowlists, audit pipelines) then mis-classifies the request.
 //
-// The expected post-fix behavior is to Unmap() before the prefix check, so
-// ::ffff:10.0.0.5 is recognized as 10.0.0.5 and skipped along with the rest
-// of the trusted chain — leaving no untrusted IP and an empty GetClientIP.
-//
-// This test is EXPECTED TO FAIL until the Unmap fix lands.
+// Pinned post-fix behavior: parseHeaderAddr calls Unmap() before the prefix
+// check, so ::ffff:10.0.0.5 is recognized as 10.0.0.5 and skipped along with
+// the rest of the trusted chain — leaving no untrusted IP and an empty
+// GetClientIP.
 func TestXFF_V4MappedIPv6BypassesTrustedV4Prefix(t *testing.T) {
 	tt := []struct {
 		name     string
@@ -541,11 +540,9 @@ func TestXFF_V4MappedIPv6BypassesTrustedV4Prefix(t *testing.T) {
 // link-local concepts; they have no meaning on the wire and should never
 // appear in a real XFF chain.
 //
-// The expected post-fix behavior is to strip the zone before the prefix
-// check (or reject zoned addresses as parse failures), so 2606:4700::1%foo
-// is recognized as in 2606:4700::/32 and skipped.
-//
-// This test is EXPECTED TO FAIL until the zone-strip fix lands.
+// Pinned post-fix behavior: parseHeaderAddr strips the zone before the
+// prefix check, so 2606:4700::1%attacker is recognized as in 2606:4700::/32
+// and skipped.
 func TestXFF_IPv6ZoneIDBypassesTrustedV6Prefix(t *testing.T) {
 	got := run(t, ClientIPFromXFF("2606:4700::/32"), func(r *http.Request) {
 		r.Header.Set("X-Forwarded-For", "2606:4700::1%attacker, 2606:4700::5")
@@ -560,9 +557,8 @@ func TestXFF_IPv6ZoneIDBypassesTrustedV6Prefix(t *testing.T) {
 // Go's net/http surfaces those as ::ffff:a.b.c.d in r.RemoteAddr, and
 // returning them in that v6 form splits one logical client across two
 // rate-limit buckets, log keys, and prefix-check buckets depending on
-// listener configuration. The fix is to Unmap() before storing.
-//
-// This test is EXPECTED TO FAIL until the Unmap fix lands.
+// listener configuration. Pinned post-fix behavior: ClientIPFromRemoteAddr
+// calls Unmap() before storing.
 func TestClientIPFromRemoteAddr_V4MappedIsUnmapped(t *testing.T) {
 	tt := []struct {
 		name       string
@@ -594,9 +590,6 @@ func TestClientIPFromRemoteAddr_V4MappedIsUnmapped(t *testing.T) {
 //
 // Empty / whitespace-only entries are NOT parse failures — they are dropped
 // by trim before parsing, and do not trip fail-closed.
-//
-// These tests are EXPECTED TO FAIL until the fail-closed change lands in
-// the ClientIPFromXFF walker.
 func TestXFF_FailClosedOnUnparseable(t *testing.T) {
 	tt := []struct {
 		name     string
