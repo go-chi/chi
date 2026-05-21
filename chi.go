@@ -61,6 +61,11 @@ func NewRouter() *Mux {
 	return NewMux()
 }
 
+// middleware type alias (for chain.go) 
+type Middleware = func(http.Handler) http.Handler
+
+type Middlewares Middleware[]
+
 // Router consisting of the core routing methods used by chi's Mux,
 // using only the standard net/http.
 type Router interface {
