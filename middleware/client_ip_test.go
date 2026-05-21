@@ -487,6 +487,64 @@ func TestXFF_MultipleHeadersMerged(t *testing.T) {
 	}
 }
 
+// TestClientIPFromHeader_MultiValueLastWins demonstrates a defense-in-depth
+// gap in ClientIPFromHeader: it reads the trusted single-IP header with
+// r.Header.Get(), which returns only the FIRST header value Go saw on the
+// wire. If a misconfigured proxy appends to the trusted header (or sits
+// downstream of another proxy that already set it), Go's net/http preserves
+// both as separate values in r.Header[CanonicalKey]. Today we surface
+// values[0] — and an attacker who sent the trusted header themselves can
+// place themselves in that slot.
+//
+// The trusted hop is the one CLOSEST to us, which means the LAST value
+// added (rightmost). Same rightmost-untrusted spirit as ClientIPFromXFF:
+// values from hops further from us are more spoofable, so the right hop
+// to trust is the one nearest to us in the chain.
+//
+// Pinned post-fix behavior: ClientIPFromHeader reads r.Header.Values()
+// and uses the last entry. Multi-value headers fail-close on garbage at
+// the last position (we do NOT fall back to earlier values — those could
+// be attacker-supplied).
+func TestClientIPFromHeader_MultiValueLastWins(t *testing.T) {
+	tt := []struct {
+		name   string
+		values []string // appended in order via Header.Add
+		out    string
+	}{
+		// Baseline: single value (the well-configured case) still works.
+		{"single_value_unchanged", []string{"100.1.1.1"}, "100.1.1.1"},
+
+		// Attack: attacker sets X-Real-IP, then proxy appends (instead of
+		// overwriting) its own value. Last value (the proxy's) must win.
+		{"attacker_then_proxy", []string{"6.6.6.6", "100.2.2.2"}, "100.2.2.2"},
+
+		// Three hops; only the last is trusted.
+		{"three_values_last_wins", []string{"6.6.6.6", "5.5.5.5", "100.3.3.3"}, "100.3.3.3"},
+
+		// Fail-closed: last value is garbage. We do NOT fall back to the
+		// previous value — that value was set by someone further from us in
+		// the chain and is by definition less trustworthy than what our
+		// nearest hop produced (even if what they produced is garbage).
+		{"last_unparseable_no_fallback", []string{"100.4.4.4", "garbage"}, ""},
+
+		// Fail-closed: last value is empty. Same rationale.
+		{"last_empty_no_fallback", []string{"100.5.5.5", ""}, ""},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			got := run(t, ClientIPFromHeader("X-Real-IP"), func(r *http.Request) {
+				for _, v := range tc.values {
+					r.Header.Add("X-Real-IP", v)
+				}
+			})
+			if got != tc.out {
+				t.Errorf("VULNERABLE or wrong: want %q, got %q", tc.out, got)
+			}
+		})
+	}
+}
+
 // TestXFF_V4MappedIPv6BypassesTrustedV4Prefix demonstrates a gap in the
 // rightmost-untrusted walker: netip.Prefix.Contains returns false when an
 // IPv4-mapped IPv6 address (::ffff:a.b.c.d) is checked against a plain v4
