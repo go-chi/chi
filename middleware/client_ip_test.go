@@ -200,25 +200,25 @@ func TestClientIPFromXFFTrustedProxies(t *testing.T) {
 		{"shorter_than_n", 3, []string{"1.1.1.1, 2.2.2.2"}, ""},
 		{"missing_header", 1, nil, ""},
 
-		// Spoofing: prepended attacker values are to the LEFT of the chosen slot,
-		// so they're ignored.
+		// Spoofing: prepended attacker values are to the LEFT of the chosen
+		// position, so they're ignored.
 		{"spoof_prepend_ignored", 2, []string{"6.6.6.6, 1.1.1.1, 2.2.2.2, 3.3.3.3"}, "2.2.2.2"},
 
-		// Bad parse at the target slot: no IP set (don't accept garbage as client IP).
-		{"bad_parse_at_slot", 2, []string{"garbage, 2.2.2.2"}, ""},
+		// Bad parse at the target position: no IP set (don't accept garbage as client IP).
+		{"bad_parse_at_position", 2, []string{"garbage, 2.2.2.2"}, ""},
 
 		// Merging across multiple header instances.
 		{"multi_header", 2, []string{"1.1.1.1", "2.2.2.2", "3.3.3.3"}, "2.2.2.2"},
 
-		// Empty entries dropped by mergeXFF must not shift the slot index. The
-		// slot is computed from the right, where trusted proxies append, so an
-		// attacker prepending commas can't slide their chosen value into the
-		// trusted slot.
-		{"empties_dont_shift_slot", 2, []string{",,, 3.3.3.3, 1.1.1.1, 2.2.2.2"}, "1.1.1.1"},
+		// Empty entries dropped by the walker must not shift the chosen
+		// position. The position is computed from the right, where trusted
+		// proxies append, so an attacker prepending commas can't slide their
+		// chosen value into the trusted position.
+		{"empties_dont_shift_position", 2, []string{",,, 3.3.3.3, 1.1.1.1, 2.2.2.2"}, "1.1.1.1"},
 
-		// Normalization at the chosen slot: v4-mapped IPv6 folds to v4, zone stripped.
-		{"v4_mapped_at_slot_folded", 1, []string{"::ffff:1.2.3.4"}, "1.2.3.4"},
-		{"zone_stripped_at_slot", 1, []string{"2001:db8::1%eth0"}, "2001:db8::1"},
+		// Normalization at the chosen position: v4-mapped IPv6 folds to v4, zone stripped.
+		{"v4_mapped_at_position_folded", 1, []string{"::ffff:1.2.3.4"}, "1.2.3.4"},
+		{"zone_stripped_at_position", 1, []string{"2001:db8::1%eth0"}, "2001:db8::1"},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
@@ -487,8 +487,8 @@ func TestXFF_MultipleHeadersMerged(t *testing.T) {
 	}
 }
 
-// TestXFF_V4MappedIPv6BypassesTrustedV4Prefix demonstrates a gap in
-// rightmostUntrustedXFF: netip.Prefix.Contains returns false when an
+// TestXFF_V4MappedIPv6BypassesTrustedV4Prefix demonstrates a gap in the
+// rightmost-untrusted walker: netip.Prefix.Contains returns false when an
 // IPv4-mapped IPv6 address (::ffff:a.b.c.d) is checked against a plain v4
 // prefix. So an attacker who can inject the v4-mapped form of an internal
 // address into XFF — and whose own connecting IP happens to be in the
@@ -596,7 +596,7 @@ func TestClientIPFromRemoteAddr_V4MappedIsUnmapped(t *testing.T) {
 // by trim before parsing, and do not trip fail-closed.
 //
 // These tests are EXPECTED TO FAIL until the fail-closed change lands in
-// rightmostUntrustedXFF.
+// the ClientIPFromXFF walker.
 func TestXFF_FailClosedOnUnparseable(t *testing.T) {
 	tt := []struct {
 		name     string

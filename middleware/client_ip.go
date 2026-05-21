@@ -79,8 +79,20 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ip, ok := rightmostUntrustedXFF(r.Header.Values(xForwardedForHeader), prefixes); ok {
-				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
+			var found netip.Addr
+			walkXFF(r.Header.Values(xForwardedForHeader), func(v string) bool {
+				ip, ok := parseHeaderAddr(v)
+				if !ok {
+					return true // fail-closed; leave found unset
+				}
+				if inAnyPrefix(ip, prefixes) {
+					return false // trusted hop; keep walking left
+				}
+				found = ip
+				return true
+			})
+			if found.IsValid() {
+				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, found))
 			}
 			h.ServeHTTP(w, r)
 		})
@@ -119,8 +131,18 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if v := nthFromRightXFF(r.Header.Values(xForwardedForHeader), numTrustedProxies); v != "" {
-				if ip, ok := parseHeaderAddr(v); ok {
+			n := numTrustedProxies
+			var entry string
+			walkXFF(r.Header.Values(xForwardedForHeader), func(v string) bool {
+				n--
+				if n == 0 {
+					entry = v
+					return true
+				}
+				return false
+			})
+			if entry != "" {
+				if ip, ok := parseHeaderAddr(entry); ok {
 					r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 				}
 			}
@@ -174,19 +196,15 @@ func GetClientIPAddr(ctx context.Context) netip.Addr {
 	return ip
 }
 
-// nthFromRightXFF returns the trimmed entry at position n from the right
-// end of the merged X-Forwarded-For chain (n=1 is the rightmost), or "" if
-// the chain has fewer than n non-empty entries.
+// walkXFF walks the entries of the merged X-Forwarded-For chain
+// RIGHT-TO-LEFT, invoking visit on each trimmed non-empty entry. visit
+// returns true to stop the walk. Lazy walk, zero allocations (entries
+// are substrings of the input headers).
 //
-// Empty/whitespace entries are dropped and do NOT count toward n, so an
-// attacker can't slide their chosen value into the trusted slot by
-// prepending commas.
-//
-// Multi-header merge is required for security per RFC 2616: multiple XFF
-// headers MUST be processed in order received; reading only the first or
-// last lets an attacker pick which value security logic sees by sending
-// duplicate headers. Lazy walk, zero allocations.
-func nthFromRightXFF(headers []string, n int) string {
+// Multiple XFF headers are merged per RFC 2616 — each header's
+// comma-separated entries in order received — so an attacker cannot pick
+// which value security logic sees by sending a duplicate header.
+func walkXFF(headers []string, visit func(entry string) bool) {
 	for hi := len(headers) - 1; hi >= 0; hi-- {
 		h := headers[hi]
 		for h != "" {
@@ -200,52 +218,11 @@ func nthFromRightXFF(headers []string, n int) string {
 			if v == "" {
 				continue
 			}
-			n--
-			if n == 0 {
-				return v
+			if visit(v) {
+				return
 			}
 		}
 	}
-	return ""
-}
-
-// rightmostUntrustedXFF walks all X-Forwarded-For header values right-to-left
-// across the merged chain, skipping trusted-prefix and empty entries, and
-// returns the first remaining valid IP. An unparseable entry encountered
-// mid-walk fails closed: the walk is abandoned and no IP is returned, since
-// an unparseable hop is indistinguishable from a hostile or missing one and
-// we cannot safely keep walking past it.
-//
-// Walks the headers lazily so the common case — one trusted hop, rightmost
-// entry is the client — returns on the very first iteration without
-// materializing the full chain. Zero allocations beyond what
-// [netip.ParseAddr] does internally. See also [nthFromRightXFF], which uses
-// the same iteration shape with a count-down stop condition.
-func rightmostUntrustedXFF(headers []string, trustedPrefixes []netip.Prefix) (netip.Addr, bool) {
-	for hi := len(headers) - 1; hi >= 0; hi-- {
-		h := headers[hi]
-		for h != "" {
-			var v string
-			if i := strings.LastIndexByte(h, ','); i >= 0 {
-				v, h = h[i+1:], h[:i]
-			} else {
-				v, h = h, ""
-			}
-			v = strings.TrimSpace(v)
-			if v == "" {
-				continue
-			}
-			ip, ok := parseHeaderAddr(v)
-			if !ok {
-				return netip.Addr{}, false
-			}
-			if inAnyPrefix(ip, trustedPrefixes) {
-				continue
-			}
-			return ip, true
-		}
-	}
-	return netip.Addr{}, false
 }
 
 // inAnyPrefix reports whether ip falls within any of the given prefixes.
