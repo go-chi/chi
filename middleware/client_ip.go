@@ -119,9 +119,8 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 	}
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			xff := mergeXFF(r.Header.Values(xForwardedForHeader))
-			if i := len(xff) - numTrustedProxies; i >= 0 {
-				if ip, ok := parseHeaderAddr(xff[i]); ok {
+			if v := nthFromRightXFF(r.Header.Values(xForwardedForHeader), numTrustedProxies); v != "" {
+				if ip, ok := parseHeaderAddr(v); ok {
 					r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 				}
 			}
@@ -175,24 +174,39 @@ func GetClientIPAddr(ctx context.Context) netip.Addr {
 	return ip
 }
 
-// mergeXFF merges all X-Forwarded-For header values into a single ordered
-// list of trimmed entries (left-to-right, in the order received). Empty
-// entries are dropped. Entries are not validated as IPs here.
+// nthFromRightXFF returns the trimmed entry at position n from the right
+// end of the merged X-Forwarded-For chain (n=1 is the rightmost), or "" if
+// the chain has fewer than n non-empty entries.
 //
-// Merging all instances is required for security: per RFC 2616, multiple
-// XFF headers MUST be processed in order. Reading only the first or last
-// header value lets an attacker pick which value security logic sees by
-// sending duplicate headers.
-func mergeXFF(headers []string) []string {
-	out := make([]string, 0, len(headers))
-	for _, h := range headers {
-		for _, v := range strings.Split(h, ",") {
-			if v = strings.TrimSpace(v); v != "" {
-				out = append(out, v)
+// Empty/whitespace entries are dropped and do NOT count toward n, so an
+// attacker can't slide their chosen value into the trusted slot by
+// prepending commas.
+//
+// Multi-header merge is required for security per RFC 2616: multiple XFF
+// headers MUST be processed in order received; reading only the first or
+// last lets an attacker pick which value security logic sees by sending
+// duplicate headers. Lazy walk, zero allocations.
+func nthFromRightXFF(headers []string, n int) string {
+	for hi := len(headers) - 1; hi >= 0; hi-- {
+		h := headers[hi]
+		for h != "" {
+			var v string
+			if i := strings.LastIndexByte(h, ','); i >= 0 {
+				v, h = h[i+1:], h[:i]
+			} else {
+				v, h = h, ""
+			}
+			v = strings.TrimSpace(v)
+			if v == "" {
+				continue
+			}
+			n--
+			if n == 0 {
+				return v
 			}
 		}
 	}
-	return out
+	return ""
 }
 
 // rightmostUntrustedXFF walks all X-Forwarded-For header values right-to-left
@@ -202,10 +216,11 @@ func mergeXFF(headers []string) []string {
 // an unparseable hop is indistinguishable from a hostile or missing one and
 // we cannot safely keep walking past it.
 //
-// Walks the headers lazily rather than calling [mergeXFF] so the common case
-// — one trusted hop, the rightmost entry is the client — returns on the very
-// first iteration without materializing the full chain. Zero allocations
-// beyond what [netip.ParseAddr] does internally.
+// Walks the headers lazily so the common case — one trusted hop, rightmost
+// entry is the client — returns on the very first iteration without
+// materializing the full chain. Zero allocations beyond what
+// [netip.ParseAddr] does internally. See also [nthFromRightXFF], which uses
+// the same iteration shape with a count-down stop condition.
 func rightmostUntrustedXFF(headers []string, trustedPrefixes []netip.Prefix) (netip.Addr, bool) {
 	for hi := len(headers) - 1; hi >= 0; hi-- {
 		h := headers[hi]
