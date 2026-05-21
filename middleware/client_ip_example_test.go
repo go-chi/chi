@@ -49,7 +49,7 @@ func Example_clientIP() {
 
 	// (2) Behind reverse proxies whose IP ranges you can enumerate as CIDRs.
 	// The middleware walks X-Forwarded-For right-to-left, skipping trusted
-	// entries.
+	// entries; fail-closed on garbage.
 	//
 	// r.Use(middleware.ClientIPFromXFF(
 	//     "13.32.0.0/15",   // CloudFront IPv4.
