@@ -29,14 +29,24 @@ const xForwardedForHeader = "X-Forwarded-For"
 // pass through from the client by default in those products; don't use them
 // unless your edge strips the inbound value.
 //
+// If the header reaches us with multiple values (misconfigured proxy that
+// appends, or a downstream proxy not stripping a client-supplied value),
+// the LAST value wins — that's the one set by the hop closest to us, and
+// therefore the most trusted. Fail-closed if the last value doesn't parse:
+// no client IP is set rather than falling back to earlier (less-trusted)
+// values.
+//
 // v4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are
 // stripped before storage.
 func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 	header := http.CanonicalHeaderKey(trustedHeader)
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if ip, ok := parseHeaderAddr(r.Header.Get(header)); ok {
-				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
+			values := r.Header.Values(header)
+			if len(values) > 0 {
+				if ip, ok := parseHeaderAddr(values[len(values)-1]); ok {
+					r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
+				}
 			}
 			h.ServeHTTP(w, r)
 		})
