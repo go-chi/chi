@@ -87,7 +87,7 @@ func main() {
 
   // A good base middleware stack
   r.Use(middleware.RequestID)
-  r.Use(middleware.RealIP)
+  r.Use(middleware.ClientIPFromRemoteAddr) // pick one ClientIPFrom* based on your infra, see below
   r.Use(middleware.Logger)
   r.Use(middleware.Recoverer)
 
@@ -349,7 +349,11 @@ with `net/http` can be used with chi's mux.
 | [Logger]               | Logs the start and end of each request with the elapsed processing time |
 | [NoCache]              | Sets response headers to prevent clients from caching                   |
 | [Profiler]             | Easily attach net/http/pprof to your routers                            |
-| [RealIP]               | Sets a http.Request's RemoteAddr to either X-Real-IP or X-Forwarded-For |
+| [ClientIPFromHeader]   | Capture client IP from a trusted single-IP header (X-Real-IP, CF-Connecting-IP, ...) |
+| [ClientIPFromXFF]      | Capture client IP from X-Forwarded-For, skipping listed trusted CIDR prefixes |
+| [ClientIPFromXFFTrustedProxies] | Capture client IP from X-Forwarded-For given a fixed number of trusted proxies |
+| [ClientIPFromRemoteAddr] | Capture client IP from the TCP RemoteAddr (server directly on the public internet) |
+| [RealIP]               | Deprecated — vulnerable to IP spoofing; use [ClientIPFromXFF] or another ClientIPFrom\* middleware |
 | [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
 | [RequestID]            | Injects a request ID into the context of each request                   |
 | [RedirectSlashes]      | Redirect slashes on routing paths                                       |
@@ -375,6 +379,12 @@ with `net/http` can be used with chi's mux.
 [Logger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Logger
 [NoCache]: https://pkg.go.dev/github.com/go-chi/chi/middleware#NoCache
 [Profiler]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Profiler
+[ClientIPFromHeader]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromHeader
+[ClientIPFromXFF]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromXFF
+[ClientIPFromXFFTrustedProxies]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromXFFTrustedProxies
+[ClientIPFromRemoteAddr]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromRemoteAddr
+[GetClientIP]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetClientIP
+[GetClientIPAddr]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetClientIPAddr
 [RealIP]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RealIP
 [Recoverer]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Recoverer
 [RedirectSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RedirectSlashes
@@ -401,6 +411,62 @@ with `net/http` can be used with chi's mux.
 [LoggerInterface]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LoggerInterface
 [ThrottleOpts]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleOpts
 [WrapResponseWriter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#WrapResponseWriter
+
+### Choosing a ClientIP middleware
+
+The legacy [RealIP] middleware is deprecated — it is vulnerable to IP spoofing
+(GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf) and mutates
+`r.RemoteAddr`. Use one of the four `ClientIPFrom*` middlewares instead — pick
+exactly one based on your network setup — and read the resulting IP with
+[GetClientIP] (string) or [GetClientIPAddr] (`netip.Addr`):
+
+| Your setup | Use |
+|---|---|
+| Directly on the public internet, no proxy | `middleware.ClientIPFromRemoteAddr` |
+| Behind nginx (`X-Real-IP`), Cloudflare (`CF-Connecting-IP`), Apache (`X-Client-IP`) | `middleware.ClientIPFromHeader("<your-trusted-header>")` |
+| Behind one or more proxies whose IP ranges you can list | `middleware.ClientIPFromXFF("10.0.0.0/8", ...)` |
+| Behind a known, fixed number of proxies with dynamic IPs | `middleware.ClientIPFromXFFTrustedProxies(2)` |
+
+```go
+r := chi.NewRouter()
+r.Use(middleware.RequestID)
+
+// Pick exactly one. Examples for common deployments:
+
+// Direct internet exposure (no proxy):
+// r.Use(middleware.ClientIPFromRemoteAddr)
+
+// Behind Cloudflare:
+// r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP"))
+
+// Behind AWS CloudFront (or any proxy fleet with known CIDRs):
+r.Use(middleware.ClientIPFromXFF(
+    "13.32.0.0/15",   // CloudFront IPv4
+    "52.46.0.0/18",   // CloudFront IPv4
+    "2600:9000::/28", // CloudFront IPv6
+))
+
+// Behind a known number of proxies with dynamic IPs:
+// r.Use(middleware.ClientIPFromXFFTrustedProxies(2))
+
+r.Use(middleware.Logger)
+r.Use(middleware.Recoverer)
+
+r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+    clientIP := middleware.GetClientIP(r.Context()) // for logs, rate-limit keys, etc.
+    _ = clientIP
+})
+```
+
+These middlewares never mutate `r.RemoteAddr`. They store a normalized
+`netip.Addr` in the request context — IPv4-mapped IPv6 (`::ffff:a.b.c.d`)
+is folded to plain IPv4, and IPv6 zone identifiers carried in headers are
+stripped, so one logical client maps to a single canonical key for logs,
+rate limits, and ACLs.
+
+See the per-function godoc for the full semantics of each middleware, and
+[adam-p's "The perils of the 'real' client IP"](https://adam-p.ca/blog/2022/03/x-forwarded-for/)
+for the underlying threat model.
 
 ### Extra middlewares & packages
 
