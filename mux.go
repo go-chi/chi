@@ -445,11 +445,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// The request routing path
 	routePath := rctx.RoutePath
 	if routePath == "" {
-		if r.URL.RawPath != "" {
-			routePath = r.URL.RawPath
-		} else {
-			routePath = r.URL.Path
-		}
+		routePath = r.URL.EscapedPath()
 		if routePath == "" {
 			routePath = "/"
 		}

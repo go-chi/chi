@@ -3,6 +3,7 @@ package chi
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -100,7 +101,12 @@ func (x *Context) Reset() {
 func (x *Context) URLParam(key string) string {
 	for k := len(x.URLParams.Keys) - 1; k >= 0; k-- {
 		if x.URLParams.Keys[k] == key {
-			return x.URLParams.Values[k]
+			value := x.URLParams.Values[k]
+			decoded, err := url.PathUnescape(value)
+			if err != nil {
+				return value
+			}
+			return decoded
 		}
 	}
 	return ""

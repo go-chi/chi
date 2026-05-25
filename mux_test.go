@@ -1728,7 +1728,7 @@ func TestEscapedURLParams(t *testing.T) {
 			return
 		}
 		identifier := URLParam(r, "identifier")
-		if identifier != "http:%2f%2fexample.com%2fimage.png" {
+		if identifier != "http://example.com/image.png" {
 			t.Errorf("identifier path parameter incorrect %s", identifier)
 			return
 		}
@@ -1755,6 +1755,32 @@ func TestEscapedURLParams(t *testing.T) {
 
 	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
 		t.Fatal(body)
+	}
+}
+
+func TestURLParamPathUnescape(t *testing.T) {
+	m := NewRouter()
+	m.Get("/{key}", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(URLParam(r, "key")))
+	})
+
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+
+	tests := []struct {
+		path string
+		want string
+	}{
+		{"/It's%20great", "It's great"},
+		{"/It%20is%20great", "It is great"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			if _, body := testRequest(t, ts, "GET", tt.path, nil); body != tt.want {
+				t.Fatalf("URLParam(%q) = %q, want %q", tt.path, body, tt.want)
+			}
+		})
 	}
 }
 

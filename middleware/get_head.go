@@ -13,10 +13,9 @@ func GetHead(next http.Handler) http.Handler {
 			rctx := chi.RouteContext(r.Context())
 			routePath := rctx.RoutePath
 			if routePath == "" {
-				if r.URL.RawPath != "" {
-					routePath = r.URL.RawPath
-				} else {
-					routePath = r.URL.Path
+				routePath = r.URL.EscapedPath()
+				if routePath == "" {
+					routePath = "/"
 				}
 			}
 
