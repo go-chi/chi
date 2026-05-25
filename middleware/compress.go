@@ -239,9 +239,35 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
+		parts := strings.SplitN(strings.TrimSpace(v), ";", 2)
+		name := strings.TrimSpace(parts[0])
+
+		if name == "*" {
+			if len(parts) > 1 {
+				for _, param := range strings.Split(parts[1], ";") {
+					param = strings.TrimSpace(param)
+					if strings.EqualFold(param, "q=0") {
+						return false
+					}
+				}
+			}
 			return true
 		}
+
+		if name != encoding {
+			continue
+		}
+
+		if len(parts) > 1 {
+			for _, param := range strings.Split(parts[1], ";") {
+				param = strings.TrimSpace(param)
+				if strings.EqualFold(param, "q=0") {
+					return false
+				}
+			}
+		}
+
+		return true
 	}
 	return false
 }
