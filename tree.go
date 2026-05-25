@@ -425,6 +425,10 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 			xsearch = xsearch[len(xn.prefix):]
 
 		case ntParam, ntRegexp:
+			if rctx.strictRouting && rctx.methodNotAllowed {
+				continue
+			}
+
 			// short-circuit and return no matching route for empty param values
 			if xsearch == "" {
 				continue
