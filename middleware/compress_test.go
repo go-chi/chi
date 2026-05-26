@@ -169,6 +169,54 @@ func TestCompressorWildcards(t *testing.T) {
 	}
 }
 
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{
+			name:     "matches exact encoding",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "matches exact encoding with quality",
+			accepted: []string{"gzip;q=0.5"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "rejects exact encoding with zero quality",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "rejects substring prefix match",
+			accepted: []string{"br"},
+			encoding: "b",
+			want:     false,
+		},
+		{
+			name:     "rejects substring suffix match",
+			accepted: []string{"bgzip"},
+			encoding: "gzip",
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := matchAcceptEncoding(tt.accepted, tt.encoding); got != tt.want {
+				t.Fatalf("matchAcceptEncoding(%v, %q) = %v, want %v", tt.accepted, tt.encoding, got, tt.want)
+			}
+		})
+	}
+}
+
 func testRequestWithAcceptedEncodings(t *testing.T, ts *httptest.Server, method, path string, encodings ...string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
 	if err != nil {
