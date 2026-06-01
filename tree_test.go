@@ -414,6 +414,70 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	}
 }
 
+func TestTreePathParam(t *testing.T) {
+	hPath := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hPathNonGreedy := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hPathOne := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hPathOneNonGreedy := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hSingle := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hFiles := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	tr := &node{}
+	tr.InsertRoute(mGET, "/foo/bar/{other-stuff:*}/fizz/buzz", hPath)
+	tr.InsertRoute(mGET, "/foo/bar/{other-stuff}/fizz/buzz", hSingle)
+	tr.InsertRoute(mGET, "/files/{path:*}", hFiles)
+	tr.InsertRoute(mGET, "/plus/{path:+}/tail", hPathOne)
+	tr.InsertRoute(mGET, "/greedy/{path:*}/x/*", hPath)
+	tr.InsertRoute(mGET, "/nongreedy/{path:*?}/x/*", hPathNonGreedy)
+	tr.InsertRoute(mGET, "/plusgreedy/{path:+}/x/*", hPathOne)
+	tr.InsertRoute(mGET, "/plusnongreedy/{path:+?}/x/*", hPathOneNonGreedy)
+
+	tests := []struct {
+		r string
+		h http.Handler
+		k []string
+		v []string
+	}{
+		{r: "/foo/bar/one/two/three/fizz/buzz", h: hPath, k: []string{"other-stuff"}, v: []string{"one/two/three"}},
+		{r: "/foo/bar/one/fizz/buzz", h: hSingle, k: []string{"other-stuff"}, v: []string{"one"}},
+		{r: "/foo/bar/fizz/buzz", h: hPath, k: []string{"other-stuff"}, v: []string{""}},
+		{r: "/files/a/b/c", h: hFiles, k: []string{"path"}, v: []string{"a/b/c"}},
+		{r: "/files/", h: hFiles, k: []string{"path"}, v: []string{""}},
+		{r: "/plus/a/tail", h: hPathOne, k: []string{"path"}, v: []string{"a"}},
+		{r: "/plus/a/b/tail", h: hPathOne, k: []string{"path"}, v: []string{"a/b"}},
+		{r: "/plus/tail", h: nil, k: []string{}, v: []string{}},
+		{r: "/plus//tail", h: nil, k: []string{}, v: []string{}},
+		{r: "/greedy/a/x/b/x/c", h: hPath, k: []string{"path", "*"}, v: []string{"a/x/b", "c"}},
+		{r: "/nongreedy/a/x/b/x/c", h: hPathNonGreedy, k: []string{"path", "*"}, v: []string{"a", "b/x/c"}},
+		{r: "/plusgreedy/a/x/b/x/c", h: hPathOne, k: []string{"path", "*"}, v: []string{"a/x/b", "c"}},
+		{r: "/plusnongreedy/a/x/b/x/c", h: hPathOneNonGreedy, k: []string{"path", "*"}, v: []string{"a", "b/x/c"}},
+	}
+
+	for i, tt := range tests {
+		rctx := NewRouteContext()
+
+		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
+
+		var handler http.Handler
+		if methodHandler, ok := handlers[mGET]; ok {
+			handler = methodHandler.handler
+		}
+
+		paramKeys := rctx.routeParams.Keys
+		paramValues := rctx.routeParams.Values
+
+		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
+			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
+		}
+		if !stringSliceEqual(tt.k, paramKeys) {
+			t.Errorf("input [%d]: find '%s' expecting paramKeys:(%d)%v , got:(%d)%v", i, tt.r, len(tt.k), tt.k, len(paramKeys), paramKeys)
+		}
+		if !stringSliceEqual(tt.v, paramValues) {
+			t.Errorf("input [%d]: find '%s' expecting paramValues:(%d)%v , got:(%d)%v", i, tt.r, len(tt.v), tt.v, len(paramValues), paramValues)
+		}
+	}
+}
+
 func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -423,6 +487,8 @@ func TestTreeFindPattern(t *testing.T) {
 	tr.InsertRoute(mGET, "/pages/*", hStub1)
 	tr.InsertRoute(mGET, "/articles/{id}/*", hStub2)
 	tr.InsertRoute(mGET, "/articles/{slug}/{uid}/*", hStub3)
+	tr.InsertRoute(mGET, "/files/{path:*}/info", hStub1)
+	tr.InsertRoute(mGET, "/assets/{path:+?}/info", hStub1)
 
 	if tr.findPattern("/pages") != false {
 		t.Errorf("find /pages failed")
@@ -441,6 +507,12 @@ func TestTreeFindPattern(t *testing.T) {
 	}
 	if tr.findPattern("/articles/{slug}/{uid}/*") == false {
 		t.Errorf("find /articles/{slug}/{uid}/* failed")
+	}
+	if tr.findPattern("/files/{name:*}/info") == false {
+		t.Errorf("find /files/{name:*}/info failed")
+	}
+	if tr.findPattern("/assets/{name:+?}/info") == false {
+		t.Errorf("find /assets/{name:+?}/info failed")
 	}
 }
 
