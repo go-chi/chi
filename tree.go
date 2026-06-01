@@ -79,10 +79,14 @@ func RegisterMethod(method string) {
 type nodeTyp uint8
 
 const (
-	ntStatic   nodeTyp = iota // /home
-	ntRegexp                  // /{id:[0-9]+}
-	ntParam                   // /{user}
-	ntCatchAll                // /api/v1/*
+	ntStatic                nodeTyp = iota // /home
+	ntRegexp                               // /{id:[0-9]+}
+	ntParam                                // /{user}
+	ntPathParamOne                         // /{path:+}
+	ntPathParamOneNonGreedy                // /{path:+?}
+	ntPathParam                            // /{path:*}
+	ntPathParamNonGreedy                   // /{path:*?}
+	ntCatchAll                             // /api/v1/*
 )
 
 type node struct {
@@ -105,7 +109,7 @@ type node struct {
 	// first byte of the child prefix
 	tail byte
 
-	// node type: static, regexp, param, catchAll
+	// node type: static, regexp, param, pathParam, catchAll
 	typ nodeTyp
 
 	// first byte of the prefix
@@ -492,6 +496,56 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 
 			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
 
+		case ntPathParamOne, ntPathParamOneNonGreedy, ntPathParam, ntPathParamNonGreedy:
+			for _, xn = range nds {
+				prevlen := len(rctx.routeParams.Values)
+				prevKeyLen := len(rctx.routeParams.Keys)
+				var fallback *node
+				var fallbackValues []string
+				var fallbackKeys []string
+				var subroute *node
+				var subrouteValues []string
+				var subrouteKeys []string
+				for _, p := range pathParamCandidates(xsearch, xn.tail, ntyp) {
+					if fin := xn.findRoutePathParamCandidate(rctx, method, xsearch, p, prevlen); fin != nil {
+						if endpointPatternEndsWithWildcard(fin.endpoints[method]) {
+							if fin.subroutes != nil {
+								if subroutesMatchRoutePath(fin.subroutes, method, routeParamWildcardValue(rctx.routeParams)) {
+									return fin
+								}
+								if subroute == nil {
+									subroute = fin
+									subrouteValues = append(subrouteValues[:0], rctx.routeParams.Values...)
+									subrouteKeys = append(subrouteKeys[:0], rctx.routeParams.Keys...)
+								}
+								rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+								rctx.routeParams.Keys = rctx.routeParams.Keys[:prevKeyLen]
+								continue
+							}
+							return fin
+						}
+						if fallback == nil {
+							fallback = fin
+							fallbackValues = append(fallbackValues[:0], rctx.routeParams.Values...)
+							fallbackKeys = append(fallbackKeys[:0], rctx.routeParams.Keys...)
+						}
+						rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+						rctx.routeParams.Keys = rctx.routeParams.Keys[:prevKeyLen]
+					}
+				}
+				if fallback != nil {
+					rctx.routeParams.Values = append(rctx.routeParams.Values[:prevlen], fallbackValues[prevlen:]...)
+					rctx.routeParams.Keys = append(rctx.routeParams.Keys[:prevKeyLen], fallbackKeys[prevKeyLen:]...)
+					return fallback
+				}
+				if subroute != nil {
+					rctx.routeParams.Values = append(rctx.routeParams.Values[:prevlen], subrouteValues[prevlen:]...)
+					rctx.routeParams.Keys = append(rctx.routeParams.Keys[:prevKeyLen], subrouteKeys[prevKeyLen:]...)
+					return subroute
+				}
+			}
+			continue
+
 		default:
 			// catch-all nodes
 			rctx.routeParams.Values = append(rctx.routeParams.Values, search)
@@ -543,13 +597,124 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 	return nil
 }
 
+func endpointPatternEndsWithWildcard(e *endpoint) bool {
+	return e != nil && strings.HasSuffix(e.pattern, "/*")
+}
+
+func routeParamWildcardValue(params RouteParams) string {
+	if len(params.Values) == 0 {
+		return ""
+	}
+	return params.Values[len(params.Values)-1]
+}
+
+func subroutesMatchRoutePath(subroutes Routes, method methodTyp, routePath string) bool {
+	if subroutes == nil {
+		return false
+	}
+	if routePath == "" {
+		routePath = "/"
+	} else {
+		routePath = "/" + routePath
+	}
+
+	if methodName, ok := reverseMethodMap[method]; ok {
+		if subroutes.Match(NewRouteContext(), methodName, routePath) {
+			return true
+		}
+	}
+	for _, methodName := range reverseMethodMap {
+		if subroutes.Match(NewRouteContext(), methodName, routePath) {
+			return true
+		}
+	}
+	return false
+}
+
+func (n *node) findRoutePathParamCandidate(rctx *Context, method methodTyp, search string, p, prevlen int) *node {
+	rctx.routeParams.Values = append(rctx.routeParams.Values, search[:p])
+	xsearch := search[p:]
+	if p == 0 && n.tail == '/' && len(search) > 0 && search[0] != '/' {
+		xsearch = "/" + xsearch
+	}
+
+	if len(xsearch) == 0 {
+		if n.isLeaf() {
+			h := n.endpoints[method]
+			if h != nil && h.handler != nil {
+				rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
+				return n
+			}
+
+			for endpoints := range n.endpoints {
+				if endpoints == mALL || endpoints == mSTUB {
+					continue
+				}
+				rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+			}
+
+			// flag that the routing context found a route, but not a corresponding
+			// supported method
+			rctx.methodNotAllowed = true
+		}
+	}
+
+	fin := n.findRoute(rctx, method, xsearch)
+	if fin != nil {
+		return fin
+	}
+
+	rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+	return nil
+}
+
+func pathParamCandidates(search string, tail byte, ntyp nodeTyp) []int {
+	oneOrMore := ntyp == ntPathParamOne || ntyp == ntPathParamOneNonGreedy
+	nonGreedy := ntyp == ntPathParamOneNonGreedy || ntyp == ntPathParamNonGreedy
+	candidates := []int{}
+
+	if !oneOrMore {
+		candidates = append(candidates, 0)
+	}
+
+	for p := 0; p < len(search); p++ {
+		if p == 0 && !oneOrMore {
+			continue
+		}
+		if search[p] == tail && (!oneOrMore || hasNonEmptyPathSegment(search[:p])) {
+			candidates = append(candidates, p)
+		}
+	}
+
+	if len(search) > 0 && (!oneOrMore || hasNonEmptyPathSegment(search)) {
+		candidates = append(candidates, len(search))
+	}
+
+	if !nonGreedy {
+		for i, j := 0, len(candidates)-1; i < j; i, j = i+1, j-1 {
+			candidates[i], candidates[j] = candidates[j], candidates[i]
+		}
+	}
+
+	return candidates
+}
+
+func hasNonEmptyPathSegment(value string) bool {
+	for _, segment := range strings.Split(value, "/") {
+		if segment != "" {
+			return true
+		}
+	}
+	return false
+}
+
 func (n *node) findEdge(ntyp nodeTyp, label byte) *node {
 	nds := n.children[ntyp]
 	num := len(nds)
 	idx := 0
 
 	switch ntyp {
-	case ntStatic, ntParam, ntRegexp:
+	case ntStatic, ntParam, ntRegexp, ntPathParamOne, ntPathParamOneNonGreedy, ntPathParam, ntPathParamNonGreedy:
 		i, j := 0, num-1
 		for i <= j {
 			idx = i + (j-i)/2
@@ -597,7 +762,7 @@ func (n *node) findPattern(pattern string) bool {
 				continue
 			}
 
-		case ntParam, ntRegexp:
+		case ntParam, ntRegexp, ntPathParamOne, ntPathParamOneNonGreedy, ntPathParam, ntPathParamNonGreedy:
 			idx = strings.IndexByte(pattern, '}') + 1
 
 		case ntCatchAll:
@@ -730,10 +895,21 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 
 		key, rexpat, isRegexp := strings.Cut(key, ":")
 		if isRegexp {
-			nt = ntRegexp
+			switch rexpat {
+			case "*":
+				nt = ntPathParam
+			case "*?":
+				nt = ntPathParamNonGreedy
+			case "+":
+				nt = ntPathParamOne
+			case "+?":
+				nt = ntPathParamOneNonGreedy
+			default:
+				nt = ntRegexp
+			}
 		}
 
-		if len(rexpat) > 0 {
+		if nt == ntRegexp && len(rexpat) > 0 {
 			if rexpat[0] != '^' {
 				rexpat = "^" + rexpat
 			}
