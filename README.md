@@ -464,6 +464,11 @@ is folded to plain IPv4, and IPv6 zone identifiers carried in headers are
 stripped, so one logical client maps to a single canonical key for logs,
 rate limits, and ACLs.
 
+For `ClientIPFromXFFTrustedProxies`, `numTrustedProxies` is the total proxy
+hops between client and server. Prefer `ClientIPFromXFF` with explicit CIDRs
+when you can — CIDR-based trust cannot off-by-one. See the godoc for a
+deployment recipe and a verify checklist.
+
 See the per-function godoc for the full semantics of each middleware, and
 [adam-p's "The perils of the 'real' client IP"](https://adam-p.ca/blog/2022/03/x-forwarded-for/)
 for the underlying threat model.
