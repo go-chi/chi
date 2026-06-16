@@ -76,6 +76,7 @@ type Context struct {
 
 	methodsAllowed   []methodTyp // allowed methods in case of a 405
 	methodNotAllowed bool
+	strictRouting    bool
 }
 
 // Reset a routing context to its initial state.
@@ -92,6 +93,7 @@ func (x *Context) Reset() {
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
 	x.methodsAllowed = x.methodsAllowed[:0]
+	x.strictRouting = false
 	x.parentCtx = nil
 }
 

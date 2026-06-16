@@ -428,6 +428,53 @@ func TestMethodNotAllowed(t *testing.T) {
 	})
 }
 
+func TestStrictRoutingStaticMethodNotAllowed(t *testing.T) {
+	const updateBody = "updated"
+
+	newRouter := func(strict bool) *Mux {
+		r := NewRouter()
+		r.StrictRouting = strict
+		r.Get("/users/me", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("me"))
+		})
+		r.Put("/users/{id}", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(updateBody))
+		})
+		return r
+	}
+
+	t.Run("Default", func(t *testing.T) {
+		ts := httptest.NewServer(newRouter(false))
+		defer ts.Close()
+
+		if resp, body := testRequest(t, ts, "PUT", "/users/me", nil); resp.StatusCode != 200 || body != updateBody {
+			t.Fatalf("expected param route fallback, got %d %q", resp.StatusCode, body)
+		}
+	})
+
+	t.Run("StrictRouting", func(t *testing.T) {
+		ts := httptest.NewServer(newRouter(true))
+		defer ts.Close()
+
+		resp, body := testRequest(t, ts, "PUT", "/users/me", nil)
+		if resp.StatusCode != 405 || body != "" {
+			t.Fatalf("expected 405 for static path with unsupported method, got %d %q", resp.StatusCode, body)
+		}
+		allowed := resp.Header.Values("Allow")
+		if len(allowed) != 1 || allowed[0] != "GET" {
+			t.Fatalf("expected Allow: GET, got %v", allowed)
+		}
+
+		if resp, body := testRequest(t, ts, "GET", "/users/me", nil); resp.StatusCode != 200 || body != "me" {
+			t.Fatalf("expected GET /users/me to succeed, got %d %q", resp.StatusCode, body)
+		}
+
+		if resp, body := testRequest(t, ts, "PUT", "/users/123", nil); resp.StatusCode != 200 || body != updateBody {
+			t.Fatalf("expected param route to still match numeric id, got %d %q", resp.StatusCode, body)
+		}
+	})
+}
+
 func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {

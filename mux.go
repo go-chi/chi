@@ -39,6 +39,12 @@ type Mux struct {
 	// Custom route not found handler
 	notFoundHandler http.HandlerFunc
 
+	// StrictRouting, when true, stops route matching after a static path matches
+	// but the requested HTTP method is not registered. Without this, chi may fall
+	// through to a parameterized route (e.g. /users/{id}) that accepts the method,
+	// treating a reserved static segment (e.g. /users/me) as a parameter value.
+	StrictRouting bool
+
 	// The middleware stack
 	middlewares []func(http.Handler) http.Handler
 
@@ -251,6 +257,7 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	im := &Mux{
 		pool: mx.pool, inline: true, parent: mx, tree: mx.tree, middlewares: mws,
 		notFoundHandler: mx.notFoundHandler, methodNotAllowedHandler: mx.methodNotAllowedHandler,
+		StrictRouting: mx.StrictRouting,
 	}
 
 	return im
@@ -441,6 +448,7 @@ func (mx *Mux) handle(method methodTyp, pattern string, handler http.Handler) *n
 func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Grab the route context object
 	rctx := r.Context().Value(RouteCtxKey).(*Context)
+	rctx.strictRouting = mx.StrictRouting
 
 	// The request routing path
 	routePath := rctx.RoutePath
