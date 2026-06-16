@@ -14,10 +14,7 @@ import (
 )
 
 var defaultCompressibleContentTypes = []string{
-	"text/html",
-	"text/css",
-	"text/plain",
-	"text/javascript",
+	"text/*",
 	"application/javascript",
 	"application/x-javascript",
 	"application/json",
@@ -78,7 +75,11 @@ func NewCompressor(level int, types ...string) *Compressor {
 		}
 	} else {
 		for _, t := range defaultCompressibleContentTypes {
-			allowedTypes[t] = struct{}{}
+			if before, ok := strings.CutSuffix(t, "/*"); ok {
+				allowedWildcards[before] = struct{}{}
+			} else {
+				allowedTypes[t] = struct{}{}
+			}
 		}
 	}
 

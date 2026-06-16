@@ -109,6 +109,26 @@ func TestCompressor(t *testing.T) {
 	}
 }
 
+func TestCompressorDefaultsTextMarkdown(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(Compress(5))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/markdown")
+		w.Write([]byte("# Hello"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, body := testRequestWithAcceptedEncodings(t, ts, "GET", "/", "gzip")
+	if body != "# Hello" {
+		t.Errorf("unexpected body: %q", body)
+	}
+	if got := resp.Header.Get("Content-Encoding"); got != "gzip" {
+		t.Errorf("expected gzip encoding, got %q", got)
+	}
+}
+
 func TestCompressorWildcards(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -119,7 +139,8 @@ func TestCompressorWildcards(t *testing.T) {
 	}{
 		{
 			name:       "defaults",
-			typesCount: 10,
+			typesCount: 6,
+			wcCount:    1,
 		},
 		{
 			name:       "no wildcard",
