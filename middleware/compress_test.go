@@ -119,7 +119,7 @@ func TestCompressorWildcards(t *testing.T) {
 	}{
 		{
 			name:       "defaults",
-			typesCount: 10,
+			typesCount: 12,
 		},
 		{
 			name:       "no wildcard",
@@ -214,4 +214,37 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 	reader.Close()
 
 	return string(respBody)
+}
+
+func TestCompressorDefaultXMLTypes(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(NewCompressor(5).Handler)
+
+	for _, contentType := range []string{"text/xml", "application/xml"} {
+		r.Get("/"+strings.ReplaceAll(contentType, "/", "-"), func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", contentType)
+			w.Write([]byte("<root>xml</root>"))
+		})
+	}
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	for _, path := range []string{"/text-xml", "/application-xml"} {
+		req, err := http.NewRequest(http.MethodGet, ts.URL+path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Accept-Encoding", "gzip")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.Header.Get("Content-Encoding") != "gzip" {
+			t.Fatalf("%s: expected gzip encoding, got %q", path, resp.Header.Get("Content-Encoding"))
+		}
+	}
 }
