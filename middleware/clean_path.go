@@ -11,6 +11,11 @@ import (
 // For example, if a user requests /users//1 or //users////1 will both be treated as: /users/1
 func CleanPath(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodConnect {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		rctx := chi.RouteContext(r.Context())
 
 		routePath := rctx.RoutePath
