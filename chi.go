@@ -70,7 +70,8 @@ type Router interface {
 	// Use appends one or more middlewares onto the Router stack.
 	Use(middlewares ...func(http.Handler) http.Handler)
 
-	// With adds inline middlewares for an endpoint handler.
+	// With adds inline middlewares for an endpoint handler,
+	// applying them only to the specific route(s) defined on it.
 	With(middlewares ...func(http.Handler) http.Handler) Router
 
 	// Group adds a new inline-Router along the current routing
