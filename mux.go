@@ -404,11 +404,11 @@ func (mx *Mux) NotFoundHandler() http.HandlerFunc {
 
 // MethodNotAllowedHandler returns the default Mux 405 responder whenever
 // a method cannot be resolved for a route.
-func (mx *Mux) MethodNotAllowedHandler(methodsAllowed ...methodTyp) http.HandlerFunc {
+func (mx *Mux) MethodNotAllowedHandler(methodsAllowed methodTyp) http.HandlerFunc {
 	if mx.methodNotAllowedHandler != nil {
 		return mx.methodNotAllowedHandler
 	}
-	return methodNotAllowedHandler(methodsAllowed...)
+	return methodNotAllowedHandler(methodsAllowed)
 }
 
 // handle registers a http.Handler in the routing tree for a particular http method
@@ -478,7 +478,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rctx.methodNotAllowed {
-		mx.MethodNotAllowedHandler(rctx.methodsAllowed...).ServeHTTP(w, r)
+		mx.MethodNotAllowedHandler(rctx.methodsAllowed).ServeHTTP(w, r)
 	} else {
 		mx.NotFoundHandler().ServeHTTP(w, r)
 	}
@@ -514,11 +514,14 @@ func (mx *Mux) updateRouteHandler() {
 
 // methodNotAllowedHandler is a helper function to respond with a 405,
 // method not allowed. It sets the Allow header with the list of allowed
-// methods for the route.
-func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
+// methods for the route. methodsAllowed is a bitmask of methodTyp values,
+// ensuring each HTTP method appears at most once in the Allow header.
+func methodNotAllowedHandler(methodsAllowed methodTyp) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		for _, m := range methodsAllowed {
-			w.Header().Add("Allow", reverseMethodMap[m])
+		for m, name := range reverseMethodMap {
+			if methodsAllowed&m != 0 {
+				w.Header().Add("Allow", name)
+			}
 		}
 		w.WriteHeader(405)
 		w.Write(nil)

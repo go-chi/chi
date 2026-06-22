@@ -428,6 +428,50 @@ func TestMethodNotAllowed(t *testing.T) {
 	})
 }
 
+// TestMethodNotAllowedNoDuplicates verifies that overlapping parameterized routes
+// do not produce duplicate HTTP method names in the 405 Allow response header.
+// See https://github.com/go-chi/chi/issues/996
+func TestMethodNotAllowedNoDuplicates(t *testing.T) {
+	r := NewRouter()
+
+	// Multiple overlapping param patterns all registered for POST.
+	// A GET request to /article/1-2-3 should return 405 with Allow: POST (once).
+	r.Post("/article/1-2-3", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Post("/article/{a}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Post("/article/{b}-{c}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	r.Post("/article/{b}-{c}-{d}", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, "GET", "/article/1-2-3", nil)
+	if resp.StatusCode != 405 {
+		t.Fatalf("expected 405 Method Not Allowed, got %d", resp.StatusCode)
+	}
+
+	allowValues := resp.Header.Values("Allow")
+	seen := make(map[string]int)
+	for _, v := range allowValues {
+		seen[v]++
+	}
+	for method, count := range seen {
+		if count > 1 {
+			t.Errorf("Allow header contains %q %d times; want exactly 1", method, count)
+		}
+	}
+	if _, ok := seen["POST"]; !ok {
+		t.Errorf("Allow header missing POST; got %v", allowValues)
+	}
+}
+
 func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {

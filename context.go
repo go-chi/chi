@@ -74,7 +74,7 @@ type Context struct {
 	// patterns across a stack of sub-routers.
 	RoutePatterns []string
 
-	methodsAllowed   []methodTyp // allowed methods in case of a 405
+	methodsAllowed   methodTyp // allowed methods bitmask in case of a 405
 	methodNotAllowed bool
 }
 
@@ -91,7 +91,7 @@ func (x *Context) Reset() {
 	x.routeParams.Keys = x.routeParams.Keys[:0]
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
-	x.methodsAllowed = x.methodsAllowed[:0]
+	x.methodsAllowed = 0
 	x.parentCtx = nil
 }
 
