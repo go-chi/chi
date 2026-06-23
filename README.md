@@ -249,9 +249,10 @@ type Routes interface {
 ```
 
 Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
-supports named params (ie. `/users/{userID}`) and wildcards (ie. `/admin/*`). URL parameters
-can be fetched at runtime by calling `chi.URLParam(r, "userID")` for named parameters
-and `chi.URLParam(r, "*")` for a wildcard parameter.
+supports named params (ie. `/users/{userID}`), named path params that can contain slashes
+(ie. `/files/{path:*}` or `/files/{path:+}`), and wildcards (ie. `/admin/*`). URL
+parameters can be fetched at runtime by calling `chi.URLParam(r, "userID")` for named
+parameters and `chi.URLParam(r, "*")` for a wildcard parameter.
 
 
 ### Middleware handlers
