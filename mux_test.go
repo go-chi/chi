@@ -1980,6 +1980,29 @@ func TestServerBaseContext(t *testing.T) {
 	}
 }
 
+func TestServerPoisonedContext(t *testing.T) {
+	r := NewRouter()
+	var firstContext *Context
+	r.Get("/first", func(w http.ResponseWriter, r *http.Request) {
+		firstContext, _ = r.Context().Value(RouteCtxKey).(*Context)
+		firstContext.PreventReuse()
+	})
+	r.Get("/second", func(w http.ResponseWriter, r *http.Request) {
+		context, _ := r.Context().Value(RouteCtxKey).(*Context)
+		if context == firstContext {
+			t.Fatalf("expected to get a fresh context instance for each request")
+		}
+	})
+
+	ts := httptest.NewUnstartedServer(r)
+	ts.Start()
+
+	defer ts.Close()
+
+	testRequest(t, ts, "GET", "/first", nil)
+	testRequest(t, ts, "GET", "/second", nil)
+}
+
 func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, body)
 	if err != nil {
