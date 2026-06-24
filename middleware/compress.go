@@ -239,9 +239,25 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
-			return true
+		// Split on ";" to separate the encoding name from quality params (e.g. "gzip;q=0.5")
+		parts := strings.SplitN(strings.TrimSpace(v), ";", 2)
+		name := strings.TrimSpace(parts[0])
+
+		if name != encoding {
+			continue
 		}
+
+		// Per RFC 9110 §12.5.3, q=0 means the encoding is explicitly not acceptable
+		if len(parts) > 1 {
+			for _, param := range strings.Split(parts[1], ";") {
+				param = strings.TrimSpace(param)
+				if strings.EqualFold(param, "q=0") {
+					return false
+				}
+			}
+		}
+
+		return true
 	}
 	return false
 }
