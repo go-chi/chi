@@ -92,6 +92,18 @@ func TestCompressor(t *testing.T) {
 			acceptedEncodings: []string{"nop, gzip, deflate"},
 			expectedEncoding:  "nop",
 		},
+		{
+			name:              "gzip rejected with q=0 returns no encoding",
+			path:              "/gethtml",
+			acceptedEncodings: []string{"gzip;q=0"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "gzip rejected with q=0 falls back to deflate",
+			path:              "/gethtml",
+			acceptedEncodings: []string{"gzip;q=0", "deflate"},
+			expectedEncoding:  "deflate",
+		},
 	}
 
 	for _, tc := range tests {
@@ -164,6 +176,110 @@ func TestCompressorWildcards(t *testing.T) {
 			}
 			if len(compressor.allowedWildcards) != tt.wcCount {
 				t.Errorf("expected %d allowedWildcards, got %d", tt.wcCount, len(compressor.allowedWildcards))
+			}
+		})
+	}
+}
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{
+			name:     "exact match",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "no match",
+			accepted: []string{"deflate"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "empty list",
+			accepted: []string{""},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "leading space",
+			accepted: []string{" gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "trailing space",
+			accepted: []string{"gzip "},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "br should not match b",
+			accepted: []string{"br"},
+			encoding: "b",
+			want:     false,
+		},
+		{
+			name:     "gzip should not match zip",
+			accepted: []string{"gzip"},
+			encoding: "zip",
+			want:     false,
+		},
+		{
+			name:     "q=0 rejected",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0.0 rejected",
+			accepted: []string{"gzip;q=0.0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 with space",
+			accepted: []string{"gzip; q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0.5 accepted",
+			accepted: []string{"gzip;q=0.5"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "q=1.0 accepted",
+			accepted: []string{"gzip;q=1.0"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "match on second element",
+			accepted: []string{"deflate", "gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "q=0 on second element",
+			accepted: []string{"deflate", "gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tt.accepted, tt.encoding)
+			if got != tt.want {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v, want %v",
+					tt.accepted, tt.encoding, got, tt.want)
 			}
 		})
 	}
