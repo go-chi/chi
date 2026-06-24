@@ -241,12 +241,12 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 func matchAcceptEncoding(accepted []string, encoding string) bool {
 	for _, v := range accepted {
 		name, params, _ := strings.Cut(strings.TrimSpace(v), ";")
-		if strings.TrimSpace(name) != encoding {
+		if !strings.EqualFold(strings.TrimSpace(name), encoding) {
 			continue
 		}
 		for _, param := range strings.Split(params, ";") {
 			key, value, ok := strings.Cut(strings.TrimSpace(param), "=")
-			if !ok || strings.TrimSpace(key) != "q" {
+			if !ok || !strings.EqualFold(strings.TrimSpace(key), "q") {
 				continue
 			}
 			quality, err := strconv.ParseFloat(strings.TrimSpace(value), 64)

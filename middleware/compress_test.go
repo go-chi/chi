@@ -219,6 +219,12 @@ func TestMatchAcceptEncoding(t *testing.T) {
 			want:     true,
 		},
 		{
+			name:     "mixed case encoding",
+			accepted: []string{"GZip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
 			name:     "br should not match b",
 			accepted: []string{"br"},
 			encoding: "b",
@@ -245,6 +251,12 @@ func TestMatchAcceptEncoding(t *testing.T) {
 		{
 			name:     "q=0 with space",
 			accepted: []string{"gzip; q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "mixed case q=0 rejected",
+			accepted: []string{"gzip; Q=0"},
 			encoding: "gzip",
 			want:     false,
 		},
