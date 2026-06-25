@@ -414,6 +414,50 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	}
 }
 
+// A regexp param can legitimately capture a value that contains the byte used
+// as the tail delimiter for the next part of the same path segment (e.g. a UUID
+// "8-4-4-4-12" value followed by a literal "-" then another param). The router
+// must not truncate the value at the first delimiter. See issue #970.
+func TestTreeRegexpTailInValue(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	rctx := NewRouteContext()
+	tr := &node{}
+	// {uuid} contains '-', which is also the delimiter before {date}.
+	tr.InsertRoute(mGET, "/test/{uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}-{date}", hStub1)
+
+	tests := []struct {
+		url             string
+		expectedHandler http.Handler
+		uuid            string
+		date            string
+	}{
+		{url: "/test/f9772163-44e7-49b1-9c8c-36b8d023aa6b-2024-01-01", expectedHandler: hStub1, uuid: "f9772163-44e7-49b1-9c8c-36b8d023aa6b", date: "2024-01-01"},
+		// value that does not satisfy the regexp must not match
+		{url: "/test/notauuid-2024-01-01", expectedHandler: nil},
+		// missing trailing {date} segment must not match
+		{url: "/test/f9772163-44e7-49b1-9c8c-36b8d023aa6b", expectedHandler: nil},
+	}
+
+	for _, tc := range tests {
+		rctx.Reset()
+		_, _, handler := tr.FindRoute(rctx, mGET, tc.url)
+		if fmt.Sprintf("%v", tc.expectedHandler) != fmt.Sprintf("%v", handler) {
+			t.Errorf("url %v: expecting handler:%v , got:%v", tc.url, tc.expectedHandler, handler)
+			continue
+		}
+		if tc.expectedHandler == nil {
+			continue
+		}
+		if got := rctx.URLParam("uuid"); got != tc.uuid {
+			t.Errorf("url %v: uuid = %q, want %q", tc.url, got, tc.uuid)
+		}
+		if got := rctx.URLParam("date"); got != tc.date {
+			t.Errorf("url %v: date = %q, want %q", tc.url, got, tc.date)
+		}
+	}
+}
+
 func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
