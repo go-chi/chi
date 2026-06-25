@@ -102,3 +102,47 @@ func TestReplaceWildcardsConsecutive(t *testing.T) {
 		t.Fatalf("unexpected trailing wildcard behavior: %s", p)
 	}
 }
+
+func TestContext_Clone(t *testing.T) {
+	orig := &Context{
+		RoutePatterns:  []string{"/v1", "/resources/{id}"},
+		methodsAllowed: []methodTyp{mHEAD, mGET},
+		URLParams: RouteParams{
+			Keys:   []string{"foo"},
+			Values: []string{"bar"},
+		},
+		routeParams: RouteParams{
+			Keys:   []string{"id"},
+			Values: []string{"123"},
+		},
+	}
+
+	clone := orig.Clone()
+	orig.Reset()
+
+	orig.URLParams.Keys = append(orig.URLParams.Keys, "bar")
+	orig.URLParams.Values = append(orig.URLParams.Values, "baz")
+	orig.routeParams.Keys = append(orig.routeParams.Keys, "name")
+	orig.routeParams.Values = append(orig.routeParams.Values, "foxmulder")
+	orig.RoutePatterns = append(orig.RoutePatterns, "/mutated")
+	orig.methodsAllowed = append(orig.methodsAllowed, mPOST)
+
+	if got := clone.URLParams.Keys[0]; got != "foo" {
+		t.Fatalf("clone URLParams.Keys was corrupted, want %q got %q", "foo", got)
+	}
+	if got := clone.URLParams.Values[0]; got != "bar" {
+		t.Fatalf("clone URLParams.Values was corrupted, want %q got %q", "bar", got)
+	}
+	if got := clone.routeParams.Keys[0]; got != "id" {
+		t.Fatalf("clone routeParams.Keys was corrupted, want %q got %q", "id", got)
+	}
+	if got := clone.routeParams.Values[0]; got != "123" {
+		t.Fatalf("clone routeParams.Values was corrupted, want %q got %q", "123", got)
+	}
+	if got := clone.RoutePatterns[0]; got != "/v1" {
+		t.Fatalf("clone RoutePatterns[0] was corrupted, want %q got %q", "/v1", got)
+	}
+	if got := clone.methodsAllowed[0]; got != mHEAD {
+		t.Fatalf("clone methodsAllowed[0] was corrupted, want %d got %d", mHEAD, got)
+	}
+}
