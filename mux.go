@@ -517,7 +517,17 @@ func (mx *Mux) updateRouteHandler() {
 // methods for the route.
 func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Multiple overlapping routes (wildcards plus a literal that
+		// matches the same path, for example) can each contribute the
+		// same method to methodsAllowed, so dedupe before writing the
+		// Allow header. Without this a 405 ended up with e.g.
+		// `Allow: POST, POST, POST`. See #996.
+		seen := make(map[methodTyp]struct{}, len(methodsAllowed))
 		for _, m := range methodsAllowed {
+			if _, ok := seen[m]; ok {
+				continue
+			}
+			seen[m] = struct{}{}
 			w.Header().Add("Allow", reverseMethodMap[m])
 		}
 		w.WriteHeader(405)

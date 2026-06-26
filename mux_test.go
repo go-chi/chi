@@ -428,6 +428,28 @@ func TestMethodNotAllowed(t *testing.T) {
 	})
 }
 
+// Regression for #996. When multiple wildcard routes overlap with a
+// concrete one and the request method isn't registered on any of
+// them, the Allow header used to repeat the same method once per
+// matching route ("Allow: POST, POST, POST").
+func TestMethodNotAllowed_DedupesAllowHeader(t *testing.T) {
+	r := NewRouter()
+	r.Post("/article/1-2-3", func(w http.ResponseWriter, _ *http.Request) {})
+	r.Post("/article/{a}", func(w http.ResponseWriter, _ *http.Request) {})
+	r.Post("/article/{b}-{c}", func(w http.ResponseWriter, _ *http.Request) {})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, "GET", "/article/1-2-3", nil)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want 405", resp.StatusCode)
+	}
+	if got := resp.Header.Values("Allow"); len(got) != 1 || got[0] != "POST" {
+		t.Fatalf("Allow header = %v, want [POST]", got)
+	}
+}
+
 func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {
