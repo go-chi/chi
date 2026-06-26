@@ -446,7 +446,29 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				}
 
 				if ntyp == ntRegexp && xn.rex != nil {
-					if !xn.rex.MatchString(xsearch[:p]) {
+					// The tail delimiter can legitimately appear inside the value a
+					// regexp param is meant to capture (e.g. a "-" delimiter with a
+					// UUID value). Splitting on the first delimiter would truncate the
+					// value and fail to match, so advance to subsequent delimiters
+					// within the same path segment until the regexp matches.
+					for !xn.rex.MatchString(xsearch[:p]) {
+						next := -1
+						if p < len(xsearch) {
+							next = strings.IndexByte(xsearch[p+1:], xn.tail)
+						}
+						if next < 0 {
+							p = -1
+							break
+						}
+						np := p + 1 + next
+						// don't let a regexp param match across path segments
+						if strings.IndexByte(xsearch[:np], '/') != -1 {
+							p = -1
+							break
+						}
+						p = np
+					}
+					if p < 0 {
 						continue
 					}
 				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
