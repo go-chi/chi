@@ -52,8 +52,16 @@ func Recoverer(next http.Handler) http.Handler {
 var recovererErrorWriter io.Writer = os.Stderr
 
 func PrintPrettyStack(rvr interface{}) {
+	printPrettyStackWithColor(rvr, true)
+}
+
+// printPrettyStackWithColor is the same as PrintPrettyStack but lets
+// callers (the request logger, primarily) thread through whether the
+// destination supports ANSI color so the panic output respects the
+// surrounding NoColor configuration.
+func printPrettyStackWithColor(rvr interface{}, useColor bool) {
 	debugStack := debug.Stack()
-	s := prettyStack{}
+	s := prettyStack{useColor: useColor}
 	out, err := s.parse(debugStack, rvr)
 	if err == nil {
 		recovererErrorWriter.Write(out)
@@ -64,11 +72,12 @@ func PrintPrettyStack(rvr interface{}) {
 }
 
 type prettyStack struct {
+	useColor bool
 }
 
 func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
 	var err error
-	useColor := true
+	useColor := s.useColor
 	buf := &bytes.Buffer{}
 
 	cW(buf, false, bRed, "\n")
