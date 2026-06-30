@@ -394,12 +394,16 @@ func TestMuxNestedNotFound(t *testing.T) {
 func TestMethodNotAllowed(t *testing.T) {
 	r := NewRouter()
 
-	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/hi", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("hi, get"))
 	})
 
-	r.Head("/hi", func(w http.ResponseWriter, r *http.Request) {
+	r.Head("/hi", func(w http.ResponseWriter, _ *http.Request) {
 		w.Write([]byte("hi, head"))
+	})
+
+	r.Get("/*", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("catch-all"))
 	})
 
 	ts := httptest.NewServer(r)
