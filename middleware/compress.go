@@ -281,6 +281,9 @@ func (cw *compressResponseWriter) isCompressible() bool {
 		return true
 	}
 	if contentType, _, hadSlash := strings.Cut(contentType, "/"); hadSlash {
+		if _, ok := cw.contentWildcards[""]; ok {
+			return true
+		}
 		_, ok := cw.contentWildcards[contentType]
 		return ok
 	}

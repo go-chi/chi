@@ -169,6 +169,53 @@ func TestCompressorWildcards(t *testing.T) {
 	}
 }
 
+func TestCompressorWildcardAllTypes(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(NewCompressor(5, "/*").Handler)
+
+	r.Get("/json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"ok":true}`))
+	})
+
+	r.Get("/html", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte("<p>ok</p>"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tests := []struct {
+		name string
+		path string
+		body string
+	}{
+		{
+			name: "application type matches all wildcard",
+			path: "/json",
+			body: `{"ok":true}`,
+		},
+		{
+			name: "text type matches all wildcard",
+			path: "/html",
+			body: "<p>ok</p>",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resp, body := testRequestWithAcceptedEncodings(t, ts, http.MethodGet, tt.path, "gzip")
+			if got := resp.Header.Get("Content-Encoding"); got != "gzip" {
+				t.Fatalf("expected gzip encoding, got %q", got)
+			}
+			if body != tt.body {
+				t.Fatalf("expected body %q, got %q", tt.body, body)
+			}
+		})
+	}
+}
+
 func testRequestWithAcceptedEncodings(t *testing.T, ts *httptest.Server, method, path string, encodings ...string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
 	if err != nil {
