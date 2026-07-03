@@ -23,6 +23,8 @@ var defaultCompressibleContentTypes = []string{
 	"application/json",
 	"application/atom+xml",
 	"application/rss+xml",
+	"application/xml",
+	"text/xml",
 	"image/svg+xml",
 }
 
