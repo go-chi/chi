@@ -517,7 +517,12 @@ func (mx *Mux) updateRouteHandler() {
 // methods for the route.
 func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		seen := make(map[string]bool)
 		for _, m := range methodsAllowed {
+			if seen[reverseMethodMap[m]] {
+				continue
+			}
+			seen[reverseMethodMap[m]] = true
 			w.Header().Add("Allow", reverseMethodMap[m])
 		}
 		w.WriteHeader(405)
