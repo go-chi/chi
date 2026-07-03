@@ -239,7 +239,21 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
+		token := strings.TrimSpace(v)
+		// Strip quality parameter (e.g. "gzip;q=0.5" → "gzip")
+		if idx := strings.IndexByte(token, ';'); idx >= 0 {
+			params := strings.TrimSpace(token[idx+1:])
+			token = strings.TrimSpace(token[:idx])
+			// q=0 means not acceptable per RFC 9110 Section 12.5.3.
+			// Check exact "q=0" or "q=0.0" (not "q=0.5" or "q=0.1").
+			if len(params) >= 3 && strings.HasPrefix(params, "q=") {
+				qv := params[2:]
+				if qv == "0" || qv == "0.0" || qv == "0.00" || qv == "0.000" {
+					continue
+				}
+			}
+		}
+		if strings.EqualFold(token, encoding) {
 			return true
 		}
 	}
