@@ -1804,6 +1804,57 @@ func TestCustomHTTPMethod(t *testing.T) {
 	}
 }
 
+func TestQueryHTTPMethod(t *testing.T) {
+	r := NewRouter()
+
+	r.Get("/search", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("get"))
+	})
+
+	// QUERY is a safe, idempotent http method that conveys a request body,
+	// see RFC 10008.
+	r.Query("/search", func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		w.Write([]byte(fmt.Sprintf("query: %s", body)))
+	})
+
+	r.MethodFunc(MethodQuery, "/reports", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("reports"))
+	})
+
+	r.HandleFunc("/any", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("any"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, MethodQuery, "/search", bytes.NewReader([]byte("select 1"))); body != "query: select 1" {
+		t.Fatal(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/search", nil); body != "get" {
+		t.Fatal(body)
+	}
+	if _, body := testRequest(t, ts, MethodQuery, "/reports", nil); body != "reports" {
+		t.Fatal(body)
+	}
+	if _, body := testRequest(t, ts, MethodQuery, "/any", nil); body != "any" {
+		t.Fatal(body)
+	}
+
+	// An unregistered method on the same route responds 405 with QUERY
+	// listed in the Allow header.
+	resp, _ := testRequest(t, ts, "POST", "/search", nil)
+	if resp.StatusCode != 405 {
+		t.Fatal(resp.Status)
+	}
+	allowedMethods := resp.Header.Values("Allow")
+	if len(allowedMethods) != 2 || ((allowedMethods[0] != "GET" || allowedMethods[1] != "QUERY") &&
+		(allowedMethods[1] != "GET" || allowedMethods[0] != "QUERY")) {
+		t.Fatal("Allow header should contain 2 headers: GET, QUERY. Received: ", allowedMethods)
+	}
+}
+
 func TestMuxMatch(t *testing.T) {
 	r := NewRouter()
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {

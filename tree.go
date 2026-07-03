@@ -26,11 +26,17 @@ const (
 	mPATCH
 	mPOST
 	mPUT
+	mQUERY
 	mTRACE
 )
 
 var mALL = mCONNECT | mDELETE | mGET | mHEAD |
-	mOPTIONS | mPATCH | mPOST | mPUT | mTRACE
+	mOPTIONS | mPATCH | mPOST | mPUT | mQUERY | mTRACE
+
+// MethodQuery is the HTTP QUERY method (RFC 10008), a safe, idempotent
+// method that conveys a request body. It is defined here until net/http
+// provides an equivalent constant.
+const MethodQuery = "QUERY"
 
 var methodMap = map[string]methodTyp{
 	http.MethodConnect: mCONNECT,
@@ -41,6 +47,7 @@ var methodMap = map[string]methodTyp{
 	http.MethodPatch:   mPATCH,
 	http.MethodPost:    mPOST,
 	http.MethodPut:     mPUT,
+	MethodQuery:        mQUERY,
 	http.MethodTrace:   mTRACE,
 }
 
@@ -53,6 +60,7 @@ var reverseMethodMap = map[methodTyp]string{
 	mPATCH:   http.MethodPatch,
 	mPOST:    http.MethodPost,
 	mPUT:     http.MethodPut,
+	mQUERY:   MethodQuery,
 	mTRACE:   http.MethodTrace,
 }
 

@@ -221,6 +221,7 @@ type Router interface {
 	Patch(pattern string, h http.HandlerFunc)
 	Post(pattern string, h http.HandlerFunc)
 	Put(pattern string, h http.HandlerFunc)
+	Query(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
 
 	// NotFound defines a handler to respond whenever a route could
