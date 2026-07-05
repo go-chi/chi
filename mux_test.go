@@ -1818,7 +1818,7 @@ func TestQueryHTTPMethod(t *testing.T) {
 		w.Write([]byte(fmt.Sprintf("query: %s", body)))
 	})
 
-	r.MethodFunc(MethodQuery, "/reports", func(w http.ResponseWriter, r *http.Request) {
+	r.MethodFunc("QUERY", "/reports", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("reports"))
 	})
 
@@ -1829,16 +1829,16 @@ func TestQueryHTTPMethod(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if _, body := testRequest(t, ts, MethodQuery, "/search", bytes.NewReader([]byte("select 1"))); body != "query: select 1" {
+	if _, body := testRequest(t, ts, "QUERY", "/search", bytes.NewReader([]byte("select 1"))); body != "query: select 1" {
 		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/search", nil); body != "get" {
 		t.Fatal(body)
 	}
-	if _, body := testRequest(t, ts, MethodQuery, "/reports", nil); body != "reports" {
+	if _, body := testRequest(t, ts, "QUERY", "/reports", nil); body != "reports" {
 		t.Fatal(body)
 	}
-	if _, body := testRequest(t, ts, MethodQuery, "/any", nil); body != "any" {
+	if _, body := testRequest(t, ts, "QUERY", "/any", nil); body != "any" {
 		t.Fatal(body)
 	}
 

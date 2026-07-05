@@ -33,10 +33,10 @@ const (
 var mALL = mCONNECT | mDELETE | mGET | mHEAD |
 	mOPTIONS | mPATCH | mPOST | mPUT | mQUERY | mTRACE
 
-// MethodQuery is the HTTP QUERY method (RFC 10008), a safe, idempotent
+// methodQuery is the HTTP QUERY method (RFC 10008), a safe, idempotent
 // method that conveys a request body. It is defined here until net/http
-// provides an equivalent constant.
-const MethodQuery = "QUERY"
+// provides an equivalent constant, at which point this is a 1-1 swap.
+const methodQuery = "QUERY"
 
 var methodMap = map[string]methodTyp{
 	http.MethodConnect: mCONNECT,
@@ -47,7 +47,7 @@ var methodMap = map[string]methodTyp{
 	http.MethodPatch:   mPATCH,
 	http.MethodPost:    mPOST,
 	http.MethodPut:     mPUT,
-	MethodQuery:        mQUERY,
+	methodQuery:        mQUERY,
 	http.MethodTrace:   mTRACE,
 }
 
@@ -60,7 +60,7 @@ var reverseMethodMap = map[methodTyp]string{
 	mPATCH:   http.MethodPatch,
 	mPOST:    http.MethodPost,
 	mPUT:     http.MethodPut,
-	mQUERY:   MethodQuery,
+	mQUERY:   methodQuery,
 	mTRACE:   http.MethodTrace,
 }
 
