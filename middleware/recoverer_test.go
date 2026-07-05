@@ -46,6 +46,13 @@ func TestRecoverer(t *testing.T) {
 }
 
 func TestRecovererNoColor(t *testing.T) {
+	// Force IsTTY so cW would emit color codes if useColor were true; this is
+	// what makes the assertion below a real regression guard rather than a
+	// no-op on non-TTY test runners (e.g. CI).
+	oldIsTTY := IsTTY
+	IsTTY = true
+	defer func() { IsTTY = oldIsTTY }()
+
 	oldRecovererErrorWriter := recovererErrorWriter
 	defer func() { recovererErrorWriter = oldRecovererErrorWriter }()
 	buf := &bytes.Buffer{}
