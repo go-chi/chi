@@ -119,7 +119,7 @@ func TestCompressorWildcards(t *testing.T) {
 	}{
 		{
 			name:       "defaults",
-			typesCount: 10,
+			typesCount: len(defaultCompressibleContentTypes),
 		},
 		{
 			name:       "no wildcard",
