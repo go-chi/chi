@@ -215,3 +215,102 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 
 	return string(respBody)
 }
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		// Exact match
+		{
+			name:     "exact match gzip",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		// Substring false positives that previously returned true
+		{
+			name:     "br does not match b",
+			accepted: []string{"br"},
+			encoding: "b",
+			want:     false,
+		},
+		{
+			name:     "bgzip does not match gzip",
+			accepted: []string{"bgzip"},
+			encoding: "gzip",
+			want:     false,
+		},
+		// q=0 must be rejected (client explicitly refuses the encoding)
+		{
+			name:     "gzip;q=0 is not acceptable",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "gzip;q=0.0 is not acceptable",
+			accepted: []string{"gzip;q=0.0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		// Non-zero quality values are acceptable
+		{
+			name:     "gzip;q=1 is acceptable",
+			accepted: []string{"gzip;q=1"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "gzip;q=0.5 is acceptable",
+			accepted: []string{"gzip;q=0.5"},
+			encoding: "gzip",
+			want:     true,
+		},
+		// Multiple accepted encodings
+		{
+			name:     "encoding in list",
+			accepted: []string{"deflate", "gzip", "br"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "encoding not in list",
+			accepted: []string{"deflate", "br"},
+			encoding: "gzip",
+			want:     false,
+		},
+		// Empty list
+		{
+			name:     "empty accepted list",
+			accepted: []string{""},
+			encoding: "gzip",
+			want:     false,
+		},
+		// Whitespace trimming
+		{
+			name:     "leading/trailing whitespace around token",
+			accepted: []string{" gzip "},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "whitespace around quality param",
+			accepted: []string{"gzip ; q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tc.accepted, tc.encoding)
+			if got != tc.want {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v, want %v",
+					tc.accepted, tc.encoding, got, tc.want)
+			}
+		})
+	}
+}
