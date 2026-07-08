@@ -1650,6 +1650,45 @@ func TestMuxRegexp3(t *testing.T) {
 	}
 }
 
+func TestMuxNamedPathParam(t *testing.T) {
+	r := NewRouter()
+	r.Get("/foo/bar/{other-stuff:*}/fizz/buzz", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "other-stuff")))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/foo/bar/one/two/three/fizz/buzz", nil); body != "one/two/three" {
+		t.Fatalf("expecting %q, got %q", "one/two/three", body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/foo/bar/fizz/buzz", nil); body != "" {
+		t.Fatalf("expecting empty body, got %q", body)
+	}
+}
+
+func TestMuxNamedPathParamInNestedRoute(t *testing.T) {
+	r := NewRouter()
+	r.Route("/stuff", func(r Router) {
+		r.Route("/{owner}/{group:*}/{repo}", func(r Router) {
+			r.Route("/src", func(r Router) {
+				r.Route("/branch/{branch:*}", func(r Router) {
+					r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						fmt.Fprintf(w, "%s:%s:%s:%s", URLParam(r, "owner"), URLParam(r, "group"), URLParam(r, "repo"), URLParam(r, "branch"))
+					})
+				})
+			})
+		})
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/stuff/owner/foo/repo/src/branch/feature", nil); body != "owner:foo:repo:feature" {
+		t.Fatalf("expecting %q, got %q", "owner:foo:repo:feature", body)
+	}
+}
+
 func TestMuxSubrouterWildcardParam(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "param:%v *:%v", URLParam(r, "param"), URLParam(r, "*"))

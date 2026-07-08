@@ -41,15 +41,21 @@
 // matched. An anonymous regexp pattern is allowed, using an empty string
 // before the colon in the placeholder, such as {:\\d+}
 //
+// A placeholder with a name followed by :* matches zero or more path
+// segments, including / characters, up to the next matching segment in
+// the route. A placeholder with :+ matches one or more non-empty path
+// segments. Either form may be suffixed with ? to make the match
+// non-greedy, such as {name:*?} or {name:+?}.
+//
 // The special placeholder of asterisk matches the rest of the requested
-// URL. Any trailing characters in the pattern are ignored. This is the only
-// placeholder which will match / characters.
+// URL. Any trailing characters in the pattern are ignored.
 //
 // Examples:
 //
 //	"/user/{name}" matches "/user/jsmith" but not "/user/jsmith/info" or "/user/jsmith/"
 //	"/user/{name}/info" matches "/user/jsmith/info"
 //	"/page/*" matches "/page/intro/latest"
+//	"/page/{name:*}/latest" matches "/page/intro/latest"
 //	"/page/{other}/latest" also matches "/page/intro/latest"
 //	"/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"
 package chi

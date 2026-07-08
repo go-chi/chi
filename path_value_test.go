@@ -15,6 +15,7 @@ func TestPathValue(t *testing.T) {
 		requestPath  string
 		expectedBody string
 		pathKeys     []string
+		allowEmpty   bool
 	}{
 		{
 			name:         "Basic path value",
@@ -40,6 +41,23 @@ func TestPathValue(t *testing.T) {
 			requestPath:  "/users/Gojo/friends/all-of-them/and/more",
 			expectedBody: "Gojo all-of-them/and/more",
 		},
+		{
+			name:         "Named path value with slashes",
+			pattern:      "/foo/bar/{other-stuff:*}/fizz/buzz",
+			method:       "GET",
+			pathKeys:     []string{"other-stuff"},
+			requestPath:  "/foo/bar/one/two/three/fizz/buzz",
+			expectedBody: "one/two/three",
+		},
+		{
+			name:         "Empty named path value",
+			pattern:      "/foo/bar/{other-stuff:*}/fizz/buzz",
+			method:       "GET",
+			pathKeys:     []string{"other-stuff"},
+			requestPath:  "/foo/bar/fizz/buzz",
+			expectedBody: "",
+			allowEmpty:   true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -50,7 +68,7 @@ func TestPathValue(t *testing.T) {
 				pathValues := []string{}
 				for _, pathKey := range tc.pathKeys {
 					pathValue := r.PathValue(pathKey)
-					if pathValue == "" {
+					if pathValue == "" && !tc.allowEmpty {
 						pathValue = "NOT_FOUND:" + pathKey
 					}
 
