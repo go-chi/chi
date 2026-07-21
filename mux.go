@@ -45,6 +45,10 @@ type Mux struct {
 	// Controls the behaviour of middleware chain generation when a mux
 	// is registered as an inline group inside another mux.
 	inline bool
+
+	// When true, an exact static path that exists for other methods returns
+	// 405 instead of falling through to a param/regexp sibling (#1035).
+	strictRouting bool
 }
 
 // NewMux returns a newly initialized Mux object that implements the Router
@@ -216,6 +220,16 @@ func (mx *Mux) NotFound(handlerFn http.HandlerFunc) {
 			subMux.NotFound(hFn)
 		}
 	})
+}
+
+// StrictRouting controls whether an exact static path match that does not
+// support the request method returns 405 instead of falling through to a
+// less-specific param or regexp sibling route.
+//
+// Default is false to preserve historical chi behavior (e.g. GET /articles/me
+// may match /articles/{id} when only PUT is registered on /articles/me).
+func (mx *Mux) StrictRouting(enabled bool) {
+	mx.strictRouting = enabled
 }
 
 // MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the
@@ -472,6 +486,7 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the route
+	rctx.strictStaticMethodMatch = mx.strictRouting
 	if _, _, h := mx.tree.FindRoute(rctx, method, routePath); h != nil {
 		// Set http.Request path values from our request context
 		for i, key := range rctx.URLParams.Keys {

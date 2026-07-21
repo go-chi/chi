@@ -76,6 +76,9 @@ type Context struct {
 
 	methodsAllowed   []methodTyp // allowed methods in case of a 405
 	methodNotAllowed bool
+	// strictStaticMethodMatch prefers 405 on exact static path matches over
+	// falling through to less-specific param/regexp siblings (see Mux.StrictRouting).
+	strictStaticMethodMatch bool
 }
 
 // Reset a routing context to its initial state.
@@ -91,6 +94,7 @@ func (x *Context) Reset() {
 	x.routeParams.Keys = x.routeParams.Keys[:0]
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
+	x.strictStaticMethodMatch = false
 	x.methodsAllowed = x.methodsAllowed[:0]
 	x.parentCtx = nil
 }
