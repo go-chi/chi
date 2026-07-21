@@ -530,6 +530,12 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				// flag that the routing context found a route, but not a corresponding
 				// supported method
 				rctx.methodNotAllowed = true
+
+				// Optional: exact static path match takes precedence over less-specific
+				// param/regexp siblings when Mux.StrictRouting is enabled (#1035).
+				if xn.typ == ntStatic && rctx.strictStaticMethodMatch {
+					return nil
+				}
 			}
 		}
 
