@@ -54,6 +54,16 @@ func TestContentEncodingMiddleware(t *testing.T) {
 			encodings:      []string{"deflate", "br"},
 			expectedStatus: 415,
 		},
+		{
+			name:           "Support comma-separated gzip, deflate",
+			encodings:      []string{"gzip, deflate"},
+			expectedStatus: 200,
+		},
+		{
+			name:           "No support for comma-separated gzip, br",
+			encodings:      []string{"gzip, br"},
+			expectedStatus: 415,
+		},
 	}
 
 	for _, tt := range tests {
@@ -64,7 +74,7 @@ func TestContentEncodingMiddleware(t *testing.T) {
 			body := []byte("This is my content. There are many like this but this one is mine")
 			r := httptest.NewRequest("POST", "/", bytes.NewReader(body))
 			for _, encoding := range tt.encodings {
-				r.Header.Set("Content-Encoding", encoding)
+				r.Header.Add("Content-Encoding", encoding)
 			}
 
 			w := httptest.NewRecorder()
