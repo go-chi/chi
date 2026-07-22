@@ -30,6 +30,8 @@ func contentEncoding(ce string, charsets ...string) bool {
 	_, ce = split(strings.ToLower(ce), ";")
 	_, ce = split(ce, "charset=")
 	ce, _ = split(ce, ";")
+	// Clients often quote the charset parameter: charset="utf-8"
+	ce = strings.Trim(ce, `"'`)
 	return slices.Contains(charsets, ce)
 }
 
