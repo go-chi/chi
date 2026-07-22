@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"strings"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,5 +124,21 @@ func TestContentEncoding(t *testing.T) {
 
 	if !contentEncoding("text/xml; charset=UTF-8", []string{"latin-1", "utf-8"}...) {
 		t.Error("Want true, got false")
+	}
+}
+
+func TestContentCharsetQuoted(t *testing.T) {
+	t.Parallel()
+	mw := ContentCharset("utf-8")
+	body := strings.NewReader(`{}`)
+	r := httptest.NewRequest("POST", "/", body)
+	r.Header.Set("Content-Type", `application/json; charset="utf-8"`)
+	w := httptest.NewRecorder()
+	router := chi.NewRouter()
+	router.Use(mw)
+	router.Post("/", func(w http.ResponseWriter, r *http.Request) {})
+	router.ServeHTTP(w, r)
+	if w.Code != 200 {
+		t.Fatalf("got %d want 200 for quoted charset", w.Code)
 	}
 }
