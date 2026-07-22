@@ -37,7 +37,7 @@ var (
 //		switch urlFormat {
 //		case "json":
 //			render.JSON(w, r, articles)
-//		case "xml:"
+//		case "xml"
 //			render.XML(w, r, articles)
 //		default:
 //			render.JSON(w, r, articles)
