@@ -31,12 +31,13 @@ var etagHeaders = []string{
 // NoCache is a simple piece of middleware that sets a number of HTTP headers to prevent
 // a router (or subrouter) from being cached by an upstream proxy and/or client.
 //
-// As per http://wiki.nginx.org/HttpProxyModule - NoCache sets:
+// NoCache sets anti-caching response headers and strips conditional request
+// ETag-related headers. The response headers currently set are:
 //
-//	Expires: Thu, 01 Jan 1970 00:00:00 UTC
-//	Cache-Control: no-cache, private, max-age=0
+//	Expires: Thu, 01 Jan 1970 00:00:00 GMT  (http.TimeFormat)
+//	Cache-Control: no-cache, no-store, no-transform, must-revalidate, private, max-age=0
 //	X-Accel-Expires: 0
-//	Pragma: no-cache (for HTTP/1.0 proxies/clients)
+//	Pragma: no-cache  (for HTTP/1.0 proxies/clients)
 func NoCache(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 
