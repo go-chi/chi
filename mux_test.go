@@ -2120,3 +2120,30 @@ func BenchmarkMux(b *testing.B) {
 		})
 	}
 }
+
+func TestMethodNotAllowedAllowIncludesHEADForGET(t *testing.T) {
+	r := NewRouter()
+	r.Get("/only-get", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, "POST", "/only-get", nil)
+	if resp.StatusCode != 405 {
+		t.Fatalf("status=%d", resp.StatusCode)
+	}
+	allowed := resp.Header.Values("Allow")
+	hasGET, hasHEAD := false, false
+	for _, m := range allowed {
+		if m == "GET" {
+			hasGET = true
+		}
+		if m == "HEAD" {
+			hasHEAD = true
+		}
+	}
+	if !hasGET || !hasHEAD {
+		t.Fatalf("Allow should include GET and HEAD, got %v", allowed)
+	}
+}

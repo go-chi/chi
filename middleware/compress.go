@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -239,11 +240,46 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 	return nil, "", func() {}
 }
 
+// matchAcceptEncoding reports whether encoding is acceptable according to
+// the parsed Accept-Encoding tokens (already lowercased, comma-split).
+// Tokens may include quality values (e.g. "gzip;q=0.8"). Per RFC 9110,
+// q=0 means "not acceptable". Matching is by encoding name only (not a
+// substring of the full token), so "br" does not match encoding "b".
 func matchAcceptEncoding(accepted []string, encoding string) bool {
+	encoding = strings.ToLower(encoding)
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
-			return true
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
 		}
+		// Split name from parameters (q=, etc.)
+		name, params, _ := strings.Cut(v, ";")
+		name = strings.TrimSpace(name)
+		if name != encoding && name != "*" {
+			continue
+		}
+		// Default q=1 when omitted; q=0 means not acceptable.
+		q := 1.0
+		for _, p := range strings.Split(params, ";") {
+			p = strings.TrimSpace(p)
+			if p == "" {
+				continue
+			}
+			key, val, ok := strings.Cut(p, "=")
+			if !ok {
+				continue
+			}
+			if strings.TrimSpace(key) != "q" {
+				continue
+			}
+			if f, err := strconv.ParseFloat(strings.TrimSpace(val), 64); err == nil {
+				q = f
+			}
+		}
+		if q <= 0 {
+			return false
+		}
+		return true
 	}
 	return false
 }

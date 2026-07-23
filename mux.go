@@ -523,8 +523,21 @@ func (mx *Mux) updateRouteHandler() {
 // methods for the route.
 func methodNotAllowedHandler(methodsAllowed ...methodTyp) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		hasGET, hasHEAD := false, false
 		for _, m := range methodsAllowed {
+			if m == mGET {
+				hasGET = true
+			}
+			if m == mHEAD {
+				hasHEAD = true
+			}
 			w.Header().Add("Allow", reverseMethodMap[m])
+		}
+		// RFC 9110: HEAD is the same as GET without a body. When GET is
+		// allowed, advertise HEAD so clients and GetHead middleware stay
+		// consistent with the Allow header.
+		if hasGET && !hasHEAD {
+			w.Header().Add("Allow", http.MethodHead)
 		}
 		w.WriteHeader(405)
 		w.Write(nil)

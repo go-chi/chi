@@ -215,3 +215,28 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 
 	return string(respBody)
 }
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{[]string{"gzip"}, "gzip", true},
+		{[]string{"gzip;q=1.0"}, "gzip", true},
+		{[]string{"gzip;q=0"}, "gzip", false},
+		{[]string{"gzip;q=0.0"}, "gzip", false},
+		{[]string{"br"}, "gzip", false},
+		{[]string{"br"}, "b", false},          // no substring false positive
+		{[]string{"bgzip"}, "gzip", false},    // no substring false positive
+		{[]string{"gzip", "deflate"}, "deflate", true},
+		{[]string{"*"}, "gzip", true},
+		{[]string{"*;q=0"}, "gzip", false},
+		{[]string{" gzip ; q=0.8 "}, "gzip", true},
+	}
+	for _, tt := range tests {
+		if got := matchAcceptEncoding(tt.accepted, tt.encoding); got != tt.want {
+			t.Errorf("matchAcceptEncoding(%v, %q)=%v want %v", tt.accepted, tt.encoding, got, tt.want)
+		}
+	}
+}
