@@ -738,6 +738,18 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 
 		key, rexpat, isRegexp := strings.Cut(key, ":")
 		if isRegexp {
+			// Named catch-all: {path:*} matches the remainder of the URL path
+			// (including slashes) and records it under URLParam "path".
+			// Like "*", it must be the final segment in the pattern.
+			if rexpat == "*" {
+				if pe < len(pattern) {
+					panic("chi: named catch-all '{param:*}' must be the last segment in a route")
+				}
+				if key == "" {
+					panic("chi: named catch-all requires a non-empty param name, e.g. '{path:*}'")
+				}
+				return ntCatchAll, key, "", 0, ps, pe
+			}
 			nt = ntRegexp
 		}
 
