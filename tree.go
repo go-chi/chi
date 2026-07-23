@@ -273,11 +273,11 @@ func (n *node) addChild(child *node, prefix string) *node {
 			// Route starts with a param
 			child.typ = segTyp
 
-			if segTyp == ntCatchAll {
-				segStartIdx = -1
-			} else {
-				segStartIdx = segEndIdx
-			}
+			// Named catch-all may be followed by a static suffix
+			// (e.g. /files/{path:*}/edit). Bare /* still ends the pattern
+			// (enforced in patNextSegment). Use the segment end so trailing
+			// static edges are attached as children of the catch-all node.
+			segStartIdx = segEndIdx
 			if segStartIdx < 0 {
 				segStartIdx = len(search)
 			}
@@ -501,9 +501,46 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
 
 		default:
-			// catch-all nodes
-			rctx.routeParams.Values = append(rctx.routeParams.Values, search)
+			// catch-all nodes: either consume the remainder (leaf /* or
+			// {name:*}), or leave a suffix for children when the pattern is
+			// mid-route, e.g. /files/{path:*}/edit.
 			xn = nds[0]
+			prevlen := len(rctx.routeParams.Values)
+
+			hasChild := false
+			for _, kids := range xn.children {
+				if len(kids) > 0 {
+					hasChild = true
+					break
+				}
+			}
+
+			if hasChild {
+				// Greedy: try longest catch-all value first so
+				// /files/a/b/edit binds path=a/b with suffix /edit.
+				for i := len(search); i >= 0; i-- {
+					rctx.routeParams.Values = append(rctx.routeParams.Values[:prevlen], search[:i])
+					fin := xn.findRoute(rctx, method, search[i:])
+					if fin != nil {
+						return fin
+					}
+				}
+				// Empty catch-all with a URL that has no extra slash before
+				// the suffix, e.g. pattern /files/{path:*}/upload and path
+				// /files/upload (path=""): remaining is "upload" but the
+				// static child is registered as "/upload".
+				if search != "" && search[0] != '/' {
+					rctx.routeParams.Values = append(rctx.routeParams.Values[:prevlen], "")
+					fin := xn.findRoute(rctx, method, "/"+search)
+					if fin != nil {
+						return fin
+					}
+				}
+				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+			}
+
+			// Leaf catch-all (or no child matched): take the entire remainder.
+			rctx.routeParams.Values = append(rctx.routeParams.Values, search)
 			xsearch = ""
 		}
 
@@ -738,13 +775,11 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 
 		key, rexpat, isRegexp := strings.Cut(key, ":")
 		if isRegexp {
-			// Named catch-all: {path:*} matches the remainder of the URL path
-			// (including slashes) and records it under URLParam "path".
-			// Like "*", it must be the final segment in the pattern.
+			// Named catch-all: {path:*} matches zero or more path segments
+			// (including slashes) and records them under URLParam key.
+			// May be followed by a static suffix, e.g. /files/{path:*}/edit.
+			// Bare /* remains final-only (see below).
 			if rexpat == "*" {
-				if pe < len(pattern) {
-					panic("chi: named catch-all '{param:*}' must be the last segment in a route")
-				}
 				if key == "" {
 					panic("chi: named catch-all requires a non-empty param name, e.g. '{path:*}'")
 				}
