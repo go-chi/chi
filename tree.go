@@ -7,6 +7,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"slices"
 	"sort"
@@ -629,8 +630,9 @@ func (n *node) routes() []Route {
 	rts := []Route{}
 
 	n.walk(func(eps endpoints, subroutes Routes) bool {
-		if eps[mSTUB] != nil && eps[mSTUB].handler != nil && subroutes == nil {
-			return false
+		var stubHandler http.Handler
+		if eps[mSTUB] != nil {
+			stubHandler = eps[mSTUB].handler
 		}
 
 		// Group methodHandlers by unique patterns
@@ -650,12 +652,13 @@ func (n *node) routes() []Route {
 
 		for p, mh := range pats {
 			hs := make(map[string]http.Handler)
+
 			if mh[mALL] != nil && mh[mALL].handler != nil {
 				hs["*"] = mh[mALL].handler
 			}
 
 			for mt, h := range mh {
-				if h.handler == nil {
+				if h.handler == nil || sameHandler(h.handler, stubHandler) {
 					continue
 				}
 				if m, ok := reverseMethodMap[mt]; ok {
@@ -671,6 +674,28 @@ func (n *node) routes() []Route {
 	})
 
 	return rts
+}
+
+func sameHandler(a, b http.Handler) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+	if av.Type() != bv.Type() {
+		return false
+	}
+
+	switch av.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+		return av.Pointer() == bv.Pointer()
+	default:
+		if av.Type().Comparable() {
+			return a == b
+		}
+		return false
+	}
 }
 
 func (n *node) walk(fn func(eps endpoints, subroutes Routes) bool) bool {
@@ -848,16 +873,16 @@ func walk(r Routes, walkFn WalkFunc, parentRoute string, parentMw ...func(http.H
 		mws := slices.Concat(parentMw, r.Middlewares())
 
 		if route.SubRoutes != nil {
+			subrouteMw := mws
 			if handler, ok := route.Handlers["*"]; ok {
 				if chain, ok := handler.(*ChainHandler); ok {
-					mws = append(mws, chain.Middlewares...)
+					subrouteMw = append(subrouteMw, chain.Middlewares...)
 				}
 			}
 
-			if err := walk(route.SubRoutes, walkFn, parentRoute+route.Pattern, mws...); err != nil {
+			if err := walk(route.SubRoutes, walkFn, parentRoute+route.Pattern, subrouteMw...); err != nil {
 				return err
 			}
-			continue
 		}
 
 		for method, handler := range route.Handlers {

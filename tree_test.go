@@ -522,6 +522,32 @@ func TestWalker(t *testing.T) {
 	}
 }
 
+func TestWalkRouteWithHandlerAndSubrouter(t *testing.T) {
+	r := NewRouter()
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	r.Route("/foo", func(r Router) {
+		r.Route("/bar", func(r Router) {
+			r.Get("/{id}", handler)
+		})
+		r.Get("/bar", handler)
+	})
+
+	routes := map[string]bool{}
+	if err := Walk(r, func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		routes[method+" "+route] = true
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, route := range []string{"GET /foo/bar", "GET /foo/bar/{id}"} {
+		if !routes[route] {
+			t.Fatalf("expected Walk to include %s, got %v", route, routes)
+		}
+	}
+}
+
 func TestWalkInlineMiddlewaresAcrossSubrouter(t *testing.T) {
 	mw := func(next http.Handler) http.Handler { return next }
 	handler := func(w http.ResponseWriter, r *http.Request) {}
