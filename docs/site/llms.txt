@@ -1,0 +1,9 @@
+# chi
+
+> Package chi is a small, idiomatic and composable router for building HTTP services.
+
+## Go API Reference
+
+- [github.com/go-chi/chi/v5](/chi/api/package-root.html): Package chi is a small, idiomatic and composable router for building HTTP services.
+- [middleware](/chi/api/pkg-middleware.html): github.com/go-chi/chi/v5/middleware
+- [Go API Reference](/chi/api.html): github.com/go-chi/chi/v5

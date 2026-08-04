@@ -1,0 +1,1722 @@
+{
+  "schema_version": 1,
+  "source": "sourcey-godoc",
+  "module_path": "github.com/go-chi/chi/v5",
+  "generated_at": "2026-08-04T11:10:45Z",
+  "packages": [
+    {
+      "importPath": "github.com/go-chi/chi/v5",
+      "name": "chi",
+      "synopsis": "Package chi is a small, idiomatic and composable router for building HTTP services.",
+      "doc": "Package chi is a small, idiomatic and composable router for building HTTP services.\n\nchi supports the four most recent major versions of Go.\n\nExample:\n\n\tpackage main\n\n\timport (\n\t\t\"net/http\"\n\n\t\t\"github.com/go-chi/chi/v5\"\n\t\t\"github.com/go-chi/chi/v5/middleware\"\n\t)\n\n\tfunc main() {\n\t\tr := chi.NewRouter()\n\t\tr.Use(middleware.Logger)\n\t\tr.Use(middleware.Recoverer)\n\n\t\tr.Get(\"/\", func(w http.ResponseWriter, r *http.Request) {\n\t\t\tw.Write([]byte(\"root.\"))\n\t\t})\n\n\t\thttp.ListenAndServe(\":3333\", r)\n\t}\n\nSee github.com/go-chi/chi/_examples/ for more in-depth examples.\n\nURL patterns allow for easy matching of path components in HTTP\nrequests. The matching components can then be accessed using\nchi.URLParam(). All patterns must begin with a slash.\n\nA simple named placeholder {name} matches any sequence of characters\nup to the next / or the end of the URL. Trailing slashes on paths must\nbe handled explicitly.\n\nA placeholder with a name followed by a colon allows a regular\nexpression match, for example {number:\\\\d+}. The regular expression\nsyntax is Go's normal regexp RE2 syntax, except that / will never be\nmatched. An anonymous regexp pattern is allowed, using an empty string\nbefore the colon in the placeholder, such as {:\\\\d+}\n\nThe special placeholder of asterisk matches the rest of the requested\nURL. Any trailing characters in the pattern are ignored. This is the only\nplaceholder which will match / characters.\n\nExamples:\n\n\t\"/user/{name}\" matches \"/user/jsmith\" but not \"/user/jsmith/info\" or \"/user/jsmith/\"\n\t\"/user/{name}/info\" matches \"/user/jsmith/info\"\n\t\"/page/*\" matches \"/page/intro/latest\"\n\t\"/page/{other}/latest\" also matches \"/page/intro/latest\"\n\t\"/date/{yyyy:\\\\d\\\\d\\\\d\\\\d}/{mm:\\\\d\\\\d}/{dd:\\\\d\\\\d}\" matches \"/date/2017/04/01\"",
+      "dir": ".",
+      "files": [
+        "chain.go",
+        "chi.go",
+        "context.go",
+        "mux.go",
+        "tree.go"
+      ],
+      "consts": [],
+      "vars": [
+        {
+          "name": "RouteCtxKey",
+          "doc": "",
+          "declaration": "var (\n\t// RouteCtxKey is the context.Context key to store the request context.\n\tRouteCtxKey = &contextKey{\"RouteContext\"}\n)",
+          "position": {
+            "file": "context.go",
+            "line": 39
+          }
+        }
+      ],
+      "funcs": [
+        {
+          "name": "Chain",
+          "doc": "Chain returns a Middlewares type from a slice of middleware handlers.",
+          "signature": "func Chain(middlewares ...func(http.Handler) http.Handler) Middlewares",
+          "position": {
+            "file": "chain.go",
+            "line": 6
+          },
+          "examples": []
+        },
+        {
+          "name": "NewMux",
+          "doc": "NewMux returns a newly initialized Mux object that implements the Router\ninterface.",
+          "signature": "func NewMux() *Mux",
+          "position": {
+            "file": "mux.go",
+            "line": 52
+          },
+          "examples": []
+        },
+        {
+          "name": "NewRouteContext",
+          "doc": "NewRouteContext returns a new routing Context object.",
+          "signature": "func NewRouteContext() *Context",
+          "position": {
+            "file": "context.go",
+            "line": 33
+          },
+          "examples": []
+        },
+        {
+          "name": "NewRouter",
+          "doc": "NewRouter returns a new Mux object that implements the Router interface.",
+          "signature": "func NewRouter() *Mux",
+          "position": {
+            "file": "chi.go",
+            "line": 60
+          },
+          "examples": []
+        },
+        {
+          "name": "RegisterMethod",
+          "doc": "RegisterMethod adds support for custom HTTP method handlers, available\nvia Router#Method and Router#MethodFunc",
+          "signature": "func RegisterMethod(method string)",
+          "position": {
+            "file": "tree.go",
+            "line": 69
+          },
+          "examples": []
+        },
+        {
+          "name": "RouteContext",
+          "doc": "RouteContext returns chi's routing Context object from a\nhttp.Request Context.",
+          "signature": "func RouteContext(ctx context.Context) *Context",
+          "position": {
+            "file": "context.go",
+            "line": 27
+          },
+          "examples": []
+        },
+        {
+          "name": "URLParam",
+          "doc": "URLParam returns the url parameter from a http.Request object.",
+          "signature": "func URLParam(r *http.Request, key string) string",
+          "position": {
+            "file": "context.go",
+            "line": 10
+          },
+          "examples": []
+        },
+        {
+          "name": "URLParamFromCtx",
+          "doc": "URLParamFromCtx returns the url parameter from a http.Request Context.",
+          "signature": "func URLParamFromCtx(ctx context.Context, key string) string",
+          "position": {
+            "file": "context.go",
+            "line": 18
+          },
+          "examples": []
+        },
+        {
+          "name": "Walk",
+          "doc": "Walk walks any router tree that implements Routes interface.",
+          "signature": "func Walk(r Routes, walkFn WalkFunc) error",
+          "position": {
+            "file": "tree.go",
+            "line": 842
+          },
+          "examples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "ChainHandler",
+          "doc": "ChainHandler is a http.Handler with support for handler composition and\nexecution.",
+          "declaration": "type ChainHandler struct {\n\tEndpoint http.Handler\n\n\tMiddlewares Middlewares\n\t// contains filtered or unexported fields\n}",
+          "kind": "struct",
+          "position": {
+            "file": "chain.go",
+            "line": 24
+          },
+          "fields": [
+            {
+              "name": "Endpoint",
+              "doc": "",
+              "type": "http.Handler"
+            },
+            {
+              "name": "Middlewares",
+              "doc": "",
+              "type": "Middlewares"
+            }
+          ],
+          "methods": [
+            {
+              "name": "ServeHTTP",
+              "doc": "",
+              "signature": "func  ServeHTTP(w http.ResponseWriter, r *http.Request)",
+              "position": {
+                "file": "chain.go",
+                "line": 30
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "Context",
+          "doc": "Context is the default routing context set on the root node of a\nrequest context to track route patterns, URL parameters and\nan optional routing path.",
+          "declaration": "type Context struct {\n\tRoutes Routes\n\n\t// Routing path/method override used during the route search.\n\t// See Mux#routeHTTP method.\n\tRoutePath   string\n\tRouteMethod string\n\n\t// URLParams are the stack of routeParams captured during the\n\t// routing lifecycle across a stack of sub-routers.\n\tURLParams RouteParams\n\n\t// Routing pattern stack throughout the lifecycle of the request,\n\t// across all connected routers. It is a record of all matching\n\t// patterns across a stack of sub-routers.\n\tRoutePatterns []string\n\t// contains filtered or unexported fields\n}",
+          "kind": "struct",
+          "position": {
+            "file": "context.go",
+            "line": 45
+          },
+          "fields": [
+            {
+              "name": "Routes",
+              "doc": "",
+              "type": "Routes"
+            },
+            {
+              "name": "RoutePath",
+              "doc": "Routing path/method override used during the route search.\nSee Mux#routeHTTP method.",
+              "type": "string"
+            },
+            {
+              "name": "RouteMethod",
+              "doc": "",
+              "type": "string"
+            },
+            {
+              "name": "URLParams",
+              "doc": "URLParams are the stack of routeParams captured during the\nrouting lifecycle across a stack of sub-routers.",
+              "type": "RouteParams"
+            },
+            {
+              "name": "RoutePatterns",
+              "doc": "Routing pattern stack throughout the lifecycle of the request,\nacross all connected routers. It is a record of all matching\npatterns across a stack of sub-routers.",
+              "type": "[]string"
+            }
+          ],
+          "methods": [
+            {
+              "name": "Reset",
+              "doc": "Reset a routing context to its initial state.",
+              "signature": "func  Reset()",
+              "position": {
+                "file": "context.go",
+                "line": 82
+              },
+              "examples": []
+            },
+            {
+              "name": "RoutePattern",
+              "doc": "RoutePattern builds the routing pattern string for the particular\nrequest, at the particular point during routing. This means, the value\nwill change throughout the execution of a request in a router. That is\nwhy it's advised to only use this value after calling the next handler.\n\nFor example,\n\n\tfunc Instrument(next http.Handler) http.Handler {\n\t\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n\t\t\tnext.ServeHTTP(w, r)\n\t\t\troutePattern := chi.RouteContext(r.Context()).RoutePattern()\n\t\t\tmeasure(w, r, routePattern)\n\t\t})\n\t}",
+              "signature": "func  RoutePattern() string",
+              "position": {
+                "file": "context.go",
+                "line": 123
+              },
+              "examples": []
+            },
+            {
+              "name": "URLParam",
+              "doc": "URLParam returns the corresponding URL parameter value from the request\nrouting context.",
+              "signature": "func  URLParam(key string) string",
+              "position": {
+                "file": "context.go",
+                "line": 100
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "Middlewares",
+          "doc": "Middlewares type is a slice of standard middleware handlers with methods\nto compose middleware chains and http.Handler's.",
+          "declaration": "type Middlewares []func(http.Handler) http.Handler",
+          "kind": "defined",
+          "position": {
+            "file": "chi.go",
+            "line": 138
+          },
+          "fields": [],
+          "methods": [
+            {
+              "name": "Handler",
+              "doc": "Handler builds and returns a http.Handler from the chain of middlewares,\nwith `h http.Handler` as the final handler.",
+              "signature": "func  Handler(h http.Handler) http.Handler",
+              "position": {
+                "file": "chain.go",
+                "line": 12
+              },
+              "examples": []
+            },
+            {
+              "name": "HandlerFunc",
+              "doc": "HandlerFunc builds and returns a http.Handler from the chain of middlewares,\nwith `h http.Handler` as the final handler.",
+              "signature": "func  HandlerFunc(h http.HandlerFunc) http.Handler",
+              "position": {
+                "file": "chain.go",
+                "line": 18
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "Mux",
+          "doc": "Mux is a simple HTTP route multiplexer that parses a request path,\nrecords any URL params, and executes an end handler. It implements\nthe http.Handler interface and is friendly with the standard library.\n\nMux is designed to be fast, minimal and offer a powerful API for building\nmodular and composable HTTP services with a large set of handlers. It's\nparticularly useful for writing large REST API services that break a handler\ninto many smaller parts composed of middlewares and end handlers.",
+          "declaration": "type Mux struct {\n\t// contains filtered or unexported fields\n}",
+          "kind": "struct",
+          "position": {
+            "file": "mux.go",
+            "line": 21
+          },
+          "fields": [],
+          "methods": [
+            {
+              "name": "Connect",
+              "doc": "Connect adds the route `pattern` that matches a CONNECT http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Connect(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 143
+              },
+              "examples": []
+            },
+            {
+              "name": "Delete",
+              "doc": "Delete adds the route `pattern` that matches a DELETE http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Delete(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 149
+              },
+              "examples": []
+            },
+            {
+              "name": "Find",
+              "doc": "Find searches the routing tree for the pattern that matches\nthe method/path.\n\nNote: the *Context state is updated during execution, so manage\nthe state carefully or make a NewRouteContext().",
+              "signature": "func  Find(rctx *Context, method, path string) string",
+              "position": {
+                "file": "mux.go",
+                "line": 374
+              },
+              "examples": []
+            },
+            {
+              "name": "Get",
+              "doc": "Get adds the route `pattern` that matches a GET http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Get(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 155
+              },
+              "examples": []
+            },
+            {
+              "name": "Group",
+              "doc": "Group creates a new inline-Mux with a copy of middleware stack. It's useful\nfor a group of handlers along the same routing path that use an additional\nset of middlewares. See _examples/.",
+              "signature": "func  Group(fn func(r Router)) Router",
+              "position": {
+                "file": "mux.go",
+                "line": 268
+              },
+              "examples": []
+            },
+            {
+              "name": "Handle",
+              "doc": "Handle adds the route `pattern` that matches any http method to\nexecute the `handler` http.Handler.",
+              "signature": "func  Handle(pattern string, handler http.Handler)",
+              "position": {
+                "file": "mux.go",
+                "line": 109
+              },
+              "examples": []
+            },
+            {
+              "name": "HandleFunc",
+              "doc": "HandleFunc adds the route `pattern` that matches any http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  HandleFunc(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 121
+              },
+              "examples": []
+            },
+            {
+              "name": "Head",
+              "doc": "Head adds the route `pattern` that matches a HEAD http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Head(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 161
+              },
+              "examples": []
+            },
+            {
+              "name": "Match",
+              "doc": "Match searches the routing tree for a handler that matches the method/path.\nIt's similar to routing a http request, but without executing the handler\nthereafter.\n\nNote: the *Context state is updated during execution, so manage\nthe state carefully or make a NewRouteContext().",
+              "signature": "func  Match(rctx *Context, method, path string) bool",
+              "position": {
+                "file": "mux.go",
+                "line": 365
+              },
+              "examples": []
+            },
+            {
+              "name": "Method",
+              "doc": "Method adds the route `pattern` that matches `method` http method to\nexecute the `handler` http.Handler.",
+              "signature": "func  Method(method, pattern string, handler http.Handler)",
+              "position": {
+                "file": "mux.go",
+                "line": 127
+              },
+              "examples": []
+            },
+            {
+              "name": "MethodFunc",
+              "doc": "MethodFunc adds the route `pattern` that matches `method` http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  MethodFunc(method, pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 137
+              },
+              "examples": []
+            },
+            {
+              "name": "MethodNotAllowed",
+              "doc": "MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the\nmethod is unresolved. The default handler returns a 405 with an empty body.",
+              "signature": "func  MethodNotAllowed(handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 223
+              },
+              "examples": []
+            },
+            {
+              "name": "MethodNotAllowedHandler",
+              "doc": "MethodNotAllowedHandler returns the default Mux 405 responder whenever\na method cannot be resolved for a route.",
+              "signature": "func  MethodNotAllowedHandler(methodsAllowed ...methodTyp) http.HandlerFunc",
+              "position": {
+                "file": "mux.go",
+                "line": 413
+              },
+              "examples": []
+            },
+            {
+              "name": "Middlewares",
+              "doc": "Middlewares returns a slice of middleware handler functions.",
+              "signature": "func  Middlewares() Middlewares",
+              "position": {
+                "file": "mux.go",
+                "line": 355
+              },
+              "examples": []
+            },
+            {
+              "name": "Mount",
+              "doc": "Mount attaches another http.Handler or chi Router as a subrouter along a routing\npath. It's very useful to split up a large API as many independent routers and\ncompose them as a single service using Mount. See _examples/.\n\nNote that Mount() simply sets a wildcard along the `pattern` that will continue\nrouting at the `handler`, which in most cases is another chi.Router. As a result,\nif you define two Mount() routes on the exact same pattern the mount will panic.",
+              "signature": "func  Mount(pattern string, handler http.Handler)",
+              "position": {
+                "file": "mux.go",
+                "line": 295
+              },
+              "examples": []
+            },
+            {
+              "name": "NotFound",
+              "doc": "NotFound sets a custom http.HandlerFunc for routing paths that could\nnot be found. The default 404 handler is `http.NotFound`.",
+              "signature": "func  NotFound(handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 203
+              },
+              "examples": []
+            },
+            {
+              "name": "NotFoundHandler",
+              "doc": "NotFoundHandler returns the default Mux 404 responder whenever a route\ncannot be found.",
+              "signature": "func  NotFoundHandler() http.HandlerFunc",
+              "position": {
+                "file": "mux.go",
+                "line": 404
+              },
+              "examples": []
+            },
+            {
+              "name": "Options",
+              "doc": "Options adds the route `pattern` that matches an OPTIONS http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Options(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 167
+              },
+              "examples": []
+            },
+            {
+              "name": "Patch",
+              "doc": "Patch adds the route `pattern` that matches a PATCH http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Patch(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 173
+              },
+              "examples": []
+            },
+            {
+              "name": "Post",
+              "doc": "Post adds the route `pattern` that matches a POST http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Post(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 179
+              },
+              "examples": []
+            },
+            {
+              "name": "Put",
+              "doc": "Put adds the route `pattern` that matches a PUT http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Put(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 185
+              },
+              "examples": []
+            },
+            {
+              "name": "Query",
+              "doc": "Query adds the route `pattern` that matches a QUERY http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Query(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 191
+              },
+              "examples": []
+            },
+            {
+              "name": "Route",
+              "doc": "Route creates a new Mux and mounts it along the `pattern` as a subrouter.\nEffectively, this is a short-hand call to Mount. See _examples/.",
+              "signature": "func  Route(pattern string, fn func(r Router)) Router",
+              "position": {
+                "file": "mux.go",
+                "line": 278
+              },
+              "examples": []
+            },
+            {
+              "name": "Routes",
+              "doc": "Routes returns a slice of routing information from the tree,\nuseful for traversing available routes of a router.",
+              "signature": "func  Routes() []Route",
+              "position": {
+                "file": "mux.go",
+                "line": 350
+              },
+              "examples": []
+            },
+            {
+              "name": "ServeHTTP",
+              "doc": "ServeHTTP is the single method of the http.Handler interface that makes\nMux interoperable with the standard library. It uses a sync.Pool to get and\nreuse routing contexts for each request.",
+              "signature": "func  ServeHTTP(w http.ResponseWriter, r *http.Request)",
+              "position": {
+                "file": "mux.go",
+                "line": 63
+              },
+              "examples": []
+            },
+            {
+              "name": "Trace",
+              "doc": "Trace adds the route `pattern` that matches a TRACE http method to\nexecute the `handlerFn` http.HandlerFunc.",
+              "signature": "func  Trace(pattern string, handlerFn http.HandlerFunc)",
+              "position": {
+                "file": "mux.go",
+                "line": 197
+              },
+              "examples": []
+            },
+            {
+              "name": "Use",
+              "doc": "Use appends a middleware handler to the Mux middleware stack.\n\nThe middleware stack for any Mux will execute before searching for a matching\nroute to a specific handler, which provides opportunity to respond early,\nchange the course of the request execution, or set request-scoped values for\nthe next http.Handler.",
+              "signature": "func  Use(middlewares ...func(http.Handler) http.Handler)",
+              "position": {
+                "file": "mux.go",
+                "line": 100
+              },
+              "examples": []
+            },
+            {
+              "name": "With",
+              "doc": "With adds inline middlewares for an endpoint handler.",
+              "signature": "func  With(middlewares ...func(http.Handler) http.Handler) Router",
+              "position": {
+                "file": "mux.go",
+                "line": 242
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "Route",
+          "doc": "Route describes the details of a routing handler.\nHandlers map key is an HTTP method",
+          "declaration": "type Route struct {\n\tSubRoutes Routes\n\tHandlers  map[string]http.Handler\n\tPattern   string\n}",
+          "kind": "struct",
+          "position": {
+            "file": "tree.go",
+            "line": 832
+          },
+          "fields": [
+            {
+              "name": "SubRoutes",
+              "doc": "",
+              "type": "Routes"
+            },
+            {
+              "name": "Handlers",
+              "doc": "",
+              "type": "map[string]http.Handler"
+            },
+            {
+              "name": "Pattern",
+              "doc": "",
+              "type": "string"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "RouteParams",
+          "doc": "RouteParams is a structure to track URL routing parameters efficiently.",
+          "declaration": "type RouteParams struct {\n\tKeys, Values []string\n}",
+          "kind": "struct",
+          "position": {
+            "file": "context.go",
+            "line": 147
+          },
+          "fields": [
+            {
+              "name": "Keys",
+              "doc": "",
+              "type": "[]string"
+            },
+            {
+              "name": "Values",
+              "doc": "",
+              "type": "[]string"
+            }
+          ],
+          "methods": [
+            {
+              "name": "Add",
+              "doc": "Add will append a URL parameter to the end of the route param",
+              "signature": "func  Add(key, value string)",
+              "position": {
+                "file": "context.go",
+                "line": 152
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "Router",
+          "doc": "Router consisting of the core routing methods used by chi's Mux,\nusing only the standard net/http.",
+          "declaration": "type Router interface {\n\thttp.Handler\n\tRoutes\n\n\t// Use appends one or more middlewares onto the Router stack.\n\tUse(middlewares ...func(http.Handler) http.Handler)\n\n\t// With adds inline middlewares for an endpoint handler.\n\tWith(middlewares ...func(http.Handler) http.Handler) Router\n\n\t// Group adds a new inline-Router along the current routing\n\t// path, with a fresh middleware stack for the inline-Router.\n\tGroup(fn func(r Router)) Router\n\n\t// Route mounts a sub-Router along a `pattern` string.\n\tRoute(pattern string, fn func(r Router)) Router\n\n\t// Mount attaches another http.Handler along ./pattern/*\n\tMount(pattern string, h http.Handler)\n\n\t// Handle and HandleFunc adds routes for `pattern` that matches\n\t// all HTTP methods.\n\tHandle(pattern string, h http.Handler)\n\tHandleFunc(pattern string, h http.HandlerFunc)\n\n\t// Method and MethodFunc adds routes for `pattern` that matches\n\t// the `method` HTTP method.\n\tMethod(method, pattern string, h http.Handler)\n\tMethodFunc(method, pattern string, h http.HandlerFunc)\n\n\t// HTTP-method routing along `pattern`\n\tConnect(pattern string, h http.HandlerFunc)\n\tDelete(pattern string, h http.HandlerFunc)\n\tGet(pattern string, h http.HandlerFunc)\n\tHead(pattern string, h http.HandlerFunc)\n\tOptions(pattern string, h http.HandlerFunc)\n\tPatch(pattern string, h http.HandlerFunc)\n\tPost(pattern string, h http.HandlerFunc)\n\tPut(pattern string, h http.HandlerFunc)\n\tQuery(pattern string, h http.HandlerFunc)\n\tTrace(pattern string, h http.HandlerFunc)\n\n\t// NotFound defines a handler to respond whenever a route could\n\t// not be found.\n\tNotFound(h http.HandlerFunc)\n\n\t// MethodNotAllowed defines a handler to respond whenever a method is\n\t// not allowed.\n\tMethodNotAllowed(h http.HandlerFunc)\n}",
+          "kind": "interface",
+          "position": {
+            "file": "chi.go",
+            "line": 66
+          },
+          "fields": [
+            {
+              "name": "http.Handler",
+              "doc": "",
+              "type": "http.Handler",
+              "embedded": true
+            },
+            {
+              "name": "Routes",
+              "doc": "",
+              "type": "Routes",
+              "embedded": true
+            },
+            {
+              "name": "Use",
+              "doc": "Use appends one or more middlewares onto the Router stack.",
+              "type": "func(middlewares ...func(http.Handler) http.Handler)"
+            },
+            {
+              "name": "With",
+              "doc": "With adds inline middlewares for an endpoint handler.",
+              "type": "func(middlewares ...func(http.Handler) http.Handler) Router"
+            },
+            {
+              "name": "Group",
+              "doc": "Group adds a new inline-Router along the current routing\npath, with a fresh middleware stack for the inline-Router.",
+              "type": "func(fn func(r Router)) Router"
+            },
+            {
+              "name": "Route",
+              "doc": "Route mounts a sub-Router along a `pattern` string.",
+              "type": "func(pattern string, fn func(r Router)) Router"
+            },
+            {
+              "name": "Mount",
+              "doc": "Mount attaches another http.Handler along ./pattern/*",
+              "type": "func(pattern string, h http.Handler)"
+            },
+            {
+              "name": "Handle",
+              "doc": "Handle and HandleFunc adds routes for `pattern` that matches\nall HTTP methods.",
+              "type": "func(pattern string, h http.Handler)"
+            },
+            {
+              "name": "HandleFunc",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Method",
+              "doc": "Method and MethodFunc adds routes for `pattern` that matches\nthe `method` HTTP method.",
+              "type": "func(method, pattern string, h http.Handler)"
+            },
+            {
+              "name": "MethodFunc",
+              "doc": "",
+              "type": "func(method, pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Connect",
+              "doc": "HTTP-method routing along `pattern`",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Delete",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Get",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Head",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Options",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Patch",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Post",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Put",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Query",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "Trace",
+              "doc": "",
+              "type": "func(pattern string, h http.HandlerFunc)"
+            },
+            {
+              "name": "NotFound",
+              "doc": "NotFound defines a handler to respond whenever a route could\nnot be found.",
+              "type": "func(h http.HandlerFunc)"
+            },
+            {
+              "name": "MethodNotAllowed",
+              "doc": "MethodNotAllowed defines a handler to respond whenever a method is\nnot allowed.",
+              "type": "func(h http.HandlerFunc)"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "Routes",
+          "doc": "Routes interface adds two methods for router traversal, which is also\nused by the `docgen` subpackage to generation documentation for Routers.",
+          "declaration": "type Routes interface {\n\t// Routes returns the routing tree in an easily traversable structure.\n\tRoutes() []Route\n\n\t// Middlewares returns the list of middlewares in use by the router.\n\tMiddlewares() Middlewares\n\n\t// Match searches the routing tree for a handler that matches\n\t// the method/path - similar to routing a http request, but without\n\t// executing the handler thereafter.\n\tMatch(rctx *Context, method, path string) bool\n\n\t// Find searches the routing tree for the pattern that matches\n\t// the method/path.\n\tFind(rctx *Context, method, path string) string\n}",
+          "kind": "interface",
+          "position": {
+            "file": "chi.go",
+            "line": 119
+          },
+          "fields": [
+            {
+              "name": "Routes",
+              "doc": "Routes returns the routing tree in an easily traversable structure.",
+              "type": "func() []Route"
+            },
+            {
+              "name": "Middlewares",
+              "doc": "Middlewares returns the list of middlewares in use by the router.",
+              "type": "func() Middlewares"
+            },
+            {
+              "name": "Match",
+              "doc": "Match searches the routing tree for a handler that matches\nthe method/path - similar to routing a http request, but without\nexecuting the handler thereafter.",
+              "type": "func(rctx *Context, method, path string) bool"
+            },
+            {
+              "name": "Find",
+              "doc": "Find searches the routing tree for the pattern that matches\nthe method/path.",
+              "type": "func(rctx *Context, method, path string) string"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "WalkFunc",
+          "doc": "WalkFunc is the type of the function called for each method and route visited by Walk.",
+          "declaration": "type WalkFunc func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error",
+          "kind": "defined",
+          "position": {
+            "file": "tree.go",
+            "line": 839
+          },
+          "fields": [],
+          "methods": [],
+          "examples": []
+        }
+      ],
+      "examples": []
+    },
+    {
+      "importPath": "github.com/go-chi/chi/v5/middleware",
+      "name": "middleware",
+      "synopsis": "",
+      "doc": "",
+      "dir": "middleware",
+      "files": [
+        "middleware/basic_auth.go",
+        "middleware/clean_path.go",
+        "middleware/client_ip.go",
+        "middleware/compress.go",
+        "middleware/content_charset.go",
+        "middleware/content_encoding.go",
+        "middleware/content_type.go",
+        "middleware/get_head.go",
+        "middleware/heartbeat.go",
+        "middleware/logger.go",
+        "middleware/maybe.go",
+        "middleware/middleware.go",
+        "middleware/nocache.go",
+        "middleware/page_route.go",
+        "middleware/path_rewrite.go",
+        "middleware/profiler.go",
+        "middleware/realip.go",
+        "middleware/recoverer.go",
+        "middleware/request_id.go",
+        "middleware/request_size.go",
+        "middleware/route_headers.go",
+        "middleware/strip.go",
+        "middleware/sunset.go",
+        "middleware/supress_notfound.go",
+        "middleware/terminal.go",
+        "middleware/throttle.go",
+        "middleware/timeout.go",
+        "middleware/url_format.go",
+        "middleware/value.go",
+        "middleware/wrap_writer.go"
+      ],
+      "consts": [
+        {
+          "name": "RequestIDKey",
+          "doc": "RequestIDKey is the key that holds the unique request ID in a request context.",
+          "declaration": "const RequestIDKey ctxKeyRequestID = 0",
+          "position": {
+            "file": "middleware/request_id.go",
+            "line": 21
+          }
+        }
+      ],
+      "vars": [
+        {
+          "name": "LogEntryCtxKey",
+          "doc": "",
+          "declaration": "var (\n\t// LogEntryCtxKey is the context.Context key to store the request log entry.\n\tLogEntryCtxKey = &contextKey{\"LogEntry\"}\n\n\t// DefaultLogger is called by the Logger middleware handler to log each request.\n\t// Its made a package-level variable so that it can be reconfigured for custom\n\t// logging configurations.\n\tDefaultLogger func(next http.Handler) http.Handler\n)",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 15
+          }
+        },
+        {
+          "name": "DefaultLogger",
+          "doc": "",
+          "declaration": "var (\n\t// LogEntryCtxKey is the context.Context key to store the request log entry.\n\tLogEntryCtxKey = &contextKey{\"LogEntry\"}\n\n\t// DefaultLogger is called by the Logger middleware handler to log each request.\n\t// Its made a package-level variable so that it can be reconfigured for custom\n\t// logging configurations.\n\tDefaultLogger func(next http.Handler) http.Handler\n)",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 20
+          }
+        },
+        {
+          "name": "IsTTY",
+          "doc": "",
+          "declaration": "var IsTTY bool",
+          "position": {
+            "file": "middleware/terminal.go",
+            "line": 35
+          }
+        },
+        {
+          "name": "RequestIDHeader",
+          "doc": "RequestIDHeader is the name of the HTTP Header which contains the request id.\nExported so that it can be changed by developers",
+          "declaration": "var RequestIDHeader = \"X-Request-Id\"",
+          "position": {
+            "file": "middleware/request_id.go",
+            "line": 25
+          }
+        },
+        {
+          "name": "URLFormatCtxKey",
+          "doc": "",
+          "declaration": "var (\n\t// URLFormatCtxKey is the context.Context key to store the URL format data\n\t// for a request.\n\tURLFormatCtxKey = &contextKey{\"URLFormat\"}\n)",
+          "position": {
+            "file": "middleware/url_format.go",
+            "line": 14
+          }
+        }
+      ],
+      "funcs": [
+        {
+          "name": "AllowContentEncoding",
+          "doc": "AllowContentEncoding enforces a whitelist of request Content-Encoding otherwise responds\nwith a 415 Unsupported Media Type status.",
+          "signature": "func AllowContentEncoding(contentEncoding ...string) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/content_encoding.go",
+            "line": 10
+          },
+          "examples": []
+        },
+        {
+          "name": "AllowContentType",
+          "doc": "AllowContentType enforces a whitelist of request Content-Types otherwise responds\nwith a 415 Unsupported Media Type status.",
+          "signature": "func AllowContentType(contentTypes ...string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/content_type.go",
+            "line": 20
+          },
+          "examples": []
+        },
+        {
+          "name": "BasicAuth",
+          "doc": "BasicAuth implements a simple middleware handler for adding basic http auth to a route.",
+          "signature": "func BasicAuth(realm string, creds map[string]string) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/basic_auth.go",
+            "line": 10
+          },
+          "examples": []
+        },
+        {
+          "name": "CleanPath",
+          "doc": "CleanPath middleware will clean out double slash mistakes from a user's request path.\nFor example, if a user requests /users//1 or //users////1 will both be treated as: /users/1",
+          "signature": "func CleanPath(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/clean_path.go",
+            "line": 12
+          },
+          "examples": []
+        },
+        {
+          "name": "ClientIPFromHeader",
+          "doc": "ClientIPFromHeader stores the client IP from a single-IP header set by\nyour reverse proxy. Read it with [GetClientIP].\n\nOnly safe with headers your proxy unconditionally OVERWRITES on every\nrequest, e.g.:\n\n  - X-Real-IP        — Nginx with ngx_http_realip_module\n  - X-Client-IP      — Apache with mod_remoteip\n  - CF-Connecting-IP — Cloudflare\n\nTrue-Client-IP, X-Azure-ClientIP, and Fastly-Client-IP look similar but\npass through from the client by default in those products; don't use them\nunless your edge strips the inbound value.\n\nIf the header reaches us with multiple values (misconfigured proxy that\nappends, or a downstream proxy not stripping a client-supplied value),\nthe LAST value wins — that's the one set by the hop closest to us, and\ntherefore the most trusted. Fail-closed if the last value doesn't parse:\nno client IP is set rather than falling back to earlier (less-trusted)\nvalues.\n\nv4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are\nstripped before storage.",
+          "signature": "func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/client_ip.go",
+            "line": 41
+          },
+          "examples": []
+        },
+        {
+          "name": "ClientIPFromRemoteAddr",
+          "doc": "ClientIPFromRemoteAddr stores the client IP read from the TCP RemoteAddr\nof the incoming request — the IP address of whoever opened the connection\nto this server. Read it with [GetClientIP].\n\nUse this when this server is directly connected to the public internet\nwith NO reverse proxy in front of it. Behind a reverse proxy, RemoteAddr\nis the proxy's IP, not the client's — use [ClientIPFromHeader] or\n[ClientIPFromXFF] instead.\n\nIPv4 clients on a dual-stack listener surface as ::ffff:a.b.c.d; they\nfold to plain v4 before storage so one logical client maps to one key.\nIPv6 zones are preserved (link-local connections may legitimately have one).",
+          "signature": "func ClientIPFromRemoteAddr(h http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/client_ip.go",
+            "line": 176
+          },
+          "examples": []
+        },
+        {
+          "name": "ClientIPFromXFF",
+          "doc": "ClientIPFromXFF stores the client IP read from the X-Forwarded-For header,\nwalking the chain right-to-left and skipping any IP that falls within one\nof the given trusted CIDR prefixes. The first IP that is not trusted is\nthe client. Read it with [GetClientIP].\n\nAn unparseable entry mid-chain aborts the walk and leaves no client IP\nset (fail-closed) — we can't safely trust anything left of garbage.\n\nUse this when you sit behind one or more reverse proxies whose IP ranges\nyou can enumerate as CIDRs:\n\n\tr.Use(middleware.ClientIPFromXFF(\n\t    \"13.32.0.0/15\",   // CloudFront IPv4\n\t    \"52.46.0.0/18\",   // CloudFront IPv4\n\t    \"2600:9000::/28\", // CloudFront IPv6\n\t))\n\nCalling with no arguments returns the rightmost XFF entry, or no IP if\nthat entry doesn't parse (fail-closed) — safe only if you have exactly\none trusted hop directly in front of this server (e.g., nginx on localhost).\n\nv4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are\nstripped before the prefix check and storage; otherwise an attacker\ncould use either notation to alias a trusted IP past the check.\n\nIf you know the number of trusted proxies but not their IPs, use\n[ClientIPFromXFFTrustedProxies] instead.\n\nPanics at startup if any prefix is invalid.",
+          "signature": "func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/client_ip.go",
+            "line": 85
+          },
+          "examples": []
+        },
+        {
+          "name": "ClientIPFromXFFTrustedProxies",
+          "doc": "ClientIPFromXFFTrustedProxies stores the client IP read from the\nX-Forwarded-For header, given the exact number of trusted reverse proxies\nbetween this server and the public internet. It returns the IP at position\nlen(xff) - numTrustedProxies in the merged X-Forwarded-For list — the IP\nadded by the outermost of your trusted proxies, the only IP in the chain\nthat none of your proxies have allowed an attacker to forge. Read it with\n[GetClientIP].\n\nUse this when:\n  - You know exactly how many proxies you sit behind, AND\n  - Their IP addresses are dynamic (autoscaling proxy pools, ephemeral\n    containers, dynamic CDN edges) so listing CIDRs with [ClientIPFromXFF]\n    is impractical.\n\nWARNING: This variant is brittle to network architecture changes. If you\nadd or remove a proxy level, numTrustedProxies silently becomes wrong and\nyou may start trusting an attacker-supplied IP. Prefer [ClientIPFromXFF]\nwith explicit trusted CIDRs whenever you can.\n\nIf the XFF chain has fewer than numTrustedProxies entries (header missing\nor architecture changed), no client IP is set and [GetClientIP] returns \"\".\n\nLike [ClientIPFromXFF], v4-mapped IPv6 folds to plain v4 and IPv6 zones\nare stripped before storage.\n\nPanics at startup if numTrustedProxies < 1.",
+          "signature": "func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/client_ip.go",
+            "line": 138
+          },
+          "examples": []
+        },
+        {
+          "name": "Compress",
+          "doc": "Compress is a middleware that compresses response\nbody of a given content types to a data format based\non Accept-Encoding request header. It uses a given\ncompression level.\n\nNOTE: make sure to set the Content-Type header on your response\notherwise this middleware will not compress the response body. For ex, in\nyour handler you should set w.Header().Set(\"Content-Type\", http.DetectContentType(yourBody))\nor set it manually.\n\nPassing a compression level of 5 is sensible value",
+          "signature": "func Compress(level int, types ...string) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/compress.go",
+            "line": 42
+          },
+          "examples": []
+        },
+        {
+          "name": "ContentCharset",
+          "doc": "ContentCharset generates a handler that writes a 415 Unsupported Media Type response if none of the charsets match.\nAn empty charset will allow requests with no Content-Type header or no specified charset.",
+          "signature": "func ContentCharset(charsets ...string) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/content_charset.go",
+            "line": 11
+          },
+          "examples": []
+        },
+        {
+          "name": "GetClientIP",
+          "doc": "GetClientIP returns the client IP as a string, as set by one of the\nClientIPFrom* middlewares. Returns \"\" if no valid IP was set.\nConvenient for logging, rate-limit keys, etc.",
+          "signature": "func GetClientIP(ctx context.Context) string",
+          "position": {
+            "file": "middleware/client_ip.go",
+            "line": 192
+          },
+          "examples": []
+        },
+        {
+          "name": "GetClientIPAddr",
+          "doc": "GetClientIPAddr returns the client IP as a [netip.Addr], as set by one of\nthe ClientIPFrom* middlewares. The returned Addr is the zero value if not\nset; use [netip.Addr.IsValid] to check. Useful when you need typed work —\nprefix containment, Is4/Is6, etc. — without re-parsing the string.",
+          "signature": "func GetClientIPAddr(ctx context.Context) netip.Addr",
+          "position": {
+            "file": "middleware/client_ip.go",
+            "line": 204
+          },
+          "examples": []
+        },
+        {
+          "name": "GetHead",
+          "doc": "GetHead automatically route undefined HEAD requests to GET handlers.",
+          "signature": "func GetHead(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/get_head.go",
+            "line": 10
+          },
+          "examples": []
+        },
+        {
+          "name": "GetLogEntry",
+          "doc": "GetLogEntry returns the in-context LogEntry for a request.",
+          "signature": "func GetLogEntry(r *http.Request) LogEntry",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 75
+          },
+          "examples": []
+        },
+        {
+          "name": "GetReqID",
+          "doc": "GetReqID returns a request ID from the given context if one is present.\nReturns the empty string if a request ID cannot be found.",
+          "signature": "func GetReqID(ctx context.Context) string",
+          "position": {
+            "file": "middleware/request_id.go",
+            "line": 83
+          },
+          "examples": []
+        },
+        {
+          "name": "Heartbeat",
+          "doc": "Heartbeat endpoint middleware useful to setting up a path like\n`/ping` that load balancers or uptime testing external services\ncan make a request before hitting any routes. It's also convenient\nto place this above ACL middlewares as well.",
+          "signature": "func Heartbeat(endpoint string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/heartbeat.go",
+            "line": 12
+          },
+          "examples": []
+        },
+        {
+          "name": "Logger",
+          "doc": "Logger is a middleware that logs the start and end of each request, along\nwith some useful data about what was requested, what the response status was,\nand how long it took to return. When standard output is a TTY, Logger will\nprint in color, otherwise it will print in black and white. Logger prints a\nrequest ID if one is provided.\n\nAlternatively, look at https://github.com/goware/httplog for a more in-depth\nhttp logger with structured logging support.\n\nIMPORTANT NOTE: Logger should go before any other middleware that may change\nthe response, such as middleware.Recoverer. Example:\n\n\tr := chi.NewRouter()\n\tr.Use(middleware.Logger)        // <--<< Logger should come before Recoverer\n\tr.Use(middleware.Recoverer)\n\tr.Get(\"/\", handler)",
+          "signature": "func Logger(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 39
+          },
+          "examples": []
+        },
+        {
+          "name": "Maybe",
+          "doc": "Maybe middleware will allow you to change the flow of the middleware stack execution depending on return\nvalue of maybeFn(request). This is useful for example if you'd like to skip a middleware handler if\na request does not satisfy the maybeFn logic.",
+          "signature": "func Maybe(mw func(http.Handler) http.Handler, maybeFn func(r *http.Request) bool) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/maybe.go",
+            "line": 8
+          },
+          "examples": []
+        },
+        {
+          "name": "New",
+          "doc": "New will create a new middleware handler from a http.Handler.",
+          "signature": "func New(h http.Handler) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/middleware.go",
+            "line": 6
+          },
+          "examples": []
+        },
+        {
+          "name": "NewCompressor",
+          "doc": "NewCompressor creates a new Compressor that will handle encoding responses.\n\nThe level should be one of the ones defined in the flate package.\nThe types are the content types that are allowed to be compressed.",
+          "signature": "func NewCompressor(level int, types ...string) *Compressor",
+          "position": {
+            "file": "middleware/compress.go",
+            "line": 65
+          },
+          "examples": []
+        },
+        {
+          "name": "NewPattern",
+          "doc": "",
+          "signature": "func NewPattern(value string) Pattern",
+          "position": {
+            "file": "middleware/route_headers.go",
+            "line": 135
+          },
+          "examples": []
+        },
+        {
+          "name": "NewWrapResponseWriter",
+          "doc": "NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to\nhook into various parts of the response process.",
+          "signature": "func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter",
+          "position": {
+            "file": "middleware/wrap_writer.go",
+            "line": 15
+          },
+          "examples": []
+        },
+        {
+          "name": "NextRequestID",
+          "doc": "NextRequestID generates the next request ID in the sequence.",
+          "signature": "func NextRequestID() uint64",
+          "position": {
+            "file": "middleware/request_id.go",
+            "line": 94
+          },
+          "examples": []
+        },
+        {
+          "name": "NoCache",
+          "doc": "NoCache is a simple piece of middleware that sets a number of HTTP headers to prevent\na router (or subrouter) from being cached by an upstream proxy and/or client.\n\nAs per http://wiki.nginx.org/HttpProxyModule - NoCache sets:\n\n\tExpires: Thu, 01 Jan 1970 00:00:00 UTC\n\tCache-Control: no-cache, private, max-age=0\n\tX-Accel-Expires: 0\n\tPragma: no-cache (for HTTP/1.0 proxies/clients)",
+          "signature": "func NoCache(h http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/nocache.go",
+            "line": 40
+          },
+          "examples": []
+        },
+        {
+          "name": "PageRoute",
+          "doc": "PageRoute is a simple middleware which allows you to route a static GET request\nat the middleware stack level.",
+          "signature": "func PageRoute(path string, handler http.Handler) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/page_route.go",
+            "line": 10
+          },
+          "examples": []
+        },
+        {
+          "name": "PathRewrite",
+          "doc": "PathRewrite is a simple middleware which allows you to rewrite the request URL path.",
+          "signature": "func PathRewrite(old, new string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/path_rewrite.go",
+            "line": 9
+          },
+          "examples": []
+        },
+        {
+          "name": "PrintPrettyStack",
+          "doc": "",
+          "signature": "func PrintPrettyStack(rvr interface{})",
+          "position": {
+            "file": "middleware/recoverer.go",
+            "line": 54
+          },
+          "examples": []
+        },
+        {
+          "name": "Profiler",
+          "doc": "Profiler is a convenient subrouter used for mounting net/http/pprof. ie.\n\n\tfunc MyService() http.Handler {\n\t\tr := chi.NewRouter()\n\t\t// ..middlewares\n\t\tr.Mount(\"/debug\", middleware.Profiler())\n\t\t// ..routes\n\t\treturn r\n\t}",
+          "signature": "func Profiler() http.Handler",
+          "position": {
+            "file": "middleware/profiler.go",
+            "line": 22
+          },
+          "examples": []
+        },
+        {
+          "name": "RealIP",
+          "doc": "RealIP is a middleware that sets a http.Request's RemoteAddr to the results\nof parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers\n(in that order).\n\nDeprecated: RealIP is vulnerable to IP spoofing — it mutates r.RemoteAddr\nto the leftmost X-Forwarded-For value, or to True-Client-IP / X-Real-IP\nwhether or not your infrastructure actually sets them. See\nGHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf.\n\nUse [ClientIPFromHeader], [ClientIPFromXFF], [ClientIPFromXFFTrustedProxies]\nor [ClientIPFromRemoteAddr] and read the IP with [GetClientIP] instead.\nThese never mutate r.RemoteAddr.",
+          "signature": "func RealIP(h http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/realip.go",
+            "line": 28
+          },
+          "examples": []
+        },
+        {
+          "name": "Recoverer",
+          "doc": "Recoverer is a middleware that recovers from panics, logs the panic (and a\nbacktrace), and returns a HTTP 500 (Internal Server Error) status if\npossible. Recoverer prints a request ID if one is provided.\n\nAlternatively, look at https://github.com/go-chi/httplog middleware pkgs.",
+          "signature": "func Recoverer(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/recoverer.go",
+            "line": 22
+          },
+          "examples": []
+        },
+        {
+          "name": "RedirectSlashes",
+          "doc": "RedirectSlashes is a middleware that will match request paths with a trailing\nslash and redirect to the same path, less the trailing slash.\n\nNOTE: RedirectSlashes middleware is *incompatible* with http.FileServer,\nsee https://github.com/go-chi/chi/issues/343",
+          "signature": "func RedirectSlashes(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/strip.go",
+            "line": 41
+          },
+          "examples": []
+        },
+        {
+          "name": "RequestID",
+          "doc": "RequestID is a middleware that injects a request ID into the context of each\nrequest. A request ID is a string of the form \"host.example.com/random-0001\",\nwhere \"random\" is a base62 random string that uniquely identifies this go\nprocess, and where the last number is an atomically incremented request\ncounter.",
+          "signature": "func RequestID(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/request_id.go",
+            "line": 67
+          },
+          "examples": []
+        },
+        {
+          "name": "RequestLogger",
+          "doc": "RequestLogger returns a logger handler using a custom LogFormatter.",
+          "signature": "func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 44
+          },
+          "examples": []
+        },
+        {
+          "name": "RequestSize",
+          "doc": "RequestSize is a middleware that will limit request sizes to a specified\nnumber of bytes. It uses MaxBytesReader to do so.",
+          "signature": "func RequestSize(bytes int64) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/request_size.go",
+            "line": 9
+          },
+          "examples": []
+        },
+        {
+          "name": "RouteHeaders",
+          "doc": "RouteHeaders is a neat little header-based router that allows you to direct\nthe flow of a request through a middleware stack based on a request header.\n\nFor example, lets say you'd like to setup multiple routers depending on the\nrequest Host header, you could then do something as so:\n\n\tr := chi.NewRouter()\n\trSubdomain := chi.NewRouter()\n\tr.Use(middleware.RouteHeaders().\n\t\tRoute(\"Host\", \"example.com\", middleware.New(r)).\n\t\tRoute(\"Host\", \"*.example.com\", middleware.New(rSubdomain)).\n\t\tHandler)\n\tr.Get(\"/\", h)\n\trSubdomain.Get(\"/\", h2)\n\nAnother example, imagine you want to setup multiple CORS handlers, where for\nyour origin servers you allow authorized requests, but for third-party public\nrequests, authorization is disabled.\n\n\tr := chi.NewRouter()\n\tr.Use(middleware.RouteHeaders().\n\t\tRoute(\"Origin\", \"https://app.skyweaver.net\", cors.Handler(cors.Options{\n\t\t\tAllowedOrigins:   []string{\"https://api.skyweaver.net\"},\n\t\t\tAllowedMethods:   []string{\"GET\", \"POST\", \"PUT\", \"DELETE\", \"OPTIONS\"},\n\t\t\tAllowedHeaders:   []string{\"Accept\", \"Authorization\", \"Content-Type\"},\n\t\t\tAllowCredentials: true, // <----------<<< allow credentials\n\t\t})).\n\t\tRoute(\"Origin\", \"*\", cors.Handler(cors.Options{\n\t\t\tAllowedOrigins:   []string{\"*\"},\n\t\t\tAllowedMethods:   []string{\"GET\", \"POST\", \"PUT\", \"DELETE\", \"OPTIONS\"},\n\t\t\tAllowedHeaders:   []string{\"Accept\", \"Content-Type\"},\n\t\t\tAllowCredentials: false, // <----------<<< do not allow credentials\n\t\t})).\n\t\tHandler)",
+          "signature": "func RouteHeaders() HeaderRouter",
+          "position": {
+            "file": "middleware/route_headers.go",
+            "line": 42
+          },
+          "examples": []
+        },
+        {
+          "name": "SetHeader",
+          "doc": "SetHeader is a convenience handler to set a response header key/value",
+          "signature": "func SetHeader(key, value string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/content_type.go",
+            "line": 9
+          },
+          "examples": []
+        },
+        {
+          "name": "StripPrefix",
+          "doc": "StripPrefix is a middleware that will strip the provided prefix from the\nrequest path before handing the request over to the next handler.",
+          "signature": "func StripPrefix(prefix string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/strip.go",
+            "line": 73
+          },
+          "examples": []
+        },
+        {
+          "name": "StripSlashes",
+          "doc": "StripSlashes is a middleware that will match request paths with a trailing\nslash, strip it from the path and continue routing through the mux, if a route\nmatches, then it will serve the handler.",
+          "signature": "func StripSlashes(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/strip.go",
+            "line": 14
+          },
+          "examples": []
+        },
+        {
+          "name": "Sunset",
+          "doc": "Sunset set Deprecation/Sunset header to response\nThis can be used to enable Sunset in a route or a route group\nFor more: https://www.rfc-editor.org/rfc/rfc8594.html",
+          "signature": "func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/sunset.go",
+            "line": 11
+          },
+          "examples": []
+        },
+        {
+          "name": "SupressNotFound",
+          "doc": "SupressNotFound will quickly respond with a 404 if the route is not found\nand will not continue to the next middleware handler.\n\nThis is handy to put at the top of your middleware stack to avoid unnecessary\nprocessing of requests that are not going to match any routes anyway. For\nexample its super annoying to see a bunch of 404's in your logs from bots.",
+          "signature": "func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/supress_notfound.go",
+            "line": 15
+          },
+          "examples": []
+        },
+        {
+          "name": "Throttle",
+          "doc": "Throttle is a middleware that limits number of currently processed requests\nat a time across all users. Note: Throttle is not a rate-limiter per user,\ninstead it just puts a ceiling on the number of current in-flight requests\nbeing processed from the point from where the Throttle middleware is mounted.",
+          "signature": "func Throttle(limit int) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/throttle.go",
+            "line": 32
+          },
+          "examples": []
+        },
+        {
+          "name": "ThrottleBacklog",
+          "doc": "ThrottleBacklog is a middleware that limits number of currently processed\nrequests at a time and provides a backlog for holding a finite number of\npending requests.",
+          "signature": "func ThrottleBacklog(limit, backlogLimit int, backlogTimeout time.Duration) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/throttle.go",
+            "line": 39
+          },
+          "examples": []
+        },
+        {
+          "name": "ThrottleWithOpts",
+          "doc": "ThrottleWithOpts is a middleware that limits number of currently processed requests using passed ThrottleOpts.",
+          "signature": "func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/throttle.go",
+            "line": 44
+          },
+          "examples": []
+        },
+        {
+          "name": "Timeout",
+          "doc": "Timeout is a middleware that cancels ctx after a given timeout and return\na 504 Gateway Timeout error to the client.\n\nIt's required that you select the ctx.Done() channel to check for the signal\nif the context has reached its deadline and return, otherwise the timeout\nsignal will be just ignored.\n\nie. a route/handler may look like:\n\n\tr.Get(\"/long\", func(w http.ResponseWriter, r *http.Request) {\n\t\tctx := r.Context()\n\t\tprocessTime := time.Duration(rand.Intn(4)+1) * time.Second\n\n\t\tselect {\n\t\tcase <-ctx.Done():\n\t\t\treturn\n\n\t\tcase <-time.After(processTime):\n\t\t\t// The above channel simulates some hard work.\n\t\t}\n\n\t\tw.Write([]byte(\"done\"))\n\t})",
+          "signature": "func Timeout(timeout time.Duration) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/timeout.go",
+            "line": 32
+          },
+          "examples": []
+        },
+        {
+          "name": "URLFormat",
+          "doc": "URLFormat is a middleware that parses the url extension from a request path and stores it\non the context as a string under the key `middleware.URLFormatCtxKey`. The middleware will\ntrim the suffix from the routing path and continue routing.\n\nRouters should not include a url parameter for the suffix when using this middleware.\n\nSample usage for url paths `/articles/1`, `/articles/1.json` and `/articles/1.xml`:\n\n\tfunc routes() http.Handler {\n\t\tr := chi.NewRouter()\n\t\tr.Use(middleware.URLFormat)\n\n\t\tr.Get(\"/articles/{id}\", ListArticles)\n\n\t\treturn r\n\t}\n\n\tfunc ListArticles(w http.ResponseWriter, r *http.Request) {\n\t\turlFormat, _ := r.Context().Value(middleware.URLFormatCtxKey).(string)\n\n\t\tswitch urlFormat {\n\t\tcase \"json\":\n\t\t\trender.JSON(w, r, articles)\n\t\tcase \"xml:\"\n\t\t\trender.XML(w, r, articles)\n\t\tdefault:\n\t\t\trender.JSON(w, r, articles)\n\t\t}\n\t}",
+          "signature": "func URLFormat(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/url_format.go",
+            "line": 46
+          },
+          "examples": []
+        },
+        {
+          "name": "WithLogEntry",
+          "doc": "WithLogEntry sets the in-context LogEntry for a request.",
+          "signature": "func WithLogEntry(r *http.Request, entry LogEntry) *http.Request",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 81
+          },
+          "examples": []
+        },
+        {
+          "name": "WithValue",
+          "doc": "WithValue is a middleware that sets a given key/value in a context chain.",
+          "signature": "func WithValue(key, val interface{}) func(next http.Handler) http.Handler",
+          "position": {
+            "file": "middleware/value.go",
+            "line": 9
+          },
+          "examples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "Compressor",
+          "doc": "Compressor represents a set of encoding configurations.",
+          "declaration": "type Compressor struct {\n\t// contains filtered or unexported fields\n}",
+          "kind": "struct",
+          "position": {
+            "file": "middleware/compress.go",
+            "line": 48
+          },
+          "fields": [],
+          "methods": [
+            {
+              "name": "Handler",
+              "doc": "Handler returns a new middleware that will compress the response based on the\ncurrent Compressor.",
+              "signature": "func  Handler(next http.Handler) http.Handler",
+              "position": {
+                "file": "middleware/compress.go",
+                "line": 189
+              },
+              "examples": []
+            },
+            {
+              "name": "SetEncoder",
+              "doc": "SetEncoder can be used to set the implementation of a compression algorithm.\n\nThe encoding should be a standardised identifier. See:\nhttps://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding\n\nFor example, add the Brotli algorithm:\n\n\timport brotli_enc \"gopkg.in/kothar/brotli-go.v0/enc\"\n\n\tcompressor := middleware.NewCompressor(5, \"text/html\")\n\tcompressor.SetEncoder(\"br\", func(w io.Writer, level int) io.Writer {\n\t\tparams := brotli_enc.NewBrotliParams()\n\t\tparams.SetQuality(level)\n\t\treturn brotli_enc.NewBrotliWriter(params, w)\n\t})",
+              "signature": "func  SetEncoder(encoding string, fn EncoderFunc)",
+              "position": {
+                "file": "middleware/compress.go",
+                "line": 149
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "DefaultLogFormatter",
+          "doc": "DefaultLogFormatter is a simple logger that implements a LogFormatter.",
+          "declaration": "type DefaultLogFormatter struct {\n\tLogger  LoggerInterface\n\tNoColor bool\n}",
+          "kind": "struct",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 92
+          },
+          "fields": [
+            {
+              "name": "Logger",
+              "doc": "",
+              "type": "LoggerInterface"
+            },
+            {
+              "name": "NoColor",
+              "doc": "",
+              "type": "bool"
+            }
+          ],
+          "methods": [
+            {
+              "name": "NewLogEntry",
+              "doc": "NewLogEntry creates a new LogEntry for the request.",
+              "signature": "func  NewLogEntry(r *http.Request) LogEntry",
+              "position": {
+                "file": "middleware/logger.go",
+                "line": 98
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "EncoderFunc",
+          "doc": "An EncoderFunc is a function that wraps the provided io.Writer with a\nstreaming compression algorithm and returns it.\n\nIn case of failure, the function should return nil.",
+          "declaration": "type EncoderFunc func(w io.Writer, level int) io.Writer",
+          "kind": "defined",
+          "position": {
+            "file": "middleware/compress.go",
+            "line": 255
+          },
+          "fields": [],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "HeaderRoute",
+          "doc": "",
+          "declaration": "type HeaderRoute struct {\n\tMiddleware func(next http.Handler) http.Handler\n\tMatchOne   Pattern\n\tMatchAny   []Pattern\n}",
+          "kind": "struct",
+          "position": {
+            "file": "middleware/route_headers.go",
+            "line": 110
+          },
+          "fields": [
+            {
+              "name": "Middleware",
+              "doc": "",
+              "type": "func(next http.Handler) http.Handler"
+            },
+            {
+              "name": "MatchOne",
+              "doc": "",
+              "type": "Pattern"
+            },
+            {
+              "name": "MatchAny",
+              "doc": "",
+              "type": "[]Pattern"
+            }
+          ],
+          "methods": [
+            {
+              "name": "IsMatch",
+              "doc": "",
+              "signature": "func  IsMatch(value string) bool",
+              "position": {
+                "file": "middleware/route_headers.go",
+                "line": 116
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "HeaderRouter",
+          "doc": "",
+          "declaration": "type HeaderRouter map[string][]HeaderRoute",
+          "kind": "defined",
+          "position": {
+            "file": "middleware/route_headers.go",
+            "line": 46
+          },
+          "fields": [],
+          "methods": [
+            {
+              "name": "Handler",
+              "doc": "",
+              "signature": "func  Handler(next http.Handler) http.Handler",
+              "position": {
+                "file": "middleware/route_headers.go",
+                "line": 77
+              },
+              "examples": []
+            },
+            {
+              "name": "Route",
+              "doc": "",
+              "signature": "func  Router) Route(header, match string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter",
+              "position": {
+                "file": "middleware/route_headers.go",
+                "line": 48
+              },
+              "examples": []
+            },
+            {
+              "name": "RouteAny",
+              "doc": "",
+              "signature": "func  RouteAny(header string, match []string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter",
+              "position": {
+                "file": "middleware/route_headers.go",
+                "line": 58
+              },
+              "examples": []
+            },
+            {
+              "name": "RouteDefault",
+              "doc": "",
+              "signature": "func  RouteDefault(handler func(next http.Handler) http.Handler) HeaderRouter",
+              "position": {
+                "file": "middleware/route_headers.go",
+                "line": 72
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "LogEntry",
+          "doc": "LogEntry records the final log when a request completes.\nSee defaultLogEntry for an example implementation.",
+          "declaration": "type LogEntry interface {\n\tWrite(status, bytes int, header http.Header, elapsed time.Duration, extra interface{})\n\tPanic(v interface{}, stack []byte)\n}",
+          "kind": "interface",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 69
+          },
+          "fields": [
+            {
+              "name": "Write",
+              "doc": "",
+              "type": "func(status, bytes int, header http.Header, elapsed time.Duration, extra interface{})"
+            },
+            {
+              "name": "Panic",
+              "doc": "",
+              "type": "func(v interface{}, stack []byte)"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "LogFormatter",
+          "doc": "LogFormatter initiates the beginning of a new LogEntry per request.\nSee DefaultLogFormatter for an example implementation.",
+          "declaration": "type LogFormatter interface {\n\tNewLogEntry(r *http.Request) LogEntry\n}",
+          "kind": "interface",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 63
+          },
+          "fields": [
+            {
+              "name": "NewLogEntry",
+              "doc": "",
+              "type": "func(r *http.Request) LogEntry"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "LoggerInterface",
+          "doc": "LoggerInterface accepts printing to stdlib logger or compatible logger.",
+          "declaration": "type LoggerInterface interface {\n\tPrint(v ...interface{})\n}",
+          "kind": "interface",
+          "position": {
+            "file": "middleware/logger.go",
+            "line": 87
+          },
+          "fields": [
+            {
+              "name": "Print",
+              "doc": "",
+              "type": "func(v ...interface{})"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "Pattern",
+          "doc": "",
+          "declaration": "type Pattern struct {\n\t// contains filtered or unexported fields\n}",
+          "kind": "struct",
+          "position": {
+            "file": "middleware/route_headers.go",
+            "line": 129
+          },
+          "fields": [],
+          "methods": [
+            {
+              "name": "Match",
+              "doc": "",
+              "signature": "func  Match(v string) bool",
+              "position": {
+                "file": "middleware/route_headers.go",
+                "line": 141
+              },
+              "examples": []
+            }
+          ],
+          "examples": []
+        },
+        {
+          "name": "ThrottleOpts",
+          "doc": "ThrottleOpts represents a set of throttling options.",
+          "declaration": "type ThrottleOpts struct {\n\tRetryAfterFn   func(ctxDone bool) time.Duration\n\tLimit          int\n\tBacklogLimit   int\n\tBacklogTimeout time.Duration\n\tStatusCode     int\n}",
+          "kind": "struct",
+          "position": {
+            "file": "middleware/throttle.go",
+            "line": 20
+          },
+          "fields": [
+            {
+              "name": "RetryAfterFn",
+              "doc": "",
+              "type": "func(ctxDone bool) time.Duration"
+            },
+            {
+              "name": "Limit",
+              "doc": "",
+              "type": "int"
+            },
+            {
+              "name": "BacklogLimit",
+              "doc": "",
+              "type": "int"
+            },
+            {
+              "name": "BacklogTimeout",
+              "doc": "",
+              "type": "time.Duration"
+            },
+            {
+              "name": "StatusCode",
+              "doc": "",
+              "type": "int"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        },
+        {
+          "name": "WrapResponseWriter",
+          "doc": "WrapResponseWriter is a proxy around an http.ResponseWriter that allows you to hook\ninto various parts of the response process.",
+          "declaration": "type WrapResponseWriter interface {\n\thttp.ResponseWriter\n\t// Status returns the HTTP status of the request, or 0 if one has not\n\t// yet been sent.\n\tStatus() int\n\t// BytesWritten returns the total number of bytes sent to the client.\n\tBytesWritten() int\n\t// Tee causes the response body to be written to the given io.Writer in\n\t// addition to proxying the writes through. Only one io.Writer can be\n\t// tee'd to at once: setting a second one will overwrite the first.\n\t// Writes will be sent to the proxy before being written to this\n\t// io.Writer. It is illegal for the tee'd writer to be modified\n\t// concurrently with writes.\n\tTee(io.Writer)\n\t// Unwrap returns the original proxied target.\n\tUnwrap() http.ResponseWriter\n\t// Discard causes all writes to the original ResponseWriter be discarded,\n\t// instead writing only to the tee'd writer if it's set.\n\t// The caller is responsible for calling WriteHeader and Write on the\n\t// original ResponseWriter once the processing is done.\n\tDiscard()\n}",
+          "kind": "interface",
+          "position": {
+            "file": "middleware/wrap_writer.go",
+            "line": 48
+          },
+          "fields": [
+            {
+              "name": "http.ResponseWriter",
+              "doc": "",
+              "type": "http.ResponseWriter",
+              "embedded": true
+            },
+            {
+              "name": "Status",
+              "doc": "Status returns the HTTP status of the request, or 0 if one has not\nyet been sent.",
+              "type": "func() int"
+            },
+            {
+              "name": "BytesWritten",
+              "doc": "BytesWritten returns the total number of bytes sent to the client.",
+              "type": "func() int"
+            },
+            {
+              "name": "Tee",
+              "doc": "Tee causes the response body to be written to the given io.Writer in\naddition to proxying the writes through. Only one io.Writer can be\ntee'd to at once: setting a second one will overwrite the first.\nWrites will be sent to the proxy before being written to this\nio.Writer. It is illegal for the tee'd writer to be modified\nconcurrently with writes.",
+              "type": "func(io.Writer)"
+            },
+            {
+              "name": "Unwrap",
+              "doc": "Unwrap returns the original proxied target.",
+              "type": "func() http.ResponseWriter"
+            },
+            {
+              "name": "Discard",
+              "doc": "Discard causes all writes to the original ResponseWriter be discarded,\ninstead writing only to the tee'd writer if it's set.\nThe caller is responsible for calling WriteHeader and Write on the\noriginal ResponseWriter once the processing is done.",
+              "type": "func()"
+            }
+          ],
+          "methods": [],
+          "examples": []
+        }
+      ],
+      "examples": []
+    }
+  ]
+}

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>github.com/go-chi/chi/v5 - chi</title><meta name="description" content="Package chi is a small, idiomatic and composable router for building HTTP services."/><meta name="generator" content="Sourcey 3.6.5"/><link rel="canonical" href="https://kais12349.github.io/chi/api/package-root.html"/><meta property="og:title" content="github.com/go-chi/chi/v5 - chi"/><meta property="og:description" content="Package chi is a small, idiomatic and composable router for building HTTP services."/><meta property="og:type" content="website"/><meta property="og:site_name" content="chi"/><meta property="og:url" content="https://kais12349.github.io/chi/api/package-root.html"/><meta property="og:image" content="https://kais12349.github.io/chi/_og/api/package-root.png"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta property="og:image:type" content="image/png"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="github.com/go-chi/chi/v5 - chi"/><meta name="twitter:description" content="Package chi is a small, idiomatic and composable router for building HTTP services."/><meta name="twitter:image" content="https://kais12349.github.io/chi/_og/api/package-root.png"/><meta name="sourcey-search" content="search-index.json"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap"/><style>
+    :root {
+      --color-primary: 99 102 241;
+      --color-primary-light: 129 140 248;
+      --color-primary-dark: 79 70 229;
+      --color-primary-ink: 79 70 229;
+      --color-background-light: 255 255 255;
+      --color-background-dark: 11 12 16;
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+      --sidebar-width: 18rem;
+      --toc-width: 19rem;
+      --content-max-width: 44rem;
+      --header-height: 7.5rem;
+    }
+    html { scroll-padding-top: var(--header-height); }
+    @media (min-width: 1024px) {
+      :root { --header-height: 4rem; }
+    }
+    body { margin: 0; background: rgb(var(--color-background-light)); }
+    .dark body { background: rgb(var(--color-background-dark)); }
+  </style><script>(function(){var t=localStorage.getItem('sourcey-theme');if(t==='dark')document.documentElement.classList.add('dark')})()</script><link rel="stylesheet" href="sourcey.css"/></head><body id="sourcey"><div id="page" class="relative antialiased text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]"><div id="navbar" class="z-30 fixed lg:sticky top-0 w-full"><div class="absolute w-full h-full flex-none border-b border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-300)/0.06)] bg-[rgb(var(--color-background-light))] dark:bg-[rgb(var(--color-background-dark))]"></div><div class="max-w-[92rem] mx-auto relative"><div class="relative"><div class="flex items-center lg:px-12 h-16 min-w-0 mx-4 lg:mx-0"><div class="h-full relative flex-1 flex items-center gap-x-4 min-w-0 border-b border-[rgb(var(--color-gray-500)/0.08)] dark:border-[rgb(var(--color-gray-300)/0.08)]"><div class="flex-1 flex items-center gap-x-4"><a href="api/index.html" class="select-none inline-block"><span class="text-sm font-semibold text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-200))]">chi</span></a></div><div class="relative hidden lg:flex items-center flex-1 z-20 gap-2"><button id="search-open" type="button" class="group flex pointer-events-auto rounded-lg w-full items-center text-sm leading-6 h-9 pl-3.5 pr-3 text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))] ring-1 ring-[rgb(var(--color-gray-400)/0.3)] hover:ring-[rgb(var(--color-gray-600)/0.3)] dark:ring-[rgb(var(--color-gray-600)/0.3)] dark:hover:ring-[rgb(var(--color-gray-500)/0.3)] justify-between truncate gap-2 min-w-[43px] cursor-pointer bg-[rgb(var(--color-background-light))] dark:bg-[rgb(var(--color-background-dark))] dark:brightness-110 dark:hover:brightness-125"><div class="flex items-center gap-2 min-w-[42px]"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="min-w-4 flex-none"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><div class="truncate min-w-0">Type <kbd>/</kbd> to search</div></div></button></div><div class="flex-1 relative hidden lg:flex items-center ml-auto justify-end space-x-4"><nav class="text-sm"><ul class="flex space-x-6 items-center"><li><a href="https://github.com/go-chi/chi" target="_blank" rel="noopener noreferrer" aria-label="Repository" class="text-[rgb(var(--color-gray-500))] hover:text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-300))]"><span class="ml-1">Repository</span></a></li><li><a href="https://pkg.go.dev/github.com/go-chi/chi/v5" target="_blank" rel="noopener noreferrer" aria-label="pkg.go.dev" class="text-[rgb(var(--color-gray-500))] hover:text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-300))]"><span class="ml-1">pkg.go.dev</span></a></li></ul></nav><button id="theme-toggle" type="button" aria-label="Toggle theme" class="p-2 flex items-center justify-center cursor-pointer text-[rgb(var(--color-gray-400))] hover:text-[rgb(var(--color-gray-600))] dark:text-[rgb(var(--color-gray-500))] dark:hover:text-[rgb(var(--color-gray-300))]"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" class="h-4 w-4 block dark:hidden"><g stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.11V2"></path><path d="M12.87 3.13L12.24 3.76"></path><path d="M14.89 8H14"></path><path d="M12.87 12.87L12.24 12.24"></path><path d="M8 14.89V14"></path><path d="M3.13 12.87L3.76 12.24"></path><path d="M1.11 8H2"></path><path d="M3.13 3.13L3.76 3.76"></path><circle cx="8" cy="8" r="3.78"></circle></g></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="h-4 w-4 hidden dark:block"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button></div><div class="flex lg:hidden items-center gap-3"><button id="search-open-mobile" type="button" aria-label="Search" class="text-[rgb(var(--color-gray-500))] w-8 h-8 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="min-w-4 flex-none"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></button><button type="button" data-drawer-slide="right" aria-label="Open menu" class="text-[rgb(var(--color-gray-500))] w-8 h-8 flex items-center justify-center hover:text-[rgb(var(--color-gray-600))]"><svg class="h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"></path></svg></button></div></div></div></div><div class="flex lg:hidden items-center h-14 px-5 text-sm overflow-hidden"><div class="flex items-center min-w-0 space-x-3 leading-6 whitespace-nowrap"><span class="font-semibold text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-200))] truncate min-w-0">chi</span></div></div></div></div><span class="fixed inset-0 bg-[rgb(var(--color-background-light))] dark:bg-[rgb(var(--color-background-dark))] -z-10 pointer-events-none"></span><div class="max-w-[92rem] mx-auto relative px-4 lg:px-8"><div id="sidebar" class="z-20 hidden lg:block fixed bottom-0 right-auto w-[18rem]" style="top: var(--header-height)"><div class="absolute inset-0 z-10 overflow-auto pr-8 pb-10" data-sourcey-sidebar-scroll="true" data-sourcey-sidebar-tab="api"><div class="relative text-sm leading-6"><div class="sticky top-0 h-8 z-10 bg-gradient-to-b from-[rgb(var(--color-background-light))] dark:from-[rgb(var(--color-background-dark))]"></div><nav id="nav" role="navigation"><div class><h5 class="nav-group-label">Go API Reference</h5><ul class="space-y-px"><li><a href="api/index.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">Overview</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Middleware</h5><ul class="space-y-px"><li><a href="api/pkg-middleware.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">middleware</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Root</h5><ul class="space-y-px"><li><a href="api/package-root.html" class="nav-link active"><span class="flex-1 break-words [word-break:break-word]">chi</span></a></li></ul></div></nav></div></div></div><dialog id="mobile-nav" class="mobile-nav-dialog"><nav class="pt-5 pb-3 px-4 flex-1 overflow-y-auto"><div class><h5 class="nav-group-label">Go API Reference</h5><ul class="space-y-px"><li><a href="api/index.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">Overview</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Middleware</h5><ul class="space-y-px"><li><a href="api/pkg-middleware.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">middleware</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Root</h5><ul class="space-y-px"><li><a href="api/package-root.html" class="nav-link active"><span class="flex-1 break-words [word-break:break-word]">chi</span></a></li></ul></div></nav><div class="px-4 py-3 border-t border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] shrink-0"><ul class="space-y-3"><li><a href="https://github.com/go-chi/chi" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 text-[rgb(var(--color-gray-600))] hover:text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-200))]"><span>Repository</span></a></li><li><a href="https://pkg.go.dev/github.com/go-chi/chi/v5" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 text-[rgb(var(--color-gray-600))] hover:text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-200))]"><span>pkg.go.dev</span></a></li></ul></div></dialog><main id="docs" class="pt-[8.5rem] lg:pt-10"><div class="flex flex-row-reverse gap-12 box-border w-full"><aside id="toc" class="hidden xl:flex self-start sticky xl:flex-col max-w-[28rem] z-[21]" style="height: calc(100vh - var(--header-height) - 2.5rem); top: calc(var(--header-height) + 2.5rem)"><div class="z-10 hidden xl:flex box-border max-h-full pl-10 w-[19rem]"><div class="text-[rgb(var(--color-gray-600))] text-sm leading-6 w-[16.5rem] overflow-y-auto space-y-2 pb-4 -mt-10 pt-10"><h5 class="font-medium text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-300))] flex items-center gap-2"><svg class="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>On this page</h5><nav><ul><li><a href="#variables" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Variables</a></li><li><a href="#functions" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Functions</a><ul class="mb-2"><li><a href="#func-Chain" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Chain</a></li><li><a href="#func-NewMux" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NewMux</a></li><li><a href="#func-NewRouteContext" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NewRouteContext</a></li><li><a href="#func-NewRouter" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NewRouter</a></li><li><a href="#func-RegisterMethod" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RegisterMethod</a></li><li><a href="#func-RouteContext" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RouteContext</a></li><li><a href="#func-URLParam" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">URLParam</a></li><li><a href="#func-URLParamFromCtx" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">URLParamFromCtx</a></li><li><a href="#func-Walk" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Walk</a></li></ul></li><li><a href="#types" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Types</a><ul class="mb-2"><li><a href="#type-ChainHandler" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ChainHandler</a></li><li><a href="#type-Context" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Context</a></li><li><a href="#type-Middlewares" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Middlewares</a></li><li><a href="#type-Mux" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Mux</a></li><li><a href="#type-Route" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Route</a></li><li><a href="#type-RouteParams" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RouteParams</a></li><li><a href="#type-Router" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Router</a></li><li><a href="#type-Routes" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Routes</a></li><li><a href="#type-WalkFunc" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">WalkFunc</a></li></ul></li></ul></nav></div></div></aside><div class="relative grow box-border flex-col w-full mx-auto px-1 min-w-0 lg:pl-[23.7rem] lg:-ml-12 xl:w-[calc(100%-28rem)]" id="content-area"><header class="relative leading-none"><div class="mt-0.5 space-y-2.5"><div class="h-5 text-[rgb(var(--color-primary-ink))] dark:text-[rgb(var(--color-primary-light))] text-sm font-semibold">Root</div><div class="flex flex-col sm:flex-row items-start sm:items-center relative gap-2 min-w-0"><h1 class="text-2xl sm:text-3xl text-[rgb(var(--color-gray-900))] tracking-tight dark:text-[rgb(var(--color-gray-200))] font-bold" style="overflow-wrap: anywhere">github.com/go-chi/chi/v5</h1></div></div><div class="page-description mt-2 text-lg prose prose-gray dark:prose-invert" style="overflow-wrap: anywhere"><span>Package chi is a small, idiomatic and composable router for building HTTP services.</span></div></header><div class="prose prose-gray dark:prose-invert relative mt-8 mb-14 max-w-none"><p class="godoc-import"><code>import "github.com/go-chi/chi/v5"</code></p>
+<div class="godoc-doc"><p>Package chi is a small, idiomatic and composable router for building HTTP services.</p>
+<p>chi supports the four most recent major versions of Go.</p>
+<p>Example:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>package main</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>import (</span></span>
+<span class="line"><span>	"net/http"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	"github.com/go-chi/chi/v5"</span></span>
+<span class="line"><span>	"github.com/go-chi/chi/v5/middleware"</span></span>
+<span class="line"><span>)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>func main() {</span></span>
+<span class="line"><span>	r := chi.NewRouter()</span></span>
+<span class="line"><span>	r.Use(middleware.Logger)</span></span>
+<span class="line"><span>	r.Use(middleware.Recoverer)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	r.Get("/", func(w http.ResponseWriter, r *http.Request) {</span></span>
+<span class="line"><span>		w.Write([]byte("root."))</span></span>
+<span class="line"><span>	})</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	http.ListenAndServe(":3333", r)</span></span>
+<span class="line"><span>}</span></span></code></pre></div>
+</div><p>See github.com/go-chi/chi/_examples/ for more in-depth examples.</p>
+<p>URL patterns allow for easy matching of path components in HTTP
+requests. The matching components can then be accessed using
+chi.URLParam(). All patterns must begin with a slash.</p>
+<p>A simple named placeholder {name} matches any sequence of characters
+up to the next / or the end of the URL. Trailing slashes on paths must
+be handled explicitly.</p>
+<p>A placeholder with a name followed by a colon allows a regular
+expression match, for example {number:\d+}. The regular expression
+syntax is Go's normal regexp RE2 syntax, except that / will never be
+matched. An anonymous regexp pattern is allowed, using an empty string
+before the colon in the placeholder, such as {:\d+}</p>
+<p>The special placeholder of asterisk matches the rest of the requested
+URL. Any trailing characters in the pattern are ignored. This is the only
+placeholder which will match / characters.</p>
+<p>Examples:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>"/user/{name}" matches "/user/jsmith" but not "/user/jsmith/info" or "/user/jsmith/"</span></span>
+<span class="line"><span>"/user/{name}/info" matches "/user/jsmith/info"</span></span>
+<span class="line"><span>"/page/*" matches "/page/intro/latest"</span></span>
+<span class="line"><span>"/page/{other}/latest" also matches "/page/intro/latest"</span></span>
+<span class="line"><span>"/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"</span></span></code></pre></div>
+</div></div>
+<nav class="godoc-toc not-prose"><h4>Index</h4><ul><li><a href="#variables">Variables</a></li><li><a href="#functions">Functions</a></li><li class="godoc-toc-sub"><a href="#func-Chain">func Chain(middlewares ...func(http.Handler) http.Handler) Middlewares</a></li><li class="godoc-toc-sub"><a href="#func-NewMux">func NewMux() *Mux</a></li><li class="godoc-toc-sub"><a href="#func-NewRouteContext">func NewRouteContext() *Context</a></li><li class="godoc-toc-sub"><a href="#func-NewRouter">func NewRouter() *Mux</a></li><li class="godoc-toc-sub"><a href="#func-RegisterMethod">func RegisterMethod(method string)</a></li><li class="godoc-toc-sub"><a href="#func-RouteContext">func RouteContext(ctx context.Context) *Context</a></li><li class="godoc-toc-sub"><a href="#func-URLParam">func URLParam(r *http.Request, key string) string</a></li><li class="godoc-toc-sub"><a href="#func-URLParamFromCtx">func URLParamFromCtx(ctx context.Context, key string) string</a></li><li class="godoc-toc-sub"><a href="#func-Walk">func Walk(r Routes, walkFn WalkFunc) error</a></li><li><a href="#types">Types</a></li><li class="godoc-toc-sub"><a href="#type-ChainHandler">type ChainHandler</a></li><li class="godoc-toc-sub"><a href="#type-Context">type Context</a></li><li class="godoc-toc-sub"><a href="#type-Middlewares">type Middlewares</a></li><li class="godoc-toc-sub"><a href="#type-Mux">type Mux</a></li><li class="godoc-toc-sub"><a href="#type-Route">type Route</a></li><li class="godoc-toc-sub"><a href="#type-RouteParams">type RouteParams</a></li><li class="godoc-toc-sub"><a href="#type-Router">type Router</a></li><li class="godoc-toc-sub"><a href="#type-Routes">type Routes</a></li><li class="godoc-toc-sub"><a href="#type-WalkFunc">type WalkFunc</a></li></ul></nav>
+<h2 id="variables">Variables</h2>
+<section class="godoc-value" id="var-RouteCtxKey"><p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L39" target="_blank" rel="noopener noreferrer">Source: context.go:39</a></p><div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">var</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> (</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// RouteCtxKey is the context.Context key to store the request context.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	RouteCtxKey</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> &#x26;</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">contextKey</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">{</span><span style="--shiki-light:#0A3069;--shiki-dark:#CE9178">"RouteContext"</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span></code></pre></div>
+</div></section>
+<h2 id="functions">Functions</h2>
+<section class="godoc-func" id="func-Chain">
+<h3 class="godoc-symbol">func Chain(middlewares ...func(http.Handler) http.Handler) Middlewares</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chain.go#L6" target="_blank" rel="noopener noreferrer">Source: chain.go:6</a></p>
+<div class="godoc-doc"><p>Chain returns a Middlewares type from a slice of middleware handlers.</p></div>
+</section>
+<section class="godoc-func" id="func-NewMux">
+<h3 class="godoc-symbol">func NewMux() *Mux</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L52" target="_blank" rel="noopener noreferrer">Source: mux.go:52</a></p>
+<div class="godoc-doc"><p>NewMux returns a newly initialized Mux object that implements the Router
+interface.</p></div>
+</section>
+<section class="godoc-func" id="func-NewRouteContext">
+<h3 class="godoc-symbol">func NewRouteContext() *Context</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L33" target="_blank" rel="noopener noreferrer">Source: context.go:33</a></p>
+<div class="godoc-doc"><p>NewRouteContext returns a new routing Context object.</p></div>
+</section>
+<section class="godoc-func" id="func-NewRouter">
+<h3 class="godoc-symbol">func NewRouter() *Mux</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chi.go#L60" target="_blank" rel="noopener noreferrer">Source: chi.go:60</a></p>
+<div class="godoc-doc"><p>NewRouter returns a new Mux object that implements the Router interface.</p></div>
+</section>
+<section class="godoc-func" id="func-RegisterMethod">
+<h3 class="godoc-symbol">func RegisterMethod(method string)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/tree.go#L69" target="_blank" rel="noopener noreferrer">Source: tree.go:69</a></p>
+<div class="godoc-doc"><p>RegisterMethod adds support for custom HTTP method handlers, available
+via Router#Method and Router#MethodFunc</p></div>
+</section>
+<section class="godoc-func" id="func-RouteContext">
+<h3 class="godoc-symbol">func RouteContext(ctx context.Context) *Context</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L27" target="_blank" rel="noopener noreferrer">Source: context.go:27</a></p>
+<div class="godoc-doc"><p>RouteContext returns chi's routing Context object from a
+http.Request Context.</p></div>
+</section>
+<section class="godoc-func" id="func-URLParam">
+<h3 class="godoc-symbol">func URLParam(r *http.Request, key string) string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L10" target="_blank" rel="noopener noreferrer">Source: context.go:10</a></p>
+<div class="godoc-doc"><p>URLParam returns the url parameter from a http.Request object.</p></div>
+</section>
+<section class="godoc-func" id="func-URLParamFromCtx">
+<h3 class="godoc-symbol">func URLParamFromCtx(ctx context.Context, key string) string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L18" target="_blank" rel="noopener noreferrer">Source: context.go:18</a></p>
+<div class="godoc-doc"><p>URLParamFromCtx returns the url parameter from a http.Request Context.</p></div>
+</section>
+<section class="godoc-func" id="func-Walk">
+<h3 class="godoc-symbol">func Walk(r Routes, walkFn WalkFunc) error</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/tree.go#L842" target="_blank" rel="noopener noreferrer">Source: tree.go:842</a></p>
+<div class="godoc-doc"><p>Walk walks any router tree that implements Routes interface.</p></div>
+</section>
+<h2 id="types">Types</h2>
+<section class="godoc-type" id="type-ChainHandler">
+<h3 class="godoc-symbol">type ChainHandler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chain.go#L24" target="_blank" rel="noopener noreferrer">Source: chain.go:24</a></p>
+<div class="godoc-doc"><p>ChainHandler is a http.Handler with support for handler composition and
+execution.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> ChainHandler</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Endpoint</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Middlewares</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Middlewares</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// contains filtered or unexported fields</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Endpoint <span class="godoc-field-type">http.Handler</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Middlewares <span class="godoc-field-type">Middlewares</span></code> </li></ul></details>
+<section class="godoc-func" id="method-ChainHandler-ServeHTTP">
+<h3 class="godoc-symbol">func  ServeHTTP(w http.ResponseWriter, r *http.Request)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chain.go#L30" target="_blank" rel="noopener noreferrer">Source: chain.go:30</a></p>
+</section>
+</section>
+<section class="godoc-type" id="type-Context">
+<h3 class="godoc-symbol">type Context</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L45" target="_blank" rel="noopener noreferrer">Source: context.go:45</a></p>
+<div class="godoc-doc"><p>Context is the default routing context set on the root node of a
+request context to track route patterns, URL parameters and
+an optional routing path.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Context</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Routes</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Routes</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Routing path/method override used during the route search.</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// See Mux#routeHTTP method.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	RoutePath</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">   string</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	RouteMethod</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// URLParams are the stack of routeParams captured during the</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// routing lifecycle across a stack of sub-routers.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	URLParams</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> RouteParams</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Routing pattern stack throughout the lifecycle of the request,</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// across all connected routers. It is a record of all matching</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// patterns across a stack of sub-routers.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	RoutePatterns</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> []</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">string</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// contains filtered or unexported fields</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Routes <span class="godoc-field-type">Routes</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">RoutePath <span class="godoc-field-type">string</span></code> <div class="godoc-field-doc"><p>Routing path/method override used during the route search.
+See Mux#routeHTTP method.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">RouteMethod <span class="godoc-field-type">string</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">URLParams <span class="godoc-field-type">RouteParams</span></code> <div class="godoc-field-doc"><p>URLParams are the stack of routeParams captured during the
+routing lifecycle across a stack of sub-routers.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">RoutePatterns <span class="godoc-field-type">[]string</span></code> <div class="godoc-field-doc"><p>Routing pattern stack throughout the lifecycle of the request,
+across all connected routers. It is a record of all matching
+patterns across a stack of sub-routers.</p></div></li></ul></details>
+<section class="godoc-func" id="method-Context-Reset">
+<h3 class="godoc-symbol">func  Reset()</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L82" target="_blank" rel="noopener noreferrer">Source: context.go:82</a></p>
+<div class="godoc-doc"><p>Reset a routing context to its initial state.</p></div>
+</section>
+<section class="godoc-func" id="method-Context-RoutePattern">
+<h3 class="godoc-symbol">func  RoutePattern() string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L123" target="_blank" rel="noopener noreferrer">Source: context.go:123</a></p>
+<div class="godoc-doc"><p>RoutePattern builds the routing pattern string for the particular
+request, at the particular point during routing. This means, the value
+will change throughout the execution of a request in a router. That is
+why it's advised to only use this value after calling the next handler.</p>
+<p>For example,</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>func Instrument(next http.Handler) http.Handler {</span></span>
+<span class="line"><span>	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {</span></span>
+<span class="line"><span>		next.ServeHTTP(w, r)</span></span>
+<span class="line"><span>		routePattern := chi.RouteContext(r.Context()).RoutePattern()</span></span>
+<span class="line"><span>		measure(w, r, routePattern)</span></span>
+<span class="line"><span>	})</span></span>
+<span class="line"><span>}</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="method-Context-URLParam">
+<h3 class="godoc-symbol">func  URLParam(key string) string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L100" target="_blank" rel="noopener noreferrer">Source: context.go:100</a></p>
+<div class="godoc-doc"><p>URLParam returns the corresponding URL parameter value from the request
+routing context.</p></div>
+</section>
+</section>
+<section class="godoc-type" id="type-Middlewares">
+<h3 class="godoc-symbol">type Middlewares</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chi.go#L138" target="_blank" rel="noopener noreferrer">Source: chi.go:138</a></p>
+<div class="godoc-doc"><p>Middlewares type is a slice of standard middleware handlers with methods
+to compose middleware chains and http.Handler's.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Middlewares</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> []</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span></span></code></pre></div>
+</div>
+<section class="godoc-func" id="method-Middlewares-Handler">
+<h3 class="godoc-symbol">func  Handler(h http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chain.go#L12" target="_blank" rel="noopener noreferrer">Source: chain.go:12</a></p>
+<div class="godoc-doc"><p>Handler builds and returns a http.Handler from the chain of middlewares,
+with <code>h http.Handler</code> as the final handler.</p></div>
+</section>
+<section class="godoc-func" id="method-Middlewares-HandlerFunc">
+<h3 class="godoc-symbol">func  HandlerFunc(h http.HandlerFunc) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chain.go#L18" target="_blank" rel="noopener noreferrer">Source: chain.go:18</a></p>
+<div class="godoc-doc"><p>HandlerFunc builds and returns a http.Handler from the chain of middlewares,
+with <code>h http.Handler</code> as the final handler.</p></div>
+</section>
+</section>
+<section class="godoc-type" id="type-Mux">
+<h3 class="godoc-symbol">type Mux</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L21" target="_blank" rel="noopener noreferrer">Source: mux.go:21</a></p>
+<div class="godoc-doc"><p>Mux is a simple HTTP route multiplexer that parses a request path,
+records any URL params, and executes an end handler. It implements
+the http.Handler interface and is friendly with the standard library.</p>
+<p>Mux is designed to be fast, minimal and offer a powerful API for building
+modular and composable HTTP services with a large set of handlers. It's
+particularly useful for writing large REST API services that break a handler
+into many smaller parts composed of middlewares and end handlers.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Mux</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// contains filtered or unexported fields</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<section class="godoc-func" id="method-Mux-Connect">
+<h3 class="godoc-symbol">func  Connect(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L143" target="_blank" rel="noopener noreferrer">Source: mux.go:143</a></p>
+<div class="godoc-doc"><p>Connect adds the route <code>pattern</code> that matches a CONNECT http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Delete">
+<h3 class="godoc-symbol">func  Delete(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L149" target="_blank" rel="noopener noreferrer">Source: mux.go:149</a></p>
+<div class="godoc-doc"><p>Delete adds the route <code>pattern</code> that matches a DELETE http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Find">
+<h3 class="godoc-symbol">func  Find(rctx *Context, method, path string) string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L374" target="_blank" rel="noopener noreferrer">Source: mux.go:374</a></p>
+<div class="godoc-doc"><p>Find searches the routing tree for the pattern that matches
+the method/path.</p>
+<p>Note: the *Context state is updated during execution, so manage
+the state carefully or make a NewRouteContext().</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Get">
+<h3 class="godoc-symbol">func  Get(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L155" target="_blank" rel="noopener noreferrer">Source: mux.go:155</a></p>
+<div class="godoc-doc"><p>Get adds the route <code>pattern</code> that matches a GET http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Group">
+<h3 class="godoc-symbol">func  Group(fn func(r Router)) Router</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L268" target="_blank" rel="noopener noreferrer">Source: mux.go:268</a></p>
+<div class="godoc-doc"><p>Group creates a new inline-Mux with a copy of middleware stack. It's useful
+for a group of handlers along the same routing path that use an additional
+set of middlewares. See _examples/.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Handle">
+<h3 class="godoc-symbol">func  Handle(pattern string, handler http.Handler)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L109" target="_blank" rel="noopener noreferrer">Source: mux.go:109</a></p>
+<div class="godoc-doc"><p>Handle adds the route <code>pattern</code> that matches any http method to
+execute the <code>handler</code> http.Handler.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-HandleFunc">
+<h3 class="godoc-symbol">func  HandleFunc(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L121" target="_blank" rel="noopener noreferrer">Source: mux.go:121</a></p>
+<div class="godoc-doc"><p>HandleFunc adds the route <code>pattern</code> that matches any http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Head">
+<h3 class="godoc-symbol">func  Head(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L161" target="_blank" rel="noopener noreferrer">Source: mux.go:161</a></p>
+<div class="godoc-doc"><p>Head adds the route <code>pattern</code> that matches a HEAD http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Match">
+<h3 class="godoc-symbol">func  Match(rctx *Context, method, path string) bool</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L365" target="_blank" rel="noopener noreferrer">Source: mux.go:365</a></p>
+<div class="godoc-doc"><p>Match searches the routing tree for a handler that matches the method/path.
+It's similar to routing a http request, but without executing the handler
+thereafter.</p>
+<p>Note: the *Context state is updated during execution, so manage
+the state carefully or make a NewRouteContext().</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Method">
+<h3 class="godoc-symbol">func  Method(method, pattern string, handler http.Handler)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L127" target="_blank" rel="noopener noreferrer">Source: mux.go:127</a></p>
+<div class="godoc-doc"><p>Method adds the route <code>pattern</code> that matches <code>method</code> http method to
+execute the <code>handler</code> http.Handler.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-MethodFunc">
+<h3 class="godoc-symbol">func  MethodFunc(method, pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L137" target="_blank" rel="noopener noreferrer">Source: mux.go:137</a></p>
+<div class="godoc-doc"><p>MethodFunc adds the route <code>pattern</code> that matches <code>method</code> http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-MethodNotAllowed">
+<h3 class="godoc-symbol">func  MethodNotAllowed(handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L223" target="_blank" rel="noopener noreferrer">Source: mux.go:223</a></p>
+<div class="godoc-doc"><p>MethodNotAllowed sets a custom http.HandlerFunc for routing paths where the
+method is unresolved. The default handler returns a 405 with an empty body.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-MethodNotAllowedHandler">
+<h3 class="godoc-symbol">func  MethodNotAllowedHandler(methodsAllowed ...methodTyp) http.HandlerFunc</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L413" target="_blank" rel="noopener noreferrer">Source: mux.go:413</a></p>
+<div class="godoc-doc"><p>MethodNotAllowedHandler returns the default Mux 405 responder whenever
+a method cannot be resolved for a route.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Middlewares">
+<h3 class="godoc-symbol">func  Middlewares() Middlewares</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L355" target="_blank" rel="noopener noreferrer">Source: mux.go:355</a></p>
+<div class="godoc-doc"><p>Middlewares returns a slice of middleware handler functions.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Mount">
+<h3 class="godoc-symbol">func  Mount(pattern string, handler http.Handler)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L295" target="_blank" rel="noopener noreferrer">Source: mux.go:295</a></p>
+<div class="godoc-doc"><p>Mount attaches another http.Handler or chi Router as a subrouter along a routing
+path. It's very useful to split up a large API as many independent routers and
+compose them as a single service using Mount. See _examples/.</p>
+<p>Note that Mount() simply sets a wildcard along the <code>pattern</code> that will continue
+routing at the <code>handler</code>, which in most cases is another chi.Router. As a result,
+if you define two Mount() routes on the exact same pattern the mount will panic.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-NotFound">
+<h3 class="godoc-symbol">func  NotFound(handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L203" target="_blank" rel="noopener noreferrer">Source: mux.go:203</a></p>
+<div class="godoc-doc"><p>NotFound sets a custom http.HandlerFunc for routing paths that could
+not be found. The default 404 handler is <code>http.NotFound</code>.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-NotFoundHandler">
+<h3 class="godoc-symbol">func  NotFoundHandler() http.HandlerFunc</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L404" target="_blank" rel="noopener noreferrer">Source: mux.go:404</a></p>
+<div class="godoc-doc"><p>NotFoundHandler returns the default Mux 404 responder whenever a route
+cannot be found.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Options">
+<h3 class="godoc-symbol">func  Options(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L167" target="_blank" rel="noopener noreferrer">Source: mux.go:167</a></p>
+<div class="godoc-doc"><p>Options adds the route <code>pattern</code> that matches an OPTIONS http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Patch">
+<h3 class="godoc-symbol">func  Patch(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L173" target="_blank" rel="noopener noreferrer">Source: mux.go:173</a></p>
+<div class="godoc-doc"><p>Patch adds the route <code>pattern</code> that matches a PATCH http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Post">
+<h3 class="godoc-symbol">func  Post(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L179" target="_blank" rel="noopener noreferrer">Source: mux.go:179</a></p>
+<div class="godoc-doc"><p>Post adds the route <code>pattern</code> that matches a POST http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Put">
+<h3 class="godoc-symbol">func  Put(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L185" target="_blank" rel="noopener noreferrer">Source: mux.go:185</a></p>
+<div class="godoc-doc"><p>Put adds the route <code>pattern</code> that matches a PUT http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Query">
+<h3 class="godoc-symbol">func  Query(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L191" target="_blank" rel="noopener noreferrer">Source: mux.go:191</a></p>
+<div class="godoc-doc"><p>Query adds the route <code>pattern</code> that matches a QUERY http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Route">
+<h3 class="godoc-symbol">func  Route(pattern string, fn func(r Router)) Router</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L278" target="_blank" rel="noopener noreferrer">Source: mux.go:278</a></p>
+<div class="godoc-doc"><p>Route creates a new Mux and mounts it along the <code>pattern</code> as a subrouter.
+Effectively, this is a short-hand call to Mount. See _examples/.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Routes">
+<h3 class="godoc-symbol">func  Routes() []Route</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L350" target="_blank" rel="noopener noreferrer">Source: mux.go:350</a></p>
+<div class="godoc-doc"><p>Routes returns a slice of routing information from the tree,
+useful for traversing available routes of a router.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-ServeHTTP">
+<h3 class="godoc-symbol">func  ServeHTTP(w http.ResponseWriter, r *http.Request)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L63" target="_blank" rel="noopener noreferrer">Source: mux.go:63</a></p>
+<div class="godoc-doc"><p>ServeHTTP is the single method of the http.Handler interface that makes
+Mux interoperable with the standard library. It uses a sync.Pool to get and
+reuse routing contexts for each request.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Trace">
+<h3 class="godoc-symbol">func  Trace(pattern string, handlerFn http.HandlerFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L197" target="_blank" rel="noopener noreferrer">Source: mux.go:197</a></p>
+<div class="godoc-doc"><p>Trace adds the route <code>pattern</code> that matches a TRACE http method to
+execute the <code>handlerFn</code> http.HandlerFunc.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-Use">
+<h3 class="godoc-symbol">func  Use(middlewares ...func(http.Handler) http.Handler)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L100" target="_blank" rel="noopener noreferrer">Source: mux.go:100</a></p>
+<div class="godoc-doc"><p>Use appends a middleware handler to the Mux middleware stack.</p>
+<p>The middleware stack for any Mux will execute before searching for a matching
+route to a specific handler, which provides opportunity to respond early,
+change the course of the request execution, or set request-scoped values for
+the next http.Handler.</p></div>
+</section>
+<section class="godoc-func" id="method-Mux-With">
+<h3 class="godoc-symbol">func  With(middlewares ...func(http.Handler) http.Handler) Router</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/mux.go#L242" target="_blank" rel="noopener noreferrer">Source: mux.go:242</a></p>
+<div class="godoc-doc"><p>With adds inline middlewares for an endpoint handler.</p></div>
+</section>
+</section>
+<section class="godoc-type" id="type-Route">
+<h3 class="godoc-symbol">type Route</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/tree.go#L832" target="_blank" rel="noopener noreferrer">Source: tree.go:832</a></p>
+<div class="godoc-doc"><p>Route describes the details of a routing handler.
+Handlers map key is an HTTP method</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Route</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	SubRoutes</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Routes</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Handlers</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">  map</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">]</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">   string</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">SubRoutes <span class="godoc-field-type">Routes</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Handlers <span class="godoc-field-type">map[string]http.Handler</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Pattern <span class="godoc-field-type">string</span></code> </li></ul></details>
+</section>
+<section class="godoc-type" id="type-RouteParams">
+<h3 class="godoc-symbol">type RouteParams</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L147" target="_blank" rel="noopener noreferrer">Source: context.go:147</a></p>
+<div class="godoc-doc"><p>RouteParams is a structure to track URL routing parameters efficiently.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> RouteParams</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Keys</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">Values</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> []</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">string</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Keys <span class="godoc-field-type">[]string</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Values <span class="godoc-field-type">[]string</span></code> </li></ul></details>
+<section class="godoc-func" id="method-RouteParams-Add">
+<h3 class="godoc-symbol">func  Add(key, value string)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/context.go#L152" target="_blank" rel="noopener noreferrer">Source: context.go:152</a></p>
+<div class="godoc-doc"><p>Add will append a URL parameter to the end of the route param</p></div>
+</section>
+</section>
+<section class="godoc-type" id="type-Router">
+<h3 class="godoc-symbol">type Router</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chi.go#L66" target="_blank" rel="noopener noreferrer">Source: chi.go:66</a></p>
+<div class="godoc-doc"><p>Router consisting of the core routing methods used by chi's Mux,
+using only the standard net/http.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Router</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">	http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span></span>
+<span class="line"><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">	Routes</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Use appends one or more middlewares onto the Router stack.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Use</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">middlewares</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> ...</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// With adds inline middlewares for an endpoint handler.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	With</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">middlewares</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> ...</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Router</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Group adds a new inline-Router along the current routing</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// path, with a fresh middleware stack for the inline-Router.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Group</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">fn</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">r</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Router</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Router</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Route mounts a sub-Router along a `pattern` string.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Route</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">fn</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">r</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Router</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Router</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Mount attaches another http.Handler along ./pattern/*</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Mount</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Handle and HandleFunc adds routes for `pattern` that matches</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// all HTTP methods.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Handle</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	HandleFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Method and MethodFunc adds routes for `pattern` that matches</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// the `method` HTTP method.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Method</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">method</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	MethodFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">method</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// HTTP-method routing along `pattern`</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Connect</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Delete</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Get</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Head</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Options</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Patch</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Post</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Put</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Query</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Trace</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// NotFound defines a handler to respond whenever a route could</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// not be found.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	NotFound</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// MethodNotAllowed defines a handler to respond whenever a method is</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// not allowed.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	MethodNotAllowed</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">h</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HandlerFunc</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Methods</summary><ul><li class="godoc-field"><code class="godoc-field-sig">http.Handler</code> </li><li class="godoc-field"><code class="godoc-field-sig">Routes</code> </li><li class="godoc-field"><code class="godoc-field-sig">Use <span class="godoc-field-type">func(middlewares ...func(http.Handler) http.Handler)</span></code> <div class="godoc-field-doc"><p>Use appends one or more middlewares onto the Router stack.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">With <span class="godoc-field-type">func(middlewares ...func(http.Handler) http.Handler) Router</span></code> <div class="godoc-field-doc"><p>With adds inline middlewares for an endpoint handler.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Group <span class="godoc-field-type">func(fn func(r Router)) Router</span></code> <div class="godoc-field-doc"><p>Group adds a new inline-Router along the current routing
+path, with a fresh middleware stack for the inline-Router.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Route <span class="godoc-field-type">func(pattern string, fn func(r Router)) Router</span></code> <div class="godoc-field-doc"><p>Route mounts a sub-Router along a <code>pattern</code> string.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Mount <span class="godoc-field-type">func(pattern string, h http.Handler)</span></code> <div class="godoc-field-doc"><p>Mount attaches another http.Handler along ./pattern/*</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Handle <span class="godoc-field-type">func(pattern string, h http.Handler)</span></code> <div class="godoc-field-doc"><p>Handle and HandleFunc adds routes for <code>pattern</code> that matches
+all HTTP methods.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">HandleFunc <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Method <span class="godoc-field-type">func(method, pattern string, h http.Handler)</span></code> <div class="godoc-field-doc"><p>Method and MethodFunc adds routes for <code>pattern</code> that matches
+the <code>method</code> HTTP method.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">MethodFunc <span class="godoc-field-type">func(method, pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Connect <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> <div class="godoc-field-doc"><p>HTTP-method routing along <code>pattern</code></p></div></li><li class="godoc-field"><code class="godoc-field-sig">Delete <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Get <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Head <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Options <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Patch <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Post <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Put <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Query <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Trace <span class="godoc-field-type">func(pattern string, h http.HandlerFunc)</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">NotFound <span class="godoc-field-type">func(h http.HandlerFunc)</span></code> <div class="godoc-field-doc"><p>NotFound defines a handler to respond whenever a route could
+not be found.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">MethodNotAllowed <span class="godoc-field-type">func(h http.HandlerFunc)</span></code> <div class="godoc-field-doc"><p>MethodNotAllowed defines a handler to respond whenever a method is
+not allowed.</p></div></li></ul></details>
+</section>
+<section class="godoc-type" id="type-Routes">
+<h3 class="godoc-symbol">type Routes</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chi.go#L119" target="_blank" rel="noopener noreferrer">Source: chi.go:119</a></p>
+<div class="godoc-doc"><p>Routes interface adds two methods for router traversal, which is also
+used by the <code>docgen</code> subpackage to generation documentation for Routers.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Routes</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Routes returns the routing tree in an easily traversable structure.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Routes</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">() []</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Route</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Middlewares returns the list of middlewares in use by the router.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Middlewares</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">() </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Middlewares</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Match searches the routing tree for a handler that matches</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// the method/path - similar to routing a http request, but without</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// executing the handler thereafter.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Match</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">rctx</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> *</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Context</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">method</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">path</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">bool</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Find searches the routing tree for the pattern that matches</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// the method/path.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Find</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">rctx</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> *</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Context</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">method</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">path</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">string</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Methods</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Routes <span class="godoc-field-type">func() []Route</span></code> <div class="godoc-field-doc"><p>Routes returns the routing tree in an easily traversable structure.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Middlewares <span class="godoc-field-type">func() Middlewares</span></code> <div class="godoc-field-doc"><p>Middlewares returns the list of middlewares in use by the router.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Match <span class="godoc-field-type">func(rctx *Context, method, path string) bool</span></code> <div class="godoc-field-doc"><p>Match searches the routing tree for a handler that matches
+the method/path - similar to routing a http request, but without
+executing the handler thereafter.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Find <span class="godoc-field-type">func(rctx *Context, method, path string) string</span></code> <div class="godoc-field-doc"><p>Find searches the routing tree for the pattern that matches
+the method/path.</p></div></li></ul></details>
+</section>
+<section class="godoc-type" id="type-WalkFunc">
+<h3 class="godoc-symbol">type WalkFunc</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/tree.go#L839" target="_blank" rel="noopener noreferrer">Source: tree.go:839</a></p>
+<div class="godoc-doc"><p>WalkFunc is the type of the function called for each method and route visited by Walk.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> WalkFunc</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">method</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">route</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">handler</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">middlewares</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> ...</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">error</span></span></code></pre></div>
+</div>
+</section></div><nav class="mt-12 flex items-stretch justify-between gap-4"><a href="api/pkg-middleware.html" class="group flex flex-col gap-1 px-4 py-3 rounded-lg border border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] hover:border-[rgb(var(--color-primary)/0.4)] dark:hover:border-[rgb(var(--color-primary-light)/0.3)] transition-colors no-underline"><span class="text-xs text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]">← Previous</span><span class="text-sm font-medium text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-300))] group-hover:text-[rgb(var(--color-primary-ink))] dark:group-hover:text-[rgb(var(--color-primary-light))] transition-colors">middleware</span></a></nav><div class="mt-16 mb-8 flex items-center justify-between border-t border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] pt-6 text-xs text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]"><a href="https://sourcey.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 hover:text-[rgb(var(--color-gray-600))] dark:hover:text-[rgb(var(--color-gray-300))] transition-colors">Built with<img src="https://sourcey.com/sourcey-logo.png" alt="Sourcey" class="h-4 w-4"/></a><div class="flex items-center gap-4"><a href="https://github.com/go-chi/chi/edit/8b258c7bb28f97a5f2a856ff7ef962578fec9215/chain.go" target="_blank" rel="noopener noreferrer" class="hover:text-[rgb(var(--color-gray-600))] dark:hover:text-[rgb(var(--color-gray-300))] transition-colors flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 mr-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"></path></svg>Edit this page</a><a href="https://github.com/go-chi/chi/blob/master/LICENSE" target="_blank" rel="noopener noreferrer" aria-label="MIT License" class="hover:text-[rgb(var(--color-gray-600))] dark:hover:text-[rgb(var(--color-gray-300))] transition-colors"><span class="ml-1">MIT License</span></a></div></div></div></div></main></div><div id="search-dialog" role="dialog" aria-label="Search"><div class="search-dialog-inner"><div class="search-input-row"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="search-input-icon"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"></path></svg><input id="search-input" type="text" placeholder="Search docs..." autocomplete="off" spellcheck="false"/></div><div id="search-results"></div><div class="search-footer"><span class="search-footer-hint"><kbd>↑↓</kbd> navigate</span><span class="search-footer-hint"><kbd>↵</kbd> select</span><span class="search-footer-hint"><kbd>esc</kbd> close</span></div></div></div></div><script src="sourcey.js" defer></script></body></html>

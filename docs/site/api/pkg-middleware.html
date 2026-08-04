@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>middleware - chi</title><meta name="description" content="github.com/go-chi/chi/v5/middleware"/><meta name="generator" content="Sourcey 3.6.5"/><link rel="canonical" href="https://kais12349.github.io/chi/api/pkg-middleware.html"/><meta property="og:title" content="middleware - chi"/><meta property="og:description" content="github.com/go-chi/chi/v5/middleware"/><meta property="og:type" content="website"/><meta property="og:site_name" content="chi"/><meta property="og:url" content="https://kais12349.github.io/chi/api/pkg-middleware.html"/><meta property="og:image" content="https://kais12349.github.io/chi/_og/api/pkg-middleware.png"/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta property="og:image:type" content="image/png"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="middleware - chi"/><meta name="twitter:description" content="github.com/go-chi/chi/v5/middleware"/><meta name="twitter:image" content="https://kais12349.github.io/chi/_og/api/pkg-middleware.png"/><meta name="sourcey-search" content="../search-index.json"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap"/><style>
+    :root {
+      --color-primary: 99 102 241;
+      --color-primary-light: 129 140 248;
+      --color-primary-dark: 79 70 229;
+      --color-primary-ink: 79 70 229;
+      --color-background-light: 255 255 255;
+      --color-background-dark: 11 12 16;
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Liberation Mono', Menlo, monospace;
+      --sidebar-width: 18rem;
+      --toc-width: 19rem;
+      --content-max-width: 44rem;
+      --header-height: 7.5rem;
+    }
+    html { scroll-padding-top: var(--header-height); }
+    @media (min-width: 1024px) {
+      :root { --header-height: 4rem; }
+    }
+    body { margin: 0; background: rgb(var(--color-background-light)); }
+    .dark body { background: rgb(var(--color-background-dark)); }
+  </style><script>(function(){var t=localStorage.getItem('sourcey-theme');if(t==='dark')document.documentElement.classList.add('dark')})()</script><link rel="stylesheet" href="../sourcey.css"/></head><body id="sourcey"><div id="page" class="relative antialiased text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]"><div id="navbar" class="z-30 fixed lg:sticky top-0 w-full"><div class="absolute w-full h-full flex-none border-b border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-300)/0.06)] bg-[rgb(var(--color-background-light))] dark:bg-[rgb(var(--color-background-dark))]"></div><div class="max-w-[92rem] mx-auto relative"><div class="relative"><div class="flex items-center lg:px-12 h-16 min-w-0 mx-4 lg:mx-0"><div class="h-full relative flex-1 flex items-center gap-x-4 min-w-0 border-b border-[rgb(var(--color-gray-500)/0.08)] dark:border-[rgb(var(--color-gray-300)/0.08)]"><div class="flex-1 flex items-center gap-x-4"><a href="../api/index.html" class="select-none inline-block"><span class="text-sm font-semibold text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-200))]">chi</span></a></div><div class="relative hidden lg:flex items-center flex-1 z-20 gap-2"><button id="search-open" type="button" class="group flex pointer-events-auto rounded-lg w-full items-center text-sm leading-6 h-9 pl-3.5 pr-3 text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))] ring-1 ring-[rgb(var(--color-gray-400)/0.3)] hover:ring-[rgb(var(--color-gray-600)/0.3)] dark:ring-[rgb(var(--color-gray-600)/0.3)] dark:hover:ring-[rgb(var(--color-gray-500)/0.3)] justify-between truncate gap-2 min-w-[43px] cursor-pointer bg-[rgb(var(--color-background-light))] dark:bg-[rgb(var(--color-background-dark))] dark:brightness-110 dark:hover:brightness-125"><div class="flex items-center gap-2 min-w-[42px]"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="min-w-4 flex-none"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg><div class="truncate min-w-0">Type <kbd>/</kbd> to search</div></div></button></div><div class="flex-1 relative hidden lg:flex items-center ml-auto justify-end space-x-4"><nav class="text-sm"><ul class="flex space-x-6 items-center"><li><a href="https://github.com/go-chi/chi" target="_blank" rel="noopener noreferrer" aria-label="Repository" class="text-[rgb(var(--color-gray-500))] hover:text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-300))]"><span class="ml-1">Repository</span></a></li><li><a href="https://pkg.go.dev/github.com/go-chi/chi/v5" target="_blank" rel="noopener noreferrer" aria-label="pkg.go.dev" class="text-[rgb(var(--color-gray-500))] hover:text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-300))]"><span class="ml-1">pkg.go.dev</span></a></li></ul></nav><button id="theme-toggle" type="button" aria-label="Toggle theme" class="p-2 flex items-center justify-center cursor-pointer text-[rgb(var(--color-gray-400))] hover:text-[rgb(var(--color-gray-600))] dark:text-[rgb(var(--color-gray-500))] dark:hover:text-[rgb(var(--color-gray-300))]"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" class="h-4 w-4 block dark:hidden"><g stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.11V2"></path><path d="M12.87 3.13L12.24 3.76"></path><path d="M14.89 8H14"></path><path d="M12.87 12.87L12.24 12.24"></path><path d="M8 14.89V14"></path><path d="M3.13 12.87L3.76 12.24"></path><path d="M1.11 8H2"></path><path d="M3.13 3.13L3.76 3.76"></path><circle cx="8" cy="8" r="3.78"></circle></g></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="h-4 w-4 hidden dark:block"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg></button></div><div class="flex lg:hidden items-center gap-3"><button id="search-open-mobile" type="button" aria-label="Search" class="text-[rgb(var(--color-gray-500))] w-8 h-8 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" class="min-w-4 flex-none"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></button><button type="button" data-drawer-slide="right" aria-label="Open menu" class="text-[rgb(var(--color-gray-500))] w-8 h-8 flex items-center justify-center hover:text-[rgb(var(--color-gray-600))]"><svg class="h-4" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"></path></svg></button></div></div></div></div><div class="flex lg:hidden items-center h-14 px-5 text-sm overflow-hidden"><div class="flex items-center min-w-0 space-x-3 leading-6 whitespace-nowrap"><span class="font-semibold text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-200))] truncate min-w-0">middleware</span></div></div></div></div><span class="fixed inset-0 bg-[rgb(var(--color-background-light))] dark:bg-[rgb(var(--color-background-dark))] -z-10 pointer-events-none"></span><div class="max-w-[92rem] mx-auto relative px-4 lg:px-8"><div id="sidebar" class="z-20 hidden lg:block fixed bottom-0 right-auto w-[18rem]" style="top: var(--header-height)"><div class="absolute inset-0 z-10 overflow-auto pr-8 pb-10" data-sourcey-sidebar-scroll="true" data-sourcey-sidebar-tab="api"><div class="relative text-sm leading-6"><div class="sticky top-0 h-8 z-10 bg-gradient-to-b from-[rgb(var(--color-background-light))] dark:from-[rgb(var(--color-background-dark))]"></div><nav id="nav" role="navigation"><div class><h5 class="nav-group-label">Go API Reference</h5><ul class="space-y-px"><li><a href="../api/index.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">Overview</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Middleware</h5><ul class="space-y-px"><li><a href="../api/pkg-middleware.html" class="nav-link active"><span class="flex-1 break-words [word-break:break-word]">middleware</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Root</h5><ul class="space-y-px"><li><a href="../api/package-root.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">chi</span></a></li></ul></div></nav></div></div></div><dialog id="mobile-nav" class="mobile-nav-dialog"><nav class="pt-5 pb-3 px-4 flex-1 overflow-y-auto"><div class><h5 class="nav-group-label">Go API Reference</h5><ul class="space-y-px"><li><a href="../api/index.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">Overview</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Middleware</h5><ul class="space-y-px"><li><a href="../api/pkg-middleware.html" class="nav-link active"><span class="flex-1 break-words [word-break:break-word]">middleware</span></a></li></ul></div><div class="mt-6 lg:mt-8"><h5 class="nav-group-label">Root</h5><ul class="space-y-px"><li><a href="../api/package-root.html" class="nav-link"><span class="flex-1 break-words [word-break:break-word]">chi</span></a></li></ul></div></nav><div class="px-4 py-3 border-t border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] shrink-0"><ul class="space-y-3"><li><a href="https://github.com/go-chi/chi" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 text-[rgb(var(--color-gray-600))] hover:text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-200))]"><span>Repository</span></a></li><li><a href="https://pkg.go.dev/github.com/go-chi/chi/v5" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 text-[rgb(var(--color-gray-600))] hover:text-[rgb(var(--color-gray-900))] dark:text-[rgb(var(--color-gray-400))] dark:hover:text-[rgb(var(--color-gray-200))]"><span>pkg.go.dev</span></a></li></ul></div></dialog><main id="docs" class="pt-[8.5rem] lg:pt-10"><div class="flex flex-row-reverse gap-12 box-border w-full"><aside id="toc" class="hidden xl:flex self-start sticky xl:flex-col max-w-[28rem] z-[21]" style="height: calc(100vh - var(--header-height) - 2.5rem); top: calc(var(--header-height) + 2.5rem)"><div class="z-10 hidden xl:flex box-border max-h-full pl-10 w-[19rem]"><div class="text-[rgb(var(--color-gray-600))] text-sm leading-6 w-[16.5rem] overflow-y-auto space-y-2 pb-4 -mt-10 pt-10"><h5 class="font-medium text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-300))] flex items-center gap-2"><svg class="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>On this page</h5><nav><ul><li><a href="#constants" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Constants</a></li><li><a href="#variables" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Variables</a></li><li><a href="#functions" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Functions</a><ul class="mb-2"><li><a href="#func-AllowContentEncoding" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">AllowContentEncoding</a></li><li><a href="#func-AllowContentType" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">AllowContentType</a></li><li><a href="#func-BasicAuth" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">BasicAuth</a></li><li><a href="#func-CleanPath" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">CleanPath</a></li><li><a href="#func-ClientIPFromHeader" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ClientIPFromHeader</a></li><li><a href="#func-ClientIPFromRemoteAddr" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ClientIPFromRemoteAddr</a></li><li><a href="#func-ClientIPFromXFF" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ClientIPFromXFF</a></li><li><a href="#func-ClientIPFromXFFTrustedProxies" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ClientIPFromXFFTrustedProxies</a></li><li><a href="#func-Compress" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Compress</a></li><li><a href="#func-ContentCharset" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ContentCharset</a></li><li><a href="#func-GetClientIP" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">GetClientIP</a></li><li><a href="#func-GetClientIPAddr" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">GetClientIPAddr</a></li><li><a href="#func-GetHead" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">GetHead</a></li><li><a href="#func-GetLogEntry" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">GetLogEntry</a></li><li><a href="#func-GetReqID" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">GetReqID</a></li><li><a href="#func-Heartbeat" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Heartbeat</a></li><li><a href="#func-Logger" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Logger</a></li><li><a href="#func-Maybe" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Maybe</a></li><li><a href="#func-New" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">New</a></li><li><a href="#func-NewCompressor" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NewCompressor</a></li><li><a href="#func-NewPattern" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NewPattern</a></li><li><a href="#func-NewWrapResponseWriter" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NewWrapResponseWriter</a></li><li><a href="#func-NextRequestID" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NextRequestID</a></li><li><a href="#func-NoCache" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">NoCache</a></li><li><a href="#func-PageRoute" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">PageRoute</a></li><li><a href="#func-PathRewrite" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">PathRewrite</a></li><li><a href="#func-PrintPrettyStack" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">PrintPrettyStack</a></li><li><a href="#func-Profiler" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Profiler</a></li><li><a href="#func-RealIP" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RealIP</a></li><li><a href="#func-Recoverer" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Recoverer</a></li><li><a href="#func-RedirectSlashes" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RedirectSlashes</a></li><li><a href="#func-RequestID" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RequestID</a></li><li><a href="#func-RequestLogger" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RequestLogger</a></li><li><a href="#func-RequestSize" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RequestSize</a></li><li><a href="#func-RouteHeaders" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">RouteHeaders</a></li><li><a href="#func-SetHeader" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">SetHeader</a></li><li><a href="#func-StripPrefix" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">StripPrefix</a></li><li><a href="#func-StripSlashes" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">StripSlashes</a></li><li><a href="#func-Sunset" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Sunset</a></li><li><a href="#func-SupressNotFound" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">SupressNotFound</a></li><li><a href="#func-Throttle" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Throttle</a></li><li><a href="#func-ThrottleBacklog" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ThrottleBacklog</a></li><li><a href="#func-ThrottleWithOpts" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ThrottleWithOpts</a></li><li><a href="#func-Timeout" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Timeout</a></li><li><a href="#func-URLFormat" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">URLFormat</a></li><li><a href="#func-WithLogEntry" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">WithLogEntry</a></li><li><a href="#func-WithValue" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">WithValue</a></li></ul></li><li><a href="#types" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors py-1 font-medium">Types</a><ul class="mb-2"><li><a href="#type-Compressor" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Compressor</a></li><li><a href="#type-DefaultLogFormatter" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">DefaultLogFormatter</a></li><li><a href="#type-EncoderFunc" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">EncoderFunc</a></li><li><a href="#type-HeaderRoute" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">HeaderRoute</a></li><li><a href="#type-HeaderRouter" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">HeaderRouter</a></li><li><a href="#type-LogEntry" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">LogEntry</a></li><li><a href="#type-LogFormatter" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">LogFormatter</a></li><li><a href="#type-LoggerInterface" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">LoggerInterface</a></li><li><a href="#type-Pattern" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">Pattern</a></li><li><a href="#type-ThrottleOpts" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">ThrottleOpts</a></li><li><a href="#type-WrapResponseWriter" class="toc-item break-words block hover:text-[rgb(var(--color-gray-900))] dark:hover:text-[rgb(var(--color-gray-300))] dark:text-[rgb(var(--color-gray-400))] transition-colors pl-3 py-1 text-[rgb(var(--color-gray-500))]">WrapResponseWriter</a></li></ul></li></ul></nav></div></div></aside><div class="relative grow box-border flex-col w-full mx-auto px-1 min-w-0 lg:pl-[23.7rem] lg:-ml-12 xl:w-[calc(100%-28rem)]" id="content-area"><header class="relative leading-none"><div class="mt-0.5 space-y-2.5"><div class="h-5 text-[rgb(var(--color-primary-ink))] dark:text-[rgb(var(--color-primary-light))] text-sm font-semibold">Middleware</div><div class="flex flex-col sm:flex-row items-start sm:items-center relative gap-2 min-w-0"><h1 class="text-2xl sm:text-3xl text-[rgb(var(--color-gray-900))] tracking-tight dark:text-[rgb(var(--color-gray-200))] font-bold" style="overflow-wrap: anywhere">middleware</h1></div></div><div class="page-description mt-2 text-lg prose prose-gray dark:prose-invert" style="overflow-wrap: anywhere"><span>github.com/go-chi/chi/v5/middleware</span></div></header><div class="prose prose-gray dark:prose-invert relative mt-8 mb-14 max-w-none"><p class="godoc-import"><code>import "github.com/go-chi/chi/v5/middleware"</code></p>
+<nav class="godoc-toc not-prose"><h4>Index</h4><ul><li><a href="#constants">Constants</a></li><li><a href="#variables">Variables</a></li><li><a href="#functions">Functions</a></li><li class="godoc-toc-sub"><a href="#func-AllowContentEncoding">func AllowContentEncoding(contentEncoding ...string) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-AllowContentType">func AllowContentType(contentTypes ...string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-BasicAuth">func BasicAuth(realm string, creds map[string]string) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-CleanPath">func CleanPath(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ClientIPFromHeader">func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ClientIPFromRemoteAddr">func ClientIPFromRemoteAddr(h http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ClientIPFromXFF">func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ClientIPFromXFFTrustedProxies">func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Compress">func Compress(level int, types ...string) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ContentCharset">func ContentCharset(charsets ...string) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-GetClientIP">func GetClientIP(ctx context.Context) string</a></li><li class="godoc-toc-sub"><a href="#func-GetClientIPAddr">func GetClientIPAddr(ctx context.Context) netip.Addr</a></li><li class="godoc-toc-sub"><a href="#func-GetHead">func GetHead(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-GetLogEntry">func GetLogEntry(r *http.Request) LogEntry</a></li><li class="godoc-toc-sub"><a href="#func-GetReqID">func GetReqID(ctx context.Context) string</a></li><li class="godoc-toc-sub"><a href="#func-Heartbeat">func Heartbeat(endpoint string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Logger">func Logger(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Maybe">func Maybe(mw func(http.Handler) http.Handler, maybeFn func(r *http.Request) bool) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-New">func New(h http.Handler) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-NewCompressor">func NewCompressor(level int, types ...string) *Compressor</a></li><li class="godoc-toc-sub"><a href="#func-NewPattern">func NewPattern(value string) Pattern</a></li><li class="godoc-toc-sub"><a href="#func-NewWrapResponseWriter">func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter</a></li><li class="godoc-toc-sub"><a href="#func-NextRequestID">func NextRequestID() uint64</a></li><li class="godoc-toc-sub"><a href="#func-NoCache">func NoCache(h http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-PageRoute">func PageRoute(path string, handler http.Handler) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-PathRewrite">func PathRewrite(old, new string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-PrintPrettyStack">func PrintPrettyStack(rvr interface{})</a></li><li class="godoc-toc-sub"><a href="#func-Profiler">func Profiler() http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-RealIP">func RealIP(h http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Recoverer">func Recoverer(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-RedirectSlashes">func RedirectSlashes(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-RequestID">func RequestID(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-RequestLogger">func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-RequestSize">func RequestSize(bytes int64) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-RouteHeaders">func RouteHeaders() HeaderRouter</a></li><li class="godoc-toc-sub"><a href="#func-SetHeader">func SetHeader(key, value string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-StripPrefix">func StripPrefix(prefix string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-StripSlashes">func StripSlashes(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Sunset">func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-SupressNotFound">func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Throttle">func Throttle(limit int) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ThrottleBacklog">func ThrottleBacklog(limit, backlogLimit int, backlogTimeout time.Duration) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-ThrottleWithOpts">func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-Timeout">func Timeout(timeout time.Duration) func(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-URLFormat">func URLFormat(next http.Handler) http.Handler</a></li><li class="godoc-toc-sub"><a href="#func-WithLogEntry">func WithLogEntry(r *http.Request, entry LogEntry) *http.Request</a></li><li class="godoc-toc-sub"><a href="#func-WithValue">func WithValue(key, val interface{}) func(next http.Handler) http.Handler</a></li><li><a href="#types">Types</a></li><li class="godoc-toc-sub"><a href="#type-Compressor">type Compressor</a></li><li class="godoc-toc-sub"><a href="#type-DefaultLogFormatter">type DefaultLogFormatter</a></li><li class="godoc-toc-sub"><a href="#type-EncoderFunc">type EncoderFunc</a></li><li class="godoc-toc-sub"><a href="#type-HeaderRoute">type HeaderRoute</a></li><li class="godoc-toc-sub"><a href="#type-HeaderRouter">type HeaderRouter</a></li><li class="godoc-toc-sub"><a href="#type-LogEntry">type LogEntry</a></li><li class="godoc-toc-sub"><a href="#type-LogFormatter">type LogFormatter</a></li><li class="godoc-toc-sub"><a href="#type-LoggerInterface">type LoggerInterface</a></li><li class="godoc-toc-sub"><a href="#type-Pattern">type Pattern</a></li><li class="godoc-toc-sub"><a href="#type-ThrottleOpts">type ThrottleOpts</a></li><li class="godoc-toc-sub"><a href="#type-WrapResponseWriter">type WrapResponseWriter</a></li></ul></nav>
+<h2 id="constants">Constants</h2>
+<section class="godoc-value" id="const-RequestIDKey"><div class="godoc-doc"><p>RequestIDKey is the key that holds the unique request ID in a request context.</p></div><p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/request_id.go#L21" target="_blank" rel="noopener noreferrer">Source: middleware/request_id.go:21</a></p><div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">const</span><span style="--shiki-light:#0550AE;--shiki-dark:#4FC1FF"> RequestIDKey</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> ctxKeyRequestID</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#0550AE;--shiki-dark:#B5CEA8"> 0</span></span></code></pre></div>
+</div></section>
+<h2 id="variables">Variables</h2>
+<section class="godoc-value" id="var-LogEntryCtxKey"><p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L15" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:15</a></p><div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">var</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> (</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// LogEntryCtxKey is the context.Context key to store the request log entry.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	LogEntryCtxKey</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> &#x26;</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">contextKey</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">{</span><span style="--shiki-light:#0A3069;--shiki-dark:#CE9178">"LogEntry"</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// DefaultLogger is called by the Logger middleware handler to log each request.</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Its made a package-level variable so that it can be reconfigured for custom</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// logging configurations.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	DefaultLogger</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">next</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span></code></pre></div>
+</div></section>
+<a id="var-DefaultLogger" class="godoc-anchor"></a>
+<section class="godoc-value" id="var-IsTTY"><p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/terminal.go#L35" target="_blank" rel="noopener noreferrer">Source: middleware/terminal.go:35</a></p><div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">var</span><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE"> IsTTY</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> bool</span></span></code></pre></div>
+</div></section>
+<section class="godoc-value" id="var-RequestIDHeader"><div class="godoc-doc"><p>RequestIDHeader is the name of the HTTP Header which contains the request id.
+Exported so that it can be changed by developers</p></div><p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/request_id.go#L25" target="_blank" rel="noopener noreferrer">Source: middleware/request_id.go:25</a></p><div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">var</span><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE"> RequestIDHeader</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#0A3069;--shiki-dark:#CE9178"> "X-Request-Id"</span></span></code></pre></div>
+</div></section>
+<section class="godoc-value" id="var-URLFormatCtxKey"><p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/url_format.go#L14" target="_blank" rel="noopener noreferrer">Source: middleware/url_format.go:14</a></p><div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">var</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> (</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// URLFormatCtxKey is the context.Context key to store the URL format data</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// for a request.</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	URLFormatCtxKey</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> =</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> &#x26;</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">contextKey</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">{</span><span style="--shiki-light:#0A3069;--shiki-dark:#CE9178">"URLFormat"</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span></code></pre></div>
+</div></section>
+<h2 id="functions">Functions</h2>
+<section class="godoc-func" id="func-AllowContentEncoding">
+<h3 class="godoc-symbol">func AllowContentEncoding(contentEncoding ...string) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/content_encoding.go#L10" target="_blank" rel="noopener noreferrer">Source: middleware/content_encoding.go:10</a></p>
+<div class="godoc-doc"><p>AllowContentEncoding enforces a whitelist of request Content-Encoding otherwise responds
+with a 415 Unsupported Media Type status.</p></div>
+</section>
+<section class="godoc-func" id="func-AllowContentType">
+<h3 class="godoc-symbol">func AllowContentType(contentTypes ...string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/content_type.go#L20" target="_blank" rel="noopener noreferrer">Source: middleware/content_type.go:20</a></p>
+<div class="godoc-doc"><p>AllowContentType enforces a whitelist of request Content-Types otherwise responds
+with a 415 Unsupported Media Type status.</p></div>
+</section>
+<section class="godoc-func" id="func-BasicAuth">
+<h3 class="godoc-symbol">func BasicAuth(realm string, creds map[string]string) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/basic_auth.go#L10" target="_blank" rel="noopener noreferrer">Source: middleware/basic_auth.go:10</a></p>
+<div class="godoc-doc"><p>BasicAuth implements a simple middleware handler for adding basic http auth to a route.</p></div>
+</section>
+<section class="godoc-func" id="func-CleanPath">
+<h3 class="godoc-symbol">func CleanPath(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/clean_path.go#L12" target="_blank" rel="noopener noreferrer">Source: middleware/clean_path.go:12</a></p>
+<div class="godoc-doc"><p>CleanPath middleware will clean out double slash mistakes from a user's request path.
+For example, if a user requests /users//1 or //users////1 will both be treated as: /users/1</p></div>
+</section>
+<section class="godoc-func" id="func-ClientIPFromHeader">
+<h3 class="godoc-symbol">func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/client_ip.go#L41" target="_blank" rel="noopener noreferrer">Source: middleware/client_ip.go:41</a></p>
+<div class="godoc-doc"><p>ClientIPFromHeader stores the client IP from a single-IP header set by
+your reverse proxy. Read it with [GetClientIP].</p>
+<p>Only safe with headers your proxy unconditionally OVERWRITES on every
+request, e.g.:</p>
+<ul>
+<li>X-Real-IP        — Nginx with ngx_http_realip_module</li>
+<li>X-Client-IP      — Apache with mod_remoteip</li>
+<li>CF-Connecting-IP — Cloudflare</li>
+</ul>
+<p>True-Client-IP, X-Azure-ClientIP, and Fastly-Client-IP look similar but
+pass through from the client by default in those products; don't use them
+unless your edge strips the inbound value.</p>
+<p>If the header reaches us with multiple values (misconfigured proxy that
+appends, or a downstream proxy not stripping a client-supplied value),
+the LAST value wins — that's the one set by the hop closest to us, and
+therefore the most trusted. Fail-closed if the last value doesn't parse:
+no client IP is set rather than falling back to earlier (less-trusted)
+values.</p>
+<p>v4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are
+stripped before storage.</p></div>
+</section>
+<section class="godoc-func" id="func-ClientIPFromRemoteAddr">
+<h3 class="godoc-symbol">func ClientIPFromRemoteAddr(h http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/client_ip.go#L176" target="_blank" rel="noopener noreferrer">Source: middleware/client_ip.go:176</a></p>
+<div class="godoc-doc"><p>ClientIPFromRemoteAddr stores the client IP read from the TCP RemoteAddr
+of the incoming request — the IP address of whoever opened the connection
+to this server. Read it with [GetClientIP].</p>
+<p>Use this when this server is directly connected to the public internet
+with NO reverse proxy in front of it. Behind a reverse proxy, RemoteAddr
+is the proxy's IP, not the client's — use [ClientIPFromHeader] or
+[ClientIPFromXFF] instead.</p>
+<p>IPv4 clients on a dual-stack listener surface as ::ffff:a.b.c.d; they
+fold to plain v4 before storage so one logical client maps to one key.
+IPv6 zones are preserved (link-local connections may legitimately have one).</p></div>
+</section>
+<section class="godoc-func" id="func-ClientIPFromXFF">
+<h3 class="godoc-symbol">func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/client_ip.go#L85" target="_blank" rel="noopener noreferrer">Source: middleware/client_ip.go:85</a></p>
+<div class="godoc-doc"><p>ClientIPFromXFF stores the client IP read from the X-Forwarded-For header,
+walking the chain right-to-left and skipping any IP that falls within one
+of the given trusted CIDR prefixes. The first IP that is not trusted is
+the client. Read it with [GetClientIP].</p>
+<p>An unparseable entry mid-chain aborts the walk and leaves no client IP
+set (fail-closed) — we can't safely trust anything left of garbage.</p>
+<p>Use this when you sit behind one or more reverse proxies whose IP ranges
+you can enumerate as CIDRs:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>r.Use(middleware.ClientIPFromXFF(</span></span>
+<span class="line"><span>    "13.32.0.0/15",   // CloudFront IPv4</span></span>
+<span class="line"><span>    "52.46.0.0/18",   // CloudFront IPv4</span></span>
+<span class="line"><span>    "2600:9000::/28", // CloudFront IPv6</span></span>
+<span class="line"><span>))</span></span></code></pre></div>
+</div><p>Calling with no arguments returns the rightmost XFF entry, or no IP if
+that entry doesn't parse (fail-closed) — safe only if you have exactly
+one trusted hop directly in front of this server (e.g., nginx on localhost).</p>
+<p>v4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are
+stripped before the prefix check and storage; otherwise an attacker
+could use either notation to alias a trusted IP past the check.</p>
+<p>If you know the number of trusted proxies but not their IPs, use
+[ClientIPFromXFFTrustedProxies] instead.</p>
+<p>Panics at startup if any prefix is invalid.</p></div>
+</section>
+<section class="godoc-func" id="func-ClientIPFromXFFTrustedProxies">
+<h3 class="godoc-symbol">func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/client_ip.go#L138" target="_blank" rel="noopener noreferrer">Source: middleware/client_ip.go:138</a></p>
+<div class="godoc-doc"><p>ClientIPFromXFFTrustedProxies stores the client IP read from the
+X-Forwarded-For header, given the exact number of trusted reverse proxies
+between this server and the public internet. It returns the IP at position
+len(xff) - numTrustedProxies in the merged X-Forwarded-For list — the IP
+added by the outermost of your trusted proxies, the only IP in the chain
+that none of your proxies have allowed an attacker to forge. Read it with
+[GetClientIP].</p>
+<p>Use this when:</p>
+<ul>
+<li>You know exactly how many proxies you sit behind, AND</li>
+<li>Their IP addresses are dynamic (autoscaling proxy pools, ephemeral
+containers, dynamic CDN edges) so listing CIDRs with [ClientIPFromXFF]
+is impractical.</li>
+</ul>
+<p>WARNING: This variant is brittle to network architecture changes. If you
+add or remove a proxy level, numTrustedProxies silently becomes wrong and
+you may start trusting an attacker-supplied IP. Prefer [ClientIPFromXFF]
+with explicit trusted CIDRs whenever you can.</p>
+<p>If the XFF chain has fewer than numTrustedProxies entries (header missing
+or architecture changed), no client IP is set and [GetClientIP] returns "".</p>
+<p>Like [ClientIPFromXFF], v4-mapped IPv6 folds to plain v4 and IPv6 zones
+are stripped before storage.</p>
+<p>Panics at startup if numTrustedProxies &lt; 1.</p></div>
+</section>
+<section class="godoc-func" id="func-Compress">
+<h3 class="godoc-symbol">func Compress(level int, types ...string) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/compress.go#L42" target="_blank" rel="noopener noreferrer">Source: middleware/compress.go:42</a></p>
+<div class="godoc-doc"><p>Compress is a middleware that compresses response
+body of a given content types to a data format based
+on Accept-Encoding request header. It uses a given
+compression level.</p>
+<p>NOTE: make sure to set the Content-Type header on your response
+otherwise this middleware will not compress the response body. For ex, in
+your handler you should set w.Header().Set("Content-Type", http.DetectContentType(yourBody))
+or set it manually.</p>
+<p>Passing a compression level of 5 is sensible value</p></div>
+</section>
+<section class="godoc-func" id="func-ContentCharset">
+<h3 class="godoc-symbol">func ContentCharset(charsets ...string) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/content_charset.go#L11" target="_blank" rel="noopener noreferrer">Source: middleware/content_charset.go:11</a></p>
+<div class="godoc-doc"><p>ContentCharset generates a handler that writes a 415 Unsupported Media Type response if none of the charsets match.
+An empty charset will allow requests with no Content-Type header or no specified charset.</p></div>
+</section>
+<section class="godoc-func" id="func-GetClientIP">
+<h3 class="godoc-symbol">func GetClientIP(ctx context.Context) string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/client_ip.go#L192" target="_blank" rel="noopener noreferrer">Source: middleware/client_ip.go:192</a></p>
+<div class="godoc-doc"><p>GetClientIP returns the client IP as a string, as set by one of the
+ClientIPFrom* middlewares. Returns "" if no valid IP was set.
+Convenient for logging, rate-limit keys, etc.</p></div>
+</section>
+<section class="godoc-func" id="func-GetClientIPAddr">
+<h3 class="godoc-symbol">func GetClientIPAddr(ctx context.Context) netip.Addr</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/client_ip.go#L204" target="_blank" rel="noopener noreferrer">Source: middleware/client_ip.go:204</a></p>
+<div class="godoc-doc"><p>GetClientIPAddr returns the client IP as a [netip.Addr], as set by one of
+the ClientIPFrom* middlewares. The returned Addr is the zero value if not
+set; use [netip.Addr.IsValid] to check. Useful when you need typed work —
+prefix containment, Is4/Is6, etc. — without re-parsing the string.</p></div>
+</section>
+<section class="godoc-func" id="func-GetHead">
+<h3 class="godoc-symbol">func GetHead(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/get_head.go#L10" target="_blank" rel="noopener noreferrer">Source: middleware/get_head.go:10</a></p>
+<div class="godoc-doc"><p>GetHead automatically route undefined HEAD requests to GET handlers.</p></div>
+</section>
+<section class="godoc-func" id="func-GetLogEntry">
+<h3 class="godoc-symbol">func GetLogEntry(r *http.Request) LogEntry</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L75" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:75</a></p>
+<div class="godoc-doc"><p>GetLogEntry returns the in-context LogEntry for a request.</p></div>
+</section>
+<section class="godoc-func" id="func-GetReqID">
+<h3 class="godoc-symbol">func GetReqID(ctx context.Context) string</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/request_id.go#L83" target="_blank" rel="noopener noreferrer">Source: middleware/request_id.go:83</a></p>
+<div class="godoc-doc"><p>GetReqID returns a request ID from the given context if one is present.
+Returns the empty string if a request ID cannot be found.</p></div>
+</section>
+<section class="godoc-func" id="func-Heartbeat">
+<h3 class="godoc-symbol">func Heartbeat(endpoint string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/heartbeat.go#L12" target="_blank" rel="noopener noreferrer">Source: middleware/heartbeat.go:12</a></p>
+<div class="godoc-doc"><p>Heartbeat endpoint middleware useful to setting up a path like
+<code>/ping</code> that load balancers or uptime testing external services
+can make a request before hitting any routes. It's also convenient
+to place this above ACL middlewares as well.</p></div>
+</section>
+<section class="godoc-func" id="func-Logger">
+<h3 class="godoc-symbol">func Logger(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L39" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:39</a></p>
+<div class="godoc-doc"><p>Logger is a middleware that logs the start and end of each request, along
+with some useful data about what was requested, what the response status was,
+and how long it took to return. When standard output is a TTY, Logger will
+print in color, otherwise it will print in black and white. Logger prints a
+request ID if one is provided.</p>
+<p>Alternatively, look at <a href="https://github.com/goware/httplog" target="_blank" rel="noopener noreferrer">https://github.com/goware/httplog</a> for a more in-depth
+http logger with structured logging support.</p>
+<p>IMPORTANT NOTE: Logger should go before any other middleware that may change
+the response, such as middleware.Recoverer. Example:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>r := chi.NewRouter()</span></span>
+<span class="line"><span>r.Use(middleware.Logger)        // &lt;--&lt;&lt; Logger should come before Recoverer</span></span>
+<span class="line"><span>r.Use(middleware.Recoverer)</span></span>
+<span class="line"><span>r.Get("/", handler)</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="func-Maybe">
+<h3 class="godoc-symbol">func Maybe(mw func(http.Handler) http.Handler, maybeFn func(r *http.Request) bool) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/maybe.go#L8" target="_blank" rel="noopener noreferrer">Source: middleware/maybe.go:8</a></p>
+<div class="godoc-doc"><p>Maybe middleware will allow you to change the flow of the middleware stack execution depending on return
+value of maybeFn(request). This is useful for example if you'd like to skip a middleware handler if
+a request does not satisfy the maybeFn logic.</p></div>
+</section>
+<section class="godoc-func" id="func-New">
+<h3 class="godoc-symbol">func New(h http.Handler) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/middleware.go#L6" target="_blank" rel="noopener noreferrer">Source: middleware/middleware.go:6</a></p>
+<div class="godoc-doc"><p>New will create a new middleware handler from a http.Handler.</p></div>
+</section>
+<section class="godoc-func" id="func-NewCompressor">
+<h3 class="godoc-symbol">func NewCompressor(level int, types ...string) *Compressor</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/compress.go#L65" target="_blank" rel="noopener noreferrer">Source: middleware/compress.go:65</a></p>
+<div class="godoc-doc"><p>NewCompressor creates a new Compressor that will handle encoding responses.</p>
+<p>The level should be one of the ones defined in the flate package.
+The types are the content types that are allowed to be compressed.</p></div>
+</section>
+<section class="godoc-func" id="func-NewPattern">
+<h3 class="godoc-symbol">func NewPattern(value string) Pattern</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L135" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:135</a></p>
+</section>
+<section class="godoc-func" id="func-NewWrapResponseWriter">
+<h3 class="godoc-symbol">func NewWrapResponseWriter(w http.ResponseWriter, protoMajor int) WrapResponseWriter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/wrap_writer.go#L15" target="_blank" rel="noopener noreferrer">Source: middleware/wrap_writer.go:15</a></p>
+<div class="godoc-doc"><p>NewWrapResponseWriter wraps an http.ResponseWriter, returning a proxy that allows you to
+hook into various parts of the response process.</p></div>
+</section>
+<section class="godoc-func" id="func-NextRequestID">
+<h3 class="godoc-symbol">func NextRequestID() uint64</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/request_id.go#L94" target="_blank" rel="noopener noreferrer">Source: middleware/request_id.go:94</a></p>
+<div class="godoc-doc"><p>NextRequestID generates the next request ID in the sequence.</p></div>
+</section>
+<section class="godoc-func" id="func-NoCache">
+<h3 class="godoc-symbol">func NoCache(h http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/nocache.go#L40" target="_blank" rel="noopener noreferrer">Source: middleware/nocache.go:40</a></p>
+<div class="godoc-doc"><p>NoCache is a simple piece of middleware that sets a number of HTTP headers to prevent
+a router (or subrouter) from being cached by an upstream proxy and/or client.</p>
+<p>As per <a href="http://wiki.nginx.org/HttpProxyModule" target="_blank" rel="noopener noreferrer">http://wiki.nginx.org/HttpProxyModule</a> - NoCache sets:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>Expires: Thu, 01 Jan 1970 00:00:00 UTC</span></span>
+<span class="line"><span>Cache-Control: no-cache, private, max-age=0</span></span>
+<span class="line"><span>X-Accel-Expires: 0</span></span>
+<span class="line"><span>Pragma: no-cache (for HTTP/1.0 proxies/clients)</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="func-PageRoute">
+<h3 class="godoc-symbol">func PageRoute(path string, handler http.Handler) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/page_route.go#L10" target="_blank" rel="noopener noreferrer">Source: middleware/page_route.go:10</a></p>
+<div class="godoc-doc"><p>PageRoute is a simple middleware which allows you to route a static GET request
+at the middleware stack level.</p></div>
+</section>
+<section class="godoc-func" id="func-PathRewrite">
+<h3 class="godoc-symbol">func PathRewrite(old, new string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/path_rewrite.go#L9" target="_blank" rel="noopener noreferrer">Source: middleware/path_rewrite.go:9</a></p>
+<div class="godoc-doc"><p>PathRewrite is a simple middleware which allows you to rewrite the request URL path.</p></div>
+</section>
+<section class="godoc-func" id="func-PrintPrettyStack">
+<h3 class="godoc-symbol">func PrintPrettyStack(rvr interface{})</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/recoverer.go#L54" target="_blank" rel="noopener noreferrer">Source: middleware/recoverer.go:54</a></p>
+</section>
+<section class="godoc-func" id="func-Profiler">
+<h3 class="godoc-symbol">func Profiler() http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/profiler.go#L22" target="_blank" rel="noopener noreferrer">Source: middleware/profiler.go:22</a></p>
+<div class="godoc-doc"><p>Profiler is a convenient subrouter used for mounting net/http/pprof. ie.</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>func MyService() http.Handler {</span></span>
+<span class="line"><span>	r := chi.NewRouter()</span></span>
+<span class="line"><span>	// ..middlewares</span></span>
+<span class="line"><span>	r.Mount("/debug", middleware.Profiler())</span></span>
+<span class="line"><span>	// ..routes</span></span>
+<span class="line"><span>	return r</span></span>
+<span class="line"><span>}</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="func-RealIP">
+<h3 class="godoc-symbol">func RealIP(h http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/realip.go#L28" target="_blank" rel="noopener noreferrer">Source: middleware/realip.go:28</a></p>
+<div class="godoc-doc"><p>RealIP is a middleware that sets a http.Request's RemoteAddr to the results
+of parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers
+(in that order).</p>
+<p>Deprecated: RealIP is vulnerable to IP spoofing — it mutates r.RemoteAddr
+to the leftmost X-Forwarded-For value, or to True-Client-IP / X-Real-IP
+whether or not your infrastructure actually sets them. See
+GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf.</p>
+<p>Use [ClientIPFromHeader], [ClientIPFromXFF], [ClientIPFromXFFTrustedProxies]
+or [ClientIPFromRemoteAddr] and read the IP with [GetClientIP] instead.
+These never mutate r.RemoteAddr.</p></div>
+</section>
+<section class="godoc-func" id="func-Recoverer">
+<h3 class="godoc-symbol">func Recoverer(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/recoverer.go#L22" target="_blank" rel="noopener noreferrer">Source: middleware/recoverer.go:22</a></p>
+<div class="godoc-doc"><p>Recoverer is a middleware that recovers from panics, logs the panic (and a
+backtrace), and returns a HTTP 500 (Internal Server Error) status if
+possible. Recoverer prints a request ID if one is provided.</p>
+<p>Alternatively, look at <a href="https://github.com/go-chi/httplog" target="_blank" rel="noopener noreferrer">https://github.com/go-chi/httplog</a> middleware pkgs.</p></div>
+</section>
+<section class="godoc-func" id="func-RedirectSlashes">
+<h3 class="godoc-symbol">func RedirectSlashes(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/strip.go#L41" target="_blank" rel="noopener noreferrer">Source: middleware/strip.go:41</a></p>
+<div class="godoc-doc"><p>RedirectSlashes is a middleware that will match request paths with a trailing
+slash and redirect to the same path, less the trailing slash.</p>
+<p>NOTE: RedirectSlashes middleware is <em>incompatible</em> with http.FileServer,
+see <a href="https://github.com/go-chi/chi/issues/343" target="_blank" rel="noopener noreferrer">https://github.com/go-chi/chi/issues/343</a></p></div>
+</section>
+<section class="godoc-func" id="func-RequestID">
+<h3 class="godoc-symbol">func RequestID(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/request_id.go#L67" target="_blank" rel="noopener noreferrer">Source: middleware/request_id.go:67</a></p>
+<div class="godoc-doc"><p>RequestID is a middleware that injects a request ID into the context of each
+request. A request ID is a string of the form "host.example.com/random-0001",
+where "random" is a base62 random string that uniquely identifies this go
+process, and where the last number is an atomically incremented request
+counter.</p></div>
+</section>
+<section class="godoc-func" id="func-RequestLogger">
+<h3 class="godoc-symbol">func RequestLogger(f LogFormatter) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L44" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:44</a></p>
+<div class="godoc-doc"><p>RequestLogger returns a logger handler using a custom LogFormatter.</p></div>
+</section>
+<section class="godoc-func" id="func-RequestSize">
+<h3 class="godoc-symbol">func RequestSize(bytes int64) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/request_size.go#L9" target="_blank" rel="noopener noreferrer">Source: middleware/request_size.go:9</a></p>
+<div class="godoc-doc"><p>RequestSize is a middleware that will limit request sizes to a specified
+number of bytes. It uses MaxBytesReader to do so.</p></div>
+</section>
+<section class="godoc-func" id="func-RouteHeaders">
+<h3 class="godoc-symbol">func RouteHeaders() HeaderRouter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L42" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:42</a></p>
+<div class="godoc-doc"><p>RouteHeaders is a neat little header-based router that allows you to direct
+the flow of a request through a middleware stack based on a request header.</p>
+<p>For example, lets say you'd like to setup multiple routers depending on the
+request Host header, you could then do something as so:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>r := chi.NewRouter()</span></span>
+<span class="line"><span>rSubdomain := chi.NewRouter()</span></span>
+<span class="line"><span>r.Use(middleware.RouteHeaders().</span></span>
+<span class="line"><span>	Route("Host", "example.com", middleware.New(r)).</span></span>
+<span class="line"><span>	Route("Host", "*.example.com", middleware.New(rSubdomain)).</span></span>
+<span class="line"><span>	Handler)</span></span>
+<span class="line"><span>r.Get("/", h)</span></span>
+<span class="line"><span>rSubdomain.Get("/", h2)</span></span></code></pre></div>
+</div><p>Another example, imagine you want to setup multiple CORS handlers, where for
+your origin servers you allow authorized requests, but for third-party public
+requests, authorization is disabled.</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>r := chi.NewRouter()</span></span>
+<span class="line"><span>r.Use(middleware.RouteHeaders().</span></span>
+<span class="line"><span>	Route("Origin", "https://app.skyweaver.net", cors.Handler(cors.Options{</span></span>
+<span class="line"><span>		AllowedOrigins:   []string{"https://api.skyweaver.net"},</span></span>
+<span class="line"><span>		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},</span></span>
+<span class="line"><span>		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},</span></span>
+<span class="line"><span>		AllowCredentials: true, // &lt;----------&lt;&lt;&lt; allow credentials</span></span>
+<span class="line"><span>	})).</span></span>
+<span class="line"><span>	Route("Origin", "*", cors.Handler(cors.Options{</span></span>
+<span class="line"><span>		AllowedOrigins:   []string{"*"},</span></span>
+<span class="line"><span>		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},</span></span>
+<span class="line"><span>		AllowedHeaders:   []string{"Accept", "Content-Type"},</span></span>
+<span class="line"><span>		AllowCredentials: false, // &lt;----------&lt;&lt;&lt; do not allow credentials</span></span>
+<span class="line"><span>	})).</span></span>
+<span class="line"><span>	Handler)</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="func-SetHeader">
+<h3 class="godoc-symbol">func SetHeader(key, value string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/content_type.go#L9" target="_blank" rel="noopener noreferrer">Source: middleware/content_type.go:9</a></p>
+<div class="godoc-doc"><p>SetHeader is a convenience handler to set a response header key/value</p></div>
+</section>
+<section class="godoc-func" id="func-StripPrefix">
+<h3 class="godoc-symbol">func StripPrefix(prefix string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/strip.go#L73" target="_blank" rel="noopener noreferrer">Source: middleware/strip.go:73</a></p>
+<div class="godoc-doc"><p>StripPrefix is a middleware that will strip the provided prefix from the
+request path before handing the request over to the next handler.</p></div>
+</section>
+<section class="godoc-func" id="func-StripSlashes">
+<h3 class="godoc-symbol">func StripSlashes(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/strip.go#L14" target="_blank" rel="noopener noreferrer">Source: middleware/strip.go:14</a></p>
+<div class="godoc-doc"><p>StripSlashes is a middleware that will match request paths with a trailing
+slash, strip it from the path and continue routing through the mux, if a route
+matches, then it will serve the handler.</p></div>
+</section>
+<section class="godoc-func" id="func-Sunset">
+<h3 class="godoc-symbol">func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/sunset.go#L11" target="_blank" rel="noopener noreferrer">Source: middleware/sunset.go:11</a></p>
+<div class="godoc-doc"><p>Sunset set Deprecation/Sunset header to response
+This can be used to enable Sunset in a route or a route group
+For more: <a href="https://www.rfc-editor.org/rfc/rfc8594.html" target="_blank" rel="noopener noreferrer">https://www.rfc-editor.org/rfc/rfc8594.html</a></p></div>
+</section>
+<section class="godoc-func" id="func-SupressNotFound">
+<h3 class="godoc-symbol">func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/supress_notfound.go#L15" target="_blank" rel="noopener noreferrer">Source: middleware/supress_notfound.go:15</a></p>
+<div class="godoc-doc"><p>SupressNotFound will quickly respond with a 404 if the route is not found
+and will not continue to the next middleware handler.</p>
+<p>This is handy to put at the top of your middleware stack to avoid unnecessary
+processing of requests that are not going to match any routes anyway. For
+example its super annoying to see a bunch of 404's in your logs from bots.</p></div>
+</section>
+<section class="godoc-func" id="func-Throttle">
+<h3 class="godoc-symbol">func Throttle(limit int) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/throttle.go#L32" target="_blank" rel="noopener noreferrer">Source: middleware/throttle.go:32</a></p>
+<div class="godoc-doc"><p>Throttle is a middleware that limits number of currently processed requests
+at a time across all users. Note: Throttle is not a rate-limiter per user,
+instead it just puts a ceiling on the number of current in-flight requests
+being processed from the point from where the Throttle middleware is mounted.</p></div>
+</section>
+<section class="godoc-func" id="func-ThrottleBacklog">
+<h3 class="godoc-symbol">func ThrottleBacklog(limit, backlogLimit int, backlogTimeout time.Duration) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/throttle.go#L39" target="_blank" rel="noopener noreferrer">Source: middleware/throttle.go:39</a></p>
+<div class="godoc-doc"><p>ThrottleBacklog is a middleware that limits number of currently processed
+requests at a time and provides a backlog for holding a finite number of
+pending requests.</p></div>
+</section>
+<section class="godoc-func" id="func-ThrottleWithOpts">
+<h3 class="godoc-symbol">func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/throttle.go#L44" target="_blank" rel="noopener noreferrer">Source: middleware/throttle.go:44</a></p>
+<div class="godoc-doc"><p>ThrottleWithOpts is a middleware that limits number of currently processed requests using passed ThrottleOpts.</p></div>
+</section>
+<section class="godoc-func" id="func-Timeout">
+<h3 class="godoc-symbol">func Timeout(timeout time.Duration) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/timeout.go#L32" target="_blank" rel="noopener noreferrer">Source: middleware/timeout.go:32</a></p>
+<div class="godoc-doc"><p>Timeout is a middleware that cancels ctx after a given timeout and return
+a 504 Gateway Timeout error to the client.</p>
+<p>It's required that you select the ctx.Done() channel to check for the signal
+if the context has reached its deadline and return, otherwise the timeout
+signal will be just ignored.</p>
+<p>ie. a route/handler may look like:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>r.Get("/long", func(w http.ResponseWriter, r *http.Request) {</span></span>
+<span class="line"><span>	ctx := r.Context()</span></span>
+<span class="line"><span>	processTime := time.Duration(rand.Intn(4)+1) * time.Second</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	select {</span></span>
+<span class="line"><span>	case &lt;-ctx.Done():</span></span>
+<span class="line"><span>		return</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	case &lt;-time.After(processTime):</span></span>
+<span class="line"><span>		// The above channel simulates some hard work.</span></span>
+<span class="line"><span>	}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	w.Write([]byte("done"))</span></span>
+<span class="line"><span>})</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="func-URLFormat">
+<h3 class="godoc-symbol">func URLFormat(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/url_format.go#L46" target="_blank" rel="noopener noreferrer">Source: middleware/url_format.go:46</a></p>
+<div class="godoc-doc"><p>URLFormat is a middleware that parses the url extension from a request path and stores it
+on the context as a string under the key <code>middleware.URLFormatCtxKey</code>. The middleware will
+trim the suffix from the routing path and continue routing.</p>
+<p>Routers should not include a url parameter for the suffix when using this middleware.</p>
+<p>Sample usage for url paths <code>/articles/1</code>, <code>/articles/1.json</code> and <code>/articles/1.xml</code>:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>func routes() http.Handler {</span></span>
+<span class="line"><span>	r := chi.NewRouter()</span></span>
+<span class="line"><span>	r.Use(middleware.URLFormat)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	r.Get("/articles/{id}", ListArticles)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	return r</span></span>
+<span class="line"><span>}</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>func ListArticles(w http.ResponseWriter, r *http.Request) {</span></span>
+<span class="line"><span>	urlFormat, _ := r.Context().Value(middleware.URLFormatCtxKey).(string)</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>	switch urlFormat {</span></span>
+<span class="line"><span>	case "json":</span></span>
+<span class="line"><span>		render.JSON(w, r, articles)</span></span>
+<span class="line"><span>	case "xml:"</span></span>
+<span class="line"><span>		render.XML(w, r, articles)</span></span>
+<span class="line"><span>	default:</span></span>
+<span class="line"><span>		render.JSON(w, r, articles)</span></span>
+<span class="line"><span>	}</span></span>
+<span class="line"><span>}</span></span></code></pre></div>
+</div></div>
+</section>
+<section class="godoc-func" id="func-WithLogEntry">
+<h3 class="godoc-symbol">func WithLogEntry(r *http.Request, entry LogEntry) *http.Request</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L81" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:81</a></p>
+<div class="godoc-doc"><p>WithLogEntry sets the in-context LogEntry for a request.</p></div>
+</section>
+<section class="godoc-func" id="func-WithValue">
+<h3 class="godoc-symbol">func WithValue(key, val interface{}) func(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/value.go#L9" target="_blank" rel="noopener noreferrer">Source: middleware/value.go:9</a></p>
+<div class="godoc-doc"><p>WithValue is a middleware that sets a given key/value in a context chain.</p></div>
+</section>
+<h2 id="types">Types</h2>
+<section class="godoc-type" id="type-Compressor">
+<h3 class="godoc-symbol">type Compressor</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/compress.go#L48" target="_blank" rel="noopener noreferrer">Source: middleware/compress.go:48</a></p>
+<div class="godoc-doc"><p>Compressor represents a set of encoding configurations.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Compressor</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// contains filtered or unexported fields</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<section class="godoc-func" id="method-Compressor-Handler">
+<h3 class="godoc-symbol">func  Handler(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/compress.go#L189" target="_blank" rel="noopener noreferrer">Source: middleware/compress.go:189</a></p>
+<div class="godoc-doc"><p>Handler returns a new middleware that will compress the response based on the
+current Compressor.</p></div>
+</section>
+<section class="godoc-func" id="method-Compressor-SetEncoder">
+<h3 class="godoc-symbol">func  SetEncoder(encoding string, fn EncoderFunc)</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/compress.go#L149" target="_blank" rel="noopener noreferrer">Source: middleware/compress.go:149</a></p>
+<div class="godoc-doc"><p>SetEncoder can be used to set the implementation of a compression algorithm.</p>
+<p>The encoding should be a standardised identifier. See:
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding" target="_blank" rel="noopener noreferrer">https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding</a></p>
+<p>For example, add the Brotli algorithm:</p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" width="18" xmlns="http://www.w3.org/2000/svg">Copy<path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki" tabindex="0"><code><span class="line"><span>import brotli_enc "gopkg.in/kothar/brotli-go.v0/enc"</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>compressor := middleware.NewCompressor(5, "text/html")</span></span>
+<span class="line"><span>compressor.SetEncoder("br", func(w io.Writer, level int) io.Writer {</span></span>
+<span class="line"><span>	params := brotli_enc.NewBrotliParams()</span></span>
+<span class="line"><span>	params.SetQuality(level)</span></span>
+<span class="line"><span>	return brotli_enc.NewBrotliWriter(params, w)</span></span>
+<span class="line"><span>})</span></span></code></pre></div>
+</div></div>
+</section>
+</section>
+<section class="godoc-type" id="type-DefaultLogFormatter">
+<h3 class="godoc-symbol">type DefaultLogFormatter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L92" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:92</a></p>
+<div class="godoc-doc"><p>DefaultLogFormatter is a simple logger that implements a LogFormatter.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> DefaultLogFormatter</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Logger</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">  LoggerInterface</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	NoColor</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> bool</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Logger <span class="godoc-field-type">LoggerInterface</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">NoColor <span class="godoc-field-type">bool</span></code> </li></ul></details>
+<section class="godoc-func" id="method-DefaultLogFormatter-NewLogEntry">
+<h3 class="godoc-symbol">func  NewLogEntry(r *http.Request) LogEntry</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L98" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:98</a></p>
+<div class="godoc-doc"><p>NewLogEntry creates a new LogEntry for the request.</p></div>
+</section>
+</section>
+<section class="godoc-type" id="type-EncoderFunc">
+<h3 class="godoc-symbol">type EncoderFunc</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/compress.go#L255" target="_blank" rel="noopener noreferrer">Source: middleware/compress.go:255</a></p>
+<div class="godoc-doc"><p>An EncoderFunc is a function that wraps the provided io.Writer with a
+streaming compression algorithm and returns it.</p>
+<p>In case of failure, the function should return nil.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> EncoderFunc</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">w</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> io</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Writer</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">level</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> int</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">io</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Writer</span></span></code></pre></div>
+</div>
+</section>
+<section class="godoc-type" id="type-HeaderRoute">
+<h3 class="godoc-symbol">type HeaderRoute</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L110" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:110</a></p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> HeaderRoute</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Middleware</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">next</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Handler</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	MatchOne</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">   Pattern</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	MatchAny</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">   []</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Pattern</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Middleware <span class="godoc-field-type">func(next http.Handler) http.Handler</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">MatchOne <span class="godoc-field-type">Pattern</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">MatchAny <span class="godoc-field-type">[]Pattern</span></code> </li></ul></details>
+<section class="godoc-func" id="method-HeaderRoute-IsMatch">
+<h3 class="godoc-symbol">func  IsMatch(value string) bool</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L116" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:116</a></p>
+</section>
+</section>
+<section class="godoc-type" id="type-HeaderRouter">
+<h3 class="godoc-symbol">type HeaderRouter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L46" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:46</a></p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> HeaderRouter</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> map</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">[</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">string</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">][]</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">HeaderRoute</span></span></code></pre></div>
+</div>
+<section class="godoc-func" id="method-HeaderRouter-Handler">
+<h3 class="godoc-symbol">func  Handler(next http.Handler) http.Handler</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L77" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:77</a></p>
+</section>
+<section class="godoc-func" id="method-HeaderRouter-Route">
+<h3 class="godoc-symbol">func  Router) Route(header, match string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L48" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:48</a></p>
+</section>
+<section class="godoc-func" id="method-HeaderRouter-RouteAny">
+<h3 class="godoc-symbol">func  RouteAny(header string, match []string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L58" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:58</a></p>
+</section>
+<section class="godoc-func" id="method-HeaderRouter-RouteDefault">
+<h3 class="godoc-symbol">func  RouteDefault(handler func(next http.Handler) http.Handler) HeaderRouter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L72" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:72</a></p>
+</section>
+</section>
+<section class="godoc-type" id="type-LogEntry">
+<h3 class="godoc-symbol">type LogEntry</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L69" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:69</a></p>
+<div class="godoc-doc"><p>LogEntry records the final log when a request completes.
+See defaultLogEntry for an example implementation.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> LogEntry</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Write</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">status</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">bytes</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> int</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">header</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Header</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">elapsed</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> time</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Duration</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">extra</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">{})</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Panic</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">v</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">{}, </span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">stack</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> []</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">byte</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Methods</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Write <span class="godoc-field-type">func(status, bytes int, header http.Header, elapsed time.Duration, extra interface{})</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Panic <span class="godoc-field-type">func(v interface{}, stack []byte)</span></code> </li></ul></details>
+</section>
+<section class="godoc-type" id="type-LogFormatter">
+<h3 class="godoc-symbol">type LogFormatter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L63" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:63</a></p>
+<div class="godoc-doc"><p>LogFormatter initiates the beginning of a new LogEntry per request.
+See DefaultLogFormatter for an example implementation.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> LogFormatter</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	NewLogEntry</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">r</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> *</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Request</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">LogEntry</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Methods</summary><ul><li class="godoc-field"><code class="godoc-field-sig">NewLogEntry <span class="godoc-field-type">func(r *http.Request) LogEntry</span></code> </li></ul></details>
+</section>
+<section class="godoc-type" id="type-LoggerInterface">
+<h3 class="godoc-symbol">type LoggerInterface</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/logger.go#L87" target="_blank" rel="noopener noreferrer">Source: middleware/logger.go:87</a></p>
+<div class="godoc-doc"><p>LoggerInterface accepts printing to stdlib logger or compatible logger.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> LoggerInterface</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Print</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">v</span><span style="--shiki-light:#CF222E;--shiki-dark:#D4D4D4"> ...</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">{})</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Methods</summary><ul><li class="godoc-field"><code class="godoc-field-sig">Print <span class="godoc-field-type">func(v ...interface{})</span></code> </li></ul></details>
+</section>
+<section class="godoc-type" id="type-Pattern">
+<h3 class="godoc-symbol">type Pattern</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L129" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:129</a></p>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> Pattern</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// contains filtered or unexported fields</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<section class="godoc-func" id="method-Pattern-Match">
+<h3 class="godoc-symbol">func  Match(v string) bool</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/route_headers.go#L141" target="_blank" rel="noopener noreferrer">Source: middleware/route_headers.go:141</a></p>
+</section>
+</section>
+<section class="godoc-type" id="type-ThrottleOpts">
+<h3 class="godoc-symbol">type ThrottleOpts</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/throttle.go#L20" target="_blank" rel="noopener noreferrer">Source: middleware/throttle.go:20</a></p>
+<div class="godoc-doc"><p>ThrottleOpts represents a set of throttling options.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> ThrottleOpts</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> struct</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	RetryAfterFn</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">   func</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#9CDCFE">ctxDone</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0"> bool</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">) </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">time</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Duration</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	Limit</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">          int</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	BacklogLimit</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">   int</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	BacklogTimeout</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> time</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Duration</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#9CDCFE">	StatusCode</span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">     int</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Fields</summary><ul><li class="godoc-field"><code class="godoc-field-sig">RetryAfterFn <span class="godoc-field-type">func(ctxDone bool) time.Duration</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">Limit <span class="godoc-field-type">int</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">BacklogLimit <span class="godoc-field-type">int</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">BacklogTimeout <span class="godoc-field-type">time.Duration</span></code> </li><li class="godoc-field"><code class="godoc-field-sig">StatusCode <span class="godoc-field-type">int</span></code> </li></ul></details>
+</section>
+<section class="godoc-type" id="type-WrapResponseWriter">
+<h3 class="godoc-symbol">type WrapResponseWriter</h3>
+<p class="godoc-source"><a href="https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/wrap_writer.go#L48" target="_blank" rel="noopener noreferrer">Source: middleware/wrap_writer.go:48</a></p>
+<div class="godoc-doc"><p>WrapResponseWriter is a proxy around an http.ResponseWriter that allows you to hook
+into various parts of the response process.</p></div>
+<div class="prose-code-block not-prose">
+<div class="prose-code-copy">
+<button aria-label="Copy code" class="copy-btn" type="button" data-copy-source="code"><svg fill="none" height="18" viewBox="0 0 18 18" width="18" xmlns="http://www.w3.org/2000/svg"><title>Copy</title><path d="M14.25 5.25H7.25C6.14543 5.25 5.25 6.14543 5.25 7.25V14.25C5.25 15.3546 6.14543 16.25 7.25 16.25H14.25C15.3546 16.25 16.25 15.3546 16.25 14.25V7.25C16.25 6.14543 15.3546 5.25 14.25 5.25Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.80103 11.998L1.77203 5.07397C1.61003 3.98097 2.36403 2.96397 3.45603 2.80197L10.38 1.77297C11.313 1.63397 12.19 2.16297 12.528 3.00097" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="prose-code-content"><pre class="shiki shiki-themes github-light-default dark-plus" style="--shiki-light:#1f2328;--shiki-dark:#D4D4D4;--shiki-light-bg:#ffffff;--shiki-dark-bg:#1E1E1E" tabindex="0"><code><span class="line"><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6">type</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0"> WrapResponseWriter</span><span style="--shiki-light:#CF222E;--shiki-dark:#569CD6"> interface</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4"> {</span></span>
+<span class="line"><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">	http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">ResponseWriter</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Status returns the HTTP status of the request, or 0 if one has not</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// yet been sent.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Status</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">() </span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">int</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// BytesWritten returns the total number of bytes sent to the client.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	BytesWritten</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">() </span><span style="--shiki-light:#CF222E;--shiki-dark:#4EC9B0">int</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Tee causes the response body to be written to the given io.Writer in</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// addition to proxying the writes through. Only one io.Writer can be</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// tee'd to at once: setting a second one will overwrite the first.</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Writes will be sent to the proxy before being written to this</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// io.Writer. It is illegal for the tee'd writer to be modified</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// concurrently with writes.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Tee</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">(</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">io</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">Writer</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">)</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Unwrap returns the original proxied target.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Unwrap</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">() </span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">http</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">.</span><span style="--shiki-light:#953800;--shiki-dark:#4EC9B0">ResponseWriter</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// Discard causes all writes to the original ResponseWriter be discarded,</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// instead writing only to the tee'd writer if it's set.</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// The caller is responsible for calling WriteHeader and Write on the</span></span>
+<span class="line"><span style="--shiki-light:#6E7781;--shiki-dark:#6A9955">	// original ResponseWriter once the processing is done.</span></span>
+<span class="line"><span style="--shiki-light:#8250DF;--shiki-dark:#DCDCAA">	Discard</span><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">()</span></span>
+<span class="line"><span style="--shiki-light:#1F2328;--shiki-dark:#D4D4D4">}</span></span></code></pre></div>
+</div>
+<details class="godoc-fields" open><summary>Methods</summary><ul><li class="godoc-field"><code class="godoc-field-sig">http.ResponseWriter</code> </li><li class="godoc-field"><code class="godoc-field-sig">Status <span class="godoc-field-type">func() int</span></code> <div class="godoc-field-doc"><p>Status returns the HTTP status of the request, or 0 if one has not
+yet been sent.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">BytesWritten <span class="godoc-field-type">func() int</span></code> <div class="godoc-field-doc"><p>BytesWritten returns the total number of bytes sent to the client.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Tee <span class="godoc-field-type">func(io.Writer)</span></code> <div class="godoc-field-doc"><p>Tee causes the response body to be written to the given io.Writer in
+addition to proxying the writes through. Only one io.Writer can be
+tee'd to at once: setting a second one will overwrite the first.
+Writes will be sent to the proxy before being written to this
+io.Writer. It is illegal for the tee'd writer to be modified
+concurrently with writes.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Unwrap <span class="godoc-field-type">func() http.ResponseWriter</span></code> <div class="godoc-field-doc"><p>Unwrap returns the original proxied target.</p></div></li><li class="godoc-field"><code class="godoc-field-sig">Discard <span class="godoc-field-type">func()</span></code> <div class="godoc-field-doc"><p>Discard causes all writes to the original ResponseWriter be discarded,
+instead writing only to the tee'd writer if it's set.
+The caller is responsible for calling WriteHeader and Write on the
+original ResponseWriter once the processing is done.</p></div></li></ul></details>
+</section></div><nav class="mt-12 flex items-stretch justify-between gap-4"><a href="../api/index.html" class="group flex flex-col gap-1 px-4 py-3 rounded-lg border border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] hover:border-[rgb(var(--color-primary)/0.4)] dark:hover:border-[rgb(var(--color-primary-light)/0.3)] transition-colors no-underline"><span class="text-xs text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]">← Previous</span><span class="text-sm font-medium text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-300))] group-hover:text-[rgb(var(--color-primary-ink))] dark:group-hover:text-[rgb(var(--color-primary-light))] transition-colors">Overview</span></a><a href="../api/package-root.html" class="group flex flex-col gap-1 px-4 py-3 rounded-lg border border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] hover:border-[rgb(var(--color-primary)/0.4)] dark:hover:border-[rgb(var(--color-primary-light)/0.3)] transition-colors no-underline text-right ml-auto"><span class="text-xs text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]">Next →</span><span class="text-sm font-medium text-[rgb(var(--color-gray-700))] dark:text-[rgb(var(--color-gray-300))] group-hover:text-[rgb(var(--color-primary-ink))] dark:group-hover:text-[rgb(var(--color-primary-light))] transition-colors">chi</span></a></nav><div class="mt-16 mb-8 flex items-center justify-between border-t border-[rgb(var(--color-gray-200)/0.7)] dark:border-[rgb(var(--color-gray-800)/0.5)] pt-6 text-xs text-[rgb(var(--color-gray-500))] dark:text-[rgb(var(--color-gray-400))]"><a href="https://sourcey.com" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 hover:text-[rgb(var(--color-gray-600))] dark:hover:text-[rgb(var(--color-gray-300))] transition-colors">Built with<img src="https://sourcey.com/sourcey-logo.png" alt="Sourcey" class="h-4 w-4"/></a><div class="flex items-center gap-4"><a href="https://github.com/go-chi/chi/edit/8b258c7bb28f97a5f2a856ff7ef962578fec9215/middleware/basic_auth.go" target="_blank" rel="noopener noreferrer" class="hover:text-[rgb(var(--color-gray-600))] dark:hover:text-[rgb(var(--color-gray-300))] transition-colors flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3 h-3 mr-0.5"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"></path></svg>Edit this page</a><a href="https://github.com/go-chi/chi/blob/master/LICENSE" target="_blank" rel="noopener noreferrer" aria-label="MIT License" class="hover:text-[rgb(var(--color-gray-600))] dark:hover:text-[rgb(var(--color-gray-300))] transition-colors"><span class="ml-1">MIT License</span></a></div></div></div></div></main></div><div id="search-dialog" role="dialog" aria-label="Search"><div class="search-dialog-inner"><div class="search-input-row"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="search-input-icon"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"></path></svg><input id="search-input" type="text" placeholder="Search docs..." autocomplete="off" spellcheck="false"/></div><div id="search-results"></div><div class="search-footer"><span class="search-footer-hint"><kbd>↑↓</kbd> navigate</span><span class="search-footer-hint"><kbd>↵</kbd> select</span><span class="search-footer-hint"><kbd>esc</kbd> close</span></div></div></div></div><script src="../sourcey.js" defer></script></body></html>

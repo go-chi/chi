@@ -1,0 +1,6 @@
+{
+  "name": "chi-sourcey-docs",
+  "private": true,
+  "scripts": {"build": "sourcey build --config sourcey.config.ts --output site"},
+  "devDependencies": {"sourcey": "3.6.5"}
+}
