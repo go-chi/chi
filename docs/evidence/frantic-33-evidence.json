@@ -1,0 +1,94 @@
+{
+    "summary":  "Published a navigable Sourcey API reference for the maintained go-chi/chi OSS library at a pinned upstream commit, with governed build verification and an upstream adoption PR.",
+    "observations":  [
+                         {
+                             "id":  "target",
+                             "claim":  "The documented target is the third-party go-chi/chi repository.",
+                             "evidence":  "https://github.com/go-chi/chi"
+                         },
+                         {
+                             "id":  "pin",
+                             "claim":  "Documentation input is pinned to upstream commit 8b258c7bb28f97a5f2a856ff7ef962578fec9215.",
+                             "evidence":  "https://github.com/go-chi/chi/tree/8b258c7bb28f97a5f2a856ff7ef962578fec9215"
+                         },
+                         {
+                             "id":  "license",
+                             "claim":  "The target uses the permissive MIT license.",
+                             "evidence":  "https://github.com/go-chi/chi/blob/8b258c7bb28f97a5f2a856ff7ef962578fec9215/LICENSE"
+                         },
+                         {
+                             "id":  "maintenance",
+                             "claim":  "The pinned target snapshot was selected after confirming recent upstream activity on 2026-07-05.",
+                             "evidence":  "https://github.com/go-chi/chi/commits/master/"
+                         },
+                         {
+                             "id":  "scale",
+                             "claim":  "The pinned checkout contains 78 Go source files and the generated godoc snapshot exposes 83 top-level public entries across the root and middleware packages.",
+                             "evidence":  "docs/godoc.json"
+                         },
+                         {
+                             "id":  "adapter",
+                             "claim":  "Sourcey godoc produced docs/godoc.json; Sourcey build 3.6.5 rendered the configured API site.",
+                             "evidence":  "docs/README-sourcey.md"
+                         },
+                         {
+                             "id":  "pages",
+                             "claim":  "The public site contains the root, package-root, and middleware reference pages plus search, sitemap, LLM exports, and Open Graph assets.",
+                             "evidence":  "https://kais12349.github.io/chi/"
+                         },
+                         {
+                             "id":  "links",
+                             "claim":  "The generated site contains 180 pinned source-link occurrences to the selected upstream commit.",
+                             "evidence":  "https://kais12349.github.io/chi/"
+                         },
+                         {
+                             "id":  "governance",
+                             "claim":  "Runx CLI 0.8.2 sealed the Sourcey workflow after discovery, approval, two deterministic builds, critique, bounded revision, verification, and packaging.",
+                             "evidence":  "sha256:9f1a7499cd70394c3b0e4b9885e13aa74f70616f882122542978d4b1652c2751"
+                         },
+                         {
+                             "id":  "adoption",
+                             "claim":  "An upstream pull request offers the configuration and reproducible build to the project maintainers.",
+                             "evidence":  "https://github.com/go-chi/chi/pull/1147"
+                         },
+                         {
+                             "id":  "public_http",
+                             "claim":  "Public root and both package pages returned HTTP 200; the root returned 107205 bytes, package-root 107238 bytes, and middleware 138848 bytes.",
+                             "evidence":  "https://kais12349.github.io/chi/"
+                         }
+                     ],
+    "target":  {
+                   "repository":  "https://github.com/go-chi/chi",
+                   "pinned_commit":  "8b258c7bb28f97a5f2a856ff7ef962578fec9215",
+                   "license":  "MIT",
+                   "latest_activity_observed":  "2026-07-05T20:51:45+02:00",
+                   "source_file_count":  78
+               },
+    "sourcey":  {
+                    "version":  "3.6.5",
+                    "adapter_commands":  [
+                                             "sourcey godoc -p github.com/go-chi/chi/v5 -p github.com/go-chi/chi/v5/middleware -o docs/godoc.json",
+                                             "sourcey build -o docs/site --quiet"
+                                         ],
+                    "config":  "docs/sourcey.config.ts",
+                    "page_list":  [
+                                      "/chi/",
+                                      "/chi/api/package-root.html",
+                                      "/chi/api/pkg-middleware.html"
+                                  ],
+                    "top_level_public_entries":  83,
+                    "pinned_source_link_occurrences":  180
+                },
+    "runx":  {
+                 "cli_version":  "0.8.2",
+                 "run_id":  "run_sourcey_6a9cd659cd197404",
+                 "receipt_ref":  "sha256:9f1a7499cd70394c3b0e4b9885e13aa74f70616f882122542978d4b1652c2751",
+                 "status":  "sealed",
+                 "locally_verified":  true
+             },
+    "artifacts":  {
+                      "public_url":  "https://kais12349.github.io/chi/",
+                      "source_url":  "https://github.com/Kais12349/chi/tree/codex/sourcey-chi-docs-frantic33/docs",
+                      "pr_url":  "https://github.com/go-chi/chi/pull/1147"
+                  }
+}
