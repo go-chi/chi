@@ -657,13 +657,13 @@ func (n *node) routes() []Route {
 			// Walk() reads Handlers["*"] for With() middleware when recursing
 			// into a subroute, so keep it there even if it's also the stub.
 			if mh[mALL] != nil && mh[mALL].handler != nil {
-				if subroutes != nil || !sameHandler(mh[mALL].handler, stubHandler) {
+				if subroutes != nil || !equalHandlers(mh[mALL].handler, stubHandler) {
 					hs["*"] = mh[mALL].handler
 				}
 			}
 
 			for mt, h := range mh {
-				if h.handler == nil || sameHandler(h.handler, stubHandler) {
+				if h.handler == nil || equalHandlers(h.handler, stubHandler) {
 					continue
 				}
 				if m, ok := reverseMethodMap[mt]; ok {
@@ -686,10 +686,10 @@ func (n *node) routes() []Route {
 	return rts
 }
 
-// sameHandler reports whether a and b are the same handler value. Handlers
-// are commonly funcs, so this uses reflection: a direct == panics on
-// uncomparable types such as http.HandlerFunc.
-func sameHandler(a, b http.Handler) bool {
+// equalHandlers reports whether a and b are the same handler value. Handlers
+// are commonly funcs (e.g. http.HandlerFunc), and a direct == on those
+// panics at runtime, so funcs are compared by pointer instead.
+func equalHandlers(a, b http.Handler) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
@@ -700,15 +700,13 @@ func sameHandler(a, b http.Handler) bool {
 		return false
 	}
 
-	switch av.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.Slice, reflect.UnsafePointer:
+	if av.Kind() == reflect.Func {
 		return av.Pointer() == bv.Pointer()
-	default:
-		if av.Type().Comparable() {
-			return a == b
-		}
-		return false
 	}
+	if av.Type().Comparable() {
+		return a == b
+	}
+	return false
 }
 
 func (n *node) walk(fn func(eps endpoints, subroutes Routes) bool) bool {
