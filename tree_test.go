@@ -622,13 +622,9 @@ func TestRoutesHidesMountStub(t *testing.T) {
 			r.Get("/{id}", handler)
 		})
 
-		// Routes() is not recursive: r.Route("/api", ...) mounts a distinct
-		// subrouter, so r.Routes() sees only the "/api/*" connector to it, not
-		// "/api/{id}". SubRoutes is itself a Routes, so it can be walked
-		// further — either manually via SubRoutes.Routes(), or by passing it
-		// straight to Walk() to recurse into just that subtree. Walk() itself
-		// already does this recursion across the whole tree, which is how it
-		// correctly reports "/api/{id}" (see TestWalkRouteWithHandlerAndSubrouter).
+		// Routes() isn't recursive: /api mounts a separate subrouter, so only
+		// its "/api/*" connector shows here, not "/api/{id}". SubRoutes can be
+		// walked further, the same way Walk() does internally.
 		routes := r.Routes()
 		if len(routes) != 1 {
 			t.Fatalf("expected exactly 1 route, got %d: %+v", len(routes), routes)
