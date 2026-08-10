@@ -630,11 +630,7 @@ func (n *node) routes() []Route {
 	rts := []Route{}
 
 	n.walk(func(eps endpoints, subroutes Routes) bool {
-		// Mount() registers a synthetic stub handler on the exact mount
-		// pattern to connect it to the subrouter. That stub must stay
-		// hidden from the public route listing, but a real handler
-		// registered on the very same pattern (e.g. a Get() colliding
-		// with a Route() mount) must still be reported.
+		// Hide Mount()'s stub handler, but not a real handler sharing its pattern.
 		var stubHandler http.Handler
 		if eps[mSTUB] != nil {
 			stubHandler = eps[mSTUB].handler
@@ -658,11 +654,8 @@ func (n *node) routes() []Route {
 		for p, mh := range pats {
 			hs := make(map[string]http.Handler)
 
-			// Walk() reads Handlers["*"] to pick up inline (With()) middleware
-			// carried by a *ChainHandler when it recurses into a subroute, even
-			// when that same handler value is also the mount stub — so the "*"
-			// entry must stay in place whenever a subrouter is attached. It's
-			// only safe (and necessary) to hide it on a leaf, non-subroute node.
+			// Walk() reads Handlers["*"] for With() middleware when recursing
+			// into a subroute, so keep it there even if it's also the stub.
 			if mh[mALL] != nil && mh[mALL].handler != nil {
 				if subroutes != nil || !sameHandler(mh[mALL].handler, stubHandler) {
 					hs["*"] = mh[mALL].handler
@@ -678,10 +671,7 @@ func (n *node) routes() []Route {
 				}
 			}
 
-			// A node with subroutes must still be reported even when it
-			// carries no handlers of its own (Walk needs it to recurse
-			// into the subrouter); a leaf mount-connector stub with
-			// nothing left after filtering has nothing worth reporting.
+			// Keep subroute nodes so Walk() can recurse; a stub-only leaf has nothing to report.
 			if len(hs) == 0 && subroutes == nil {
 				continue
 			}
@@ -696,12 +686,9 @@ func (n *node) routes() []Route {
 	return rts
 }
 
-// sameHandler reports whether a and b are the same handler value. It is
-// used to detect the synthetic stub handler Mount() installs on its mount
-// pattern so routes() can hide it without dropping a real handler that
-// happens to share the same node. Handlers are commonly funcs, which are
-// only comparable via reflection (a direct == panics on uncomparable
-// types such as http.HandlerFunc).
+// sameHandler reports whether a and b are the same handler value. Handlers
+// are commonly funcs, so this uses reflection: a direct == panics on
+// uncomparable types such as http.HandlerFunc.
 func sameHandler(a, b http.Handler) bool {
 	if a == nil || b == nil {
 		return a == b
