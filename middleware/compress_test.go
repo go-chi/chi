@@ -109,6 +109,30 @@ func TestCompressor(t *testing.T) {
 	}
 }
 
+func TestCompressorDefaultTextTypes(t *testing.T) {
+	for _, contentType := range []string{"text/markdown", "text/csv", "text/vtt"} {
+		t.Run(contentType, func(t *testing.T) {
+			r := chi.NewRouter()
+			r.Use(Compress(5))
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", contentType)
+				w.Write([]byte("textstring"))
+			})
+
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			resp, body := testRequestWithAcceptedEncodings(t, ts, "GET", "/", "gzip")
+			if body != "textstring" {
+				t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", body)
+			}
+			if got := resp.Header.Get("Content-Encoding"); got != "gzip" {
+				t.Errorf("expected encoding %q but got %q", "gzip", got)
+			}
+		})
+	}
+}
+
 func TestCompressorWildcards(t *testing.T) {
 	tests := []struct {
 		name       string
