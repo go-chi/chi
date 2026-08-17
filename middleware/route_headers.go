@@ -43,8 +43,19 @@ func RouteHeaders() HeaderRouter {
 	return HeaderRouter{}
 }
 
+// HeaderRouter maps a lowercased request header name to the routes registered
+// for it. Use [RouteHeaders] to create one.
 type HeaderRouter map[string][]HeaderRoute
 
+// Route registers middlewareHandler for requests whose header value matches
+// match, which may contain a single "*" wildcard. The header name is matched
+// case-insensitively.
+//
+// The header value is lowercased before it is compared, but match is not, so
+// match should be lowercase: "example.com" matches both "example.com" and
+// "EXAMPLE.COM", while "Example.com" never matches anything.
+//
+// It returns hr so that calls can be chained.
 func (hr HeaderRouter) Route(header, match string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter {
 	header = strings.ToLower(header)
 	k := hr[header]
@@ -55,6 +66,10 @@ func (hr HeaderRouter) Route(header, match string, middlewareHandler func(next h
 	return hr
 }
 
+// RouteAny works like [HeaderRouter.Route], but registers one middlewareHandler
+// for several patterns at once. The route matches when any of them matches.
+//
+// It returns hr so that calls can be chained.
 func (hr HeaderRouter) RouteAny(header string, match []string, middlewareHandler func(next http.Handler) http.Handler) HeaderRouter {
 	header = strings.ToLower(header)
 	k := hr[header]
@@ -69,11 +84,22 @@ func (hr HeaderRouter) RouteAny(header string, match []string, middlewareHandler
 	return hr
 }
 
+// RouteDefault registers the handler to use when no other route matches. It
+// replaces any default registered earlier.
+//
+// It returns hr so that calls can be chained.
 func (hr HeaderRouter) RouteDefault(handler func(next http.Handler) http.Handler) HeaderRouter {
 	hr["*"] = []HeaderRoute{{Middleware: handler}}
 	return hr
 }
 
+// Handler returns the middleware that performs the routing. The first route
+// whose pattern matches the value of its header handles the request. If none
+// match, the handler registered with [HeaderRouter.RouteDefault] runs, and if
+// there is no default the request is passed to next unchanged.
+//
+// Headers are visited in map order, so when a request could match routes on
+// more than one header, which of them wins is not defined.
 func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if len(hr) == 0 {
@@ -107,12 +133,16 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 	})
 }
 
+// HeaderRoute is a single route registered on a [HeaderRouter]. MatchAny takes
+// precedence: MatchOne is only consulted when MatchAny is empty.
 type HeaderRoute struct {
 	Middleware func(next http.Handler) http.Handler
 	MatchOne   Pattern
 	MatchAny   []Pattern
 }
 
+// IsMatch reports whether value matches the route. When MatchAny is set it
+// matches if any of its patterns match, otherwise MatchOne is used.
 func (r HeaderRoute) IsMatch(value string) bool {
 	if len(r.MatchAny) > 0 {
 		for _, m := range r.MatchAny {
@@ -126,18 +156,26 @@ func (r HeaderRoute) IsMatch(value string) bool {
 	return false
 }
 
+// Pattern matches a header value, optionally through a single "*" wildcard.
+// Use [NewPattern] to build one.
 type Pattern struct {
 	prefix   string
 	suffix   string
 	wildcard bool
 }
 
+// NewPattern compiles value into a [Pattern]. The first "*" in value becomes a
+// wildcard that matches any run of characters, so "*.example.com" matches
+// "api.example.com". A second "*" is matched literally.
 func NewPattern(value string) Pattern {
 	p := Pattern{}
 	p.prefix, p.suffix, p.wildcard = strings.Cut(value, "*")
 	return p
 }
 
+// Match reports whether v satisfies the pattern. Without a wildcard this is an
+// exact comparison. With one, v must be long enough to hold both sides and must
+// start with the part before the "*" and end with the part after it.
 func (p Pattern) Match(v string) bool {
 	if !p.wildcard {
 		return p.prefix == v
