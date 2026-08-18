@@ -1,0 +1,7 @@
+{
+  "steps": [
+    { "op": "initialize" },
+    { "op": "newSession" },
+    { "op": "prompt", "text": "This prompt first receives an empty completion, then a retried reply." }
+  ]
+}

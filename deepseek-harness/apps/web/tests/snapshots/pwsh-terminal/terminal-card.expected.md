@@ -1,0 +1,3 @@
+- text: Failed {{workspace}} Get-Item missing.txt exit code 1
+- button "Copy"
+- text: "[stderr] Get-Item : Cannot find path 'missing.txt' because it does not exist."

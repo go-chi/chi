@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "op": "initialize" },
+    { "op": "newSession" },
+    { "op": "prompt", "text": "This turn is cut off at the output limit while calling a tool." },
+    { "op": "prompt", "text": "Continue: summarize what happened without retrying the tool." }
+  ]
+}

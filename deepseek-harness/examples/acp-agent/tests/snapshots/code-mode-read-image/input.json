@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {
+      "op": "initialize"
+    },
+    {
+      "op": "newSession"
+    },
+    {
+      "op": "prompt",
+      "text": "Using ONE run_code program, create a one-pixel PNG with Node.js, call read_image on it, then reply with exactly the single word DONE."
+    }
+  ]
+}

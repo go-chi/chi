@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {
+      "op": "prompt",
+      "text": "retry the transient provider failure"
+    }
+  ]
+}

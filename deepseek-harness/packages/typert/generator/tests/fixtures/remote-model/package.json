@@ -1,0 +1,5 @@
+{
+  "name": "@fixture/remote-workspace",
+  "private": true,
+  "type": "module"
+}

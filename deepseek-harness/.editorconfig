@@ -1,0 +1,8 @@
+# Editor-side declaration of the repo's text conventions. Pairs with
+# .gitattributes: that file pins what GIT produces (LF checkouts), this one
+# pins what EDITORS write to disk — the one path git's filters cannot reach.
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true

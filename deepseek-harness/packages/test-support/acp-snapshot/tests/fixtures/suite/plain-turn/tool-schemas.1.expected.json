@@ -1,0 +1,12 @@
+{
+  "initial": [
+    {
+      "name": "child-only",
+      "description": "Child D",
+      "parameters": {
+        "type": "object"
+      }
+    }
+  ],
+  "changes": []
+}

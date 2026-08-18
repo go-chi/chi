@@ -1,0 +1,11 @@
+{
+  "name": "@fixture/write",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  }
+}

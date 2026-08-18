@@ -1,0 +1,4 @@
+- id: beta
+  name: ../../plugins/contribute.js
+  config:
+    tool: beta

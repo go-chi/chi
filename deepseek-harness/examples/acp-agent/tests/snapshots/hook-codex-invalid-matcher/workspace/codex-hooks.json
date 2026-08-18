@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "echo 'must not run' >&2; exit 2" }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "[",
+        "hooks": [
+          { "type": "command", "command": "exit 2" }
+        ]
+      }
+    ]
+  }
+}

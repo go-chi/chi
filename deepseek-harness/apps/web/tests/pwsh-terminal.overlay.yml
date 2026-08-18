@@ -1,0 +1,30 @@
+# The pwsh terminal-card lane swaps the shipped bash stack for the PowerShell
+# twin: the bash executor row is disabled, the pwsh executor is inserted, and
+# the host tool-pwsh row is enabled by id. The pwsh-sandbox row is disabled
+# too so the inserted pwsh-local is the lone executor on every platform. The
+# permission service refuses an unconfined executor by design (presets bundle
+# a sandbox mode), so its row is disabled as well — this lane renders a seeded
+# session, never a permission decision. The seeded scenario renders the logged
+# pwsh call/result through the real tools on replay; no command executes, but
+# the composition must boot the pwsh executor, so the lane skips on hosts
+# without a usable `pwsh`.
+- id: bash-sandbox
+  name: '@deepseek-ai/dsh-bash-sandbox'
+  disabled: true
+- id: pwsh-sandbox
+  name: '@deepseek-ai/dsh-pwsh-sandbox'
+  disabled: true
+- id: permission
+  name: '@deepseek-ai/dsh-permission-presets'
+  disabled: true
+- insert:
+    - id: pwsh-local
+      name: '@deepseek-ai/dsh-pwsh-local'
+
+# tool-pwsh already exists in the shipped composition: the base bundle declares
+# it platform-gated on every platform, and the web-app overlay disables it for
+# surfaces that use presets. So this lane enables it by id rather than
+# inserting a second row to the same id.
+- id: tool-pwsh
+  name: '@deepseek-ai/dsh-tool-pwsh'
+  disabled: false

@@ -1,0 +1,10 @@
+{
+  "platform": "linux-arm64",
+  "binaries": [
+    {
+      "tool": "landlock-run",
+      "kind": "static-musl",
+      "path": "bin/landlock-run"
+    }
+  ]
+}
