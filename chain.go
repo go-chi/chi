@@ -27,6 +27,10 @@ type ChainHandler struct {
 	Middlewares Middlewares
 }
 
+// ServeHTTP serves the middleware stack, ending at Endpoint. The stack is
+// composed once, when Middlewares.Handler or Middlewares.HandlerFunc builds
+// the ChainHandler, so assigning to Endpoint or Middlewares afterwards does
+// not change what is served.
 func (c *ChainHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	c.chain.ServeHTTP(w, r)
 }

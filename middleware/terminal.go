@@ -32,6 +32,10 @@ var (
 	reset = []byte{'\033', '[', '0', 'm'}
 )
 
+// IsTTY reports whether stdout looks like a terminal. It is set once during
+// package initialization, by treating stdout as a terminal when it is a
+// character device, and it gates the ANSI colors written by Logger and
+// Recoverer. Assign to it to force colors on or off.
 var IsTTY bool
 
 func init() {

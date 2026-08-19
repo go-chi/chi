@@ -51,6 +51,10 @@ func Recoverer(next http.Handler) http.Handler {
 // for ability to test the PrintPrettyStack function
 var recovererErrorWriter io.Writer = os.Stderr
 
+// PrintPrettyStack writes a formatted stack trace for the recovered value rvr
+// to stderr, in color when [IsTTY] reports that stdout is a terminal.
+//
+// Recoverer calls this itself when the request carries no LogEntry.
 func PrintPrettyStack(rvr interface{}) {
 	printPrettyStack(rvr, true)
 }
