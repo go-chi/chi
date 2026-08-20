@@ -39,7 +39,7 @@
 // expression match, for example {number:\\d+}. The regular expression
 // syntax is Go's normal regexp RE2 syntax, except that / will never be
 // matched. An anonymous regexp pattern is allowed, using an empty string
-// before the colon in the placeholder, such as {:\\d+}
+// before the colon in the placeholder, such as {:\\d+}.
 //
 // The special placeholder of asterisk matches the rest of the requested
 // URL. Any trailing characters in the pattern are ignored. This is the only
