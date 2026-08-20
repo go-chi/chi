@@ -153,12 +153,22 @@ func TestCompressorWildcards(t *testing.T) {
 		{
 			name:    "invalid wildcard #1",
 			types:   []string{"audio/*wav"},
-			recover: "middleware/compress: Unsupported content-type wildcard pattern 'audio/*wav'. Only '/*' supported",
+			recover: "middleware/compress: Unsupported content-type wildcard pattern 'audio/*wav'. Only '<type>/*' supported",
 		},
 		{
 			name:    "invalid wildcard #2",
 			types:   []string{"application*/*"},
-			recover: "middleware/compress: Unsupported content-type wildcard pattern 'application*/*'. Only '/*' supported",
+			recover: "middleware/compress: Unsupported content-type wildcard pattern 'application*/*'. Only '<type>/*' supported",
+		},
+		{
+			name:    "catch-all wildcard #1",
+			types:   []string{"*/*"},
+			recover: "middleware/compress: Unsupported content-type wildcard pattern '*/*'. Only '<type>/*' supported",
+		},
+		{
+			name:    "catch-all wildcard #2",
+			types:   []string{"/*"},
+			recover: "middleware/compress: Unsupported content-type wildcard pattern '/*'. Only '<type>/*' supported",
 		},
 		{
 			name:    "valid wildcard",

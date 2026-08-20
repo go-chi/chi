@@ -65,6 +65,10 @@ type Compressor struct {
 //
 // The level should be one of the ones defined in the flate package.
 // The types are the content types that are allowed to be compressed.
+//
+// Catch-all wildcards ("*/*", "/*") are rejected: compressing every response
+// wastes CPU on already-compressed types like zip, jpeg or png. Pass explicit
+// types instead, e.g. "text/html" or "application/*".
 func NewCompressor(level int, types ...string) *Compressor {
 	// If types are provided, set those as the allowed types. If none are
 	// provided, use the default list.
@@ -73,9 +77,12 @@ func NewCompressor(level int, types ...string) *Compressor {
 	if len(types) > 0 {
 		for _, t := range types {
 			if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
-				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '/*' supported", t))
+				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '<type>/*' supported", t))
 			}
 			if before, ok := strings.CutSuffix(t, "/*"); ok {
+				if before == "" {
+					panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '<type>/*' supported", t))
+				}
 				allowedWildcards[before] = struct{}{}
 			} else {
 				allowedTypes[t] = struct{}{}
