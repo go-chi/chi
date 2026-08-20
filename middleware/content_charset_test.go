@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -15,55 +17,78 @@ func TestContentCharset(t *testing.T) {
 		name                string
 		inputValue          string
 		inputContentCharset []string
+		body                string
 		want                int
 	}{
 		{
 			"should accept requests with a matching charset",
 			"application/json; charset=UTF-8",
 			[]string{"UTF-8"},
+			"foobar",
 			http.StatusOK,
 		},
 		{
 			"should be case-insensitive",
 			"application/json; charset=utf-8",
 			[]string{"UTF-8"},
+			"foobar",
 			http.StatusOK,
 		},
 		{
 			"should accept requests with a matching charset with extra values",
 			"application/json; foo=bar; charset=UTF-8; spam=eggs",
 			[]string{"UTF-8"},
+			"foobar",
 			http.StatusOK,
 		},
 		{
 			"should accept requests with a matching charset when multiple charsets are supported",
 			"text/xml; charset=UTF-8",
 			[]string{"UTF-8", "Latin-1"},
+			"foobar",
 			http.StatusOK,
 		},
 		{
 			"should accept requests with no charset if empty charset headers are allowed",
 			"text/xml",
 			[]string{"UTF-8", ""},
+			"foobar",
 			http.StatusOK,
 		},
 		{
 			"should not accept requests with no charset if empty charset headers are not allowed",
 			"text/xml",
 			[]string{"UTF-8"},
+			"foobar",
 			http.StatusUnsupportedMediaType,
 		},
 		{
 			"should not accept requests with a mismatching charset",
 			"text/plain; charset=Latin-1",
 			[]string{"UTF-8"},
+			"foobar",
 			http.StatusUnsupportedMediaType,
 		},
 		{
 			"should not accept requests with a mismatching charset even if empty charsets are allowed",
 			"text/plain; charset=Latin-1",
 			[]string{"UTF-8", ""},
+			"foobar",
 			http.StatusUnsupportedMediaType,
+		},
+		{
+			"should skip validation for requests without a body",
+			"text/plain; charset=Latin-1",
+			[]string{"UTF-8"},
+			"",
+			http.StatusOK,
+		},
+		{
+			"should skip validation for requests without a body and no Content-Type header",
+			"",
+			[]string{"UTF-8"},
+			"",
+			http.StatusOK,
 		},
 	}
 
@@ -76,10 +101,17 @@ func TestContentCharset(t *testing.T) {
 
 			var r = chi.NewRouter()
 			r.Use(ContentCharset(tt.inputContentCharset...))
-			r.Get("/", func(w http.ResponseWriter, r *http.Request) {})
+			r.Post("/", func(w http.ResponseWriter, r *http.Request) {})
 
-			var req, _ = http.NewRequest("GET", "/", nil)
-			req.Header.Set("Content-Type", tt.inputValue)
+			var body io.Reader
+			if tt.body != "" {
+				body = strings.NewReader(tt.body)
+			}
+
+			var req, _ = http.NewRequest("POST", "/", body)
+			if tt.inputValue != "" {
+				req.Header.Set("Content-Type", tt.inputValue)
+			}
 
 			r.ServeHTTP(recorder, req)
 			var res = recorder.Result()
