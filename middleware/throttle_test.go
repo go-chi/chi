@@ -220,11 +220,14 @@ func TestThrottleRetryAfter(t *testing.T) {
 
 	// Take the limit tokens first and wait until they are all held.
 	var wg sync.WaitGroup
+	accepted := make(chan *httptest.ResponseRecorder, limit)
 	for i := 0; i < limit; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+			accepted <- rec
 		}()
 	}
 	for i := 0; i < limit; i++ {
@@ -232,22 +235,30 @@ func TestThrottleRetryAfter(t *testing.T) {
 	}
 
 	// Requests beyond the limit are rejected right away with Retry-After.
-	code := make(chan int, total-limit)
+	rejected := make(chan *httptest.ResponseRecorder, total-limit)
 	for i := 0; i < total-limit; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
-			code <- rec.Code
+			rejected <- rec
 		}()
 	}
 	for i := 0; i < total-limit; i++ {
-		assertEqual(t, http.StatusTooManyRequests, <-code)
+		rec := <-rejected
+		assertEqual(t, http.StatusTooManyRequests, rec.Code)
+		assertEqual(t, "3600", rec.Header().Get("Retry-After"))
 	}
 
 	close(release)
 	wg.Wait()
+
+	// The held requests finished once released, all of them served normally.
+	for i := 0; i < limit; i++ {
+		rec := <-accepted
+		assertEqual(t, http.StatusOK, rec.Code)
+	}
 }
 
 func TestThrottleRetryAfterCancelled(t *testing.T) {
@@ -283,7 +294,11 @@ func TestThrottleRetryAfterCancelled(t *testing.T) {
 	<-served
 
 	// A second request has to wait in the backlog. Cancel its context and the
-	// middleware must reply with the "done" variant of Retry-After.
+	// middleware must reply with the "done" variant of Retry-After. Depending
+	// on scheduling, the cancellation may fire before the request reaches the
+	// first select (direct cancel branch) or while it waits in the backlog
+	// (backlog cancel branch). Both paths set the header the same way, so the
+	// assertion below holds either way.
 	ctx, cancel := context.WithCancel(context.Background())
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
@@ -297,6 +312,51 @@ func TestThrottleRetryAfterCancelled(t *testing.T) {
 
 	assertEqual(t, http.StatusTooManyRequests, rec.Code)
 	assertEqual(t, "7200", rec.Header().Get("Retry-After"))
+
+	close(release)
+	<-firstDone
+}
+
+func TestThrottleRetryAfterBacklogTimeout(t *testing.T) {
+	// A request that gets a backlog token but no processing token in time
+	// hits the backlog timeout branch, which reports Retry-After with
+	// ctxDone=false (it is a timeout, not a cancellation).
+	retryAfterFn := func(ctxDone bool) time.Duration {
+		if ctxDone {
+			return 2 * time.Hour
+		}
+		return time.Hour
+	}
+	throttled := ThrottleWithOpts(ThrottleOpts{
+		Limit:          1,
+		BacklogLimit:   1,
+		BacklogTimeout: 10 * time.Millisecond,
+		RetryAfterFn:   retryAfterFn,
+	})
+
+	release := make(chan struct{})
+	served := make(chan struct{}, 1)
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		served <- struct{}{}
+		<-release
+	})
+	handler := throttled(next)
+
+	// Hold the single token with an in-flight request.
+	firstDone := make(chan struct{})
+	go func() {
+		defer close(firstDone)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+	}()
+	<-served
+
+	// A second request gets the backlog token, finds no processing token and
+	// times out waiting for one.
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	assertEqual(t, http.StatusTooManyRequests, rec.Code)
+	assertEqual(t, "3600", rec.Header().Get("Retry-After"))
 
 	close(release)
 	<-firstDone
