@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -62,5 +63,35 @@ func TestGetHead(t *testing.T) {
 	}
 	if req, body := testRequest(t, ts, "HEAD", "/users/1", nil); body != "" || req.Header.Get("X-User") != "-" {
 		t.Fatalf("expecting X-User header '-' but got '%s'", req.Header.Get("X-User"))
+	}
+}
+
+// Regression for #1030. GetHead implicitly serves HEAD via the GET
+// handler, so a 405 response for a route that has GET should advertise
+// HEAD in the Allow header alongside GET.
+func TestGetHead_AllowHeaderIncludesHead(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(GetHead)
+	r.Get("/only-get", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte("ok"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	req, _ := testRequest(t, ts, "POST", "/only-get", nil)
+	if req.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("status = %d, want 405", req.StatusCode)
+	}
+	allow := req.Header.Values("Allow")
+	joined := ""
+	for _, v := range allow {
+		joined += "," + v
+	}
+	if !strings.Contains(joined, "GET") {
+		t.Fatalf("Allow header missing GET: %v", allow)
+	}
+	if !strings.Contains(joined, "HEAD") {
+		t.Fatalf("Allow header missing HEAD: %v", allow)
 	}
 }
