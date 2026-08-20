@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 )
 
 var _ Router = &Mux{}
@@ -33,9 +32,6 @@ type Mux struct {
 	// to a parent mux
 	parent *Mux
 
-	// Routing context pool
-	pool *sync.Pool
-
 	// Custom route not found handler
 	notFoundHandler http.HandlerFunc
 
@@ -50,10 +46,7 @@ type Mux struct {
 // NewMux returns a newly initialized Mux object that implements the Router
 // interface.
 func NewMux() *Mux {
-	mux := &Mux{tree: &node{}, pool: &sync.Pool{}}
-	mux.pool.New = func() interface{} {
-		return NewRouteContext()
-	}
+	mux := &Mux{tree: &node{}}
 	return mux
 }
 
@@ -78,17 +71,14 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// mx.handler that is comprised of mx.middlewares + mx.routeHTTP.
 	// Once the request is finished, reset the routing context and put it back
 	// into the pool for reuse from another request.
-	rctx = mx.pool.Get().(*Context)
-	rctx.Reset()
-	rctx.Routes = mx
-	rctx.parentCtx = r.Context()
+	rctx = GetRouteContext(mx)
+	defer PutRouteContext(rctx)
 
 	// NOTE: r.WithContext() causes 2 allocations and context.WithValue() causes 1 allocation
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
 
 	// Serve the request and once its done, put the request context back in the sync pool
 	mx.handler.ServeHTTP(w, r)
-	mx.pool.Put(rctx)
 }
 
 // Use appends a middleware handler to the Mux middleware stack.
@@ -255,7 +245,7 @@ func (mx *Mux) With(middlewares ...func(http.Handler) http.Handler) Router {
 	mws = append(mws, middlewares...)
 
 	im := &Mux{
-		pool: mx.pool, inline: true, parent: mx, tree: mx.tree, middlewares: mws,
+		inline: true, parent: mx, tree: mx.tree, middlewares: mws,
 		notFoundHandler: mx.notFoundHandler, methodNotAllowedHandler: mx.methodNotAllowedHandler,
 	}
 
