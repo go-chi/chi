@@ -1,6 +1,9 @@
 package chi
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 // TestRoutePattern tests correct in-the-middle wildcard removals.
 // If user organizes a router like this:
@@ -105,6 +108,7 @@ func TestReplaceWildcardsConsecutive(t *testing.T) {
 
 func TestContext_Clone(t *testing.T) {
 	orig := &Context{
+		parentCtx:      context.Background(),
 		RoutePatterns:  []string{"/v1", "/resources/{id}"},
 		methodsAllowed: []methodTyp{mHEAD, mGET},
 		URLParams: RouteParams{
@@ -144,5 +148,8 @@ func TestContext_Clone(t *testing.T) {
 	}
 	if got := clone.methodsAllowed[0]; got != mHEAD {
 		t.Fatalf("clone methodsAllowed[0] was corrupted, want %d got %d", mHEAD, got)
+	}
+	if clone.parentCtx != nil {
+		t.Fatalf("clone parentCtx should be detached, got %v", clone.parentCtx)
 	}
 }

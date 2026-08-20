@@ -43,6 +43,8 @@ var (
 // Context is the default routing context set on the root node of a
 // request context to track route patterns, URL parameters and
 // an optional routing path.
+//
+// NOTE: New reference fields (slices, maps, pointers) must be deep-copied in Clone.
 type Context struct {
 	Routes Routes
 
@@ -96,18 +98,26 @@ func (x *Context) Reset() {
 	x.parentCtx = nil
 }
 
-// Clone a routing context so that it may be used outside of the request/response lifecycle.
-func (c *Context) Clone() *Context {
-	clone := *c
+// Clone a routing context so that it may be used outside of the request/response
+// lifecycle, e.g. in a goroutine that outlives the request handler.
+//
+// Clone must be called before the request handler returns; after that, the
+// original context is reset and put back into the pool for reuse by another
+// request, racing with the copy.
+func (x *Context) Clone() *Context {
+	clone := *x
 
-	clone.URLParams.Keys = slices.Clone(c.URLParams.Keys)
-	clone.URLParams.Values = slices.Clone(c.URLParams.Values)
+	// Detach from the request's context, which is canceled once the request finishes.
+	clone.parentCtx = nil
 
-	clone.routeParams.Keys = slices.Clone(c.routeParams.Keys)
-	clone.routeParams.Values = slices.Clone(c.routeParams.Values)
+	clone.URLParams.Keys = slices.Clone(x.URLParams.Keys)
+	clone.URLParams.Values = slices.Clone(x.URLParams.Values)
 
-	clone.RoutePatterns = slices.Clone(c.RoutePatterns)
-	clone.methodsAllowed = slices.Clone(c.methodsAllowed)
+	clone.routeParams.Keys = slices.Clone(x.routeParams.Keys)
+	clone.routeParams.Values = slices.Clone(x.routeParams.Values)
+
+	clone.RoutePatterns = slices.Clone(x.RoutePatterns)
+	clone.methodsAllowed = slices.Clone(x.methodsAllowed)
 
 	return &clone
 }
