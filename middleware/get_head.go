@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"net/http"
+	"slices"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -34,6 +36,42 @@ func GetHead(next http.Handler) http.Handler {
 			}
 		}
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(&addAllowHeadWriter{ResponseWriter: w}, r)
 	})
+}
+
+type addAllowHeadWriter struct {
+	http.ResponseWriter
+	headerWritten bool
+}
+
+func (w *addAllowHeadWriter) WriteHeader(statusCode int) {
+	w.headerWritten = true
+	if statusCode == http.StatusMethodNotAllowed {
+		allow := parseAllow(w.Header())
+		if slices.Contains(allow, http.MethodGet) && !slices.Contains(allow, http.MethodHead) {
+			w.Header().Add("Allow", http.MethodHead)
+		}
+	}
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *addAllowHeadWriter) Write(b []byte) (int, error) {
+	if !w.headerWritten {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+// parseAllow parses the Allow header into a slice of methods. It handles
+// multiple Allow headers and comma-separated values.
+func parseAllow(h http.Header) []string {
+	allow := make([]string, 0, len(h["Allow"]))
+	for _, v := range h["Allow"] {
+		parts := strings.Split(v, ",")
+		for i := range parts {
+			allow = append(allow, strings.TrimSpace(parts[i]))
+		}
+	}
+	return allow
 }
