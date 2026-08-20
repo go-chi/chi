@@ -7,6 +7,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"slices"
 	"sort"
@@ -629,8 +630,10 @@ func (n *node) routes() []Route {
 	rts := []Route{}
 
 	n.walk(func(eps endpoints, subroutes Routes) bool {
-		if eps[mSTUB] != nil && eps[mSTUB].handler != nil && subroutes == nil {
-			return false
+		// Hide Mount()'s stub handler, but not a real handler sharing its pattern.
+		var stubHandler http.Handler
+		if eps[mSTUB] != nil {
+			stubHandler = eps[mSTUB].handler
 		}
 
 		// Group methodHandlers by unique patterns
@@ -650,17 +653,27 @@ func (n *node) routes() []Route {
 
 		for p, mh := range pats {
 			hs := make(map[string]http.Handler)
+
+			// Walk() reads Handlers["*"] for With() middleware when recursing
+			// into a subroute, so keep it there even if it's also the stub.
 			if mh[mALL] != nil && mh[mALL].handler != nil {
-				hs["*"] = mh[mALL].handler
+				if subroutes != nil || !equalHandlers(mh[mALL].handler, stubHandler) {
+					hs["*"] = mh[mALL].handler
+				}
 			}
 
 			for mt, h := range mh {
-				if h.handler == nil {
+				if h.handler == nil || equalHandlers(h.handler, stubHandler) {
 					continue
 				}
 				if m, ok := reverseMethodMap[mt]; ok {
 					hs[m] = h.handler
 				}
+			}
+
+			// Keep subroute nodes so Walk() can recurse; a stub-only leaf has nothing to report.
+			if len(hs) == 0 && subroutes == nil {
+				continue
 			}
 
 			rt := Route{subroutes, hs, p}
@@ -671,6 +684,29 @@ func (n *node) routes() []Route {
 	})
 
 	return rts
+}
+
+// equalHandlers reports whether a and b are the same handler value. Handlers
+// are commonly funcs (e.g. http.HandlerFunc), and a direct == on those
+// panics at runtime, so funcs are compared by pointer instead.
+func equalHandlers(a, b http.Handler) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+
+	av := reflect.ValueOf(a)
+	bv := reflect.ValueOf(b)
+	if av.Type() != bv.Type() {
+		return false
+	}
+
+	if av.Kind() == reflect.Func {
+		return av.Pointer() == bv.Pointer()
+	}
+	if av.Type().Comparable() {
+		return a == b
+	}
+	return false
 }
 
 func (n *node) walk(fn func(eps endpoints, subroutes Routes) bool) bool {
