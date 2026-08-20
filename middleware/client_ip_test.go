@@ -196,8 +196,10 @@ func TestClientIPFromXFFTrustedProxies(t *testing.T) {
 
 		// XFF shorter than N: no IP set. This is intentionally fail-closed so a
 		// proxy-count mismatch doesn't silently fall through to attacker-controlled
-		// values.
+		// values. The index len(xff)-N is negative/out-of-range here; the walk
+		// must never panic or wrap around to an entry the client controls.
 		{"shorter_than_n", 3, []string{"1.1.1.1, 2.2.2.2"}, ""},
+		{"single_entry_n_two", 2, []string{"2.2.2.2"}, ""},
 		{"missing_header", 1, nil, ""},
 
 		// Spoofing: prepended attacker values are to the LEFT of the chosen

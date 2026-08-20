@@ -77,3 +77,32 @@ func Example_clientIP() {
 	fmt.Print(w.Body.String())
 	// Output: 198.51.100.42
 }
+
+// Example_clientIPFromXFFTrustedProxies shows that with two proxies the
+// client sits at XFF[len-2] and any client-prepended entries to the left of
+// that position are ignored.
+func Example_clientIPFromXFFTrustedProxies() {
+	r := chi.NewRouter()
+	r.Use(middleware.ClientIPFromXFFTrustedProxies(2)) // P1 (inner) + P2 (outer).
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, middleware.GetClientIP(r.Context()))
+	})
+
+	// Each chain ends in "<client>, <P1>"; P2's address is in RemoteAddr,
+	// not in X-Forwarded-For. Leading entries are client-controlled.
+	for _, xff := range []string{
+		"109.81.118.93, 3.172.119.73",
+		"8.8.8.8, 109.81.118.93, 3.172.119.73",
+		"8.8.8.8, 8.8.8.8, 8.8.8.8, 109.81.118.93, 3.172.119.73",
+	} {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Forwarded-For", xff)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		fmt.Print(w.Body.String())
+	}
+	// Output:
+	// 109.81.118.93
+	// 109.81.118.93
+	// 109.81.118.93
+}

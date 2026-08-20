@@ -62,7 +62,14 @@ func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 // set (fail-closed) — we can't safely trust anything left of garbage.
 //
 // Use this when you sit behind one or more reverse proxies whose IP ranges
-// you can enumerate as CIDRs:
+// you can enumerate as CIDRs. Most CDNs publish their IPs:
+//
+//	Cloudflare:   https://www.cloudflare.com/ips/
+//	AWS:          https://ip-ranges.amazonaws.com/ip-ranges.json
+//	Fastly:       https://api.fastly.com/public-ip-list
+//	Google Cloud: https://www.gstatic.com/ipranges/cloud.json
+//
+// Example (CloudFront):
 //
 //	r.Use(middleware.ClientIPFromXFF(
 //	    "13.32.0.0/15",   // CloudFront IPv4
@@ -109,30 +116,34 @@ func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handle
 	}
 }
 
-// ClientIPFromXFFTrustedProxies stores the client IP read from the
-// X-Forwarded-For header, given the exact number of trusted reverse proxies
-// between this server and the public internet. It returns the IP at position
-// len(xff) - numTrustedProxies in the merged X-Forwarded-For list — the IP
-// added by the outermost of your trusted proxies, the only IP in the chain
-// that none of your proxies have allowed an attacker to forge. Read it with
-// [GetClientIP].
+// ClientIPFromXFFTrustedProxies stores the client IP read from
+// X-Forwarded-For, given the exact number of trusted reverse proxies
+// between this server and the public internet. Read it with [GetClientIP].
 //
-// Use this when:
-//   - You know exactly how many proxies you sit behind, AND
-//   - Their IP addresses are dynamic (autoscaling proxy pools, ephemeral
-//     containers, dynamic CDN edges) so listing CIDRs with [ClientIPFromXFF]
-//     is impractical.
+// PREFER [ClientIPFromXFF] with explicit CIDRs whenever you can — it
+// cannot off-by-one and is robust to architecture changes. Most CDNs
+// publish their IP ranges (Cloudflare, AWS, Fastly, Google Cloud). Use
+// this counting variant only when proxy IPs are dynamic and unpublishable.
 //
-// WARNING: This variant is brittle to network architecture changes. If you
-// add or remove a proxy level, numTrustedProxies silently becomes wrong and
-// you may start trusting an attacker-supplied IP. Prefer [ClientIPFromXFF]
-// with explicit trusted CIDRs whenever you can.
+// numTrustedProxies = total proxy hops between the client and this server.
+// Count every hop in the request path:
 //
-// If the XFF chain has fewer than numTrustedProxies entries (header missing
-// or architecture changed), no client IP is set and [GetClientIP] returns "".
+//	Single proxy (one LB / nginx / Heroku / Fly.io / Render) ....... 1
+//	Two proxies  (Cloudflare → ALB, CloudFront → ALB) .............. 2
+//	Three proxies (CDN → API gateway → LB) ......................... 3
 //
-// Like [ClientIPFromXFF], v4-mapped IPv6 folds to plain v4 and IPv6 zones
-// are stripped before storage.
+// VERIFY BEFORE GOING LIVE: send a request from a known IP and confirm
+// [GetClientIP] returns that IP. If it returns a proxy IP, your count is
+// too LOW — a client can spoof their IP, fix immediately. If it returns
+// "", your count is too HIGH — no leak, but no client IP either.
+//
+// This middleware reads ONLY X-Forwarded-For; it does not inspect
+// r.RemoteAddr. Guarantee at the network layer (security group / firewall)
+// that only your proxies can reach this server.
+//
+// If the XFF chain has fewer than numTrustedProxies entries, no client IP
+// is set (fail-closed). Like [ClientIPFromXFF], v4-mapped IPv6 folds to v4
+// and IPv6 zones are stripped before storage.
 //
 // Panics at startup if numTrustedProxies < 1.
 func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) http.Handler {
