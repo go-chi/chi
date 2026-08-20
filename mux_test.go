@@ -2124,3 +2124,100 @@ func BenchmarkMux(b *testing.B) {
 		})
 	}
 }
+
+func TestMiddlewareCtxCloneURLParams(t *testing.T) {
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(r.Context())
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	r := NewRouter()
+	r.Use(mw)
+	r.Get("/users/{userID}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "userID")))
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/users/42", nil)
+	r.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if w.Body.String() != "42" {
+		t.Errorf("expected userID=42, got %q", w.Body.String())
+	}
+}
+
+func TestMiddlewareCtxCloneURLParamsConcurrent(t *testing.T) {
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(r.Context())
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	r := NewRouter()
+	r.Use(mw)
+	r.Get("/items/{itemID}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "itemID")))
+	})
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", fmt.Sprintf("/items/%d", id), nil)
+			r.ServeHTTP(w, req)
+			if w.Body.String() != fmt.Sprintf("%d", id) {
+				t.Errorf("expected itemID=%d, got %q", id, w.Body.String())
+			}
+		}(i)
+	}
+	wg.Wait()
+}
+
+func TestMiddlewareCtxCloneURLParamsNested(t *testing.T) {
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			r = r.WithContext(r.Context())
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	r := NewRouter()
+	r.Use(mw)
+
+	r.Route("/api", func(r Router) {
+		r.Get("/users/{userID}", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("user:" + URLParam(r, "userID")))
+		})
+		r.Route("/teams/{teamID}", func(r Router) {
+			r.Use(mw)
+			r.Get("/members/{memberID}", func(w http.ResponseWriter, r *http.Request) {
+				w.Write([]byte("team:" + URLParam(r, "teamID") + " member:" + URLParam(r, "memberID")))
+			})
+		})
+	})
+
+	tests := []struct {
+		path   string
+		expect string
+	}{
+		{"/api/users/123", "user:123"},
+		{"/api/teams/456/members/789", "team:456 member:789"},
+	}
+
+	for _, tt := range tests {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", tt.path, nil)
+		r.ServeHTTP(w, req)
+		if w.Body.String() != tt.expect {
+			t.Errorf("path %s: expected %q, got %q", tt.path, tt.expect, w.Body.String())
+		}
+	}
+}
