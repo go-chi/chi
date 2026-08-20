@@ -249,3 +249,90 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 
 	return string(respBody)
 }
+
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{
+			name:     "exact match",
+			accepted: []string{"gzip", "deflate"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "no match",
+			accepted: []string{"gzip", "deflate"},
+			encoding: "br",
+			want:     false,
+		},
+		{
+			name:     "substring false positive: br contains b",
+			accepted: []string{"br"},
+			encoding: "b",
+			want:     false,
+		},
+		{
+			name:     "substring false positive: bgzip contains gzip",
+			accepted: []string{"bgzip"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 means not acceptable",
+			accepted: []string{"gzip;q=0", "deflate"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 with spaces",
+			accepted: []string{" gzip; q=0 "},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=1.0 is acceptable",
+			accepted: []string{"gzip;q=1.0"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "q=0.5 is acceptable",
+			accepted: []string{"gzip;q=0.5", "br;q=1.0"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "case insensitive",
+			accepted: []string{"GZIP"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "empty accepted list",
+			accepted: []string{},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0.0001 is acceptable (q=0 exact check)",
+			accepted: []string{"gzip;q=0.0001"},
+			encoding: "gzip",
+			want:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tt.accepted, tt.encoding)
+			if got != tt.want {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v, want %v",
+					tt.accepted, tt.encoding, got, tt.want)
+			}
+		})
+	}
+}
