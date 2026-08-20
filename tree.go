@@ -479,7 +479,9 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 							if endpoints == mALL || endpoints == mSTUB {
 								continue
 							}
-							rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+							if !slices.Contains(rctx.methodsAllowed, endpoints) {
+								rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+							}
 						}
 
 						// flag that the routing context found a route, but not a corresponding
@@ -525,7 +527,9 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					if endpoints == mALL || endpoints == mSTUB {
 						continue
 					}
-					rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+					if !slices.Contains(rctx.methodsAllowed, endpoints) {
+						rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+					}
 				}
 
 				// flag that the routing context found a route, but not a corresponding
