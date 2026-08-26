@@ -17,17 +17,14 @@ var xRealIP = http.CanonicalHeaderKey("X-Real-IP")
 // of parsing either the True-Client-IP, X-Real-IP or the X-Forwarded-For headers
 // (in that order).
 //
-// This middleware should be inserted fairly early in the middleware stack to
-// ensure that subsequent layers (e.g., request loggers) which examine the
-// RemoteAddr will see the intended value.
+// Deprecated: RealIP is vulnerable to IP spoofing — it mutates r.RemoteAddr
+// to the leftmost X-Forwarded-For value, or to True-Client-IP / X-Real-IP
+// whether or not your infrastructure actually sets them. See
+// GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf.
 //
-// You should only use this middleware if you can trust the headers passed to
-// you (in particular, the two headers this middleware uses), for example
-// because you have placed a reverse proxy like HAProxy or nginx in front of
-// chi. If your reverse proxies are configured to pass along arbitrary header
-// values from the client, or if you use this middleware without a reverse
-// proxy, malicious clients will be able to make you very sad (or, depending on
-// how you're using RemoteAddr, vulnerable to an attack of some sort).
+// Use [ClientIPFromHeader], [ClientIPFromXFF], [ClientIPFromXFFTrustedProxies]
+// or [ClientIPFromRemoteAddr] and read the IP with [GetClientIP] instead.
+// These never mutate r.RemoteAddr.
 func RealIP(h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if rip := realIP(r); rip != "" {
@@ -47,11 +44,7 @@ func realIP(r *http.Request) string {
 	} else if xrip := r.Header.Get(xRealIP); xrip != "" {
 		ip = xrip
 	} else if xff := r.Header.Get(xForwardedFor); xff != "" {
-		i := strings.Index(xff, ",")
-		if i == -1 {
-			i = len(xff)
-		}
-		ip = xff[:i]
+		ip, _, _ = strings.Cut(xff, ",")
 	}
 	if ip == "" || net.ParseIP(ip) == nil {
 		return ""

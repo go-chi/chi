@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -34,10 +34,10 @@ func TestThrottleBacklog(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	// The throttler proccesses 10 consecutive requests, each one of those
+	// The throttler processes 10 consecutive requests, each one of those
 	// requests lasts 1s. The maximum number of requests this can possible serve
 	// before the clients time out (5s) is 40.
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -46,7 +46,7 @@ func TestThrottleBacklog(t *testing.T) {
 			assertNoError(t, err)
 
 			assertEqual(t, http.StatusOK, res.StatusCode)
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
 		}(i)
@@ -75,7 +75,7 @@ func TestThrottleClientTimeout(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -108,7 +108,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// These requests will be processed normally until they finish.
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -116,7 +116,6 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusOK, res.StatusCode)
-
 		}(i)
 	}
 
@@ -124,7 +123,7 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 
 	// These requests will wait for the first batch to complete but it will take
 	// too much time, so they will eventually receive a timeout error.
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -132,11 +131,10 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errTimedOut, strings.TrimSpace(string(buf)))
-
 		}(i)
 	}
 
@@ -163,7 +161,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -172,10 +170,9 @@ func TestThrottleMaximum(t *testing.T) {
 			assertNoError(t, err)
 			assertEqual(t, http.StatusOK, res.StatusCode)
 
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, testContent, buf)
-
 		}(i)
 	}
 
@@ -184,7 +181,7 @@ func TestThrottleMaximum(t *testing.T) {
 
 	// At this point the server is still processing, all the following request
 	// will be beyond the server capacity.
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
@@ -192,63 +189,142 @@ func TestThrottleMaximum(t *testing.T) {
 			res, err := client.Get(server.URL)
 			assertNoError(t, err)
 
-			buf, err := ioutil.ReadAll(res.Body)
+			buf, err := io.ReadAll(res.Body)
 			assertNoError(t, err)
 			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
 			assertEqual(t, errCapacityExceeded, strings.TrimSpace(string(buf)))
-
 		}(i)
 	}
 
 	wg.Wait()
 }
 
-// NOTE: test is disabled as it requires some refactoring. It is prone to intermittent failure.
-/*func TestThrottleRetryAfter(t *testing.T) {
+func TestThrottleRetryAfter(t *testing.T) {
 	r := chi.NewRouter()
+	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour }
 
-	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour * 1 }
-	r.Use(ThrottleWithOpts(ThrottleOpts{Limit: 10, RetryAfterFn: retryAfterFn}))
+	r.Use(ThrottleWithOpts(ThrottleOpts{
+		Limit:        5,
+		BacklogLimit: 0,
+		RetryAfterFn: retryAfterFn,
+	}))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Second * 1) // Expensive operation.
 		w.WriteHeader(http.StatusOK)
-		time.Sleep(time.Second * 4) // Expensive operation.
-		w.Write(testContent)
+		w.Write([]byte("ok"))
 	})
 
 	server := httptest.NewServer(r)
 	defer server.Close()
+	client := http.Client{}
 
-	client := http.Client{
-		Timeout: time.Second * 60, // Maximum waiting time.
+	type result struct {
+		status int
+		header http.Header
 	}
 
 	var wg sync.WaitGroup
+	totalRequests := 10
+	resultsCh := make(chan result, totalRequests)
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < totalRequests; i++ {
 		wg.Add(1)
-		go func(i int) {
+		go func() {
 			defer wg.Done()
-
-			res, err := client.Get(server.URL)
-			assertNoError(t, err)
-			assertEqual(t, http.StatusOK, res.StatusCode)
-		}(i)
-	}
-
-	time.Sleep(time.Second * 1)
-
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-
-			res, err := client.Get(server.URL)
-			assertNoError(t, err)
-			assertEqual(t, http.StatusTooManyRequests, res.StatusCode)
-			assertEqual(t, res.Header.Get("Retry-After"), "3600")
-		}(i)
+			res, _ := client.Get(server.URL)
+			resultsCh <- result{status: res.StatusCode, header: res.Header}
+		}()
 	}
 
 	wg.Wait()
-}*/
+	close(resultsCh)
+
+	count200 := 0
+	count429 := 0
+	for res := range resultsCh {
+		switch res.status {
+		case http.StatusOK:
+			count200++
+			continue
+		case http.StatusTooManyRequests:
+			count429++
+			assertEqual(t, "3600", res.header.Get("Retry-After"))
+			continue
+		default:
+			t.Fatalf("Unexpected status code: %d", res.status)
+			continue
+		}
+	}
+
+	assertEqual(t, 5, count200)
+	assertEqual(t, 5, count429)
+}
+
+func TestThrottleCustomStatusCode(t *testing.T) {
+	const timeout = time.Second * 3
+
+	wait := make(chan struct{})
+
+	r := chi.NewRouter()
+	r.Use(ThrottleWithOpts(ThrottleOpts{Limit: 1, StatusCode: http.StatusServiceUnavailable}))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-wait:
+		case <-time.After(timeout):
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	server := httptest.NewServer(r)
+	defer server.Close()
+
+	const totalRequestCount = 5
+
+	codes := make(chan int, totalRequestCount)
+	errs := make(chan error, totalRequestCount)
+	client := &http.Client{Timeout: timeout}
+	for range totalRequestCount {
+		go func() {
+			resp, err := client.Get(server.URL)
+			if err != nil {
+				errs <- err
+				return
+			}
+			codes <- resp.StatusCode
+		}()
+	}
+
+	waitResponse := func(wantCode int) {
+		select {
+		case err := <-errs:
+			t.Fatal(err)
+		case code := <-codes:
+			assertEqual(t, wantCode, code)
+		case <-time.After(timeout):
+			t.Fatalf("waiting %d code, timeout exceeded", wantCode)
+		}
+	}
+
+	for range totalRequestCount - 1 {
+		waitResponse(http.StatusServiceUnavailable)
+	}
+	close(wait) // Allow the last request to proceed.
+	waitResponse(http.StatusOK)
+}
+
+func BenchmarkThrottle(b *testing.B) {
+	throttleMiddleware := ThrottleBacklog(1000, 50, time.Second)
+
+	handler := throttleMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/", nil)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, req)
+	}
+}

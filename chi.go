@@ -1,35 +1,37 @@
-//
 // Package chi is a small, idiomatic and composable router for building HTTP services.
 //
-// chi requires Go 1.10 or newer.
+// chi supports the four most recent major versions of Go.
 //
-// Example:
-//  package main
+// # Example
 //
-//  import (
-//  	"net/http"
+//	package main
 //
-//  	"github.com/go-chi/chi/v5"
-//  	"github.com/go-chi/chi/v5/middleware"
-//  )
+//	import (
+//		"net/http"
 //
-//  func main() {
-//  	r := chi.NewRouter()
-//  	r.Use(middleware.Logger)
-//  	r.Use(middleware.Recoverer)
+//		"github.com/go-chi/chi/v5"
+//		"github.com/go-chi/chi/v5/middleware"
+//	)
 //
-//  	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-//  		w.Write([]byte("root."))
-//  	})
+//	func main() {
+//		r := chi.NewRouter()
+//		r.Use(middleware.Logger)
+//		r.Use(middleware.Recoverer)
 //
-//  	http.ListenAndServe(":3333", r)
-//  }
+//		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+//			w.Write([]byte("root."))
+//		})
 //
-// See github.com/go-chi/chi/_examples/ for more in-depth examples.
+//		http.ListenAndServe(":3333", r)
+//	}
+//
+// See [github.com/go-chi/chi/v5/_examples] for more in-depth examples.
+//
+// # URL patterns
 //
 // URL patterns allow for easy matching of path components in HTTP
 // requests. The matching components can then be accessed using
-// chi.URLParam(). All patterns must begin with a slash.
+// [chi.URLParam](). All patterns must begin with a slash.
 //
 // A simple named placeholder {name} matches any sequence of characters
 // up to the next / or the end of the URL. Trailing slashes on paths must
@@ -37,22 +39,21 @@
 //
 // A placeholder with a name followed by a colon allows a regular
 // expression match, for example {number:\\d+}. The regular expression
-// syntax is Go's normal regexp RE2 syntax, except that regular expressions
-// including { or } are not supported, and / will never be
-// matched. An anonymous regexp pattern is allowed, using an empty string
-// before the colon in the placeholder, such as {:\\d+}
+// syntax is Go's normal [regexp] RE2 syntax (see [regexp/syntax]), except
+// that / will never be matched. An anonymous regexp pattern is allowed, using
+// an empty string before the colon in the placeholder, such as {:\\d+}.
 //
-// The special placeholder of asterisk matches the rest of the requested
+// The special placeholder of asterisk (*) matches the rest of the requested
 // URL. Any trailing characters in the pattern are ignored. This is the only
 // placeholder which will match / characters.
 //
 // Examples:
-//  "/user/{name}" matches "/user/jsmith" but not "/user/jsmith/info" or "/user/jsmith/"
-//  "/user/{name}/info" matches "/user/jsmith/info"
-//  "/page/*" matches "/page/intro/latest"
-//  "/page/*/index" also matches "/page/intro/latest"
-//  "/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"
 //
+//	"/user/{name}" matches "/user/jsmith" but not "/user/jsmith/info" or "/user/jsmith/"
+//	"/user/{name}/info" matches "/user/jsmith/info"
+//	"/page/*" matches "/page/intro/latest"
+//	"/page/{other}/latest" also matches "/page/intro/latest"
+//	"/date/{yyyy:\\d\\d\\d\\d}/{mm:\\d\\d}/{dd:\\d\\d}" matches "/date/2017/04/01"
 package chi
 
 import "net/http"
@@ -78,7 +79,7 @@ type Router interface {
 	// path, with a fresh middleware stack for the inline-Router.
 	Group(fn func(r Router)) Router
 
-	// Route mounts a sub-Router along a `pattern`` string.
+	// Route mounts a sub-Router along a `pattern` string.
 	Route(pattern string, fn func(r Router)) Router
 
 	// Mount attaches another http.Handler along ./pattern/*
@@ -103,6 +104,7 @@ type Router interface {
 	Patch(pattern string, h http.HandlerFunc)
 	Post(pattern string, h http.HandlerFunc)
 	Put(pattern string, h http.HandlerFunc)
+	Query(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
 
 	// NotFound defines a handler to respond whenever a route could
@@ -127,6 +129,10 @@ type Routes interface {
 	// the method/path - similar to routing a http request, but without
 	// executing the handler thereafter.
 	Match(rctx *Context, method, path string) bool
+
+	// Find searches the routing tree for the pattern that matches
+	// the method/path.
+	Find(rctx *Context, method, path string) string
 }
 
 // Middlewares type is a slice of standard middleware handlers with methods

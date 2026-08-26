@@ -1,7 +1,7 @@
 # <img alt="chi" src="https://cdn.rawgit.com/go-chi/chi/master/_examples/chi.svg" width="220" />
 
 
-[![GoDoc Widget]][GoDoc] [![Travis Widget]][Travis]
+[![GoDoc Widget]][GoDoc]
 
 `chi` is a lightweight, idiomatic and composable router for building Go HTTP services. It's
 especially good at helping you write large REST API services that are kept maintainable as your
@@ -20,7 +20,9 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 
 ## Install
 
-`go get -u github.com/go-chi/chi/v5`
+```sh
+go get -u github.com/go-chi/chi/v5
+```
 
 
 ## Features
@@ -30,7 +32,7 @@ and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
 * **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
 * **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and sub-router mounting
 * **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
-* **Robust** - in production at Pressly, CloudFlare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
+* **Robust** - in production at Pressly, Cloudflare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
 * **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
 * **Go.mod support** - as of v5, go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md))
 * **No external dependencies** - plain ol' Go stdlib + net/http
@@ -65,7 +67,7 @@ func main() {
 
 **REST Preview:**
 
-Here is a little preview of how routing looks like with chi. Also take a look at the generated routing docs
+Here is a little preview of what routing looks like with chi. Also take a look at the generated routing docs
 in JSON ([routes.json](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.json)) and in
 Markdown ([routes.md](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.md)).
 
@@ -85,7 +87,7 @@ func main() {
 
   // A good base middleware stack
   r.Use(middleware.RequestID)
-  r.Use(middleware.RealIP)
+  r.Use(middleware.ClientIPFromRemoteAddr) // pick one ClientIPFrom* based on your infra, see below
   r.Use(middleware.Logger)
   r.Use(middleware.Recoverer)
 
@@ -194,7 +196,7 @@ type Router interface {
 	// path, with a fresh middleware stack for the inline-Router.
 	Group(fn func(r Router)) Router
 
-	// Route mounts a sub-Router along a `pattern`` string.
+	// Route mounts a sub-Router along a `pattern` string.
 	Route(pattern string, fn func(r Router)) Router
 
 	// Mount attaches another http.Handler along ./pattern/*
@@ -219,6 +221,7 @@ type Router interface {
 	Patch(pattern string, h http.HandlerFunc)
 	Post(pattern string, h http.HandlerFunc)
 	Put(pattern string, h http.HandlerFunc)
+	Query(pattern string, h http.HandlerFunc)
 	Trace(pattern string, h http.HandlerFunc)
 
 	// NotFound defines a handler to respond whenever a route could
@@ -347,13 +350,18 @@ with `net/http` can be used with chi's mux.
 | [Logger]               | Logs the start and end of each request with the elapsed processing time |
 | [NoCache]              | Sets response headers to prevent clients from caching                   |
 | [Profiler]             | Easily attach net/http/pprof to your routers                            |
-| [RealIP]               | Sets a http.Request's RemoteAddr to either X-Real-IP or X-Forwarded-For |
+| [ClientIPFromHeader]   | Capture client IP from a trusted single-IP header (X-Real-IP, CF-Connecting-IP, ...) |
+| [ClientIPFromXFF]      | Capture client IP from X-Forwarded-For, skipping listed trusted CIDR prefixes |
+| [ClientIPFromXFFTrustedProxies] | Capture client IP from X-Forwarded-For given a fixed number of trusted proxies |
+| [ClientIPFromRemoteAddr] | Capture client IP from the TCP RemoteAddr (server directly on the public internet) |
+| [RealIP]               | Deprecated — vulnerable to IP spoofing; use [ClientIPFromXFF] or another ClientIPFrom\* middleware |
 | [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
 | [RequestID]            | Injects a request ID into the context of each request                   |
 | [RedirectSlashes]      | Redirect slashes on routing paths                                       |
 | [RouteHeaders]         | Route handling for request headers                                      |
 | [SetHeader]            | Short-hand middleware to set a response header key/value                |
 | [StripSlashes]         | Strip slashes on routing paths                                          |
+| [Sunset]               | Sunset set Deprecation/Sunset header to response                        |
 | [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
 | [Timeout]              | Signals to the request context when the timeout deadline is reached     |
 | [URLFormat]            | Parse extension from url and put it on request context                  |
@@ -372,6 +380,12 @@ with `net/http` can be used with chi's mux.
 [Logger]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Logger
 [NoCache]: https://pkg.go.dev/github.com/go-chi/chi/middleware#NoCache
 [Profiler]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Profiler
+[ClientIPFromHeader]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromHeader
+[ClientIPFromXFF]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromXFF
+[ClientIPFromXFFTrustedProxies]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromXFFTrustedProxies
+[ClientIPFromRemoteAddr]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ClientIPFromRemoteAddr
+[GetClientIP]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetClientIP
+[GetClientIPAddr]: https://pkg.go.dev/github.com/go-chi/chi/middleware#GetClientIPAddr
 [RealIP]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RealIP
 [Recoverer]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Recoverer
 [RedirectSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RedirectSlashes
@@ -380,6 +394,7 @@ with `net/http` can be used with chi's mux.
 [RouteHeaders]: https://pkg.go.dev/github.com/go-chi/chi/middleware#RouteHeaders
 [SetHeader]: https://pkg.go.dev/github.com/go-chi/chi/middleware#SetHeader
 [StripSlashes]: https://pkg.go.dev/github.com/go-chi/chi/middleware#StripSlashes
+[Sunset]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Sunset
 [Throttle]: https://pkg.go.dev/github.com/go-chi/chi/middleware#Throttle
 [ThrottleBacklog]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleBacklog
 [ThrottleWithOpts]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleWithOpts
@@ -397,6 +412,67 @@ with `net/http` can be used with chi's mux.
 [LoggerInterface]: https://pkg.go.dev/github.com/go-chi/chi/middleware#LoggerInterface
 [ThrottleOpts]: https://pkg.go.dev/github.com/go-chi/chi/middleware#ThrottleOpts
 [WrapResponseWriter]: https://pkg.go.dev/github.com/go-chi/chi/middleware#WrapResponseWriter
+
+### Choosing a ClientIP middleware
+
+The legacy [RealIP] middleware is deprecated — it is vulnerable to IP spoofing
+(GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf) and mutates
+`r.RemoteAddr`. Use one of the four `ClientIPFrom*` middlewares instead — pick
+exactly one based on your network setup — and read the resulting IP with
+[GetClientIP] (string) or [GetClientIPAddr] (`netip.Addr`):
+
+| Your setup | Use |
+|---|---|
+| Directly on the public internet, no proxy | `middleware.ClientIPFromRemoteAddr` |
+| Behind nginx (`X-Real-IP`), Cloudflare (`CF-Connecting-IP`), Apache (`X-Client-IP`) | `middleware.ClientIPFromHeader("<your-trusted-header>")` |
+| Behind one or more proxies whose IP ranges you can list | `middleware.ClientIPFromXFF("10.0.0.0/8", ...)` |
+| Behind a known, fixed number of proxies with dynamic IPs | `middleware.ClientIPFromXFFTrustedProxies(2)` |
+
+```go
+r := chi.NewRouter()
+r.Use(middleware.RequestID)
+
+// Pick exactly one. Examples for common deployments:
+
+// Direct internet exposure (no proxy):
+// r.Use(middleware.ClientIPFromRemoteAddr)
+
+// Behind Cloudflare:
+// r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP"))
+
+// Behind AWS CloudFront (or any proxy fleet with known CIDRs):
+r.Use(middleware.ClientIPFromXFF(
+    "13.32.0.0/15",   // CloudFront IPv4
+    "52.46.0.0/18",   // CloudFront IPv4
+    "2600:9000::/28", // CloudFront IPv6
+))
+
+// Behind a known number of proxies with dynamic IPs:
+// r.Use(middleware.ClientIPFromXFFTrustedProxies(2))
+
+r.Use(middleware.Logger)
+r.Use(middleware.Recoverer)
+
+r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+    clientIP := middleware.GetClientIP(r.Context()) // for logs, rate-limit keys, etc.
+    _ = clientIP
+})
+```
+
+These middlewares never mutate `r.RemoteAddr`. They store a normalized
+`netip.Addr` in the request context — IPv4-mapped IPv6 (`::ffff:a.b.c.d`)
+is folded to plain IPv4, and IPv6 zone identifiers carried in headers are
+stripped, so one logical client maps to a single canonical key for logs,
+rate limits, and ACLs.
+
+For `ClientIPFromXFFTrustedProxies`, `numTrustedProxies` is the total proxy
+hops between client and server. Prefer `ClientIPFromXFF` with explicit CIDRs
+when you can — CIDR-based trust cannot off-by-one. See the godoc for a
+deployment recipe and a verify checklist.
+
+See the per-function godoc for the full semantics of each middleware, and
+[adam-p's "The perils of the 'real' client IP"](https://adam-p.ca/blog/2022/03/x-forwarded-for/)
+for the underlying threat model.
 
 ### Extra middlewares & packages
 
@@ -467,7 +543,8 @@ how setting context on a request in Go works.
 
 * Carl Jackson for https://github.com/zenazn/goji
   * Parts of chi's thinking comes from goji, and chi's middleware package
-    sources from goji.
+    sources from [goji](https://github.com/zenazn/goji/tree/master/web/middleware).
+  * Please see goji's [LICENSE](https://github.com/zenazn/goji/blob/master/LICENSE) (MIT)
 * Armon Dadgar for https://github.com/armon/go-radix
 * Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
 
@@ -494,7 +571,7 @@ Copyright (c) 2015-present [Peter Kieltyka](https://github.com/pkieltyka)
 
 Licensed under [MIT License](./LICENSE)
 
-[GoDoc]: https://pkg.go.dev/github.com/go-chi/chi?tab=versions
+[GoDoc]: https://pkg.go.dev/github.com/go-chi/chi/v5
 [GoDoc Widget]: https://godoc.org/github.com/go-chi/chi?status.svg
 [Travis]: https://travis-ci.org/go-chi/chi
 [Travis Widget]: https://travis-ci.org/go-chi/chi.svg?branch=master

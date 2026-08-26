@@ -14,7 +14,7 @@
 
 A typical workflow is:
 
-1. [Fork the repository.][fork] [This tip maybe also helpful.][go-fork-tip]
+1. [Fork the repository.][fork]
 2. [Create a topic branch.][branch]
 3. Add tests for your change.
 4. Run `go test`. If your tests pass, return to the step 3.
@@ -24,8 +24,8 @@ A typical workflow is:
 8. [Submit a pull request.][pull-req]
 
 [go-install]: https://golang.org/doc/install
-[go-fork-tip]: http://blog.campoy.cat/2014/03/github-and-go-forking-pull-requests-and.html
-[fork]: https://help.github.com/articles/fork-a-repo
-[branch]: http://learn.github.com/p/branching.html
-[git-help]: https://guides.github.com
-[pull-req]: https://help.github.com/articles/using-pull-requests
+[fork]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo
+[branch]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-branches 
+[git-help]: https://docs.github.com/en
+[pull-req]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests
+

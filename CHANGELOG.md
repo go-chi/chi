@@ -1,5 +1,31 @@
 # Changelog
 
+## v5.0.12 (2024-02-16)
+
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.11...v5.0.12
+
+
+## v5.0.11 (2023-12-19)
+
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.10...v5.0.11
+
+
+## v5.0.10 (2023-07-13)
+
+- Fixed small edge case in tests of v5.0.9 for older Go versions
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.9...v5.0.10
+
+
+## v5.0.9 (2023-07-13)
+
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.8...v5.0.9
+
+
+## v5.0.8 (2022-12-07)
+
+- History of changes: see https://github.com/go-chi/chi/compare/v5.0.7...v5.0.8
+
+
 ## v5.0.7 (2021-11-18)
 
 - History of changes: see https://github.com/go-chi/chi/compare/v5.0.6...v5.0.7
@@ -85,14 +111,14 @@ incremental, with the architecture and api being the same today as it was origin
 makes chi a pretty easy project to maintain, as well thanks to the many amazing community contributions over the years
 to who all help make chi better (total of 86 contributors to date -- thanks all!).
 
-Chi has been an labour of love, art and engineering, with the goals to offer beautiful ergonomics, flexibility, performance
+Chi has been a labour of love, art and engineering, with the goals to offer beautiful ergonomics, flexibility, performance
 and simplicity when building HTTP services with Go. I've strived to keep the router very minimal in surface area / code size,
 and always improving the code wherever possible -- and as of today the `chi` package is just 1082 lines of code (not counting
 middlewares, which are all optional). As well, I don't have the exact metrics, but from my analysis and email exchanges from
 companies and developers, chi is used by thousands of projects around the world -- thank you all as there is no better form of
 joy for me than to have art I had started be helpful and enjoyed by others. And of course I use chi in all of my own projects too :)
 
-For me, the asthetics of chi's code and usage are very important. With the introduction of Go's module support 
+For me, the aesthetics of chi's code and usage are very important. With the introduction of Go's module support
 (which I'm a big fan of), chi's past versioning scheme choice to v2, v3 and v4 would mean I'd require the import path
 of "github.com/go-chi/chi/v4", leading to the lengthy discussion at https://github.com/go-chi/chi/issues/462.
 Haha, to some, you may be scratching your head why I've spent > 1 year stalling to adopt "/vXX" convention in the import
@@ -284,13 +310,13 @@ Cheers all, happy coding!
 
 ## v2.0.0-rc1 (2016-07-26)
 
-- Huge update! chi v2 is a large refactor targetting Go 1.7+. As of Go 1.7, the popular
+- Huge update! chi v2 is a large refactor targeting Go 1.7+. As of Go 1.7, the popular
   community `"net/context"` package has been included in the standard library as `"context"` and
   utilized by `"net/http"` and `http.Request` to managing deadlines, cancelation signals and other
   request-scoped values. We're very excited about the new context addition and are proud to
   introduce chi v2, a minimal and powerful routing package for building large HTTP services,
   with zero external dependencies. Chi focuses on idiomatic design and encourages the use of 
-  stdlib HTTP handlers and middlwares.
+  stdlib HTTP handlers and middlewares.
 - chi v2 deprecates its `chi.Handler` interface and requires `http.Handler` or `http.HandlerFunc`
 - chi v2 stores URL routing parameters and patterns in the standard request context: `r.Context()`
 - chi v2 lower-level routing context is accessible by `chi.RouteContext(r.Context()) *chi.Context`,

@@ -36,7 +36,9 @@ func Recoverer(next http.Handler) http.Handler {
 					PrintPrettyStack(rvr)
 				}
 
-				w.WriteHeader(http.StatusInternalServerError)
+				if r.Header.Get("Connection") != "Upgrade" {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 		}()
 
@@ -50,9 +52,16 @@ func Recoverer(next http.Handler) http.Handler {
 var recovererErrorWriter io.Writer = os.Stderr
 
 func PrintPrettyStack(rvr interface{}) {
+	printPrettyStack(rvr, true)
+}
+
+// printPrettyStack prints a formatted stack trace to stderr. When useColor is
+// false, ANSI colour codes are suppressed, which is useful for terminals that
+// do not support them (e.g. on Windows) or when output is being captured.
+func printPrettyStack(rvr interface{}, useColor bool) {
 	debugStack := debug.Stack()
 	s := prettyStack{}
-	out, err := s.parse(debugStack, rvr)
+	out, err := s.parse(debugStack, rvr, useColor)
 	if err == nil {
 		recovererErrorWriter.Write(out)
 	} else {
@@ -64,9 +73,8 @@ func PrintPrettyStack(rvr interface{}) {
 type prettyStack struct {
 }
 
-func (s prettyStack) parse(debugStack []byte, rvr interface{}) ([]byte, error) {
+func (s prettyStack) parse(debugStack []byte, rvr interface{}, useColor bool) ([]byte, error) {
 	var err error
-	useColor := true
 	buf := &bytes.Buffer{}
 
 	cW(buf, false, bRed, "\n")
@@ -111,15 +119,14 @@ func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, 
 	line = strings.TrimSpace(line)
 	if strings.HasPrefix(line, "\t") || strings.Contains(line, ".go:") {
 		return s.decorateSourceLine(line, useColor, num)
-	} else if strings.HasSuffix(line, ")") {
-		return s.decorateFuncCallLine(line, useColor, num)
-	} else {
-		if strings.HasPrefix(line, "\t") {
-			return strings.Replace(line, "\t", "      ", 1), nil
-		} else {
-			return fmt.Sprintf("    %s\n", line), nil
-		}
 	}
+	if strings.HasSuffix(line, ")") {
+		return s.decorateFuncCallLine(line, useColor, num)
+	}
+	if strings.HasPrefix(line, "\t") {
+		return strings.Replace(line, "\t", "      ", 1), nil
+	}
+	return fmt.Sprintf("    %s\n", line), nil
 }
 
 func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (string, error) {

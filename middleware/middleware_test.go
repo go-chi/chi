@@ -3,7 +3,6 @@ package middleware
 import (
 	"crypto/tls"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"path"
@@ -79,7 +78,7 @@ func TestWrapWriterHTTP2(t *testing.T) {
 		}
 		_, rf := w.(io.ReaderFrom)
 		if rf {
-			t.Fatal("request should not have been a io.ReaderFrom")
+			t.Fatal("request should not have been an io.ReaderFrom")
 		}
 		_, ps := w.(http.Pusher)
 		if !ps {
@@ -137,7 +136,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, body io
 		return nil, ""
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 		return nil, ""
@@ -167,7 +166,7 @@ func testRequestNoRedirect(t *testing.T, ts *httptest.Server, method, path strin
 		return nil, ""
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 		return nil, ""

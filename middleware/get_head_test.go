@@ -38,27 +38,27 @@ func TestGetHead(t *testing.T) {
 	defer ts.Close()
 
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if req, body := testRequest(t, ts, "HEAD", "/hi", nil); body != "" || req.Header.Get("X-Test") != "yes" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/", nil); body != "404 page not found\n" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if req, body := testRequest(t, ts, "HEAD", "/", nil); body != "" || req.StatusCode != 404 {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 
 	if _, body := testRequest(t, ts, "GET", "/articles/5", nil); body != "article:5" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if req, body := testRequest(t, ts, "HEAD", "/articles/5", nil); body != "" || req.Header.Get("X-Article") != "5" {
 		t.Fatalf("expecting X-Article header '5' but got '%s'", req.Header.Get("X-Article"))
 	}
 
 	if _, body := testRequest(t, ts, "GET", "/users/1", nil); body != "user:1" {
-		t.Fatalf(body)
+		t.Fatal(body)
 	}
 	if req, body := testRequest(t, ts, "HEAD", "/users/1", nil); body != "" || req.Header.Get("X-User") != "-" {
 		t.Fatalf("expecting X-User header '-' but got '%s'", req.Header.Get("X-User"))

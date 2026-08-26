@@ -11,39 +11,34 @@ import (
 // For example, lets say you'd like to setup multiple routers depending on the
 // request Host header, you could then do something as so:
 //
-// r := chi.NewRouter()
-// rSubdomain := chi.NewRouter()
-//
-// r.Use(middleware.RouteHeaders().
-//   Route("Host", "example.com", middleware.New(r)).
-//   Route("Host", "*.example.com", middleware.New(rSubdomain)).
-//   Handler)
-//
-// r.Get("/", h)
-// rSubdomain.Get("/", h2)
-//
+//	r := chi.NewRouter()
+//	rSubdomain := chi.NewRouter()
+//	r.Use(middleware.RouteHeaders().
+//		Route("Host", "example.com", middleware.New(r)).
+//		Route("Host", "*.example.com", middleware.New(rSubdomain)).
+//		Handler)
+//	r.Get("/", h)
+//	rSubdomain.Get("/", h2)
 //
 // Another example, imagine you want to setup multiple CORS handlers, where for
 // your origin servers you allow authorized requests, but for third-party public
 // requests, authorization is disabled.
 //
-// r := chi.NewRouter()
-//
-// r.Use(middleware.RouteHeaders().
-//   Route("Origin", "https://app.skyweaver.net", cors.Handler(cors.Options{
-// 	   AllowedOrigins:   []string{"https://api.skyweaver.net"},
-// 	   AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-// 	   AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
-// 	   AllowCredentials: true, // <----------<<< allow credentials
-//   })).
-//   Route("Origin", "*", cors.Handler(cors.Options{
-// 	   AllowedOrigins:   []string{"*"},
-// 	   AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-// 	   AllowedHeaders:   []string{"Accept", "Content-Type"},
-// 	   AllowCredentials: false, // <----------<<< do not allow credentials
-//   })).
-//   Handler)
-//
+//	r := chi.NewRouter()
+//	r.Use(middleware.RouteHeaders().
+//		Route("Origin", "https://app.skyweaver.net", cors.Handler(cors.Options{
+//			AllowedOrigins:   []string{"https://api.skyweaver.net"},
+//			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+//			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+//			AllowCredentials: true, // <----------<<< allow credentials
+//		})).
+//		Route("Origin", "*", cors.Handler(cors.Options{
+//			AllowedOrigins:   []string{"*"},
+//			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+//			AllowedHeaders:   []string{"Accept", "Content-Type"},
+//			AllowCredentials: false, // <----------<<< do not allow credentials
+//		})).
+//		Handler)
 func RouteHeaders() HeaderRouter {
 	return HeaderRouter{}
 }
@@ -84,6 +79,7 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 		if len(hr) == 0 {
 			// skip if no routes set
 			next.ServeHTTP(w, r)
+			return
 		}
 
 		// find first matching header route, and continue
@@ -138,23 +134,13 @@ type Pattern struct {
 
 func NewPattern(value string) Pattern {
 	p := Pattern{}
-	if i := strings.IndexByte(value, '*'); i >= 0 {
-		p.wildcard = true
-		p.prefix = value[0:i]
-		p.suffix = value[i+1:]
-	} else {
-		p.prefix = value
-	}
+	p.prefix, p.suffix, p.wildcard = strings.Cut(value, "*")
 	return p
 }
 
 func (p Pattern) Match(v string) bool {
 	if !p.wildcard {
-		if p.prefix == v {
-			return true
-		} else {
-			return false
-		}
+		return p.prefix == v
 	}
 	return len(v) >= len(p.prefix+p.suffix) && strings.HasPrefix(v, p.prefix) && strings.HasSuffix(v, p.suffix)
 }

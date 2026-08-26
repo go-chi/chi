@@ -10,7 +10,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func panicingHandler(http.ResponseWriter, *http.Request) { panic("foo") }
+func panickingHandler(http.ResponseWriter, *http.Request) { panic("foo") }
+
+type testPrintLogger struct{}
+
+func (testPrintLogger) Print(v ...interface{}) {}
 
 func TestRecoverer(t *testing.T) {
 	r := chi.NewRouter()
@@ -21,7 +25,7 @@ func TestRecoverer(t *testing.T) {
 	recovererErrorWriter = buf
 
 	r.Use(Recoverer)
-	r.Get("/", panicingHandler)
+	r.Get("/", panickingHandler)
 
 	ts := httptest.NewServer(r)
 	defer ts.Close()
@@ -32,13 +36,43 @@ func TestRecoverer(t *testing.T) {
 	lines := strings.Split(buf.String(), "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(strings.TrimSpace(line), "->") {
-			if !strings.Contains(line, "panicingHandler") {
-				t.Fatalf("First func call line should refer to panicingHandler, but actual line:\n%v\n", line)
+			if !strings.Contains(line, "panickingHandler") {
+				t.Fatalf("First func call line should refer to panickingHandler, but actual line:\n%v\n", line)
 			}
 			return
 		}
 	}
 	t.Fatal("First func call line should start with ->.")
+}
+
+func TestRecovererNoColor(t *testing.T) {
+	// Force IsTTY so cW would emit color codes if useColor were true; this is
+	// what makes the assertion below a real regression guard rather than a
+	// no-op on non-TTY test runners (e.g. CI).
+	oldIsTTY := IsTTY
+	IsTTY = true
+	defer func() { IsTTY = oldIsTTY }()
+
+	oldRecovererErrorWriter := recovererErrorWriter
+	defer func() { recovererErrorWriter = oldRecovererErrorWriter }()
+	buf := &bytes.Buffer{}
+	recovererErrorWriter = buf
+
+	r := chi.NewRouter()
+	r.Use(RequestLogger(&DefaultLogFormatter{Logger: testPrintLogger{}, NoColor: true}))
+	r.Use(Recoverer)
+	r.Get("/", panickingHandler)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	res, _ := testRequest(t, ts, "GET", "/", nil)
+	assertEqual(t, res.StatusCode, http.StatusInternalServerError)
+
+	// ANSI escape sequences start with \x1b[
+	if strings.Contains(buf.String(), "\x1b[") {
+		t.Fatal("Output should not contain ANSI color codes when NoColor is true")
+	}
 }
 
 func TestRecovererAbortHandler(t *testing.T) {

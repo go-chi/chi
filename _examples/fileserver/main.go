@@ -1,23 +1,18 @@
-//
-// FileServer
-// ===========
 // This example demonstrates how to serve static files from your filesystem.
 //
-//
 // Boot the server:
-// ----------------
-// $ go run main.go
+//
+//	$ go run main.go
 //
 // Client requests:
-// ----------------
-// $ curl http://localhost:3333/files/
-// <pre>
-// <a href="notes.txt">notes.txt</a>
-// </pre>
 //
-// $ curl http://localhost:3333/files/notes.txt
-// Notessszzz
+//	$ curl http://localhost:3333/files/
+//	<pre>
+//	<a href="notes.txt">notes.txt</a>
+//	</pre>
 //
+//	$ curl http://localhost:3333/files/notes.txt
+//	Notessszzz
 package main
 
 import (
