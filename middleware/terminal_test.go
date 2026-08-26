@@ -11,7 +11,7 @@ func Test_cW(t *testing.T) {
 		useColor bool
 		color    []byte
 		s        string
-		args     []interface{}
+		args     []any
 		expected string
 	}{
 		{
@@ -23,12 +23,14 @@ func Test_cW(t *testing.T) {
 		},
 	}
 
-	for name, c := range cases {
-		actual := &bytes.Buffer{}
-		cW(actual, c.useColor, c.color, c.s, c.args...)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			actual := &bytes.Buffer{}
+			cW(actual, c.useColor, c.color, c.s, c.args...)
 
-		if actual.String() != c.expected {
-			t.Errorf("(case %q) unexpected output: got %q, expected: %q", name, actual.String(), c.expected)
-		}
+			if got := actual.String(); got != c.expected {
+				t.Errorf("output: %q, expected: %q", got, c.expected)
+			}
+		})
 	}
 }

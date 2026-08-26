@@ -13,59 +13,47 @@ var testAuthCreds = map[string]string{
 }
 
 func TestBasicAuth(t *testing.T) {
+	endpoint := "/secure"
 	r := chi.NewRouter()
 	r.Use(BasicAuth("localhost", testAuthCreds))
-	r.Get("/secure", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	r.Get(endpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("authentication accepted"))
 	}))
 
 	cases := []struct {
-		name         string
-		digest       string
-		expected     int
-		errorMessage string
-		wantErr      bool
+		name     string
+		digest   string
+		expected int
 	}{
 		{
-			name:         "No auth header provided",
-			expected:     http.StatusUnauthorized,
-			errorMessage: "basic auth: accepted request without a valid header",
-			wantErr:      true,
+			name:     "no authorization header",
+			expected: http.StatusUnauthorized,
 		},
 		{
-			name:         "Invalid auth header provided",
-			digest:       "Basic dGVzdFVzZXI6d3JvbmdwYXNzd29yZA==",
-			expected:     http.StatusUnauthorized,
-			errorMessage: "basic auth: accepted invalid bearer token",
-			wantErr:      true,
+			name:     "invalid basic auth credentials",
+			digest:   "Basic dGVzdFVzZXI6d3JvbmdwYXNzd29yZA==",
+			expected: http.StatusUnauthorized,
 		},
 		{
-			name:         "Valid auth header provided",
-			digest:       "Basic dGVzdFVzZXI6dGVzdFBhc3N3b3Jk",
-			expected:     http.StatusOK,
-			errorMessage: "basic auth: did not accept a valid bearer token",
-			wantErr:      false,
+			name:     "valid basic auth credentials",
+			digest:   "Basic dGVzdFVzZXI6dGVzdFBhc3N3b3Jk",
+			expected: http.StatusOK,
 		},
 	}
 
 	for _, c := range cases {
-		// Record response
-		w := httptest.NewRecorder()
-		req, err := http.NewRequest("GET", "/secure", nil)
-		if err != nil {
-			t.Fatalf("basic auth: failed to create test request")
-		}
+		t.Run(c.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, endpoint, http.NoBody)
+			if c.digest != "" {
+				req.Header.Set("Authorization", c.digest)
+			}
 
-		if c.digest != "" {
-			req.Header.Set("Authorization", c.digest)
-		}
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
 
-		// Serve request
-		r.ServeHTTP(w, req)
-
-		// Test response code
-		if w.Result().StatusCode != c.expected {
-			t.Errorf(c.errorMessage)
-		}
+			if got := w.Code; got != c.expected {
+				t.Errorf("status code = %d, expected %d", got, c.expected)
+			}
+		})
 	}
 }

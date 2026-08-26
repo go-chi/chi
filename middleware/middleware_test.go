@@ -38,20 +38,35 @@ func (c *customMiddleware) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func TestNew(t *testing.T) {
+	endpoint := "/"
 	r := chi.NewRouter()
 	r.Use(New(&customMiddleware{}))
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r.Get(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/", nil)
-	req.Header.Set("X-Custom-Header", "abc123")
-	r.ServeHTTP(w, req)
+	t.Run("allows request with custom header", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, endpoint, http.NoBody)
+		req.Header.Set("X-Custom-Header", "abc123")
 
-	if w.Result().StatusCode != http.StatusOK {
-		t.Errorf("new: middleware was not register in the stack")
-	}
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("new: unexpected response code: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("rejects request without custom header", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, endpoint, http.NoBody)
+
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("new: unexpected response code: got %d, want %d", w.Code, http.StatusUnauthorized)
+		}
+	})
 }
 
 func Test_contextKey_String(t *testing.T) {

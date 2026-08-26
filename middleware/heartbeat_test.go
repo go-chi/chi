@@ -9,15 +9,23 @@ import (
 )
 
 func TestHeartbeat(t *testing.T) {
+	endpoint := "/ping"
+
 	r := chi.NewRouter()
-	r.Use(Heartbeat("/ping"))
-	r.Get("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	r.Use(Heartbeat(endpoint))
+	r.Handle(endpoint, http.NotFoundHandler())
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/ping", nil)
+	req := httptest.NewRequest(http.MethodGet, endpoint, http.NoBody)
 	r.ServeHTTP(w, req)
 
-	if w.Result().StatusCode != http.StatusOK {
-		t.Errorf("heartbeat: unexpected response code: %v", w.Result().StatusCode)
+	if w.Code != http.StatusOK {
+		t.Errorf("heartbeat: unexpected response code: %v", w.Code)
+	}
+	if w.Body.String() != "." {
+		t.Errorf("heartbeat: unexpected response body: %q", w.Body.String())
+	}
+	if got := w.Header().Get("Content-Type"); got != "text/plain" {
+		t.Errorf("heartbeat: unexpected Content-Type: %q", got)
 	}
 }
