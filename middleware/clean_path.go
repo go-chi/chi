@@ -20,7 +20,9 @@ func CleanPath(next http.Handler) http.Handler {
 			} else {
 				routePath = r.URL.Path
 			}
-			rctx.RoutePath = path.Clean(routePath)
+			if routePath != "" {
+				rctx.RoutePath = path.Clean(routePath)
+			}
 		}
 
 		next.ServeHTTP(w, r)
