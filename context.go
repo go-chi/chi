@@ -45,9 +45,9 @@ var (
 type Context struct {
 	Routes Routes
 
-	// parentCtx is the parent of this one, for using Context as a
-	// context.Context directly. This is an optimization that saves
-	// 1 allocation.
+	// parentCtx is the request's context, set in Mux.ServeHTTP. It is
+	// currently unused: it backed the directContext optimization that
+	// was reverted in #581.
 	parentCtx context.Context
 
 	// Routing path/method override used during the route search.
