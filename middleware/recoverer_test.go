@@ -99,3 +99,19 @@ func TestRecovererAbortHandler(t *testing.T) {
 
 	r.ServeHTTP(w, req)
 }
+
+func TestRecovererConnectionUpgradeDoesNotWrite500(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(Recoverer)
+	r.Get("/", panickingHandler)
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Connection", "keep-alive, Upgrade")
+
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, req)
+
+	if rec.Code == http.StatusInternalServerError {
+		t.Fatal("Recoverer should not write 500 when Connection contains Upgrade token")
+	}
+}
