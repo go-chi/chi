@@ -145,7 +145,7 @@ type flushWriter struct {
 }
 
 func (f *flushWriter) Flush() {
-	f.wroteHeader = true
+	f.basicWriter.maybeWriteHeader()
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -170,7 +170,7 @@ type flushHijackWriter struct {
 }
 
 func (f *flushHijackWriter) Flush() {
-	f.wroteHeader = true
+	f.basicWriter.maybeWriteHeader()
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -192,7 +192,7 @@ type httpFancyWriter struct {
 }
 
 func (f *httpFancyWriter) Flush() {
-	f.wroteHeader = true
+	f.basicWriter.maybeWriteHeader()
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
@@ -237,7 +237,7 @@ type http2FancyWriter struct {
 }
 
 func (f *http2FancyWriter) Flush() {
-	f.wroteHeader = true
+	f.basicWriter.maybeWriteHeader()
 	fl := f.basicWriter.ResponseWriter.(http.Flusher)
 	fl.Flush()
 }
