@@ -22,21 +22,58 @@ func (r *readerFromRecorder) ReadFrom(src io.Reader) (int64, error) {
 	return io.Copy(r.ResponseRecorder.Body, src)
 }
 
-func TestHttpFancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
-	f := &httpFancyWriter{basicWriter: basicWriter{ResponseWriter: httptest.NewRecorder()}}
-	f.Flush()
+func TestWrapResponseWriterStatusWhenFlushed(t *testing.T) {
+	for _, writer := range []struct {
+		name string
+		wrap func(http.ResponseWriter) WrapResponseWriter
+	}{
+		{"flushWriter", func(w http.ResponseWriter) WrapResponseWriter {
+			return &flushWriter{basicWriter{ResponseWriter: w}}
+		}},
+		{"flushHijackWriter", func(w http.ResponseWriter) WrapResponseWriter {
+			return &flushHijackWriter{basicWriter{ResponseWriter: w}}
+		}},
+		{"httpFancyWriter", func(w http.ResponseWriter) WrapResponseWriter {
+			return &httpFancyWriter{basicWriter{ResponseWriter: w}}
+		}},
+		{"http2FancyWriter", func(w http.ResponseWriter) WrapResponseWriter {
+			return &http2FancyWriter{basicWriter{ResponseWriter: w}}
+		}},
+	} {
+		t.Run(writer.name, func(t *testing.T) {
+			for _, status := range []struct {
+				name string
+				code int
+				want int
+			}{
+				{"implicit", 0, http.StatusOK},
+				{"explicit", http.StatusCreated, http.StatusCreated},
+			} {
+				t.Run(status.name, func(t *testing.T) {
+					original := httptest.NewRecorder()
+					wrap := writer.wrap(original)
+					if status.code != 0 {
+						wrap.WriteHeader(status.code)
+					}
 
-	if !f.wroteHeader {
-		t.Fatal("want Flush to have set wroteHeader=true")
-	}
-}
+					wrap.(http.Flusher).Flush()
+					assertEqual(t, status.want, wrap.Status())
+					assertEqual(t, status.want, original.Code)
+					assertEqual(t, true, original.Flushed)
+					assertEqual(t, 0, wrap.BytesWritten())
 
-func TestHttp2FancyWriterRemembersWroteHeaderWhenFlushed(t *testing.T) {
-	f := &http2FancyWriter{basicWriter{ResponseWriter: httptest.NewRecorder()}}
-	f.Flush()
-
-	if !f.wroteHeader {
-		t.Fatal("want Flush to have set wroteHeader=true")
+					// Flushing commits the status, even before any body is written.
+					wrap.WriteHeader(http.StatusInternalServerError)
+					_, err := wrap.Write([]byte("body"))
+					assertNoError(t, err)
+					wrap.(http.Flusher).Flush()
+					assertEqual(t, status.want, wrap.Status())
+					assertEqual(t, status.want, original.Code)
+					assertEqual(t, "body", original.Body.String())
+					assertEqual(t, 4, wrap.BytesWritten())
+				})
+			}
+		})
 	}
 }
 
