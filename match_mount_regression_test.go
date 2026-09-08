@@ -213,3 +213,32 @@ func TestMuxMountedBasePreservesWalkAndMiddleware(t *testing.T) {
 		t.Errorf("Walk exposed mount stubs or duplicated routes: %v", routes)
 	}
 }
+
+func TestMuxMountMetadataOnlyOnRoutableEndpoints(t *testing.T) {
+	child := NewRouter()
+	child.Get("/all", func(http.ResponseWriter, *http.Request) {})
+	r := NewRouter()
+	r.Mount("/path", child)
+	for _, path := range []string{"/path", "/path/", "/path/all"} {
+		t.Run(path, func(t *testing.T) {
+			node, _, _ := r.tree.FindRoute(NewRouteContext(), mGET, path)
+			for _, method := range []methodTyp{mSTUB, mALL} {
+				if node.endpoints[method].subroutes != nil {
+					t.Errorf("internal endpoint %d carries subroute metadata", method)
+				}
+			}
+			for _, method := range methodMap {
+				if node.endpoints[method].subroutes != child {
+					t.Errorf("HTTP method %d is missing subroute metadata", method)
+				}
+			}
+		})
+	}
+	r.Handle("/path", http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	node, _, _ := r.tree.FindRoute(NewRouteContext(), mGET, "/path")
+	for method, endpoint := range node.endpoints {
+		if endpoint.subroutes != nil {
+			t.Errorf("overridden endpoint %d still carries subroute metadata", method)
+		}
+	}
+}

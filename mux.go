@@ -340,8 +340,8 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		n := mx.handle(method, pattern, mountHandler)
 		// Keep per-method mount metadata for Find, including the exact-path
 		// forwarding entries that are intentionally hidden from Routes.
-		for _, endpoint := range n.endpoints {
-			endpoint.subroutes = subroutes
+		for _, method := range methodMap {
+			n.endpoints[method].subroutes = subroutes
 		}
 		return n
 	}
