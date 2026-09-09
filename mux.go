@@ -86,9 +86,17 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// NOTE: r.WithContext() causes 2 allocations and context.WithValue() causes 1 allocation
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
 
-	// Serve the request and once its done, put the request context back in the sync pool
+	// Serve the request and once its done, put the request context back in the sync pool.
+	// Use AfterFunc to safely reclaim the routing context only when the
+	// original request context is fully done. This prevents premature pool
+	// reclamation when middlewares have cloned the request context and the
+	// cloned contexts still reference the chi.Context. The parent context
+	// is cancelled by the HTTP server after the handler returns and any
+	// goroutines holding the cloned context should be finished.
 	mx.handler.ServeHTTP(w, r)
-	mx.pool.Put(rctx)
+	context.AfterFunc(r.Context(), func() {
+		mx.pool.Put(rctx)
+	})
 }
 
 // Use appends a middleware handler to the Mux middleware stack.
