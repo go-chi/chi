@@ -69,3 +69,76 @@ func TestRequestID(t *testing.T) {
 		}
 	}
 }
+
+func TestRequestIDWithCustomKey(t *testing.T) {
+	tests := map[string]struct {
+		customKey   string
+		request     func() *http.Request
+		expectPanic bool
+	}{
+		"Sets request ID under custom key": {
+			"x-custom-id",
+			func() *http.Request {
+				req, _ := http.NewRequest("GET", "/", nil)
+				return req
+			},
+			false,
+		},
+		"Custom key value matches GetReqID": {
+			"x-trace-id",
+			func() *http.Request {
+				req, _ := http.NewRequest("GET", "/", nil)
+				return req
+			},
+			false,
+		},
+		"Panics on empty key": {
+			"",
+			func() *http.Request {
+				req, _ := http.NewRequest("GET", "/", nil)
+				return req
+			},
+			true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			if test.expectPanic {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Fatalf("[%s] expected panic but did not get one", name)
+					}
+				}()
+				RequestIDWithCustomKey(test.customKey)
+				return
+			}
+
+			var gotDefault string
+			var gotCustom string
+
+			w := httptest.NewRecorder()
+
+			r := chi.NewRouter()
+			r.Use(RequestIDWithCustomKey(test.customKey))
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				gotDefault = GetReqID(r.Context())
+				if v, ok := r.Context().Value(test.customKey).(string); ok {
+					gotCustom = v
+				}
+				w.Write([]byte(gotDefault))
+			})
+			r.ServeHTTP(w, test.request())
+
+			if gotDefault == "" {
+				t.Fatalf("[%s] expected default RequestIDKey to be set in context", name)
+			}
+			if gotCustom == "" {
+				t.Fatalf("[%s] expected custom key %q to be set in context", name, test.customKey)
+			}
+			if gotDefault != gotCustom {
+				t.Fatalf("[%s] default id %q and custom id %q should be equal", name, gotDefault, gotCustom)
+			}
+		})
+	}
+}
