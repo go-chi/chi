@@ -146,6 +146,11 @@ func (s endpoints) Value(method methodTyp) *endpoint {
 }
 
 func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
+	// Validate the pattern up-front so a malformed route (duplicate or empty
+	// param key, misplaced wildcard, missing '}') panics BEFORE the tree is
+	// mutated.
+	patParamKeys(pattern)
+
 	var parent *node
 	search := pattern
 
