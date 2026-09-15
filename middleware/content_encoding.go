@@ -21,10 +21,13 @@ func AllowContentEncoding(contentEncoding ...string) func(next http.Handler) htt
 				return
 			}
 			// All encodings in the request must be allowed
-			for _, encoding := range requestEncodings {
-				if _, ok := allowedEncodings[strings.TrimSpace(strings.ToLower(encoding))]; !ok {
-					w.WriteHeader(http.StatusUnsupportedMediaType)
-					return
+			for _, encodingList := range requestEncodings {
+				encodings := strings.Split(encodingList, ",")
+				for _, encoding := range encodings {
+					if _, ok := allowedEncodings[strings.TrimSpace(strings.ToLower(encoding))]; !ok {
+						w.WriteHeader(http.StatusUnsupportedMediaType)
+						return
+					}
 				}
 			}
 			next.ServeHTTP(w, r)
