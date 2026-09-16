@@ -1691,6 +1691,24 @@ func TestMuxRegexp3(t *testing.T) {
 	}
 }
 
+func TestMuxRegexpUUIDDate(t *testing.T) {
+	r := NewRouter()
+	r.Get("/test/{UUID:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}-{date}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "UUID") + "\n" + URLParam(r, "date")))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	_, body := testRequest(t, ts, "GET", "/test/f9772163-44e7-49b1-9c8c-36b8d023aa6b-2024-01-01", nil)
+	if body != "f9772163-44e7-49b1-9c8c-36b8d023aa6b\n2024-01-01" {
+		t.Fatalf("got %q", body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/test/not-a-uuid-2024-01-01", nil); body != "404 page not found\n" {
+		t.Fatalf("expected 404, got %q", body)
+	}
+}
+
 func TestMuxSubrouterWildcardParam(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "param:%v *:%v", URLParam(r, "param"), URLParam(r, "*"))
