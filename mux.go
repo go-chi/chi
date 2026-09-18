@@ -335,18 +335,28 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		handler.ServeHTTP(w, r)
 	})
 
+	subroutes, _ := handler.(Routes)
+	mount := func(method methodTyp, pattern string) *node {
+		n := mx.handle(method, pattern, mountHandler)
+		// Keep per-method mount metadata for Find, including the exact-path
+		// forwarding entries that are intentionally hidden from Routes.
+		for _, method := range methodMap {
+			n.endpoints[method].subroutes = subroutes
+		}
+		return n
+	}
+
 	if pattern == "" || pattern[len(pattern)-1] != '/' {
-		mx.handle(mALL|mSTUB, pattern, mountHandler)
-		mx.handle(mALL|mSTUB, pattern+"/", mountHandler)
+		mount(mALL|mSTUB, pattern)
+		mount(mALL|mSTUB, pattern+"/")
 		pattern += "/"
 	}
 
 	method := mALL
-	subroutes, _ := handler.(Routes)
 	if subroutes != nil {
 		method |= mSTUB
 	}
-	n := mx.handle(method, pattern+"*", mountHandler)
+	n := mount(method, pattern+"*")
 
 	if subroutes != nil {
 		n.subroutes = subroutes
@@ -389,18 +399,18 @@ func (mx *Mux) Find(rctx *Context, method, path string) string {
 	pattern := rctx.routePattern
 
 	if node != nil {
-		if node.subroutes == nil {
-			e := node.endpoints[m]
+		e := node.endpoints[m]
+		if e.subroutes == nil {
 			return e.pattern
 		}
 
 		rctx.RoutePath = mx.nextRoutePath(rctx)
-		subPattern := node.subroutes.Find(rctx, method, rctx.RoutePath)
+		subPattern := e.subroutes.Find(rctx, method, rctx.RoutePath)
 		if subPattern == "" {
 			return ""
 		}
 
-		pattern = strings.TrimSuffix(pattern, "/*")
+		pattern = strings.TrimSuffix(strings.TrimSuffix(pattern, "*"), "/")
 		pattern += subPattern
 	}
 

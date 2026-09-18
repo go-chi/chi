@@ -129,6 +129,9 @@ type endpoint struct {
 	// endpoint handler
 	handler http.Handler
 
+	// subroutes reached by this method's mounted handler
+	subroutes Routes
+
 	// pattern is the routing pattern for handler nodes
 	pattern string
 
@@ -364,17 +367,20 @@ func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern strin
 	if method&mALL == mALL {
 		h := n.endpoints.Value(mALL)
 		h.handler = handler
+		h.subroutes = nil
 		h.pattern = pattern
 		h.paramKeys = paramKeys
 		for _, m := range methodMap {
 			h := n.endpoints.Value(m)
 			h.handler = handler
+			h.subroutes = nil
 			h.pattern = pattern
 			h.paramKeys = paramKeys
 		}
 	} else {
 		h := n.endpoints.Value(method)
 		h.handler = handler
+		h.subroutes = nil
 		h.pattern = pattern
 		h.paramKeys = paramKeys
 	}
