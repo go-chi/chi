@@ -50,27 +50,63 @@ func TestWrapResponseWriterStatusWhenFlushed(t *testing.T) {
 				{"explicit", http.StatusCreated, http.StatusCreated},
 			} {
 				t.Run(status.name, func(t *testing.T) {
-					original := httptest.NewRecorder()
-					wrap := writer.wrap(original)
-					if status.code != 0 {
-						wrap.WriteHeader(status.code)
+					for _, mode := range []struct {
+						name    string
+						discard bool
+						tee     bool
+					}{
+						{"passthrough", false, false},
+						{"tee", false, true},
+						{"discard", true, false},
+						{"discard-with-tee", true, true},
+					} {
+						t.Run(mode.name, func(t *testing.T) {
+							original := &httptest.ResponseRecorder{
+								HeaderMap: make(http.Header),
+								Body:      new(bytes.Buffer),
+							}
+							wrap := writer.wrap(original)
+							var tee bytes.Buffer
+							if mode.tee {
+								wrap.Tee(&tee)
+							}
+							if mode.discard {
+								wrap.Discard()
+							}
+							if status.code != 0 {
+								wrap.WriteHeader(status.code)
+							}
+
+							wrap.(http.Flusher).Flush()
+							assertEqual(t, status.want, wrap.Status())
+							assertEqual(t, !mode.discard, original.Flushed)
+							assertEqual(t, 0, wrap.BytesWritten())
+
+							// Flushing commits the status, even before any body is written.
+							wrap.WriteHeader(http.StatusInternalServerError)
+							_, err := wrap.Write([]byte("body"))
+							assertNoError(t, err)
+							assertNoError(t, http.NewResponseController(wrap).Flush())
+							assertEqual(t, status.want, wrap.Status())
+							assertEqual(t, 4, wrap.BytesWritten())
+							if mode.tee {
+								assertEqual(t, "body", tee.String())
+							}
+							if mode.discard {
+								assertEqual(t, false, original.Flushed)
+								assertEqual(t, 0, original.Code)
+								assertEqual(t, "", original.Body.String())
+								original.WriteHeader(http.StatusAccepted)
+								_, err := original.Write([]byte("replacement"))
+								assertNoError(t, err)
+								assertEqual(t, http.StatusAccepted, original.Code)
+								assertEqual(t, "replacement", original.Body.String())
+							} else {
+								assertEqual(t, status.want, original.Code)
+								assertEqual(t, "body", original.Body.String())
+							}
+						})
 					}
-
-					wrap.(http.Flusher).Flush()
-					assertEqual(t, status.want, wrap.Status())
-					assertEqual(t, status.want, original.Code)
-					assertEqual(t, true, original.Flushed)
-					assertEqual(t, 0, wrap.BytesWritten())
-
-					// Flushing commits the status, even before any body is written.
-					wrap.WriteHeader(http.StatusInternalServerError)
-					_, err := wrap.Write([]byte("body"))
-					assertNoError(t, err)
-					wrap.(http.Flusher).Flush()
-					assertEqual(t, status.want, wrap.Status())
-					assertEqual(t, status.want, original.Code)
-					assertEqual(t, "body", original.Body.String())
-					assertEqual(t, 4, wrap.BytesWritten())
 				})
 			}
 		})

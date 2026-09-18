@@ -63,6 +63,7 @@ type WrapResponseWriter interface {
 	Unwrap() http.ResponseWriter
 	// Discard causes all writes to the original ResponseWriter be discarded,
 	// instead writing only to the tee'd writer if it's set.
+	// Flush calls also do not reach the original ResponseWriter.
 	// The caller is responsible for calling WriteHeader and Write on the
 	// original ResponseWriter once the processing is done.
 	Discard()
@@ -119,6 +120,13 @@ func (b *basicWriter) maybeWriteHeader() {
 	}
 }
 
+func (b *basicWriter) flush() {
+	b.maybeWriteHeader()
+	if !b.discard {
+		b.ResponseWriter.(http.Flusher).Flush()
+	}
+}
+
 func (b *basicWriter) Status() int {
 	return b.code
 }
@@ -145,9 +153,7 @@ type flushWriter struct {
 }
 
 func (f *flushWriter) Flush() {
-	f.basicWriter.maybeWriteHeader()
-	fl := f.basicWriter.ResponseWriter.(http.Flusher)
-	fl.Flush()
+	f.basicWriter.flush()
 }
 
 var _ http.Flusher = &flushWriter{}
@@ -170,9 +176,7 @@ type flushHijackWriter struct {
 }
 
 func (f *flushHijackWriter) Flush() {
-	f.basicWriter.maybeWriteHeader()
-	fl := f.basicWriter.ResponseWriter.(http.Flusher)
-	fl.Flush()
+	f.basicWriter.flush()
 }
 
 func (f *flushHijackWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
@@ -192,9 +196,7 @@ type httpFancyWriter struct {
 }
 
 func (f *httpFancyWriter) Flush() {
-	f.basicWriter.maybeWriteHeader()
-	fl := f.basicWriter.ResponseWriter.(http.Flusher)
-	fl.Flush()
+	f.basicWriter.flush()
 }
 
 func (f *httpFancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
@@ -237,9 +239,7 @@ type http2FancyWriter struct {
 }
 
 func (f *http2FancyWriter) Flush() {
-	f.basicWriter.maybeWriteHeader()
-	fl := f.basicWriter.ResponseWriter.(http.Flusher)
-	fl.Flush()
+	f.basicWriter.flush()
 }
 
 var _ http.Flusher = &http2FancyWriter{}
