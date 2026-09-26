@@ -13,6 +13,22 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+type resetWriter struct {
+	io.Writer
+}
+
+func (w *resetWriter) Reset(dst io.Writer) {
+	w.Writer = dst
+}
+
+type forwardingWriter struct {
+	io.Writer
+}
+
+func (w *forwardingWriter) Write(p []byte) (int, error) {
+	return w.Writer.Write(p)
+}
+
 func TestCompressor(t *testing.T) {
 	r := chi.NewRouter()
 
@@ -106,6 +122,114 @@ func TestCompressor(t *testing.T) {
 
 		})
 
+	}
+}
+
+func TestCompressorEncoderFailure(t *testing.T) {
+	compressor := NewCompressor(5, "text/plain")
+	compressor.SetEncoder("broken", func(io.Writer, int) io.Writer {
+		return nil
+	})
+
+	h := compressor.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte("textstring"))
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept-Encoding", "broken")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Content-Encoding"); got != "" {
+		t.Errorf("expected no encoding after encoder failure, got %q", got)
+	}
+	if got := rec.Body.String(); got != "textstring" {
+		t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", got)
+	}
+}
+
+func TestCompressorPooledEncoderFailure(t *testing.T) {
+	compressor := NewCompressor(5, "text/plain")
+	calls := 0
+	compressor.SetEncoder("broken", func(w io.Writer, _ int) io.Writer {
+		calls++
+		if calls > 1 {
+			return nil
+		}
+		return &resetWriter{Writer: w}
+	})
+
+	h := compressor.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte("textstring"))
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept-Encoding", "broken")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Content-Encoding"); got != "" {
+		t.Errorf("expected no encoding after encoder failure, got %q", got)
+	}
+	if got := rec.Body.String(); got != "textstring" {
+		t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", got)
+	}
+}
+
+func TestCompressorTypedNilEncoderFailure(t *testing.T) {
+	compressor := NewCompressor(5, "text/plain")
+	compressor.SetEncoder("broken", func(io.Writer, int) io.Writer {
+		var encoder *forwardingWriter
+		return encoder
+	})
+
+	h := compressor.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte("textstring"))
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept-Encoding", "broken")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Content-Encoding"); got != "" {
+		t.Errorf("expected no encoding after encoder failure, got %q", got)
+	}
+	if got := rec.Body.String(); got != "textstring" {
+		t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", got)
+	}
+}
+
+func TestCompressorPooledTypedNilEncoderFailure(t *testing.T) {
+	compressor := NewCompressor(5, "text/plain")
+	calls := 0
+	compressor.SetEncoder("broken", func(w io.Writer, _ int) io.Writer {
+		calls++
+		if calls > 1 {
+			var encoder *resetWriter
+			return encoder
+		}
+		return &resetWriter{Writer: w}
+	})
+
+	h := compressor.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte("textstring"))
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Accept-Encoding", "broken")
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if got := rec.Header().Get("Content-Encoding"); got != "" {
+		t.Errorf("expected no encoding after encoder failure, got %q", got)
+	}
+	if got := rec.Body.String(); got != "textstring" {
+		t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", got)
 	}
 }
 
