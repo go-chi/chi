@@ -49,7 +49,7 @@ func TestSunset(t *testing.T) {
 		r := chi.NewRouter()
 
 		sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
-		sunsetLink := "https://example.com/v1/sunset-details"
+		sunsetLink := `<https://example.com/v1/sunset-details>; rel="sunset"`
 		r.Use(Sunset(sunsetAt, sunsetLink))
 
 		var sunset, deprecation, link string
@@ -91,8 +91,8 @@ func main() {
 	sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
 	r.Use(middleware.Sunset(sunsetAt))
 
-	// can provide additional link for updated resource
-	// r.Use(middleware.Sunset(sunsetAt, "https://example.com/v1/sunset-details"))
+	// can provide a Link header value (RFC 8288) pointing at more details
+	// r.Use(middleware.Sunset(sunsetAt, `<https://example.com/v1/sunset-details>; rel="sunset"`))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("This endpoint will be removed soon"))
