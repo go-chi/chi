@@ -12,7 +12,8 @@ import (
 // Link header, so it must be a full RFC 8288 value, e.g.
 // `<https://example.com/sunset>; rel="sunset"`.
 //
-// Often paired with [Deprecation]. Middleware order doesn't matter.
+// Recommended lifecycle: deprecate first with [Deprecation], then announce the
+// sunset. Middleware order doesn't matter.
 func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
