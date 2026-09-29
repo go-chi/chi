@@ -37,8 +37,8 @@ func TestSunset(t *testing.T) {
 			t.Fatal("Test get sunset error.", sunset)
 		}
 
-		if deprecation != "Wed, 24 Dec 2025 10:20:00 GMT" {
-			t.Fatal("Test get deprecation error.")
+		if deprecation != "" {
+			t.Fatal("Sunset should not set Deprecation.", deprecation)
 		}
 	})
 
@@ -49,8 +49,8 @@ func TestSunset(t *testing.T) {
 		r := chi.NewRouter()
 
 		sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
-		deprecationLink := "https://example.com/v1/deprecation-details"
-		r.Use(Sunset(sunsetAt, deprecationLink))
+		sunsetLink := "https://example.com/v1/sunset-details"
+		r.Use(Sunset(sunsetAt, sunsetLink))
 
 		var sunset, deprecation, link string
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -72,12 +72,12 @@ func TestSunset(t *testing.T) {
 			t.Fatal("Test get sunset error.", sunset)
 		}
 
-		if deprecation != "Wed, 24 Dec 2025 10:20:00 GMT" {
-			t.Fatal("Test get deprecation error.")
+		if deprecation != "" {
+			t.Fatal("Sunset should not set Deprecation.", deprecation)
 		}
 
-		if link != deprecationLink {
-			t.Fatal("Test get deprecation link error.")
+		if link != sunsetLink {
+			t.Fatal("Test get sunset link error.")
 		}
 	})
 
@@ -92,7 +92,7 @@ func main() {
 	r.Use(middleware.Sunset(sunsetAt))
 
 	// can provide additional link for updated resource
-	// r.Use(middleware.Sunset(sunsetAt, "https://example.com/v1/deprecation-details"))
+	// r.Use(middleware.Sunset(sunsetAt, "https://example.com/v1/sunset-details"))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("This endpoint will be removed soon"))

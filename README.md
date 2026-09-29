@@ -345,6 +345,7 @@ with `net/http` can be used with chi's mux.
 | [Compress]             | Gzip compression for clients that accept compressed responses           |
 | [ContentCharset]       | Ensure charset for Content-Type request headers                         |
 | [CleanPath]            | Clean double slashes from request path                                  |
+| [Deprecation]          | Set the Deprecation response header (RFC 9745)                          |
 | [GetHead]              | Automatically route undefined HEAD requests to GET handlers             |
 | [Heartbeat]            | Monitoring endpoint to check the servers pulse                          |
 | [Logger]               | Logs the start and end of each request with the elapsed processing time |
@@ -361,7 +362,7 @@ with `net/http` can be used with chi's mux.
 | [RouteHeaders]         | Route handling for request headers                                      |
 | [SetHeader]            | Short-hand middleware to set a response header key/value                |
 | [StripSlashes]         | Strip slashes on routing paths                                          |
-| [Sunset]               | Sunset set Deprecation/Sunset header to response                        |
+| [Sunset]               | Set the Sunset response header (RFC 8594)                               |
 | [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
 | [Timeout]              | Signals to the request context when the timeout deadline is reached     |
 | [URLFormat]            | Parse extension from url and put it on request context                  |
@@ -374,6 +375,7 @@ with `net/http` can be used with chi's mux.
 [Compress]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Compress
 [ContentCharset]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ContentCharset
 [CleanPath]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#CleanPath
+[Deprecation]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Deprecation
 [GetHead]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetHead
 [GetReqID]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetReqID
 [Heartbeat]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Heartbeat
