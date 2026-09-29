@@ -11,7 +11,7 @@ import (
 // It can be used on a route or a route group. Each link is added as a Link
 // header, e.g. `<https://example.com/sunset>; rel="sunset"`.
 //
-// To also signal deprecation, combine it with Deprecation.
+// Typically used after [Deprecation]: deprecate first, then announce the sunset.
 func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

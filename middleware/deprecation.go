@@ -12,7 +12,7 @@ import (
 // It can be used on a route or a route group. Each link is added as a Link
 // header, e.g. `<https://example.com/deprecation>; rel="deprecation"`.
 //
-// To also announce a removal date, combine it with Sunset.
+// Once a removal date is known, add [Sunset] to announce it.
 func Deprecation(deprecatedAt time.Time, links ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
