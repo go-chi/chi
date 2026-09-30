@@ -19,7 +19,7 @@ func Deprecation(deprecatedAt time.Time, links ...string) func(http.Handler) htt
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if !deprecatedAt.IsZero() {
-				// RFC 9745 uses a Structured Field Date (RFC 8941), not an HTTP-date.
+				// RFC 9745 uses a Structured Field Date (RFC 9651), not an HTTP-date.
 				w.Header().Set("Deprecation", "@"+strconv.FormatInt(deprecatedAt.Unix(), 10))
 
 				for _, link := range links {
