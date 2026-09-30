@@ -37,8 +37,8 @@ func TestSunset(t *testing.T) {
 			t.Fatal("Test get sunset error.", sunset)
 		}
 
-		if deprecation != "Wed, 24 Dec 2025 10:20:00 GMT" {
-			t.Fatal("Test get deprecation error.")
+		if deprecation != "" {
+			t.Fatal("Sunset should not set Deprecation.", deprecation)
 		}
 	})
 
@@ -49,8 +49,8 @@ func TestSunset(t *testing.T) {
 		r := chi.NewRouter()
 
 		sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
-		deprecationLink := "https://example.com/v1/deprecation-details"
-		r.Use(Sunset(sunsetAt, deprecationLink))
+		sunsetLink := `<https://example.com/v1/sunset-details>; rel="sunset"`
+		r.Use(Sunset(sunsetAt, sunsetLink))
 
 		var sunset, deprecation, link string
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -72,15 +72,41 @@ func TestSunset(t *testing.T) {
 			t.Fatal("Test get sunset error.", sunset)
 		}
 
-		if deprecation != "Wed, 24 Dec 2025 10:20:00 GMT" {
-			t.Fatal("Test get deprecation error.")
+		if deprecation != "" {
+			t.Fatal("Sunset should not set Deprecation.", deprecation)
 		}
 
-		if link != deprecationLink {
-			t.Fatal("Test get deprecation link error.")
+		if link != sunsetLink {
+			t.Fatal("Test get sunset link error.")
 		}
 	})
 
+	t.Run("Sunset with multiple links", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+
+		r := chi.NewRouter()
+
+		docs := `<https://example.com/v1/sunset-details>; rel="sunset"`
+		next := `<https://example.com/v2/users>; rel="successor-version"`
+		r.Use(Sunset(time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC), docs, next))
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {})
+		r.ServeHTTP(w, req)
+
+		got := w.Header().Values("Link")
+		if len(got) != 2 || got[0] != docs || got[1] != next {
+			t.Fatalf("Link = %q, want [%q %q]", got, docs, next)
+		}
+	})
+
+	t.Run("Zero time panics", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("Sunset should panic for zero time.")
+			}
+		}()
+		Sunset(time.Time{})
+	})
 }
 
 /**
@@ -91,8 +117,8 @@ func main() {
 	sunsetAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
 	r.Use(middleware.Sunset(sunsetAt))
 
-	// can provide additional link for updated resource
-	// r.Use(middleware.Sunset(sunsetAt, "https://example.com/v1/deprecation-details"))
+	// can provide a Link header value (RFC 8288) pointing at more details
+	// r.Use(middleware.Sunset(sunsetAt, `<https://example.com/v1/sunset-details>; rel="sunset"`))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("This endpoint will be removed soon"))
