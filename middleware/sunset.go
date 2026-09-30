@@ -12,7 +12,8 @@ import (
 // Link header, so it must be a full RFC 8288 value, e.g.
 // `<https://example.com/sunset>; rel="sunset"`.
 //
-// It panics if sunsetAt is the zero time, which is usually an unset value.
+// It panics if %s is the zero time, which is usually an unset value.
+// Pass a real date, or skip the middleware when no date is set.
 //
 // Recommended lifecycle: deprecate first with [Deprecation], then announce the
 // sunset. Middleware order doesn't matter.
