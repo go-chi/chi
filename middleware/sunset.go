@@ -19,7 +19,7 @@ import (
 // sunset. Middleware order doesn't matter.
 func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler {
 	if sunsetAt.IsZero() {
-		panic("middleware.Sunset: sunsetAt must not be the zero time")
+		panic("middleware.Sunset: sunsetAt must not be zero")
 	}
 
 	return func(next http.Handler) http.Handler {

@@ -20,7 +20,7 @@ import (
 // [Sunset]. Middleware order doesn't matter.
 func Deprecation(deprecatedAt time.Time, links ...string) func(http.Handler) http.Handler {
 	if deprecatedAt.IsZero() {
-		panic("middleware.Deprecation: deprecatedAt must not be the zero time")
+		panic("middleware.Deprecation: deprecatedAt must not be zero")
 	}
 
 	// RFC 9745 uses a Structured Field Date (RFC 9651), not an HTTP-date.
