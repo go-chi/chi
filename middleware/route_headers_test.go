@@ -184,6 +184,56 @@ func TestRouteHeaders(t *testing.T) {
 	})
 }
 
+func TestRouteHeadersDeterministicMultiKey(t *testing.T) {
+	// When multiple distinct header keys could route the same request,
+	// the selected branch must be deterministic across repeated calls.
+	// Go maps iterate in random order, so without sorted keys the winning
+	// branch can change between identical requests.
+	const iterations = 500
+
+	var authCount, permissiveCount int
+
+	authMW := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			authCount++
+			w.WriteHeader(http.StatusUnauthorized)
+		})
+	}
+	permissiveMW := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			permissiveCount++
+			w.WriteHeader(http.StatusOK)
+		})
+	}
+
+	hr := RouteHeaders().
+		Route("X-Api-Version", "v1", authMW).
+		Route("X-Legacy", "1", permissiveMW)
+
+	handler := hr.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	for i := 0; i < iterations; i++ {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Api-Version", "v1")
+		req.Header.Set("X-Legacy", "1")
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+	}
+
+	// With sorted key iteration, the same branch must win every time.
+	// One count should be exactly iterations and the other should be 0.
+	if authCount != 0 && permissiveCount != 0 {
+		t.Errorf("non-deterministic routing: auth=%d, permissive=%d across %d identical requests; expected one branch to win all",
+			authCount, permissiveCount, iterations)
+	}
+	total := authCount + permissiveCount
+	if total != iterations {
+		t.Errorf("expected %d total routed requests, got %d", iterations, total)
+	}
+}
+
 func TestPattern(t *testing.T) {
 	tests := []struct {
 		pattern  string
