@@ -81,6 +81,24 @@ func TestSunset(t *testing.T) {
 		}
 	})
 
+	t.Run("Sunset with multiple links", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/", nil)
+		w := httptest.NewRecorder()
+
+		r := chi.NewRouter()
+
+		docs := `<https://example.com/v1/sunset-details>; rel="sunset"`
+		next := `<https://example.com/v2/users>; rel="successor-version"`
+		r.Use(Sunset(time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC), docs, next))
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {})
+		r.ServeHTTP(w, req)
+
+		got := w.Header().Values("Link")
+		if len(got) != 2 || got[0] != docs || got[1] != next {
+			t.Fatalf("Link = %q, want [%q %q]", got, docs, next)
+		}
+	})
+
 	t.Run("Zero time panics", func(t *testing.T) {
 		defer func() {
 			if recover() == nil {

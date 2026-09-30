@@ -53,6 +53,17 @@ func TestDeprecation(t *testing.T) {
 		}
 	})
 
+	t.Run("Deprecation with multiple links", func(t *testing.T) {
+		docs := `<https://example.com/v1/deprecation-details>; rel="deprecation"`
+		next := `<https://example.com/v2/users>; rel="successor-version"`
+		h := serve(Deprecation(deprecatedAt, docs, next))
+
+		got := h.Values("Link")
+		if len(got) != 2 || got[0] != docs || got[1] != next {
+			t.Fatalf("Link = %q, want [%q %q]", got, docs, next)
+		}
+	})
+
 	t.Run("Zero time panics", func(t *testing.T) {
 		defer func() {
 			if recover() == nil {
@@ -71,8 +82,24 @@ func TestDeprecation(t *testing.T) {
 		if h.Get("Deprecation") != "@1766571600" {
 			t.Fatal("Deprecation header missing.")
 		}
+		if h.Get("Link") != "" {
+			t.Fatal("Link should be empty.")
+		}
 		if got, want := h.Get("Sunset"), "Mon, 01 Jun 2026 00:00:00 GMT"; got != want {
 			t.Fatalf("Sunset = %q, want %q", got, want)
+		}
+	})
+	t.Run("Combined with Sunset keeps links from both", func(t *testing.T) {
+		sunsetAt := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+		dep := `<https://example.com/deprecation>; rel="deprecation"`
+		sun := `<https://example.com/sunset>; rel="sunset"`
+		h := serve(func(next http.Handler) http.Handler {
+			return Deprecation(deprecatedAt, dep)(Sunset(sunsetAt, sun)(next))
+		})
+
+		got := h.Values("Link")
+		if len(got) != 2 || got[0] != dep || got[1] != sun {
+			t.Fatalf("Link = %q, want [%q %q]", got, dep, sun)
 		}
 	})
 }

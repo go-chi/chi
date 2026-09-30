@@ -12,7 +12,7 @@ import (
 // route. Sunset alone is valid, but clients get no "stop using this" signal.
 // Middleware order doesn't matter.
 //
-// sunsetAt is a future date, and should not be before the deprecation date.
+// sunsetAt is usually a future date, and should not be before the deprecation date.
 // After it, remove the route or return 410 Gone.
 // It panics if sunsetAt is the zero time, which is usually an unset value.
 // Pass a real date, or skip the middleware when no date is set.
