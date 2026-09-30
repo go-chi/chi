@@ -6,18 +6,19 @@ import (
 	"time"
 )
 
-// Deprecation sets the Deprecation header on the response, per RFC 9745.
+// Deprecation marks a route as deprecated, per RFC 9745.
 // https://www.rfc-editor.org/rfc/rfc9745.html
 //
-// It can be used on a route or a route group. Each link is added as-is as a
-// Link header, so it must be a full RFC 8288 value, e.g.
-// `<https://example.com/deprecation>; rel="deprecation"`.
+// Use it from the day you decide to retire a route. The route keeps working,
+// and clients are told to migrate. When you know the removal date, add [Sunset].
+// Middleware order doesn't matter.
 //
+// deprecatedAt is when the route was, or will be, deprecated. A past date is fine.
 // It panics if deprecatedAt is the zero time, which is usually an unset value.
 // Pass a real date, or skip the middleware when no date is set.
 //
-// Recommended lifecycle: deprecate first, then announce a removal date with
-// [Sunset]. Middleware order doesn't matter.
+// Each link is added as-is as a Link header, so it must be a full RFC 8288
+// value, e.g. `<https://example.com/migrate>; rel="deprecation"`.
 func Deprecation(deprecatedAt time.Time, links ...string) func(http.Handler) http.Handler {
 	if deprecatedAt.IsZero() {
 		panic("middleware.Deprecation: deprecatedAt must not be zero")

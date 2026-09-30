@@ -476,6 +476,30 @@ See the per-function godoc for the full semantics of each middleware, and
 [adam-p's "The perils of the 'real' client IP"](https://adam-p.ca/blog/2022/03/x-forwarded-for/)
 for the underlying threat model.
 
+### Deprecating and removing a route
+
+Use `Deprecation` first. Add `Sunset` when you know the removal date.
+
+| Situation                                                | Use                         |
+| :------------------------------------------------------- | :-------------------------- |
+| Route works, clients should migrate, no removal date yet | `Deprecation`               |
+| You know the date the route will stop working            | `Deprecation` + `Sunset`    |
+| Route is already removed                                 | Neither. Return `410 Gone`. |
+
+```go
+// A bad date parses to the zero time, and the middleware panics at startup.
+deprecatedAt, _ := time.Parse(time.DateOnly, "2026-01-15")
+sunsetAt, _ := time.Parse(time.DateOnly, "2026-07-01")
+
+// Step 1: the route is deprecated.
+r.With(middleware.Deprecation(deprecatedAt)).Get("/v1/users", listUsers)
+
+// Step 2: the removal date is known.
+r.With(middleware.Deprecation(deprecatedAt), middleware.Sunset(sunsetAt)).Get("/v1/users", listUsers)
+
+// After sunsetAt: remove the route, or return 410 Gone.
+```
+
 ### Extra middlewares & packages
 
 Please see https://github.com/go-chi for additional packages.
