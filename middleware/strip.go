@@ -49,6 +49,19 @@ func RedirectSlashes(next http.Handler) http.Handler {
 		}
 
 		if len(path) > 1 && path[len(path)-1] == '/' {
+			// Inside a mounted router or Route() block the routing path is
+			// relative to the mount point. Redirect to the full request path
+			// so the mount prefix is not dropped from the Location.
+			if rctx != nil && rctx.RoutePath != "" {
+				fullPath := r.URL.Path
+				if r.URL.RawPath != "" {
+					fullPath = r.URL.RawPath
+				}
+				if strings.HasSuffix(fullPath, path) {
+					path = fullPath
+				}
+			}
+
 			// Normalize backslashes to forward slashes to prevent "/\evil.com" style redirects
 			// that some clients may interpret as protocol-relative.
 			path = strings.ReplaceAll(path, `\`, `/`)
