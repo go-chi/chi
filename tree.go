@@ -454,13 +454,15 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					continue
 				}
 
+				if strings.IndexByte(xsearch[:p], '/') != -1 {
+					// avoid a match across path segments
+					continue
+				}
+
 				if ntyp == ntRegexp && xn.rex != nil {
 					if !xn.rex.MatchString(xsearch[:p]) {
 						continue
 					}
-				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
-					// avoid a match across path segments
-					continue
 				}
 
 				prevlen := len(rctx.routeParams.Values)
