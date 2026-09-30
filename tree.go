@@ -454,51 +454,72 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					continue
 				}
 
-				if ntyp == ntRegexp && xn.rex != nil {
-					if !xn.rex.MatchString(xsearch[:p]) {
-						continue
-					}
-				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
-					// avoid a match across path segments
-					continue
-				}
-
-				prevlen := len(rctx.routeParams.Values)
-				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
-				xsearch = xsearch[p:]
-
-				if len(xsearch) == 0 {
-					if xn.isLeaf() {
-						h := xn.endpoints[method]
-						if h != nil && h.handler != nil {
-							rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
-							return xn
-						}
-
-						for endpoints := range xn.endpoints {
-							if endpoints == mALL || endpoints == mSTUB {
-								continue
+				for {
+					if ntyp == ntRegexp && xn.rex != nil {
+						if !xn.rex.MatchString(xsearch[:p]) {
+							// The param value itself may contain the tail byte
+							// (e.g. UUID + '-' + date). Try the next tail.
+							if xn.tail == '/' {
+								break
 							}
-							if !slices.Contains(rctx.methodsAllowed, endpoints) {
-								rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+							next := strings.IndexByte(xsearch[p+1:], xn.tail)
+							if next < 0 {
+								break
 							}
+							p = p + 1 + next
+							continue
 						}
-
-						// flag that the routing context found a route, but not a corresponding
-						// supported method
-						rctx.methodNotAllowed = true
+					} else if strings.IndexByte(xsearch[:p], '/') != -1 {
+						// avoid a match across path segments
+						break
 					}
-				}
 
-				// recursively find the next node on this branch
-				fin := xn.findRoute(rctx, method, xsearch)
-				if fin != nil {
-					return fin
-				}
+					prevlen := len(rctx.routeParams.Values)
+					rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
+					xsearch = xsearch[p:]
 
-				// not found on this branch, reset vars
-				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
-				xsearch = search
+					if len(xsearch) == 0 {
+						if xn.isLeaf() {
+							h := xn.endpoints[method]
+							if h != nil && h.handler != nil {
+								rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
+								return xn
+							}
+
+							for endpoints := range xn.endpoints {
+								if endpoints == mALL || endpoints == mSTUB {
+									continue
+								}
+								if !slices.Contains(rctx.methodsAllowed, endpoints) {
+									rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
+								}
+							}
+
+							// flag that the routing context found a route, but not a corresponding
+							// supported method
+							rctx.methodNotAllowed = true
+						}
+					}
+
+					// recursively find the next node on this branch
+					fin := xn.findRoute(rctx, method, xsearch)
+					if fin != nil {
+						return fin
+					}
+
+					// not found on this branch, reset vars
+					rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
+					xsearch = search
+
+					if ntyp != ntRegexp || xn.tail == '/' {
+						break
+					}
+					next := strings.IndexByte(xsearch[p+1:], xn.tail)
+					if next < 0 {
+						break
+					}
+					p = p + 1 + next
+				}
 			}
 
 			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
