@@ -81,6 +81,14 @@ func TestSunset(t *testing.T) {
 		}
 	})
 
+	t.Run("Zero time panics", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("Sunset should panic for zero time.")
+			}
+		}()
+		Sunset(time.Time{})
+	})
 }
 
 /**

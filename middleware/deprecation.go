@@ -13,18 +13,24 @@ import (
 // Link header, so it must be a full RFC 8288 value, e.g.
 // `<https://example.com/deprecation>; rel="deprecation"`.
 //
+// It panics if deprecatedAt is the zero time, which is usually an unset value.
+//
 // Recommended lifecycle: deprecate first, then announce a removal date with
 // [Sunset]. Middleware order doesn't matter.
 func Deprecation(deprecatedAt time.Time, links ...string) func(http.Handler) http.Handler {
+	if deprecatedAt.IsZero() {
+		panic("middleware.Deprecation: deprecatedAt must not be the zero time")
+	}
+
+	// RFC 9745 uses a Structured Field Date (RFC 9651), not an HTTP-date.
+	value := "@" + strconv.FormatInt(deprecatedAt.Unix(), 10)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !deprecatedAt.IsZero() {
-				// RFC 9745 uses a Structured Field Date (RFC 9651), not an HTTP-date.
-				w.Header().Set("Deprecation", "@"+strconv.FormatInt(deprecatedAt.Unix(), 10))
+			w.Header().Set("Deprecation", value)
 
-				for _, link := range links {
-					w.Header().Add("Link", link)
-				}
+			for _, link := range links {
+				w.Header().Add("Link", link)
 			}
 			next.ServeHTTP(w, r)
 		})

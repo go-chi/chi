@@ -12,17 +12,21 @@ import (
 // Link header, so it must be a full RFC 8288 value, e.g.
 // `<https://example.com/sunset>; rel="sunset"`.
 //
+// It panics if sunsetAt is the zero time, which is usually an unset value.
+//
 // Recommended lifecycle: deprecate first with [Deprecation], then announce the
 // sunset. Middleware order doesn't matter.
 func Sunset(sunsetAt time.Time, links ...string) func(http.Handler) http.Handler {
+	if sunsetAt.IsZero() {
+		panic("middleware.Sunset: sunsetAt must not be the zero time")
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !sunsetAt.IsZero() {
-				w.Header().Set("Sunset", sunsetAt.UTC().Format(http.TimeFormat))
+			w.Header().Set("Sunset", sunsetAt.UTC().Format(http.TimeFormat))
 
-				for _, link := range links {
-					w.Header().Add("Link", link)
-				}
+			for _, link := range links {
+				w.Header().Add("Link", link)
 			}
 			next.ServeHTTP(w, r)
 		})

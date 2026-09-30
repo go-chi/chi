@@ -53,11 +53,13 @@ func TestDeprecation(t *testing.T) {
 		}
 	})
 
-	t.Run("Zero time sets nothing", func(t *testing.T) {
-		h := serve(Deprecation(time.Time{}))
-		if h.Get("Deprecation") != "" {
-			t.Fatal("Deprecation should be empty for zero time.")
-		}
+	t.Run("Zero time panics", func(t *testing.T) {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("Deprecation should panic for zero time.")
+			}
+		}()
+		Deprecation(time.Time{})
 	})
 
 	t.Run("Combined with Sunset", func(t *testing.T) {
