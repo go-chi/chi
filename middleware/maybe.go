@@ -7,9 +7,10 @@ import "net/http"
 // a request does not satisfy the maybeFn logic.
 func Maybe(mw func(http.Handler) http.Handler, maybeFn func(r *http.Request) bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
+		wrapped := mw(next)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if maybeFn(r) {
-				mw(next).ServeHTTP(w, r)
+				wrapped.ServeHTTP(w, r)
 			} else {
 				next.ServeHTTP(w, r)
 			}
