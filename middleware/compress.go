@@ -308,6 +308,11 @@ func (cw *compressResponseWriter) isCompressible() bool {
 }
 
 func (cw *compressResponseWriter) WriteHeader(code int) {
+	if code >= 100 && code <= 199 && code != http.StatusSwitchingProtocols {
+		cw.ResponseWriter.WriteHeader(code)
+		return
+	}
+
 	if cw.wroteHeader {
 		cw.ResponseWriter.WriteHeader(code) // Allow multiple calls to propagate.
 		return
