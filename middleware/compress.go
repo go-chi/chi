@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -258,12 +259,33 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 }
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
+	if encoding == "" {
+		return false
+	}
+	matched := false
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
-			return true
+		for _, item := range strings.Split(v, ",") {
+			parts := strings.Split(item, ";")
+			token := strings.TrimSpace(parts[0])
+			if token == "" || !strings.EqualFold(token, encoding) {
+				continue
+			}
+			for _, param := range parts[1:] {
+				k, val, found := strings.Cut(param, "=")
+				if !found {
+					continue
+				}
+				if strings.EqualFold(strings.TrimSpace(k), "q") {
+					val = strings.Trim(strings.TrimSpace(val), "\"")
+					if q, err := strconv.ParseFloat(val, 64); err == nil && q <= 0 {
+						return false
+					}
+				}
+			}
+			matched = true
 		}
 	}
-	return false
+	return matched
 }
 
 // An EncoderFunc is a function that wraps the provided io.Writer with a

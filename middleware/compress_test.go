@@ -92,6 +92,36 @@ func TestCompressor(t *testing.T) {
 			acceptedEncodings: []string{"nop, gzip, deflate"},
 			expectedEncoding:  "nop",
 		},
+		{
+			name:              "gzip explicitly rejected with q=0, deflate is used",
+			path:              "/getcss",
+			acceptedEncodings: []string{"gzip;q=0", "deflate"},
+			expectedEncoding:  "deflate",
+		},
+		{
+			name:              "gzip explicitly rejected with q=0.0, deflate is used",
+			path:              "/getcss",
+			acceptedEncodings: []string{"gzip;q=0.0", "deflate"},
+			expectedEncoding:  "deflate",
+		},
+		{
+			name:              "all accepted encodings rejected with q=0",
+			path:              "/getcss",
+			acceptedEncodings: []string{"gzip;q=0, deflate;q=0"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "substring false positive bgzip does not match gzip",
+			path:              "/getcss",
+			acceptedEncodings: []string{"bgzip"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "encoding with q=0.5 is accepted",
+			path:              "/getcss",
+			acceptedEncodings: []string{"gzip;q=0.5"},
+			expectedEncoding:  "gzip",
+		},
 	}
 
 	for _, tc := range tests {
@@ -248,4 +278,173 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 	reader.Close()
 
 	return string(respBody)
+}
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		expected bool
+	}{
+		{
+			name:     "exact match",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			expected: true,
+		},
+		{
+			name:     "exact match in comma-separated header",
+			accepted: []string{"gzip, deflate"},
+			encoding: "deflate",
+			expected: true,
+		},
+		{
+			name:     "exact match in multi-element slice",
+			accepted: []string{"gzip", "deflate"},
+			encoding: "deflate",
+			expected: true,
+		},
+		{
+			name:     "case-insensitive encoding match",
+			accepted: []string{"GZIP"},
+			encoding: "gzip",
+			expected: true,
+		},
+		{
+			name:     "case-insensitive target encoding",
+			accepted: []string{"gzip"},
+			encoding: "GZIP",
+			expected: true,
+		},
+		{
+			name:     "case-insensitive parameter match",
+			accepted: []string{"gzip;Q=0"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "substring false positive: prefix",
+			accepted: []string{"bgzip"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "substring false positive: suffix",
+			accepted: []string{"br"},
+			encoding: "b",
+			expected: false,
+		},
+		{
+			name:     "substring false positive: intermediate",
+			accepted: []string{"gzip-custom"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=0 rejects encoding",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=0.0 rejects encoding",
+			accepted: []string{"gzip;q=0.0"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=0.00 rejects encoding",
+			accepted: []string{"gzip;q=0.00"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=0.000 rejects encoding",
+			accepted: []string{"gzip;q=0.000"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "quoted q=0 rejects encoding",
+			accepted: []string{`gzip;q="0"`},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=0 with whitespace around semicolon and equals",
+			accepted: []string{"gzip ; q = 0"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=1.0 accepts encoding",
+			accepted: []string{"gzip;q=1.0"},
+			encoding: "gzip",
+			expected: true,
+		},
+		{
+			name:     "q=0.5 accepts encoding",
+			accepted: []string{"gzip;q=0.5"},
+			encoding: "gzip",
+			expected: true,
+		},
+		{
+			name:     "multiple parameters with q=0 rejects encoding",
+			accepted: []string{"gzip;foo=bar;q=0"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "multiple parameters with q=1 accepts encoding",
+			accepted: []string{"gzip;foo=bar;q=1.0"},
+			encoding: "gzip",
+			expected: true,
+		},
+		{
+			name:     "q=0 for one encoding does not affect another",
+			accepted: []string{"gzip;q=0", "deflate"},
+			encoding: "deflate",
+			expected: true,
+		},
+		{
+			name:     "q=0 anywhere in list for the encoding rejects it",
+			accepted: []string{"gzip;q=0", "gzip"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "q=0 anywhere in list for the encoding rejects it reversed",
+			accepted: []string{"gzip", "gzip;q=0"},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "empty encoding to match returns false",
+			accepted: []string{"gzip"},
+			encoding: "",
+			expected: false,
+		},
+		{
+			name:     "empty accepted list returns false",
+			accepted: []string{},
+			encoding: "gzip",
+			expected: false,
+		},
+		{
+			name:     "empty string in accepted list returns false",
+			accepted: []string{""},
+			encoding: "gzip",
+			expected: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tc.accepted, tc.encoding)
+			if got != tc.expected {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v; want %v", tc.accepted, tc.encoding, got, tc.expected)
+			}
+		})
+	}
 }
