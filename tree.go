@@ -5,12 +5,12 @@ package chi
 // (MIT licensed). It's been heavily modified for use as a HTTP routing tree.
 
 import (
+	"cmp"
 	"fmt"
 	"net/http"
 	"reflect"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -321,7 +321,23 @@ func (n *node) addChild(child *node, prefix string) *node {
 	}
 
 	n.children[child.typ] = append(n.children[child.typ], child)
-	n.children[child.typ].Sort()
+
+	// Sort the list of nodes by label, param nodes with '/' as the tail go
+	// at the end. The list order determines the traversal order.
+	slices.SortFunc(n.children[child.typ], func(a, b *node) int {
+		aSlashTail := a.typ > ntStatic && a.tail == '/'
+		bSlashTail := b.typ > ntStatic && b.tail == '/'
+
+		switch {
+		case aSlashTail && !bSlashTail:
+			return 1
+		case !aSlashTail && bSlashTail:
+			return -1
+		default:
+			return cmp.Compare(a.label, b.label)
+		}
+	})
+
 	return hn
 }
 
@@ -829,23 +845,6 @@ func longestPrefix(k1, k2 string) (i int) {
 }
 
 type nodes []*node
-
-// Sort the list of nodes by label
-func (ns nodes) Sort()              { sort.Sort(ns); ns.tailSort() }
-func (ns nodes) Len() int           { return len(ns) }
-func (ns nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
-func (ns nodes) Less(i, j int) bool { return ns[i].label < ns[j].label }
-
-// tailSort pushes nodes with '/' as the tail to the end of the list for param nodes.
-// The list order determines the traversal order.
-func (ns nodes) tailSort() {
-	for i, n := range slices.Backward(ns) {
-		if n.typ > ntStatic && n.tail == '/' {
-			ns.Swap(i, len(ns)-1)
-			return
-		}
-	}
-}
 
 func (ns nodes) findEdge(label byte) *node {
 	num := len(ns)
