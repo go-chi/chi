@@ -81,7 +81,6 @@ func (mx *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	rctx = mx.pool.Get().(*Context)
 	rctx.Reset()
 	rctx.Routes = mx
-	rctx.parentCtx = r.Context()
 
 	// NOTE: r.WithContext() causes 2 allocations and context.WithValue() causes 1 allocation
 	r = r.WithContext(context.WithValue(r.Context(), RouteCtxKey, rctx))
