@@ -2159,3 +2159,43 @@ func BenchmarkMux(b *testing.B) {
 		})
 	}
 }
+
+func TestURLEncodedParam(t *testing.T) {
+	echoParam := func(key string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(URLParam(r, key)))
+		}
+	}
+
+	do := func(t *testing.T, h http.Handler, target string) (int, string) {
+		t.Helper()
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest("GET", target, nil))
+		return w.Code, w.Body.String()
+	}
+
+	t.Run("encoded slash stays within one param", func(t *testing.T) {
+		mux := NewRouter()
+		mux.Get("/files/{name}", echoParam("name"))
+
+		code, body := do(t, mux, "/files/docs%2Freport.pdf")
+		if code != http.StatusOK {
+			t.Fatalf("expected route match for '/files/docs%%2Freport.pdf', but got %d %s",
+				code, http.StatusText(code))
+		}
+		if body != "docs%2Freport.pdf" {
+			t.Fatalf("param should keep its encoding: got %q, want %q", body, "docs%2Freport.pdf")
+		}
+	})
+
+	t.Run("unencoded path is unaffected", func(t *testing.T) {
+		mux := NewRouter()
+		mux.Get("/files/{name}", echoParam("name"))
+
+		code, body := do(t, mux, "/files/report.pdf")
+		if code != http.StatusOK || body != "report.pdf" {
+			t.Fatalf("got %d %q, want 200 %q", code, body, "report.pdf")
+		}
+	})
+}
+
