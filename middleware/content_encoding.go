@@ -20,11 +20,21 @@ func AllowContentEncoding(contentEncoding ...string) func(next http.Handler) htt
 				next.ServeHTTP(w, r)
 				return
 			}
-			// All encodings in the request must be allowed
+			// All encodings in the request must be allowed.
+			// A single Content-Encoding header may list several codings
+			// separated by commas (RFC 9110), and net/http keeps that as one
+			// slice element. Split so "gzip, deflate" is checked as gzip and
+			// deflate, not as the literal string "gzip, deflate".
 			for _, encoding := range requestEncodings {
-				if _, ok := allowedEncodings[strings.TrimSpace(strings.ToLower(encoding))]; !ok {
-					w.WriteHeader(http.StatusUnsupportedMediaType)
-					return
+				for _, part := range strings.Split(encoding, ",") {
+					part = strings.TrimSpace(strings.ToLower(part))
+					if part == "" {
+						continue
+					}
+					if _, ok := allowedEncodings[part]; !ok {
+						w.WriteHeader(http.StatusUnsupportedMediaType)
+						return
+					}
 				}
 			}
 			next.ServeHTTP(w, r)
