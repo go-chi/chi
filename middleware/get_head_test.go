@@ -64,3 +64,30 @@ func TestGetHead(t *testing.T) {
 		t.Fatalf("expecting X-User header '-' but got '%s'", req.Header.Get("X-User"))
 	}
 }
+
+func TestGetHeadAllowHeaderIncludesHEADOn405(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(GetHead)
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, "POST", "/hi", nil)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", resp.StatusCode)
+	}
+
+	allowed := map[string]bool{}
+	for _, method := range resp.Header.Values("Allow") {
+		allowed[method] = true
+	}
+	if !allowed[http.MethodGet] {
+		t.Fatalf("Allow missing GET: %v", resp.Header.Values("Allow"))
+	}
+	if !allowed[http.MethodHead] {
+		t.Fatalf("Allow missing HEAD: %v", resp.Header.Values("Allow"))
+	}
+}
