@@ -51,7 +51,6 @@ func TestRouteHeaders(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "/", nil)
 		req.Host = "example.com"
-		req.Header.Set("Host", "example.com")
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -77,7 +76,7 @@ func TestRouteHeaders(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Host", "api.example.com")
+		req.Host = "api.example.com"
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -108,7 +107,7 @@ func TestRouteHeaders(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Host", "other.com")
+		req.Host = "other.com"
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -173,13 +172,65 @@ func TestRouteHeaders(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Host", "other.com")
+		req.Host = "other.com"
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
 
 		if !nextCalled {
 			t.Error("expected next handler to be called when no match and no default")
+		}
+	})
+
+	t.Run("host header with port should match exact hostname pattern", func(t *testing.T) {
+		var matched bool
+
+		hr := RouteHeaders().
+			Route("Host", "example.com", func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					matched = true
+					next.ServeHTTP(w, r)
+				})
+			})
+
+		handler := hr.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+
+		req := httptest.NewRequest("GET", "http://example.com:8080/", nil)
+		req.Host = "example.com:8080"
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if !matched {
+			t.Error("expected hostname match to ignore the port when needed")
+		}
+	})
+
+	t.Run("host wildcard with port should match", func(t *testing.T) {
+		var matched bool
+
+		hr := RouteHeaders().
+			Route("Host", "*.example.com", func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					matched = true
+					next.ServeHTTP(w, r)
+				})
+			})
+
+		handler := hr.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+
+		req := httptest.NewRequest("GET", "http://api.example.com:8080/", nil)
+		req.Host = "api.example.com:8080"
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if !matched {
+			t.Error("expected wildcard host match to ignore the port when needed")
 		}
 	})
 }
