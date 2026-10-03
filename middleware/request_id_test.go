@@ -69,3 +69,36 @@ func TestRequestID(t *testing.T) {
 		}
 	}
 }
+
+func TestRequestIDIdempotentWhenStacked(t *testing.T) {
+	defer maintainDefaultRequestID()()
+
+	var afterFirst, afterSecond string
+	r := chi.NewRouter()
+	r.Use(RequestID)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			afterFirst = GetReqID(req.Context())
+			next.ServeHTTP(w, req)
+		})
+	})
+	r.Use(RequestID)
+	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
+		afterSecond = GetReqID(req.Context())
+		if req.Header.Get(RequestIDHeader) != afterSecond {
+			t.Fatalf("header %q != context %q", req.Header.Get(RequestIDHeader), afterSecond)
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	r.ServeHTTP(w, req)
+
+	if afterFirst == "" {
+		t.Fatal("first RequestID middleware did not set an id")
+	}
+	if afterSecond != afterFirst {
+		t.Fatalf("stacked RequestID replaced %q with %q", afterFirst, afterSecond)
+	}
+}

@@ -67,10 +67,16 @@ func init() {
 func RequestID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		requestID := r.Header.Get(RequestIDHeader)
+		requestID := GetReqID(ctx)
+		if requestID == "" {
+			requestID = r.Header.Get(RequestIDHeader)
+		}
 		if requestID == "" {
 			myid := reqid.Add(1)
 			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+		}
+		if r.Header.Get(RequestIDHeader) == "" {
+			r.Header.Set(RequestIDHeader, requestID)
 		}
 		ctx = context.WithValue(ctx, RequestIDKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
