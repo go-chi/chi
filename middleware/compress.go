@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -258,8 +259,26 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 }
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
-	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
+	for _, value := range accepted {
+		parts := strings.Split(value, ";")
+		if !strings.EqualFold(strings.TrimSpace(parts[0]), encoding) {
+			continue
+		}
+
+		quality := 1.0
+		valid := true
+		for _, parameter := range parts[1:] {
+			key, value, ok := strings.Cut(parameter, "=")
+			if !ok || !strings.EqualFold(strings.TrimSpace(key), "q") {
+				continue
+			}
+			quality, _ = strconv.ParseFloat(strings.TrimSpace(value), 64)
+			if quality <= 0 || quality > 1 {
+				valid = false
+				break
+			}
+		}
+		if valid && quality > 0 {
 			return true
 		}
 	}
