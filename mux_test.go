@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -1446,6 +1447,111 @@ func TestNestedGroups(t *testing.T) {
 		if _, body := testRequest(t, ts, "GET", "/"+route, nil); body != route {
 			t.Errorf("expected %v, got %v", route, body)
 		}
+	}
+}
+
+// singletonMW is the #995 pattern: one handler instance, next overwritten.
+type singletonMW struct {
+	next http.Handler
+}
+
+func (s *singletonMW) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.next.ServeHTTP(w, r)
+}
+
+func TestSingletonMiddlewareRejectedAcrossGroups(t *testing.T) {
+	s := &singletonMW{}
+	mw := func(next http.Handler) http.Handler {
+		s.next = next
+		return s
+	}
+
+	hello := func(text string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(text))
+		}
+	}
+
+	r := NewRouter()
+	var panicked any
+	func() {
+		defer func() { panicked = recover() }()
+		r.Group(func(top Router) {
+			top.Use(mw)
+			top.Get("/", hello("World!"))
+			top.Group(func(foo Router) {
+				foo.Get("/foo", hello("Foo!"))
+			})
+			top.Group(func(bar Router) {
+				bar.Get("/bar", hello("Bar!"))
+			})
+		})
+	}()
+	if panicked == nil {
+		t.Fatal("expected panic when singleton middleware is reused across groups")
+	}
+	msg, _ := panicked.(string)
+	if !strings.Contains(msg, "same http.Handler instance") {
+		t.Fatalf("unexpected panic: %v", panicked)
+	}
+}
+
+func TestHandlerFuncMiddlewareNestedGroups(t *testing.T) {
+	mw := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			next.ServeHTTP(w, r)
+		})
+	}
+	hello := func(text string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(text))
+		}
+	}
+
+	r := NewRouter()
+	r.Group(func(top Router) {
+		top.Use(mw)
+		top.Get("/", hello("World!"))
+		top.Group(func(foo Router) {
+			foo.Get("/foo", hello("Foo!"))
+		})
+		top.Group(func(bar Router) {
+			bar.Get("/bar", hello("Bar!"))
+		})
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/", nil); body != "World!" {
+		t.Fatalf("GET /: got %q", body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/foo", nil); body != "Foo!" {
+		t.Fatalf("GET /foo: got %q", body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/bar", nil); body != "Bar!" {
+		t.Fatalf("GET /bar: got %q", body)
+	}
+}
+
+func TestRootPointerMiddlewareStillWorks(t *testing.T) {
+	s := &singletonMW{}
+	mw := func(next http.Handler) http.Handler {
+		s.next = next
+		return s
+	}
+	r := NewRouter()
+	r.Use(mw)
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
+	r.Get("/x", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("x")) })
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+	if _, body := testRequest(t, ts, "GET", "/", nil); body != "ok" {
+		t.Fatalf("GET /: got %q", body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/x", nil); body != "x" {
+		t.Fatalf("GET /x: got %q", body)
 	}
 }
 
