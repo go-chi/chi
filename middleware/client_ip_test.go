@@ -467,6 +467,18 @@ func TestAdvisory_GHSA_rjr7_jggh_pgcp(t *testing.T) {
 			t.Errorf("want 203.0.113.7 (the only trusted header), got %q", got)
 		}
 	})
+
+	// When the opted-in header is absent, ClientIPFromHeader must not fall
+	// back to other attacker-supplied headers; it leaves no client IP set.
+	t.Run("no_fallback_when_opted_in_header_missing", func(t *testing.T) {
+		got := run(t, ClientIPFromHeader("X-Real-IP"), func(r *http.Request) {
+			r.Header.Set("True-Client-IP", "1.1.1.1")  // attacker-supplied; ignored.
+			r.Header.Set("X-Forwarded-For", "2.2.2.2") // attacker-supplied; ignored.
+		})
+		if got != "" {
+			t.Errorf("VULNERABLE: fell back to attacker-supplied header, got %q", got)
+		}
+	})
 }
 
 // "Multiple XFF headers" attack — Go's http.Header.Get returns only the first
