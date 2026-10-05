@@ -147,5 +147,14 @@ func (t throttler) setRetryAfterHeaderIfNeeded(w http.ResponseWriter, ctxDone bo
 	if t.retryAfterFn == nil {
 		return
 	}
-	w.Header().Set("Retry-After", strconv.Itoa(int(t.retryAfterFn(ctxDone).Seconds())))
+	// delay-seconds is non-negative, and rounding up avoids asking clients to
+	// retry before the duration returned by RetryAfterFn has elapsed.
+	delay := t.retryAfterFn(ctxDone)
+	seconds := delay / time.Second
+	if delay < 0 {
+		seconds = 0
+	} else if delay%time.Second != 0 {
+		seconds++
+	}
+	w.Header().Set("Retry-After", strconv.FormatInt(int64(seconds), 10))
 }
