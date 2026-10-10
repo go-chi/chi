@@ -52,7 +52,7 @@ func TestMuxBasic(t *testing.T) {
 		ctx := r.Context()
 		user := ctx.Value(ctxKey{"user"}).(string)
 		w.WriteHeader(200)
-		w.Write([]byte(fmt.Sprintf("hi %s", user)))
+		w.Write(fmt.Appendf(nil, "hi %s", user))
 	}
 
 	ping := func(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +83,7 @@ func TestMuxBasic(t *testing.T) {
 	pingOne := func(w http.ResponseWriter, r *http.Request) {
 		idParam := URLParam(r, "id")
 		w.WriteHeader(200)
-		w.Write([]byte(fmt.Sprintf("ping one id: %s", idParam)))
+		w.Write(fmt.Appendf(nil, "ping one id: %s", idParam))
 	}
 
 	pingWoop := func(w http.ResponseWriter, r *http.Request) {
@@ -210,18 +210,18 @@ func TestMuxMounts(t *testing.T) {
 
 	r.Get("/{hash}", func(w http.ResponseWriter, r *http.Request) {
 		v := URLParam(r, "hash")
-		w.Write([]byte(fmt.Sprintf("/%s", v)))
+		w.Write(fmt.Appendf(nil, "/%s", v))
 	})
 
 	r.Route("/{hash}/share", func(r Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			v := URLParam(r, "hash")
-			w.Write([]byte(fmt.Sprintf("/%s/share", v)))
+			w.Write(fmt.Appendf(nil, "/%s/share", v))
 		})
 		r.Get("/{network}", func(w http.ResponseWriter, r *http.Request) {
 			v := URLParam(r, "hash")
 			n := URLParam(r, "network")
-			w.Write([]byte(fmt.Sprintf("/%s/share/%s", v, n)))
+			w.Write(fmt.Appendf(nil, "/%s/share/%s", v, n))
 		})
 	})
 
@@ -336,7 +336,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 		chkMw := r.Context().Value(ctxKey{"mw"}).(string)
 		chkWith := r.Context().Value(ctxKey{"with"}).(string)
 		w.WriteHeader(404)
-		w.Write([]byte(fmt.Sprintf("root 404 %s %s", chkMw, chkWith)))
+		w.Write(fmt.Appendf(nil, "root 404 %s %s", chkMw, chkWith))
 	})
 
 	sr1 := NewRouter()
@@ -354,7 +354,7 @@ func TestMuxNestedNotFound(t *testing.T) {
 		sr1.NotFound(func(w http.ResponseWriter, r *http.Request) {
 			chkMw2 := r.Context().Value(ctxKey{"mw2"}).(string)
 			w.WriteHeader(404)
-			w.Write([]byte(fmt.Sprintf("sub 404 %s", chkMw2)))
+			w.Write(fmt.Appendf(nil, "sub 404 %s", chkMw2))
 		})
 	})
 
@@ -617,7 +617,7 @@ func TestMuxWith(t *testing.T) {
 	r.With(mw1).With(mw2).Get("/inline", func(w http.ResponseWriter, r *http.Request) {
 		v1 := r.Context().Value(ctxKey{"inline1"}).(string)
 		v2 := r.Context().Value(ctxKey{"inline2"}).(string)
-		w.Write([]byte(fmt.Sprintf("inline %s %s", v1, v2)))
+		w.Write(fmt.Appendf(nil, "inline %s %s", v1, v2))
 	})
 
 	ts := httptest.NewServer(r)
@@ -806,7 +806,7 @@ func TestMuxMiddlewareStack(t *testing.T) {
 		handlerCount++
 		ctx := r.Context()
 		ctxmwHandlerCount := ctx.Value(ctxKey{"count.ctxmwHandler"}).(uint64)
-		w.Write([]byte(fmt.Sprintf("inits:%d reqs:%d ctxValue:%d", ctxmwInit, handlerCount, ctxmwHandlerCount)))
+		w.Write(fmt.Appendf(nil, "inits:%d reqs:%d ctxValue:%d", ctxmwInit, handlerCount, ctxmwHandlerCount))
 	})
 
 	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
@@ -1108,10 +1108,10 @@ func TestMuxSubroutesBasic(t *testing.T) {
 		w.Write([]byte("search-articles"))
 	})
 	hGetArticle := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("get-article:%s", URLParam(r, "id"))))
+		w.Write(fmt.Appendf(nil, "get-article:%s", URLParam(r, "id")))
 	})
 	hSyncArticle := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(fmt.Sprintf("sync-article:%s", URLParam(r, "id"))))
+		w.Write(fmt.Appendf(nil, "sync-article:%s", URLParam(r, "id")))
 	})
 
 	r := NewRouter()
@@ -1556,7 +1556,7 @@ func TestMuxEmptyParams(t *testing.T) {
 		x := URLParam(r, "x")
 		y := URLParam(r, "y")
 		z := URLParam(r, "z")
-		w.Write([]byte(fmt.Sprintf("%s-%s-%s", x, y, z)))
+		w.Write(fmt.Appendf(nil, "%s-%s-%s", x, y, z))
 	})
 
 	ts := httptest.NewServer(r)
@@ -1574,7 +1574,7 @@ func TestMuxMissingParams(t *testing.T) {
 	r := NewRouter()
 	r.Get(`/user/{userId:\d+}`, func(w http.ResponseWriter, r *http.Request) {
 		userID := URLParam(r, "userId")
-		w.Write([]byte(fmt.Sprintf("userId = '%s'", userID)))
+		w.Write(fmt.Appendf(nil, "userId = '%s'", userID))
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
@@ -1622,7 +1622,7 @@ func TestMuxRegexp(t *testing.T) {
 	r := NewRouter()
 	r.Route("/{param:[0-9]*}/test", func(r Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(fmt.Sprintf("Hi: %s", URLParam(r, "param"))))
+			w.Write(fmt.Appendf(nil, "Hi: %s", URLParam(r, "param")))
 		})
 	})
 
@@ -1856,7 +1856,7 @@ func TestQueryHTTPMethod(t *testing.T) {
 	// see RFC 10008.
 	r.Query("/search", func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
-		w.Write([]byte(fmt.Sprintf("query: %s", body)))
+		w.Write(fmt.Appendf(nil, "query: %s", body))
 	})
 
 	r.MethodFunc("QUERY", "/reports", func(w http.ResponseWriter, r *http.Request) {
