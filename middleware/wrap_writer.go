@@ -219,8 +219,11 @@ func (f *httpFancyWriter) ReadFrom(r io.Reader) (int64, error) {
 		return n, err
 	}
 	rf := f.basicWriter.ResponseWriter.(io.ReaderFrom)
-	f.basicWriter.maybeWriteHeader()
 	n, err := rf.ReadFrom(r)
+	if n > 0 && !f.basicWriter.wroteHeader {
+		f.basicWriter.code = http.StatusOK
+		f.basicWriter.wroteHeader = true
+	}
 	f.basicWriter.bytes += int(n)
 	return n, err
 }
