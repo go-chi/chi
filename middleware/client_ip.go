@@ -39,15 +39,37 @@ const xForwardedForHeader = "X-Forwarded-For"
 //
 // v4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are
 // stripped before storage.
-func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
+//
+// Overwriting only protects requests that pass through your proxy. A client
+// that reaches this server directly can set the header to anything. Pass
+// your proxy's CIDR prefixes as trustedIPPrefixes to close that gap: the
+// header is then read only when r.RemoteAddr falls within one of them;
+// otherwise r.RemoteAddr itself is the client IP. This mirrors nginx
+// (set_real_ip_from), Apache (RemoteIPTrustedProxy), and Caddy
+// (trusted_proxies), and Cloudflare's advice to accept origin traffic only
+// from its IP ranges. Without trustedIPPrefixes, guarantee at the network
+// layer (security group / firewall) that only your proxy can reach this
+// server.
+//
+//	r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP",
+//	    "173.245.48.0/20", // Cloudflare IPv4, see https://www.cloudflare.com/ips/
+//	    "2400:cb00::/32",  // Cloudflare IPv6
+//	))
+//
+// Panics at startup if any prefix is invalid.
+func ClientIPFromHeader(trustedHeader string, trustedIPPrefixes ...string) func(http.Handler) http.Handler {
 	header := http.CanonicalHeaderKey(trustedHeader)
+	prefixes := mustParsePrefixes(trustedIPPrefixes)
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			values := r.Header.Values(header)
-			if len(values) > 0 {
-				if ip, ok := parseHeaderAddr(values[len(values)-1]); ok {
-					r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
-				}
+			var found netip.Addr
+			if peer, untrusted := untrustedPeer(r, prefixes); untrusted {
+				found = peer
+			} else if values := r.Header.Values(header); len(values) > 0 {
+				found, _ = parseHeaderAddr(values[len(values)-1])
+			}
+			if found.IsValid() {
+				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, found))
 			}
 			h.ServeHTTP(w, r)
 		})
@@ -78,9 +100,15 @@ func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 //	    "2600:9000::/28", // CloudFront IPv6
 //	))
 //
-// Calling with no arguments returns the rightmost XFF entry, or no IP if
-// that entry doesn't parse (fail-closed) — safe only if you have exactly
-// one trusted hop directly in front of this server (e.g., nginx on localhost).
+// The TCP peer in r.RemoteAddr is treated as the rightmost hop: if it is
+// not within a trusted prefix, it is the client IP and X-Forwarded-For is
+// ignored. A client reaching this server directly therefore cannot spoof
+// its IP. If r.RemoteAddr doesn't parse, no client IP is set (fail-closed).
+//
+// At least one prefix is required. For a single trusted hop directly in
+// front of this server (e.g., nginx on localhost), pass its address:
+//
+//	r.Use(middleware.ClientIPFromXFF("127.0.0.1/32", "::1/128"))
 //
 // v4-mapped IPv6 (::ffff:a.b.c.d) folds to plain v4 and IPv6 zones are
 // stripped before the prefix check and storage; otherwise an attacker
@@ -89,26 +117,30 @@ func ClientIPFromHeader(trustedHeader string) func(http.Handler) http.Handler {
 // If you know the number of trusted proxies but not their IPs, use
 // [ClientIPFromXFFTrustedProxies] instead.
 //
-// Panics at startup if any prefix is invalid.
+// Panics at startup if no prefix is given or any prefix is invalid.
 func ClientIPFromXFF(trustedIPPrefixes ...string) func(http.Handler) http.Handler {
-	prefixes := make([]netip.Prefix, len(trustedIPPrefixes))
-	for i, p := range trustedIPPrefixes {
-		prefixes[i] = netip.MustParsePrefix(p)
+	if len(trustedIPPrefixes) == 0 {
+		panic("middleware.ClientIPFromXFF: at least one trusted IP prefix is required; use ClientIPFromXFFTrustedProxies(1) to trust any peer")
 	}
+	prefixes := mustParsePrefixes(trustedIPPrefixes)
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var found netip.Addr
-			walkXFF(r.Header[xForwardedForHeader], func(v string) bool {
-				ip, ok := parseHeaderAddr(v)
-				if !ok {
-					return true // fail-closed; leave found unset
-				}
-				if inAnyPrefix(ip, prefixes) {
-					return false // trusted hop; keep walking left
-				}
-				found = ip
-				return true
-			})
+			if peer, untrusted := untrustedPeer(r, prefixes); untrusted {
+				found = peer
+			} else {
+				walkXFF(r.Header[xForwardedForHeader], func(v string) bool {
+					ip, ok := parseHeaderAddr(v)
+					if !ok {
+						return true // fail-closed; leave found unset
+					}
+					if inAnyPrefix(ip, prefixes) {
+						return false // trusted hop; keep walking left
+					}
+					found = ip
+					return true
+				})
+			}
 			if found.IsValid() {
 				r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, found))
 			}
@@ -187,12 +219,8 @@ func ClientIPFromXFFTrustedProxies(numTrustedProxies int) func(http.Handler) htt
 // IPv6 zones are preserved (link-local connections may legitimately have one).
 func ClientIPFromRemoteAddr(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			host = r.RemoteAddr // RemoteAddr may already be a bare IP (e.g. in tests).
-		}
-		if ip, err := netip.ParseAddr(host); err == nil {
-			r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip.Unmap()))
+		if ip, ok := parseRemoteAddr(r.RemoteAddr); ok {
+			r = r.WithContext(context.WithValue(r.Context(), clientIPCtxKey, ip))
 		}
 		h.ServeHTTP(w, r)
 	})
@@ -246,6 +274,45 @@ func walkXFF(headers []string, visit func(entry string) bool) {
 	}
 }
 
+// mustParsePrefixes parses CIDR prefixes, panicking on the first invalid one.
+func mustParsePrefixes(cidrs []string) []netip.Prefix {
+	prefixes := make([]netip.Prefix, len(cidrs))
+	for i, p := range cidrs {
+		prefixes[i] = netip.MustParsePrefix(p)
+	}
+	return prefixes
+}
+
+// untrustedPeer reports whether the TCP peer in r.RemoteAddr is outside
+// prefixes. If so, peer is the client IP, or invalid if RemoteAddr doesn't
+// parse. With no prefixes, every peer is trusted.
+func untrustedPeer(r *http.Request, prefixes []netip.Prefix) (peer netip.Addr, untrusted bool) {
+	if len(prefixes) == 0 {
+		return netip.Addr{}, false
+	}
+	peer, ok := parseRemoteAddr(r.RemoteAddr)
+	if !ok {
+		return netip.Addr{}, true
+	}
+	// Zoned addresses never match a prefix, so check a link-local peer without its zone.
+	return peer, !inAnyPrefix(peer.WithZone(""), prefixes)
+}
+
+// parseRemoteAddr parses the host of r.RemoteAddr. v4-mapped IPv6 folds to
+// plain v4; the IPv6 zone is preserved (link-local connections may
+// legitimately have one).
+func parseRemoteAddr(remoteAddr string) (netip.Addr, bool) {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		host = remoteAddr // RemoteAddr may already be a bare IP (e.g. in tests).
+	}
+	ip, err := netip.ParseAddr(host)
+	if err != nil {
+		return netip.Addr{}, false
+	}
+	return ip.Unmap(), true
+}
+
 // inAnyPrefix reports whether ip falls within any of the given prefixes.
 func inAnyPrefix(ip netip.Addr, prefixes []netip.Prefix) bool {
 	for _, p := range prefixes {
@@ -263,7 +330,7 @@ func inAnyPrefix(ip netip.Addr, prefixes []netip.Prefix) bool {
 // address, so without folding/stripping an attacker could escape an
 // otherwise valid trust list.
 //
-// Header-sourced IPs only. [ClientIPFromRemoteAddr] normalizes inline
+// Header-sourced IPs only. r.RemoteAddr goes through parseRemoteAddr
 // (Unmap, but zone preserved for legitimate link-local connections).
 func parseHeaderAddr(s string) (netip.Addr, bool) {
 	ip, err := netip.ParseAddr(s)

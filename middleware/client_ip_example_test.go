@@ -44,12 +44,18 @@ func Example_clientIP() {
 
 	// (1) Behind a reverse proxy that sets a single-IP header for every
 	// request and overwrites any client-supplied value (Cloudflare, Nginx
-	// with ngx_http_realip_module, Apache with mod_remoteip, ...).
-	r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP"))
+	// with ngx_http_realip_module, Apache with mod_remoteip, ...). The
+	// header is read only from peers in your proxy's CIDRs.
+	// Partial list, see https://www.cloudflare.com/ips/ for all ranges.
+	r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP",
+		"173.245.48.0/20", // Cloudflare IPv4.
+		"2400:cb00::/32",  // Cloudflare IPv6.
+	))
 
 	// (2) Behind reverse proxies whose IP ranges you can enumerate as CIDRs.
 	// The middleware walks X-Forwarded-For right-to-left, skipping trusted
-	// entries; fail-closed on garbage.
+	// entries; fail-closed on garbage. A peer outside these CIDRs is the
+	// client.
 	//
 	// r.Use(middleware.ClientIPFromXFF(
 	//     "13.32.0.0/15",   // CloudFront IPv4.
@@ -70,6 +76,7 @@ func Example_clientIP() {
 	})
 
 	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "173.245.48.1:443" // Cloudflare edge.
 	req.Header.Set("CF-Connecting-IP", "198.51.100.42")
 	req.Header.Set("X-Forwarded-For", "1.2.3.4") // attacker-supplied; ignored.
 	w := httptest.NewRecorder()
