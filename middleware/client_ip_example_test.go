@@ -46,6 +46,7 @@ func Example_clientIP() {
 	// request and overwrites any client-supplied value (Cloudflare, Nginx
 	// with ngx_http_realip_module, Apache with mod_remoteip, ...). The
 	// header is read only from peers in your proxy's CIDRs.
+	// Partial list, see https://www.cloudflare.com/ips/ for all ranges.
 	r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP",
 		"173.245.48.0/20", // Cloudflare IPv4.
 		"2400:cb00::/32",  // Cloudflare IPv6.
