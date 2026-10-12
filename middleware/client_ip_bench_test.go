@@ -35,8 +35,8 @@ func BenchmarkWalkXFF(b *testing.B) {
 }
 
 // BenchmarkWalkXFF_RightmostStop measures the common case for both
-// ClientIPFromXFF (no trusted prefixes => stop at the first / rightmost
-// entry) and ClientIPFromXFFTrustedProxies(1). Should be near-constant
+// ClientIPFromXFF (rightmost entry untrusted => stop at the first visit)
+// and ClientIPFromXFFTrustedProxies(1). Should be near-constant
 // regardless of n, since the walker stops after the first visit.
 func BenchmarkWalkXFF_RightmostStop(b *testing.B) {
 	for _, n := range []int{1, 10, 100, 1000, 10000} {

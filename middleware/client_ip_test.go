@@ -52,7 +52,7 @@ func TestClientIPFromHeader(t *testing.T) {
 	}
 }
 
-func TestClientIPFromXFF_NoTrustedPrefixes(t *testing.T) {
+func TestClientIPFromXFF_SingleTrustedHop(t *testing.T) {
 	tt := []struct {
 		name string
 		xff  []string
@@ -80,7 +80,7 @@ func TestClientIPFromXFF_NoTrustedPrefixes(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			got := run(t, ClientIPFromXFF(), func(r *http.Request) {
+			got := run(t, ClientIPFromXFF(testPeerPrefix), func(r *http.Request) {
 				for _, v := range tc.xff {
 					r.Header.Add("X-Forwarded-For", v)
 				}
@@ -161,6 +161,7 @@ func TestClientIPFromXFF_TrustedPrefixes(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			got := run(t, ClientIPFromXFF(tc.prefixes...), func(r *http.Request) {
+				r.RemoteAddr = peerIn(tc.prefixes[0])
 				for _, v := range tc.xff {
 					r.Header.Add("X-Forwarded-For", v)
 				}
@@ -181,6 +182,63 @@ func TestClientIPFromXFF_PanicsOnBadPrefix(t *testing.T) {
 	ClientIPFromXFF("not-a-cidr")
 }
 
+func TestClientIPFromXFF_PanicsOnNoPrefixes(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic on no trusted prefixes")
+		}
+	}()
+	ClientIPFromXFF()
+}
+
+func TestClientIPFromHeader_PanicsOnBadPrefix(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic on invalid CIDR")
+		}
+	}()
+	ClientIPFromHeader("X-Real-IP", "not-a-cidr")
+}
+
+// TestClientIP_TrustedPeer pins that r.RemoteAddr is the rightmost hop:
+// headers are read only when the TCP peer is within a trusted prefix.
+func TestClientIP_TrustedPeer(t *testing.T) {
+	tt := []struct {
+		name       string
+		remoteAddr string
+		out        string
+	}{
+		{"trusted_peer_reads_header", "10.0.0.5:1234", "203.0.113.7"},
+		{"untrusted_peer_is_client", "198.51.100.9:1234", "198.51.100.9"},
+		{"v4_mapped_trusted_peer", "[::ffff:10.0.0.5]:1234", "203.0.113.7"},
+		{"v4_mapped_untrusted_peer_folded", "[::ffff:198.51.100.9]:1234", "198.51.100.9"},
+		{"zoned_trusted_peer", "[fe80::1%eth0]:1234", "203.0.113.7"},
+		{"untrusted_ipv6_peer", "[2001:db8::9]:1234", "2001:db8::9"},
+		{"bare_ip_peer", "10.0.0.5", "203.0.113.7"},
+		{"unparseable_peer_fails_closed", "@", ""},
+		{"empty_peer_fails_closed", "", ""},
+	}
+	prefixes := []string{"10.0.0.0/8", "fe80::/10"}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			xff := run(t, ClientIPFromXFF(prefixes...), func(r *http.Request) {
+				r.RemoteAddr = tc.remoteAddr
+				r.Header.Set("X-Forwarded-For", "203.0.113.7, 10.0.0.1")
+			})
+			if xff != tc.out {
+				t.Errorf("ClientIPFromXFF: want %q, got %q", tc.out, xff)
+			}
+			hdr := run(t, ClientIPFromHeader("X-Real-IP", prefixes...), func(r *http.Request) {
+				r.RemoteAddr = tc.remoteAddr
+				r.Header.Set("X-Real-IP", "203.0.113.7")
+			})
+			if hdr != tc.out {
+				t.Errorf("ClientIPFromHeader: want %q, got %q", tc.out, hdr)
+			}
+		})
+	}
+}
+
 func TestClientIPFromXFFTrustedProxies(t *testing.T) {
 	tt := []struct {
 		name string
@@ -188,7 +246,7 @@ func TestClientIPFromXFFTrustedProxies(t *testing.T) {
 		xff  []string
 		out  string
 	}{
-		// N=1 ⇒ rightmost (equivalent to ClientIPFromXFF() with no prefixes).
+		// N=1 ⇒ rightmost.
 		{"n1_rightmost", 1, []string{"1.1.1.1, 2.2.2.2"}, "2.2.2.2"},
 		{"n2_second_from_right", 2, []string{"1.1.1.1, 2.2.2.2, 3.3.3.3"}, "2.2.2.2"},
 		{"n3_third_from_right", 3, []string{"1.1.1.1, 2.2.2.2, 3.3.3.3, 4.4.4.4"}, "2.2.2.2"},
@@ -279,7 +337,7 @@ func TestClientIPLastWriteWins(t *testing.T) {
 	t.Run("later_overrides_earlier", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
-				ClientIPFromXFF(),
+				ClientIPFromXFF(testPeerPrefix),
 				ClientIPFromHeader("CF-Connecting-IP"),
 			},
 			func(r *http.Request) {
@@ -294,7 +352,7 @@ func TestClientIPLastWriteWins(t *testing.T) {
 	t.Run("earlier_persists_when_later_finds_nothing", func(t *testing.T) {
 		got := runChain(t,
 			[]func(http.Handler) http.Handler{
-				ClientIPFromXFF(),
+				ClientIPFromXFF(testPeerPrefix),
 				ClientIPFromHeader("CF-Connecting-IP"), // missing → no-op.
 			},
 			func(r *http.Request) {
@@ -313,10 +371,10 @@ func TestClientIPLastWriteWins(t *testing.T) {
 			},
 			func(r *http.Request) {
 				r.Header.Set("X-Forwarded-For", "10.0.0.1, 10.0.0.2")
-				r.RemoteAddr = "192.0.2.1:1234"
+				r.RemoteAddr = "10.0.0.3:1234"
 			})
-		if got != "192.0.2.1" {
-			t.Errorf("want 192.0.2.1, got %q", got)
+		if got != "10.0.0.3" {
+			t.Errorf("want 10.0.0.3, got %q", got)
 		}
 	})
 }
@@ -391,6 +449,7 @@ func TestAdvisory_GHSA_3fxj_6jh8_hvhx(t *testing.T) {
 	// entry is the genuine attacker IP, never the prepended spoof.
 	t.Run("behind_proxy_uses_xff", func(t *testing.T) {
 		got := run(t, ClientIPFromXFF("10.0.0.0/8"), func(r *http.Request) {
+			r.RemoteAddr = peerIn("10.0.0.0/8")
 			r.Header.Set("X-Forwarded-For", "1.2.3.4, 99.99.99.99")
 		})
 		if got == "1.2.3.4" {
@@ -410,7 +469,7 @@ func TestAdvisory_GHSA_9g5q_2w5x_hmxf(t *testing.T) {
 
 	var capturedClientIP, capturedRemoteAddr string
 	r := chi.NewRouter()
-	r.Use(ClientIPFromXFF())
+	r.Use(ClientIPFromXFF("203.0.113.99/32"))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		capturedClientIP = GetClientIP(r.Context())
 		capturedRemoteAddr = r.RemoteAddr
@@ -445,6 +504,7 @@ func TestAdvisory_GHSA_rjr7_jggh_pgcp(t *testing.T) {
 	// rightmost-untrusted entry is never the loopback spoof.
 	t.Run("xff_loopback_spoof_rejected", func(t *testing.T) {
 		got := run(t, ClientIPFromXFF("10.0.0.0/8"), func(r *http.Request) {
+			r.RemoteAddr = peerIn("10.0.0.0/8")
 			r.Header.Set("X-Forwarded-For", "127.0.0.1, 99.99.99.99")
 		})
 		if got == "127.0.0.1" {
@@ -469,6 +529,44 @@ func TestAdvisory_GHSA_rjr7_jggh_pgcp(t *testing.T) {
 	})
 }
 
+// GHSA-j6qf-3m9c-vwj3 (tenbbughunters): ClientIPFromXFF never checked that
+// the TCP peer was a trusted proxy, so a client reaching the origin directly
+// could pick its own IP. Now an untrusted peer is the client IP; the same
+// applies to ClientIPFromHeader when trusted prefixes are given.
+func TestAdvisory_GHSA_j6qf_3m9c_vwj3(t *testing.T) {
+	const attacker = "127.0.0.1:54417"
+	for _, xff := range []string{
+		"10.0.0.7, 198.51.100.42", // reporter's PoC: forged trusted hop appended.
+		"10.0.0.7",
+	} {
+		t.Run("xff/"+xff, func(t *testing.T) {
+			got := run(t, ClientIPFromXFF("198.51.100.0/24"), func(r *http.Request) {
+				r.RemoteAddr = attacker
+				r.Header.Set("X-Forwarded-For", xff)
+			})
+			if got == "10.0.0.7" {
+				t.Fatal("VULNERABLE: returned attacker-supplied allowlisted IP")
+			}
+			if got != "127.0.0.1" {
+				t.Errorf("want 127.0.0.1 (real TCP peer), got %q", got)
+			}
+		})
+	}
+
+	t.Run("header", func(t *testing.T) {
+		got := run(t, ClientIPFromHeader("CF-Connecting-IP", "173.245.48.0/20"), func(r *http.Request) {
+			r.RemoteAddr = attacker
+			r.Header.Set("CF-Connecting-IP", "10.0.0.7")
+		})
+		if got == "10.0.0.7" {
+			t.Fatal("VULNERABLE: returned attacker-supplied allowlisted IP")
+		}
+		if got != "127.0.0.1" {
+			t.Errorf("want 127.0.0.1 (real TCP peer), got %q", got)
+		}
+	})
+}
+
 // "Multiple XFF headers" attack — Go's http.Header.Get returns only the first
 // value, but the security-relevant rightmost IP is in the LAST instance after
 // the proxy appends. We must merge all values; otherwise an attacker can pick
@@ -481,6 +579,7 @@ func TestXFF_MultipleHeadersMerged(t *testing.T) {
 	// chain. A naive http.Header.Get() implementation would only see the first
 	// header and return the attacker's prepended value.
 	got := run(t, ClientIPFromXFF("198.51.100.0/24"), func(r *http.Request) {
+		r.RemoteAddr = peerIn("198.51.100.0/24")
 		r.Header.Add("X-Forwarded-For", "127.0.0.1")             // attacker-injected.
 		r.Header.Add("X-Forwarded-For", "8.8.8.8, 198.51.100.1") // appended by trusted proxy.
 	})
@@ -579,6 +678,7 @@ func TestXFF_V4MappedIPv6BypassesTrustedV4Prefix(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			got := run(t, ClientIPFromXFF(tc.prefixes...), func(r *http.Request) {
+				r.RemoteAddr = peerIn(tc.prefixes[0])
 				r.Header.Set("X-Forwarded-For", tc.xff)
 			})
 			if got != tc.out {
@@ -600,6 +700,7 @@ func TestXFF_V4MappedIPv6BypassesTrustedV4Prefix(t *testing.T) {
 // and skipped.
 func TestXFF_IPv6ZoneIDBypassesTrustedV6Prefix(t *testing.T) {
 	got := run(t, ClientIPFromXFF("2606:4700::/32"), func(r *http.Request) {
+		r.RemoteAddr = peerIn("2606:4700::/32")
 		r.Header.Set("X-Forwarded-For", "2606:4700::1%attacker, 2606:4700::5")
 	})
 	if got != "" {
@@ -656,9 +757,10 @@ func TestXFF_FailClosedOnUnparseable(t *testing.T) {
 		// otherwise-valid 1.1.1.1 to the left. Without fail-closed, garbage
 		// to the right of a real client could be silently elided.
 		{
-			name: "garbage_rightmost_no_prefixes",
-			xff:  []string{"1.1.1.1, garbage"},
-			out:  "",
+			name:     "garbage_rightmost",
+			prefixes: []string{"10.0.0.0/8"},
+			xff:      []string{"1.1.1.1, garbage"},
+			out:      "",
 		},
 		// Garbage between the client and a trusted proxy hop. Without fail-
 		// closed, the walker would skip the trusted hop, silently skip the
@@ -690,6 +792,7 @@ func TestXFF_FailClosedOnUnparseable(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			got := run(t, ClientIPFromXFF(tc.prefixes...), func(r *http.Request) {
+				r.RemoteAddr = peerIn(tc.prefixes[0])
 				for _, v := range tc.xff {
 					r.Header.Add("X-Forwarded-For", v)
 				}
@@ -699,6 +802,14 @@ func TestXFF_FailClosedOnUnparseable(t *testing.T) {
 			}
 		})
 	}
+}
+
+// testPeerPrefix covers httptest.NewRequest's default RemoteAddr.
+const testPeerPrefix = "192.0.2.1/32"
+
+// peerIn returns a RemoteAddr inside prefix.
+func peerIn(prefix string) string {
+	return netip.AddrPortFrom(netip.MustParsePrefix(prefix).Addr().Next(), 1234).String()
 }
 
 // run invokes mw with the request constructed by buildReq and returns the
