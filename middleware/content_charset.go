@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"mime"
 	"net/http"
 	"slices"
 	"strings"
@@ -9,6 +10,7 @@ import (
 // ContentCharset generates a handler that writes a 415 Unsupported Media Type response if none of the charsets match.
 // An empty charset will allow requests with no Content-Type header or no specified charset.
 // Requests without a body (ContentLength == 0) are always allowed.
+// Quoted charset values, such as charset="UTF-8", are accepted.
 func ContentCharset(charsets ...string) func(next http.Handler) http.Handler {
 	for i, c := range charsets {
 		charsets[i] = strings.ToLower(c)
@@ -33,6 +35,12 @@ func ContentCharset(charsets ...string) func(next http.Handler) http.Handler {
 
 // Check the content encoding against a list of acceptable values.
 func contentEncoding(ce string, charsets ...string) bool {
+	_, params, err := mime.ParseMediaType(ce)
+	if err == nil {
+		return slices.Contains(charsets, strings.ToLower(params["charset"]))
+	}
+
+	// Keep the previous lenient handling when the header is not a valid media type.
 	_, ce = split(strings.ToLower(ce), ";")
 	_, ce = split(ce, "charset=")
 	ce, _ = split(ce, ";")

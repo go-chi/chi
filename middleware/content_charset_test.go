@@ -157,3 +157,62 @@ func TestContentEncoding(t *testing.T) {
 		t.Error("Want true, got false")
 	}
 }
+
+func TestContentCharsetMediaParameters(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		header  string
+		allowed []string
+		want    int
+	}{
+		{"quoted", `text/plain; charset="UTF-8"`, []string{"UTF-8"}, http.StatusAccepted},
+		{"quoted mixed case", `Text/Plain; Charset="uTf-8"`, []string{"UTF-8"}, http.StatusAccepted},
+		{"escaped quote in preceding parameter", `text/plain; note="say \"charset=latin-1\""; charset=utf-8`, []string{"UTF-8"}, http.StatusAccepted},
+		{"escaped backslash in quoted charset", `text/plain; charset="UTF\\-8"`, []string{"UTF-8", ""}, http.StatusUnsupportedMediaType},
+		{"xcharset is not charset", `text/plain; xcharset=utf-8`, []string{"UTF-8"}, http.StatusUnsupportedMediaType},
+		{"malformed parameter falls back", `text/plain; charset=utf-8; x="unterminated`, []string{"UTF-8"}, http.StatusAccepted},
+		{"preceding quoted parameter", `text/plain; note="charset=latin-1"; charset=utf-8`, []string{"UTF-8"}, http.StatusAccepted},
+		{"quoted semicolon", `text/plain; note="first; charset=latin-1"; charset="utf-8"`, []string{"UTF-8"}, http.StatusAccepted},
+		{"following parameter", `text/plain; charset="utf-8"; note="first; second"`, []string{"UTF-8"}, http.StatusAccepted},
+		{"missing charset in quoted parameter", `text/plain; note="charset=utf-8"`, []string{"UTF-8", ""}, http.StatusAccepted},
+		{"missing charset disallowed", `text/plain; note="charset=utf-8"`, []string{"UTF-8"}, http.StatusUnsupportedMediaType},
+		{"unsupported quoted charset", `text/plain; charset="latin-1"`, []string{"UTF-8", ""}, http.StatusUnsupportedMediaType},
+		{"unquoted control", `text/plain; charset=UTF-8`, []string{"UTF-8"}, http.StatusAccepted},
+		{"missing header control", "", []string{"UTF-8", ""}, http.StatusAccepted},
+		{"no allowed charset", `text/plain; charset="utf-8"`, nil, http.StatusUnsupportedMediaType},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			const body = "charset request body"
+			called := false
+			router := chi.NewRouter()
+			router.Use(ContentCharset(tc.allowed...))
+			router.Post("/", func(w http.ResponseWriter, r *http.Request) {
+				called = true
+				data, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Errorf("read body: %v", err)
+				}
+				if string(data) != body {
+					t.Errorf("body = %q, want %q", data, body)
+				}
+				if got := r.Header.Get("Content-Type"); got != tc.header {
+					t.Errorf("Content-Type changed to %q, want %q", got, tc.header)
+				}
+				w.WriteHeader(http.StatusAccepted)
+			})
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+			req.Header.Set("Content-Type", tc.header)
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+			if recorder.Code != tc.want {
+				t.Errorf("status = %d, want %d", recorder.Code, tc.want)
+			}
+			if want := tc.want == http.StatusAccepted; called != want {
+				t.Errorf("handler called = %t, want %t", called, want)
+			}
+		})
+	}
+}
