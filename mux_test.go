@@ -1769,7 +1769,8 @@ func TestEscapedURLParams(t *testing.T) {
 			return
 		}
 		identifier := URLParam(r, "identifier")
-		if identifier != "http:%2f%2fexample.com%2fimage.png" {
+		// The identifier is URL-decoded exactly once (#832).
+		if identifier != "http://example.com/image.png" {
 			t.Errorf("identifier path parameter incorrect %s", identifier)
 			return
 		}
@@ -1796,6 +1797,96 @@ func TestEscapedURLParams(t *testing.T) {
 
 	if _, body := testRequest(t, ts, "GET", "/api/http:%2f%2fexample.com%2fimage.png/full/max/0/color.png", nil); body != "success" {
 		t.Fatal(body)
+	}
+}
+
+func TestURLParamDecoded(t *testing.T) {
+	m := NewRouter()
+	m.Get("/{key}", func(w http.ResponseWriter, r *http.Request) {
+		key := URLParam(r, "key")
+		// PathValue (set via Request.SetPathValue) must agree with URLParam.
+		if pv := r.PathValue("key"); pv != key {
+			t.Errorf("PathValue(%q) = %q, want %q (same as URLParam)", "key", pv, key)
+		}
+		w.Write([]byte(key))
+	})
+
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+
+	tests := []struct {
+		path string
+		want string
+	}{
+		// RawPath is set for this request, so without the fix the
+		// parameter comes back still URL-encoded (issue #832).
+		{"/It's%20great", "It's great"},
+		// RawPath is empty for this request, so the parameter was
+		// already decoded. Both cases must agree.
+		{"/It%20is%20great", "It is great"},
+		// Doubly-encoded input must be decoded exactly once.
+		{"/my%2520data", "my%20data"},
+		// Encoded slashes inside a single segment decode to slashes.
+		{"/http:%2f%2fexample.com%2fimage.png", "http://example.com/image.png"},
+	}
+
+	for _, tt := range tests {
+		if _, body := testRequest(t, ts, "GET", tt.path, nil); body != tt.want {
+			t.Errorf("GET %s: URLParam = %q, want %q", tt.path, body, tt.want)
+		}
+	}
+}
+
+func TestURLParamDecodedMounted(t *testing.T) {
+	sub := NewRouter()
+	sub.Get("/{key}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "key")))
+	})
+
+	m := NewRouter()
+	m.Mount("/api/", sub)
+
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+
+	tests := []struct {
+		path string
+		want string
+	}{
+		{"/api/It's%20great", "It's great"},
+		{"/api/It%20is%20great", "It is great"},
+		{"/api/my%2520data", "my%20data"},
+	}
+
+	for _, tt := range tests {
+		if _, body := testRequest(t, ts, "GET", tt.path, nil); body != tt.want {
+			t.Errorf("GET %s: URLParam = %q, want %q", tt.path, body, tt.want)
+		}
+	}
+}
+
+// TestNonASCIIStaticAndRegexpRoutes guards the route-matching behavior
+// that the #832 fix must not change: static segments and regexp
+// patterns are matched against the unescaped path when RawPath is
+// empty, so non-ASCII routes and regexps matching decoded characters
+// (e.g. a space) keep working.
+func TestNonASCIIStaticAndRegexpRoutes(t *testing.T) {
+	m := NewRouter()
+	m.Get("/café/{x}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("cafe:" + URLParam(r, "x")))
+	})
+	m.Get("/name/{n:[a-zA-Z ]+}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("name:" + URLParam(r, "n")))
+	})
+
+	ts := httptest.NewServer(m)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/caf%C3%A9/1", nil); body != "cafe:1" {
+		t.Errorf("non-ASCII static route: got %q, want %q", body, "cafe:1")
+	}
+	if _, body := testRequest(t, ts, "GET", "/name/John%20Doe", nil); body != "name:John Doe" {
+		t.Errorf("regexp route matching decoded space: got %q, want %q", body, "name:John Doe")
 	}
 }
 
