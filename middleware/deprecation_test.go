@@ -12,7 +12,7 @@ import (
 func TestDeprecation(t *testing.T) {
 	deprecatedAt := time.Date(2025, 12, 24, 10, 20, 0, 0, time.UTC)
 
-	serve := func(mw func(http.Handler) http.Handler) http.Header {
+	serve := func(t *testing.T, mw func(http.Handler) http.Handler) http.Header {
 		r := chi.NewRouter()
 		r.Use(mw)
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +28,7 @@ func TestDeprecation(t *testing.T) {
 	}
 
 	t.Run("Deprecation without link", func(t *testing.T) {
-		h := serve(Deprecation(deprecatedAt))
+		h := serve(t, Deprecation(deprecatedAt))
 
 		if got, want := h.Get("Deprecation"), "@1766571600"; got != want {
 			t.Fatalf("Deprecation = %q, want %q", got, want)
@@ -43,7 +43,7 @@ func TestDeprecation(t *testing.T) {
 
 	t.Run("Deprecation with link", func(t *testing.T) {
 		link := `<https://example.com/v1/deprecation-details>; rel="deprecation"`
-		h := serve(Deprecation(deprecatedAt, link))
+		h := serve(t, Deprecation(deprecatedAt, link))
 
 		if got, want := h.Get("Deprecation"), "@1766571600"; got != want {
 			t.Fatalf("Deprecation = %q, want %q", got, want)
@@ -56,7 +56,7 @@ func TestDeprecation(t *testing.T) {
 	t.Run("Deprecation with multiple links", func(t *testing.T) {
 		docs := `<https://example.com/v1/deprecation-details>; rel="deprecation"`
 		next := `<https://example.com/v2/users>; rel="successor-version"`
-		h := serve(Deprecation(deprecatedAt, docs, next))
+		h := serve(t, Deprecation(deprecatedAt, docs, next))
 
 		got := h.Values("Link")
 		if len(got) != 2 || got[0] != docs || got[1] != next {
@@ -75,7 +75,7 @@ func TestDeprecation(t *testing.T) {
 
 	t.Run("Combined with Sunset", func(t *testing.T) {
 		sunsetAt := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
-		h := serve(func(next http.Handler) http.Handler {
+		h := serve(t, func(next http.Handler) http.Handler {
 			return Deprecation(deprecatedAt)(Sunset(sunsetAt)(next))
 		})
 
@@ -93,7 +93,7 @@ func TestDeprecation(t *testing.T) {
 		sunsetAt := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
 		dep := `<https://example.com/deprecation>; rel="deprecation"`
 		sun := `<https://example.com/sunset>; rel="sunset"`
-		h := serve(func(next http.Handler) http.Handler {
+		h := serve(t, func(next http.Handler) http.Handler {
 			return Deprecation(deprecatedAt, dep)(Sunset(sunsetAt, sun)(next))
 		})
 
