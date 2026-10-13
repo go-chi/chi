@@ -18,6 +18,9 @@ var (
 
 // ThrottleOpts represents a set of throttling options.
 type ThrottleOpts struct {
+	// RetryAfterFn, if set, enables the Retry-After header on rejected requests.
+	// The result is rounded up to whole seconds and clamped at 0, because the
+	// header carries a non-negative integer (RFC 9110 section 10.2.3).
 	RetryAfterFn   func(ctxDone bool) time.Duration
 	Limit          int
 	BacklogLimit   int

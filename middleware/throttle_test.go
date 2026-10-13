@@ -261,6 +261,33 @@ func TestThrottleRetryAfter(t *testing.T) {
 	assertEqual(t, 5, count429)
 }
 
+func TestThrottleRetryAfterRounding(t *testing.T) {
+	tests := []struct {
+		delay time.Duration
+		want  string
+	}{
+		{-time.Second, "0"},
+		{0, "0"},
+		{time.Nanosecond, "1"},
+		{500 * time.Millisecond, "1"},
+		{time.Second, "1"},
+		{1500 * time.Millisecond, "2"},
+		{time.Hour, "3600"},
+		{time.Duration(1<<63 - 1), "9223372037"},
+	}
+
+	for _, tc := range tests {
+		th := throttler{retryAfterFn: func(bool) time.Duration { return tc.delay }}
+		w := httptest.NewRecorder()
+		th.setRetryAfterHeaderIfNeeded(w, false)
+		assertEqual(t, tc.want, w.Header().Get("Retry-After"))
+	}
+
+	w := httptest.NewRecorder()
+	throttler{}.setRetryAfterHeaderIfNeeded(w, false)
+	assertEqual(t, "", w.Header().Get("Retry-After"))
+}
+
 func TestThrottleCustomStatusCode(t *testing.T) {
 	const timeout = time.Second * 3
 
