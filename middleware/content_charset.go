@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"mime"
 	"net/http"
 	"slices"
 	"strings"
@@ -33,10 +34,43 @@ func ContentCharset(charsets ...string) func(next http.Handler) http.Handler {
 
 // Check the content encoding against a list of acceptable values.
 func contentEncoding(ce string, charsets ...string) bool {
+	_, params, err := mime.ParseMediaType(normalizeHTTPQuotedPairs(ce))
+	if err == nil {
+		return slices.Contains(charsets, strings.ToLower(params["charset"]))
+	}
+
+	// Preserve the existing handling of absent or non-MIME header values.
 	_, ce = split(strings.ToLower(ce), ";")
 	_, ce = split(ce, "charset=")
 	ce, _ = split(ce, ";")
 	return slices.Contains(charsets, ce)
+}
+
+// mime.ParseMediaType preserves some quoted pairs for legacy browser file paths.
+// HTTP quoted pairs always represent the byte following the backslash.
+func normalizeHTTPQuotedPairs(value string) string {
+	if strings.IndexByte(value, '\\') < 0 {
+		return value
+	}
+	var normalized strings.Builder
+	normalized.Grow(len(value))
+	quoted := false
+	for i := 0; i < len(value); i++ {
+		c := value[i]
+		if c == '"' {
+			quoted = !quoted
+		}
+		if quoted && c == '\\' && i+1 < len(value) {
+			i++
+			c = value[i]
+			// Keep escapes that the MIME parser already decodes correctly.
+			if c == '"' || c == '\\' {
+				normalized.WriteByte('\\')
+			}
+		}
+		normalized.WriteByte(c)
+	}
+	return normalized.String()
 }
 
 // Split a string in two parts, cleaning any whitespace.
