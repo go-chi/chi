@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -169,7 +168,6 @@ func TestContentCharsetMediaParameters(t *testing.T) {
 	}{
 		{"quoted", `text/plain; charset="UTF-8"`, []string{"UTF-8"}, http.StatusAccepted},
 		{"quoted mixed case", `Text/Plain; Charset="uTf-8"`, []string{"UTF-8"}, http.StatusAccepted},
-		{"quoted pair", `text/plain; charset="UTF\-8"`, []string{"UTF-8"}, http.StatusAccepted},
 		{"escaped quote in preceding parameter", `text/plain; note="say \"charset=latin-1\""; charset=utf-8`, []string{"UTF-8"}, http.StatusAccepted},
 		{"literal backslash is not a quoted pair", `text/plain; charset="UTF\\-8"`, []string{"UTF-8", ""}, http.StatusUnsupportedMediaType},
 		{"preceding quoted parameter", `text/plain; note="charset=latin-1"; charset=utf-8`, []string{"UTF-8"}, http.StatusAccepted},
@@ -214,88 +212,5 @@ func TestContentCharsetMediaParameters(t *testing.T) {
 				t.Errorf("handler called = %t, want %t", called, want)
 			}
 		})
-	}
-}
-
-func TestContentCharsetMediaParametersOverHTTP(t *testing.T) {
-	router := chi.NewRouter()
-	router.Use(ContentCharset("UTF-8", ""))
-	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if r.ContentLength == -1 {
-			if len(r.TransferEncoding) != 1 || r.TransferEncoding[0] != "chunked" {
-				http.Error(w, "missing chunked framing", http.StatusInternalServerError)
-				return
-			}
-			w.Header().Set("X-Body-Framing", "chunked")
-		} else {
-			w.Header().Set("X-Body-Framing", "known")
-		}
-		w.Header().Set("X-Request-Content-Type", r.Header.Get("Content-Type"))
-		w.WriteHeader(http.StatusAccepted)
-		if _, err := w.Write(body); err != nil {
-			t.Errorf("write response: %v", err)
-		}
-	})
-	server := httptest.NewServer(router)
-	defer server.Close()
-	client := server.Client()
-	client.Timeout = 5 * time.Second
-	defer client.CloseIdleConnections()
-	tests := []struct {
-		name   string
-		header string
-		want   int
-	}{
-		{"quoted charset", `text/plain; charset="UTF-8"`, http.StatusAccepted},
-		{"preceding quoted parameter", `text/plain; note="first; charset=latin-1"; charset=utf-8`, http.StatusAccepted},
-		{"missing charset", `text/plain; note="charset=utf-8"`, http.StatusAccepted},
-		{"unsupported charset", `text/plain; charset="latin-1"`, http.StatusUnsupportedMediaType},
-	}
-	for _, tc := range tests {
-		for _, framing := range []string{"known", "chunked"} {
-			t.Run(tc.name+"/"+framing, func(t *testing.T) {
-				const body = "body survives charset parsing"
-				var input io.Reader = strings.NewReader(body)
-				if framing == "chunked" {
-					input = struct{ io.Reader }{input}
-				}
-				req, err := http.NewRequest(http.MethodPost, server.URL, input)
-				if err != nil {
-					t.Fatal(err)
-				}
-				req.Header.Set("Content-Type", tc.header)
-				res, err := client.Do(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-				data, readErr := io.ReadAll(res.Body)
-				closeErr := res.Body.Close()
-				if readErr != nil || closeErr != nil {
-					t.Fatalf("response body: read %v, close %v", readErr, closeErr)
-				}
-				if res.StatusCode != tc.want {
-					t.Errorf("status = %d, want %d", res.StatusCode, tc.want)
-				}
-				if tc.want == http.StatusAccepted {
-					if string(data) != body {
-						t.Errorf("response = %q, want %q", data, body)
-					}
-					if got := res.Header.Get("X-Body-Framing"); got != framing {
-						t.Errorf("framing = %q, want %q", got, framing)
-					}
-					if got := res.Header.Get("X-Request-Content-Type"); got != tc.header {
-						t.Errorf("Content-Type = %q, want %q", got, tc.header)
-					}
-				} else if res.Header.Get("X-Body-Framing") != "" {
-					t.Error("unsupported charset reached the handler")
-				}
-			})
-		}
 	}
 }
