@@ -18,6 +18,9 @@ var (
 
 // ThrottleOpts represents a set of throttling options.
 type ThrottleOpts struct {
+	// RetryAfterFn, if set, enables the Retry-After header on rejected requests.
+	// The result is rounded up to whole seconds and clamped at 0, because the
+	// header carries a non-negative integer (RFC 9110 section 10.2.3).
 	RetryAfterFn   func(ctxDone bool) time.Duration
 	Limit          int
 	BacklogLimit   int
@@ -147,5 +150,14 @@ func (t throttler) setRetryAfterHeaderIfNeeded(w http.ResponseWriter, ctxDone bo
 	if t.retryAfterFn == nil {
 		return
 	}
-	w.Header().Set("Retry-After", strconv.Itoa(int(t.retryAfterFn(ctxDone).Seconds())))
+	// delay-seconds is non-negative, and rounding up avoids asking clients to
+	// retry before the duration returned by RetryAfterFn has elapsed.
+	delay := t.retryAfterFn(ctxDone)
+	seconds := delay / time.Second
+	if delay < 0 {
+		seconds = 0
+	} else if delay%time.Second != 0 {
+		seconds++
+	}
+	w.Header().Set("Retry-After", strconv.FormatInt(int64(seconds), 10))
 }
