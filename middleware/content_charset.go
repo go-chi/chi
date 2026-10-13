@@ -10,6 +10,7 @@ import (
 // ContentCharset generates a handler that writes a 415 Unsupported Media Type response if none of the charsets match.
 // An empty charset will allow requests with no Content-Type header or no specified charset.
 // Requests without a body (ContentLength == 0) are always allowed.
+// Quoted charset values, such as charset="UTF-8", are accepted.
 func ContentCharset(charsets ...string) func(next http.Handler) http.Handler {
 	for i, c := range charsets {
 		charsets[i] = strings.ToLower(c)
