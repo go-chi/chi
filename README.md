@@ -345,6 +345,7 @@ with `net/http` can be used with chi's mux.
 | [Compress]             | Gzip compression for clients that accept compressed responses           |
 | [ContentCharset]       | Ensure charset for Content-Type request headers                         |
 | [CleanPath]            | Clean double slashes from request path                                  |
+| [Deprecation]          | Set the Deprecation response header (RFC 9745); see also [Sunset]       |
 | [GetHead]              | Automatically route undefined HEAD requests to GET handlers             |
 | [Heartbeat]            | Monitoring endpoint to check the servers pulse                          |
 | [Logger]               | Logs the start and end of each request with the elapsed processing time |
@@ -361,7 +362,7 @@ with `net/http` can be used with chi's mux.
 | [RouteHeaders]         | Route handling for request headers                                      |
 | [SetHeader]            | Short-hand middleware to set a response header key/value                |
 | [StripSlashes]         | Strip slashes on routing paths                                          |
-| [Sunset]               | Sunset set Deprecation/Sunset header to response                        |
+| [Sunset]               | Set the Sunset response header (RFC 8594); see also [Deprecation]       |
 | [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
 | [Timeout]              | Signals to the request context when the timeout deadline is reached     |
 | [URLFormat]            | Parse extension from url and put it on request context                  |
@@ -374,6 +375,7 @@ with `net/http` can be used with chi's mux.
 [Compress]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Compress
 [ContentCharset]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ContentCharset
 [CleanPath]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#CleanPath
+[Deprecation]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Deprecation
 [GetHead]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetHead
 [GetReqID]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetReqID
 [Heartbeat]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Heartbeat
@@ -473,6 +475,30 @@ deployment recipe and a verify checklist.
 See the per-function godoc for the full semantics of each middleware, and
 [adam-p's "The perils of the 'real' client IP"](https://adam-p.ca/blog/2022/03/x-forwarded-for/)
 for the underlying threat model.
+
+### Deprecating and removing a route
+
+Use `Deprecation` first. Add `Sunset` when you know the removal date.
+
+| Situation                                                | Use                         |
+| :------------------------------------------------------- | :-------------------------- |
+| Route works, clients should migrate, no removal date yet | `Deprecation`               |
+| You know the date the route will stop working            | `Deprecation` + `Sunset`    |
+| Route is already removed                                 | Neither. Return `410 Gone`. |
+
+```go
+// A bad date parses to the zero time, and the middleware panics at startup.
+deprecatedAt, _ := time.Parse(time.DateOnly, "2026-01-15")
+sunsetAt, _ := time.Parse(time.DateOnly, "2026-07-01")
+
+// Step 1: the route is deprecated.
+r.With(middleware.Deprecation(deprecatedAt)).Get("/v1/users", listUsers)
+
+// Step 2: the removal date is known.
+r.With(middleware.Deprecation(deprecatedAt), middleware.Sunset(sunsetAt)).Get("/v1/users", listUsers)
+
+// After sunsetAt: remove the route, or return 410 Gone.
+```
 
 ### Extra middlewares & packages
 
