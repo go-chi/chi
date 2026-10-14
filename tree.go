@@ -125,11 +125,14 @@ type node struct {
 	label byte
 }
 
-// endpoints is a mapping of http method constants to handlers
-// for a given route.
-type endpoints map[methodTyp]*endpoint
+// endpoints holds a node's handlers, at most one per method type. A node has
+// few, so they are kept in a slice and found by a scan, not in a map.
+type endpoints []endpoint
 
 type endpoint struct {
+	// method is the method type the endpoint is registered under
+	method methodTyp
+
 	// endpoint handler
 	handler http.Handler
 
@@ -144,13 +147,23 @@ type endpoint struct {
 	methods methodTyp
 }
 
+// find returns the endpoint registered under method, if any.
+func (s endpoints) find(method methodTyp) *endpoint {
+	for i := range s {
+		if s[i].method == method {
+			return &s[i]
+		}
+	}
+	return nil
+}
+
 // get returns the endpoint for method, or else the shared one if it serves
 // method.
 func (s endpoints) get(method methodTyp) *endpoint {
-	if e, ok := s[method]; ok {
+	if e := s.find(method); e != nil {
 		return e
 	}
-	if e := s[mANY]; e != nil && e.methods&method != 0 {
+	if e := s.find(mANY); e != nil && e.methods&method != 0 {
 		return e
 	}
 	return nil
@@ -163,8 +176,8 @@ func (s endpoints) allowMethods(rctx *Context) {
 			rctx.methodsAllowed = append(rctx.methodsAllowed, mt)
 		}
 	}
-	for mt, e := range s {
-		switch mt {
+	for _, e := range s {
+		switch e.method {
 		case mSTUB:
 		case mANY:
 			for _, m := range methodMap {
@@ -173,18 +186,19 @@ func (s endpoints) allowMethods(rctx *Context) {
 				}
 			}
 		default:
-			allow(mt)
+			allow(e.method)
 		}
 	}
 }
 
-func (s endpoints) Value(method methodTyp) *endpoint {
-	mh, ok := s[method]
-	if !ok {
-		mh = &endpoint{}
-		s[method] = mh
+// Value returns the endpoint registered under method, adding it if there is
+// none. The pointer is valid only until the next endpoint is added.
+func (s *endpoints) Value(method methodTyp) *endpoint {
+	if e := s.find(method); e != nil {
+		return e
 	}
-	return mh
+	*s = append(*s, endpoint{method: method})
+	return &(*s)[len(*s)-1]
 }
 
 func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
@@ -394,10 +408,6 @@ func (n *node) getEdge(ntyp nodeTyp, label, tail byte, prefix string) *node {
 
 func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern string) {
 	// Set the handler for the method type on the node
-	if n.endpoints == nil {
-		n.endpoints = make(endpoints)
-	}
-
 	paramKeys := patParamKeys(pattern)
 
 	if method&mSTUB == mSTUB {
@@ -406,11 +416,9 @@ func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern strin
 	if method&mALL == mALL {
 		// A single endpoint serves every method; get falls back to it. Like a
 		// registration for each method, it replaces their earlier handlers.
-		for m := range n.endpoints {
-			if m != mSTUB && m != mANY {
-				delete(n.endpoints, m)
-			}
-		}
+		n.endpoints = slices.DeleteFunc(n.endpoints, func(e endpoint) bool {
+			return e.method != mSTUB && e.method != mANY
+		})
 		h := n.endpoints.Value(mANY)
 		h.handler = handler
 		h.pattern = pattern
@@ -667,20 +675,20 @@ func (n *node) routes() []Route {
 	n.walk(func(eps endpoints, subroutes Routes) bool {
 		// Hide Mount()'s stub handler, but not a real handler sharing its pattern.
 		var stubHandler http.Handler
-		if eps[mSTUB] != nil {
-			stubHandler = eps[mSTUB].handler
+		if stub := eps.find(mSTUB); stub != nil {
+			stubHandler = stub.handler
 		}
 
 		// Group methodHandlers by unique patterns, each method under the
 		// endpoint that serves it.
-		pats := make(map[string]endpoints)
+		pats := make(map[string]map[methodTyp]*endpoint)
 		group := func(mt methodTyp, h *endpoint) {
 			if h == nil || h.pattern == "" {
 				return
 			}
 			p, ok := pats[h.pattern]
 			if !ok {
-				p = endpoints{}
+				p = map[methodTyp]*endpoint{}
 				pats[h.pattern] = p
 			}
 			p[mt] = h
@@ -688,7 +696,7 @@ func (n *node) routes() []Route {
 		for _, mt := range methodMap {
 			group(mt, eps.get(mt))
 		}
-		group(mANY, eps[mANY])
+		group(mANY, eps.find(mANY))
 
 		for p, mh := range pats {
 			hs := make(map[string]http.Handler)

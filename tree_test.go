@@ -134,7 +134,7 @@ func TestTree(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[mGET]; ok {
+		if methodHandler := handlers.find(mGET); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -250,7 +250,7 @@ func TestTreeMoar(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, tt.m, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[tt.m]; ok {
+		if methodHandler := handlers.find(tt.m); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -316,7 +316,7 @@ func TestTreeRegexp(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[mGET]; ok {
+		if methodHandler := handlers.find(mGET); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -367,7 +367,7 @@ func TestTreeRegexpRecursive(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[mGET]; ok {
+		if methodHandler := handlers.find(mGET); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
