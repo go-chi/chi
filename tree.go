@@ -146,6 +146,9 @@ func (s endpoints) Value(method methodTyp) *endpoint {
 }
 
 func (n *node) InsertRoute(method methodTyp, pattern string, handler http.Handler) *node {
+	// Reject duplicate param keys before mutating the tree.
+	_ = patParamKeys(pattern)
+
 	var parent *node
 	search := pattern
 
