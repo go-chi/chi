@@ -13,6 +13,61 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+func TestCompressFlushBeforeWrite(t *testing.T) {
+	for _, encoding := range []string{"gzip", "deflate", "identity"} {
+		t.Run(encoding, func(t *testing.T) {
+			const body = "hello world"
+			server := httptest.NewServer(Compress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "text/plain")
+				w.(http.Flusher).Flush()
+				w.(http.Flusher).Flush()
+				w.Write([]byte(body))
+			})))
+			defer server.Close()
+
+			req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req.Header.Set("Accept-Encoding", encoding)
+			resp, err := server.Client().Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer resp.Body.Close()
+			wantEncoding := encoding
+			if encoding == "identity" {
+				wantEncoding = ""
+			}
+			if got := resp.Header.Get("Content-Encoding"); got != wantEncoding {
+				t.Fatalf("Content-Encoding: got %q, want %q", got, wantEncoding)
+			}
+
+			var reader io.Reader = resp.Body
+			switch encoding {
+			case "gzip":
+				decoded, err := gzip.NewReader(resp.Body)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer decoded.Close()
+				reader = decoded
+			case "deflate":
+				decoded := flate.NewReader(resp.Body)
+				defer decoded.Close()
+				reader = decoded
+			}
+			got, err := io.ReadAll(reader)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != body {
+				t.Errorf("body: got %q, want %q", got, body)
+			}
+		})
+	}
+}
+
 func TestCompressor(t *testing.T) {
 	r := chi.NewRouter()
 
