@@ -16,7 +16,7 @@ func SupressNotFound(router *chi.Mux) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rctx := chi.RouteContext(r.Context())
-			match := rctx.Routes.Match(rctx, r.Method, r.URL.Path)
+			match := rctx.Routes.Match(chi.NewRouteContext(), r.Method, r.URL.Path)
 			if !match {
 				router.NotFoundHandler().ServeHTTP(w, r)
 				return
