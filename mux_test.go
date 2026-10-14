@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -640,6 +641,78 @@ func TestMuxWith(t *testing.T) {
 	}
 	if cmwHandler2 != 1 {
 		t.Fatalf("expecting cmwHandler2 to be 1, got %d", cmwHandler2)
+	}
+}
+
+// Handle serves every method, and for any one method the later of Handle and
+// that method's own registration wins.
+func TestMuxHandleAndMethodOverride(t *testing.T) {
+	respond := func(body string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(body))
+		}
+	}
+
+	r := NewRouter()
+	r.Handle("/handle-then-get", respond("all"))
+	r.Get("/handle-then-get", respond("get"))
+	r.Get("/get-then-handle", respond("get"))
+	r.Handle("/get-then-handle", respond("all"))
+
+	tests := []struct {
+		method, path, want string
+	}{
+		{http.MethodGet, "/handle-then-get", "get"},
+		{http.MethodPost, "/handle-then-get", "all"},
+		{http.MethodDelete, "/handle-then-get", "all"},
+		{http.MethodGet, "/get-then-handle", "all"},
+		{http.MethodPost, "/get-then-handle", "all"},
+	}
+	for _, tt := range tests {
+		if _, body := testHandler(t, r, tt.method, tt.path, nil); body != tt.want {
+			t.Fatalf("%s %s: expected %q, got %q", tt.method, tt.path, tt.want, body)
+		}
+	}
+}
+
+// A method registered after a route still leaves the route serving the
+// methods it served, and only those.
+func TestMuxRegisterMethodAfterHandle(t *testing.T) {
+	respond := func(body string) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(body))
+		}
+	}
+
+	// RegisterMethod changes global state, so restore it for other tests and
+	// for a rerun of this one.
+	methods, reverse, all := maps.Clone(methodMap), maps.Clone(reverseMethodMap), mALL
+	t.Cleanup(func() {
+		methodMap, reverseMethodMap, mALL = methods, reverse, all
+	})
+
+	r := NewRouter()
+	r.Handle("/all", respond("all"))
+	r.Route("/api", func(r Router) {
+		r.Get("/", respond("api"))
+	})
+	RegisterMethod("REGISTERED-LATE")
+
+	tests := []struct {
+		method, path string
+		code         int
+		want         string
+	}{
+		{http.MethodGet, "/all", 200, "all"},
+		{http.MethodPost, "/all", 200, "all"},
+		{http.MethodGet, "/api", 200, "api"},
+		{"REGISTERED-LATE", "/all", 405, ""},
+	}
+	for _, tt := range tests {
+		resp, body := testHandler(t, r, tt.method, tt.path, nil)
+		if resp.StatusCode != tt.code || body != tt.want {
+			t.Fatalf("%s %s: expected %d %q, got %d %q", tt.method, tt.path, tt.code, tt.want, resp.StatusCode, body)
+		}
 	}
 }
 
@@ -2108,6 +2181,29 @@ type ctxKey struct {
 
 func (k ctxKey) String() string {
 	return "context value " + k.name
+}
+
+// BenchmarkMuxRoute reports what building a router with nested Route()s
+// allocates. Each Route() mounts a sub-router, for every method, under its
+// pattern.
+func BenchmarkMuxRoute(b *testing.B) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	b.ReportAllocs()
+	for b.Loop() {
+		r := NewRouter()
+		for _, pattern := range []string{"/users", "/orders", "/admin"} {
+			r.Route(pattern, func(r Router) {
+				r.Get("/", h)
+				r.Post("/", h)
+				r.Route("/{id}", func(r Router) {
+					r.Get("/", h)
+					r.Put("/", h)
+					r.Delete("/", h)
+				})
+			})
+		}
+	}
 }
 
 func BenchmarkMux(b *testing.B) {

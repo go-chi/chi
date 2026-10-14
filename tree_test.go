@@ -134,7 +134,7 @@ func TestTree(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[mGET]; ok {
+		if methodHandler := handlers.find(mGET); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -250,7 +250,7 @@ func TestTreeMoar(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, tt.m, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[tt.m]; ok {
+		if methodHandler := handlers.find(tt.m); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -316,7 +316,7 @@ func TestTreeRegexp(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[mGET]; ok {
+		if methodHandler := handlers.find(mGET); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -367,7 +367,7 @@ func TestTreeRegexpRecursive(t *testing.T) {
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
 		var handler http.Handler
-		if methodHandler, ok := handlers[mGET]; ok {
+		if methodHandler := handlers.find(mGET); methodHandler != nil {
 			handler = methodHandler.handler
 		}
 
@@ -708,6 +708,69 @@ func TestWalkMiddlewaresAcrossGroupAndRoute(t *testing.T) {
 	for route, wantMws := range want {
 		if gotMws := got[route]; !slices.Equal(gotMws, wantMws) {
 			t.Fatalf("%s: expected middlewares %v, got %v", route, wantMws, gotMws)
+		}
+	}
+}
+
+// Walk reports a Handle registration once for every method, with any method
+// registered on its own in place of it.
+func TestWalkHandleReportsEveryMethod(t *testing.T) {
+	all := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	get := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	r := NewRouter()
+	r.Handle("/all", all)
+	r.Get("/all", get)
+
+	got := map[string]http.Handler{}
+	if err := Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		if route == "/all" {
+			got[method] = handler
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) != len(methodMap) {
+		t.Fatalf("expected a handler for each of %d methods, got %d: %v", len(methodMap), len(got), got)
+	}
+	for method := range methodMap {
+		want := http.Handler(all)
+		if method == http.MethodGet {
+			want = get
+		}
+		if !equalHandlers(got[method], want) {
+			t.Fatalf("%s /all: got the wrong handler", method)
+		}
+	}
+}
+
+// Walk reports each method under the pattern of the endpoint that serves it,
+// even when a method is registered on the same node under another spelling.
+func TestWalkHandleOverriddenUnderAnotherPattern(t *testing.T) {
+	all := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	get := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	r := NewRouter()
+	r.Handle("/items/{id}", all)
+	r.Get("/items/{name}", get)
+
+	got := map[string][]string{}
+	if err := Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		got[method] = append(got[method], route)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	for method := range methodMap {
+		want := "/items/{id}"
+		if method == http.MethodGet {
+			want = "/items/{name}"
+		}
+		if routes := got[method]; len(routes) != 1 || routes[0] != want {
+			t.Fatalf("%s: expected %s alone, got %v", method, want, routes)
 		}
 	}
 }
