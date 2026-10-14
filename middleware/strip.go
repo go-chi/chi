@@ -14,11 +14,13 @@ import (
 func StripSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		var path string
+		var fromURL bool
 		rctx := chi.RouteContext(r.Context())
 		if rctx != nil && rctx.RoutePath != "" {
 			path = rctx.RoutePath
 		} else {
 			path = r.URL.Path
+			fromURL = true
 		}
 		if len(path) > 1 && path[len(path)-1] == '/' {
 			newPath := path[:len(path)-1]
@@ -26,6 +28,12 @@ func StripSlashes(next http.Handler) http.Handler {
 				r.URL.Path = newPath
 			} else {
 				rctx.RoutePath = newPath
+				if fromURL {
+					// RoutePath came from the decoded URL path,
+					// so captured parameters must not be decoded
+					// again (#832).
+					rctx.RoutePathEscaped = false
+				}
 			}
 		}
 		next.ServeHTTP(w, r)

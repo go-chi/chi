@@ -8,6 +8,7 @@ import (
 )
 
 // URLParam returns the url parameter from a http.Request object.
+// The returned value is URL-decoded exactly once.
 func URLParam(r *http.Request, key string) string {
 	return URLParamFromCtx(r.Context(), key)
 }
@@ -52,8 +53,15 @@ type Context struct {
 
 	// Routing path/method override used during the route search.
 	// See Mux#routeHTTP method.
-	RoutePath   string
-	RouteMethod string
+	RoutePath string
+	// RoutePathEscaped reports whether RoutePath is in escaped form
+	// (as opposed to decoded). It tells the router whether captured
+	// parameters still need to be URL-decoded exactly once (#832).
+	// It is set automatically when RoutePath is derived from the
+	// request URL; code that sets RoutePath directly must set this
+	// flag to match. It defaults to false, meaning decoded.
+	RoutePathEscaped bool
+	RouteMethod      string
 
 	// URLParams are the stack of routeParams captured during the
 	// routing lifecycle across a stack of sub-routers.
@@ -82,6 +90,7 @@ type Context struct {
 func (x *Context) Reset() {
 	x.Routes = nil
 	x.RoutePath = ""
+	x.RoutePathEscaped = false
 	x.RouteMethod = ""
 	x.RoutePatterns = x.RoutePatterns[:0]
 	x.URLParams.Keys = x.URLParams.Keys[:0]
@@ -120,7 +129,7 @@ func (x *Context) Clone() *Context {
 }
 
 // URLParam returns the corresponding URL parameter value from the request
-// routing context.
+// routing context. The value is URL-decoded exactly once.
 func (x *Context) URLParam(key string) string {
 	for i, k := range slices.Backward(x.URLParams.Keys) {
 		if k == key {
