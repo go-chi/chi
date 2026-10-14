@@ -327,3 +327,47 @@ func TestRedirectSlashes_PreventBackslashRelativeOpenRedirect(t *testing.T) {
 		})
 	}
 }
+
+func TestRedirectSlashesInSubrouter(t *testing.T) {
+	r := chi.NewRouter()
+
+	r.Route("/api", func(r chi.Router) {
+		r.Use(RedirectSlashes)
+		r.Get("/accounts/{accountID}", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(chi.URLParam(r, "accountID")))
+		})
+	})
+
+	sub := chi.NewRouter()
+	sub.Use(RedirectSlashes)
+	sub.Get("/items", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("items"))
+	})
+	r.Mount("/shop", sub)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tests := []struct {
+		path     string
+		location string
+		body     string
+	}{
+		{"/api/accounts/admin/", "/api/accounts/admin", "admin"},
+		{"/api/accounts/admin/?a=1&b=2", "/api/accounts/admin?a=1&b=2", "admin"},
+		{"/shop/items/", "/shop/items", "items"},
+	}
+	for _, tc := range tests {
+		resp, body := testRequestNoRedirect(t, ts, "GET", tc.path, nil)
+		if resp.StatusCode != http.StatusMovedPermanently {
+			t.Fatalf("%s: expected status 301, got %d: %q", tc.path, resp.StatusCode, body)
+		}
+		if loc := resp.Header.Get("Location"); loc != tc.location {
+			t.Fatalf("%s: expected Location %q, got %q", tc.path, tc.location, loc)
+		}
+		// The redirect must lead to the route that was requested.
+		if resp, body := testRequest(t, ts, "GET", tc.path, nil); resp.StatusCode != 200 || body != tc.body {
+			t.Fatalf("%s: following the redirect got %d %q, want 200 %q", tc.path, resp.StatusCode, body, tc.body)
+		}
+	}
+}
