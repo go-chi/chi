@@ -2,104 +2,141 @@ package middleware
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 )
 
 var testContent = []byte("Hello world!")
 
+const throttleTestTimeout = 30 * time.Second
+
+// ThrottleWithOpts calls Done a second time only after taking a backlog token
+// and finding no processing token. Keep this handshake in step with its selects.
+type secondDoneContext struct {
+	context.Context
+	calls      atomic.Int32
+	secondDone chan struct{}
+}
+
+func (c *secondDoneContext) Done() <-chan struct{} {
+	if c.calls.Add(1) == 2 {
+		close(c.secondDone)
+	}
+	return c.Context.Done()
+}
+
 func waitN(t *testing.T, ch <-chan struct{}, n int) {
 	t.Helper()
-	deadline := time.After(2 * time.Second)
+	timer := time.NewTimer(throttleTestTimeout)
+	defer timer.Stop()
 	for i := 0; i < n; i++ {
 		select {
 		case <-ch:
-		case <-deadline:
+		case <-timer.C:
 			t.Fatalf("timed out waiting for %d events, got %d", n, i)
 		}
 	}
 }
 
-func serveThrottle(h http.Handler, req *http.Request) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	h.ServeHTTP(rr, req)
-	return rr
+func serveThrottle(h http.Handler, req *http.Request) <-chan *httptest.ResponseRecorder {
+	done := make(chan *httptest.ResponseRecorder, 1)
+	go func() {
+		rr := httptest.NewRecorder()
+		h.ServeHTTP(rr, req)
+		done <- rr
+	}()
+	return done
+}
+
+func waitThrottle(t *testing.T, done <-chan *httptest.ResponseRecorder) *httptest.ResponseRecorder {
+	t.Helper()
+	timer := time.NewTimer(throttleTestTimeout)
+	defer timer.Stop()
+	select {
+	case rr := <-done:
+		return rr
+	case <-timer.C:
+		t.Fatal("timed out waiting for throttled request to complete")
+		return nil
+	}
 }
 
 func TestThrottleBacklog(t *testing.T) {
 	started := make(chan struct{}, 2)
 	release := make(chan struct{})
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
 
-	h := ThrottleBacklog(2, 2, time.Second)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := ThrottleBacklog(2, 2, time.Minute)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started <- struct{}{}
 		<-release
 		w.WriteHeader(http.StatusOK)
 		w.Write(testContent)
 	}))
 
-	results := make(chan *httptest.ResponseRecorder, 4)
-	for range 4 {
-		go func() {
-			results <- serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
-		}()
+	var results []<-chan *httptest.ResponseRecorder
+	for range 2 {
+		results = append(results, serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil)))
 	}
-
 	waitN(t, started, 2)
-	close(release)
 
-	for range 4 {
-		select {
-		case rr := <-results:
-			assertEqual(t, http.StatusOK, rr.Code)
-			assertEqual(t, testContent, rr.Body.Bytes())
-		case <-time.After(2 * time.Second):
-			t.Fatal("timed out waiting for throttled request to complete")
-		}
+	for range 2 {
+		ctx := &secondDoneContext{Context: context.Background(), secondDone: make(chan struct{})}
+		results = append(results, serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)))
+		waitN(t, ctx.secondDone, 1)
+	}
+	unblock()
+
+	for _, done := range results {
+		rr := waitThrottle(t, done)
+		assertEqual(t, http.StatusOK, rr.Code)
+		assertEqual(t, testContent, rr.Body.Bytes())
 	}
 }
 
 func TestThrottleContextCanceled(t *testing.T) {
 	started := make(chan struct{}, 1)
 	release := make(chan struct{})
-	defer close(release)
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
 
-	h := ThrottleBacklog(1, 1, time.Second)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := ThrottleBacklog(1, 1, time.Minute)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started <- struct{}{}
 		<-release
 		w.WriteHeader(http.StatusOK)
 		w.Write(testContent)
 	}))
 
-	go serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
+	occupying := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
 	waitN(t, started, 1)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan *httptest.ResponseRecorder, 1)
-	go func() {
-		req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
-		done <- serveThrottle(h, req)
-	}()
+	defer cancel()
+	queued := &secondDoneContext{Context: ctx, secondDone: make(chan struct{})}
+	done := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(queued))
+	waitN(t, queued.secondDone, 1)
 	cancel()
 
-	select {
-	case rr := <-done:
-		assertEqual(t, http.StatusTooManyRequests, rr.Code)
-		assertEqual(t, errContextCanceled, strings.TrimSpace(rr.Body.String()))
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for canceled request")
-	}
+	rr := waitThrottle(t, done)
+	assertEqual(t, http.StatusTooManyRequests, rr.Code)
+	assertEqual(t, errContextCanceled, strings.TrimSpace(rr.Body.String()))
+
+	unblock()
+	rr = waitThrottle(t, occupying)
+	assertEqual(t, http.StatusOK, rr.Code)
+	assertEqual(t, testContent, rr.Body.Bytes())
 }
 
 func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 	started := make(chan struct{}, 1)
 	release := make(chan struct{})
-	defer close(release)
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
 
 	h := ThrottleBacklog(1, 1, 50*time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started <- struct{}{}
@@ -108,42 +145,58 @@ func TestThrottleTriggerGatewayTimeout(t *testing.T) {
 		w.Write(testContent)
 	}))
 
-	go serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
+	occupying := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
 	waitN(t, started, 1)
 
-	rr := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
+	rr := waitThrottle(t, serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil)))
 	assertEqual(t, http.StatusTooManyRequests, rr.Code)
 	assertEqual(t, errTimedOut, strings.TrimSpace(rr.Body.String()))
+
+	unblock()
+	rr = waitThrottle(t, occupying)
+	assertEqual(t, http.StatusOK, rr.Code)
+	assertEqual(t, testContent, rr.Body.Bytes())
 }
 
 func TestThrottleMaximum(t *testing.T) {
-	started := make(chan struct{}, 1)
+	started := make(chan struct{}, 2)
 	release := make(chan struct{})
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
 
-	h := ThrottleBacklog(1, 0, time.Second)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := ThrottleBacklog(1, 1, time.Minute)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		started <- struct{}{}
 		<-release
 		w.WriteHeader(http.StatusOK)
 		w.Write(testContent)
 	}))
 
-	occupying := make(chan *httptest.ResponseRecorder, 1)
-	go func() {
-		occupying <- serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
-	}()
+	occupying := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
 	waitN(t, started, 1)
 
-	rr := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
-	assertEqual(t, http.StatusTooManyRequests, rr.Code)
-	assertEqual(t, errCapacityExceeded, strings.TrimSpace(rr.Body.String()))
+	ctx := &secondDoneContext{Context: context.Background(), secondDone: make(chan struct{})}
+	queued := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))
+	waitN(t, ctx.secondDone, 1)
 
-	close(release)
+	overflowCtx := &secondDoneContext{Context: context.Background(), secondDone: make(chan struct{})}
+	overflow := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(overflowCtx))
+	timer := time.NewTimer(throttleTestTimeout)
+	defer timer.Stop()
 	select {
-	case got := <-occupying:
+	case <-overflowCtx.secondDone:
+		t.Fatal("overflow request entered a full backlog")
+	case rr := <-overflow:
+		assertEqual(t, http.StatusTooManyRequests, rr.Code)
+		assertEqual(t, errCapacityExceeded, strings.TrimSpace(rr.Body.String()))
+	case <-timer.C:
+		t.Fatal("timed out waiting for backlog overflow rejection")
+	}
+
+	unblock()
+	for _, done := range []<-chan *httptest.ResponseRecorder{occupying, queued} {
+		got := waitThrottle(t, done)
 		assertEqual(t, http.StatusOK, got.Code)
 		assertEqual(t, testContent, got.Body.Bytes())
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for occupying request to complete")
 	}
 }
 
@@ -151,6 +204,8 @@ func TestThrottleRetryAfter(t *testing.T) {
 	retryAfterFn := func(ctxDone bool) time.Duration { return time.Hour }
 	started := make(chan struct{}, 5)
 	release := make(chan struct{})
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
 
 	h := ThrottleWithOpts(ThrottleOpts{
 		Limit:        5,
@@ -163,107 +218,48 @@ func TestThrottleRetryAfter(t *testing.T) {
 		w.Write([]byte("ok"))
 	}))
 
-	type result struct {
-		status int
-		header http.Header
-	}
-	results := make(chan result, 10)
-
+	var results []<-chan *httptest.ResponseRecorder
 	for range 5 {
-		go func() {
-			rr := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
-			results <- result{status: rr.Code, header: rr.Header().Clone()}
-		}()
+		results = append(results, serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil)))
 	}
 	waitN(t, started, 5)
 
 	for range 5 {
-		go func() {
-			rr := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
-			results <- result{status: rr.Code, header: rr.Header().Clone()}
-		}()
+		rr := waitThrottle(t, serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil)))
+		assertEqual(t, http.StatusTooManyRequests, rr.Code)
+		assertEqual(t, "3600", rr.Header().Get("Retry-After"))
 	}
 
-	count429 := 0
-	for range 5 {
-		select {
-		case res := <-results:
-			assertEqual(t, http.StatusTooManyRequests, res.status)
-			assertEqual(t, "3600", res.header.Get("Retry-After"))
-			count429++
-		case <-time.After(2 * time.Second):
-			t.Fatal("timed out waiting for Retry-After rejection")
-		}
+	unblock()
+
+	for _, done := range results {
+		rr := waitThrottle(t, done)
+		assertEqual(t, http.StatusOK, rr.Code)
 	}
-
-	close(release)
-
-	count200 := 0
-	for range 5 {
-		select {
-		case res := <-results:
-			assertEqual(t, http.StatusOK, res.status)
-			count200++
-		case <-time.After(2 * time.Second):
-			t.Fatal("timed out waiting for successful throttled request")
-		}
-	}
-
-	assertEqual(t, 5, count200)
-	assertEqual(t, 5, count429)
 }
 
 func TestThrottleCustomStatusCode(t *testing.T) {
-	const timeout = time.Second * 3
+	started := make(chan struct{}, 1)
+	release := make(chan struct{})
+	unblock := sync.OnceFunc(func() { close(release) })
+	t.Cleanup(unblock)
 
-	wait := make(chan struct{})
-
-	r := chi.NewRouter()
-	r.Use(ThrottleWithOpts(ThrottleOpts{Limit: 1, StatusCode: http.StatusServiceUnavailable}))
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		select {
-		case <-wait:
-		case <-time.After(timeout):
-		}
+	h := ThrottleWithOpts(ThrottleOpts{Limit: 1, StatusCode: http.StatusServiceUnavailable})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		started <- struct{}{}
+		<-release
 		w.WriteHeader(http.StatusOK)
-	})
-	server := httptest.NewServer(r)
-	defer server.Close()
+	}))
 
-	const totalRequestCount = 5
+	occupying := serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil))
+	waitN(t, started, 1)
 
-	codes := make(chan int, totalRequestCount)
-	errs := make(chan error, totalRequestCount)
-	client := &http.Client{Timeout: timeout}
-	for range totalRequestCount {
-		go func() {
-			resp, err := client.Get(server.URL)
-			if err != nil {
-				errs <- err
-				return
-			}
-			io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
-			codes <- resp.StatusCode
-		}()
+	for range 4 {
+		rr := waitThrottle(t, serveThrottle(h, httptest.NewRequest(http.MethodGet, "/", nil)))
+		assertEqual(t, http.StatusServiceUnavailable, rr.Code)
+		assertEqual(t, errCapacityExceeded, strings.TrimSpace(rr.Body.String()))
 	}
-
-	waitResponse := func(wantCode int) {
-		select {
-		case err := <-errs:
-			t.Fatal(err)
-		case code := <-codes:
-			assertEqual(t, wantCode, code)
-		case <-time.After(timeout):
-			t.Fatalf("waiting %d code, timeout exceeded", wantCode)
-		}
-	}
-
-	for range totalRequestCount - 1 {
-		waitResponse(http.StatusServiceUnavailable)
-	}
-	close(wait) // Allow the last request to proceed.
-	waitResponse(http.StatusOK)
+	unblock()
+	assertEqual(t, http.StatusOK, waitThrottle(t, occupying).Code)
 }
 
 func BenchmarkThrottle(b *testing.B) {
