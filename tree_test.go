@@ -335,6 +335,55 @@ func TestTreeRegexp(t *testing.T) {
 	}
 }
 
+func TestTreeRegexpSuffixSlashDelimiter(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub3 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	tr := &node{}
+	tr.InsertRoute(mGET, "/re/{name:[^.]+}.json", hStub1)
+	tr.InsertRoute(mGET, "/re/{cat}/{name:[^.]+}.json", hStub2)
+	tr.InsertRoute(mGET, "/assets/{path:[a-z/]+}.css", hStub3)
+
+	tests := []struct {
+		r string
+		h http.Handler
+		k []string
+		v []string
+	}{
+		{r: "/re/a.json", h: hStub1, k: []string{"name"}, v: []string{"a"}},
+		{r: "/re/a/b.json", h: hStub2, k: []string{"cat", "name"}, v: []string{"a", "b"}},
+		{r: "/re/a/b/c.json", h: nil, k: []string{}, v: []string{}},
+		{r: "/assets/style.css", h: hStub3, k: []string{"path"}, v: []string{"style"}},
+		{r: "/assets/theme/dark.css", h: hStub3, k: []string{"path"}, v: []string{"theme/dark"}},
+		{r: "/assets/theme/dark.js", h: nil, k: []string{}, v: []string{}},
+	}
+
+	for i, tt := range tests {
+		rctx := NewRouteContext()
+
+		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
+
+		var handler http.Handler
+		if methodHandler, ok := handlers[mGET]; ok {
+			handler = methodHandler.handler
+		}
+
+		paramKeys := rctx.routeParams.Keys
+		paramValues := rctx.routeParams.Values
+
+		if fmt.Sprintf("%v", tt.h) != fmt.Sprintf("%v", handler) {
+			t.Errorf("input [%d]: find '%s' expecting handler:%v , got:%v", i, tt.r, tt.h, handler)
+		}
+		if !stringSliceEqual(tt.k, paramKeys) {
+			t.Errorf("input [%d]: find '%s' expecting paramKeys:(%d)%v , got:(%d)%v", i, tt.r, len(tt.k), tt.k, len(paramKeys), paramKeys)
+		}
+		if !stringSliceEqual(tt.v, paramValues) {
+			t.Errorf("input [%d]: find '%s' expecting paramValues:(%d)%v , got:(%d)%v", i, tt.r, len(tt.v), tt.v, len(paramValues), paramValues)
+		}
+	}
+}
+
 func TestTreeRegexpRecursive(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
