@@ -782,12 +782,7 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 		}
 
 		if len(rexpat) > 0 {
-			if rexpat[0] != '^' {
-				rexpat = "^" + rexpat
-			}
-			if rexpat[len(rexpat)-1] != '$' {
-				rexpat += "$"
-			}
+			rexpat = anchorRegexp(rexpat)
 		}
 
 		return nt, key, rexpat, tail, ps, pe
@@ -798,6 +793,28 @@ func patNextSegment(pattern string) (nodeTyp, string, string, byte, int, int) {
 		panic("chi: wildcard '*' must be the last value in a route. trim trailing text or use a '{param}' instead")
 	}
 	return ntCatchAll, "*", "", 0, ws, len(pattern)
+}
+
+// anchorRegexp makes a route param regexp match the whole param value.
+//
+// Prepending '^' and appending '$' is not enough: in `^a|b$` the anchors bind
+// to the outer alternatives only, so the pattern means "starts with a, or ends
+// with b". The source is wrapped in a non-capturing group instead. A leading
+// '^' and a trailing unescaped '$' are dropped first, so that `a`, `^a`, `a$`
+// and `^a$` keep normalizing to the same pattern and share a tree node.
+func anchorRegexp(rexpat string) string {
+	rexpat = strings.TrimPrefix(rexpat, "^")
+	if n := len(rexpat); n > 0 && rexpat[n-1] == '$' {
+		// An odd run of backslashes before it escapes the '$' into a literal.
+		bs := 0
+		for i := n - 2; i >= 0 && rexpat[i] == '\\'; i-- {
+			bs++
+		}
+		if bs%2 == 0 {
+			rexpat = rexpat[:n-1]
+		}
+	}
+	return "^(?:" + rexpat + ")$"
 }
 
 func patParamKeys(pattern string) []string {
