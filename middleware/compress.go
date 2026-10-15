@@ -257,11 +257,37 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 	return nil, "", func() {}
 }
 
+// matchAcceptEncoding reports whether encoding appears in the accepted list
+// with a non-zero quality value.
+//
+// Each element of accepted may contain an optional quality parameter, e.g.
+// "gzip;q=0.8" or "gzip;q=0". Per RFC 9110 section 12.5.3, a quality value
+// of 0 means the encoding is explicitly not acceptable and must be rejected.
+// Matching is done by exact token comparison (not substring) so that, for
+// example, "br" does not accidentally match the encoding "b".
 func matchAcceptEncoding(accepted []string, encoding string) bool {
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
+		v = strings.TrimSpace(v)
+		// Split off any parameters (e.g. ";q=0.5").
+		parts := strings.SplitN(v, ";", 2)
+		token := strings.TrimSpace(parts[0])
+		if token != encoding {
+			continue
+		}
+		// Encoding token matches. Check the quality value if present.
+		if len(parts) == 1 {
+			// No quality parameter; default quality is 1 (acceptable).
 			return true
 		}
+		// Parse the quality parameter.
+		param := strings.TrimSpace(parts[1])
+		if strings.HasPrefix(param, "q=") {
+			q := strings.TrimPrefix(param, "q=")
+			if q == "0" || q == "0.0" || q == "0.00" || q == "0.000" {
+				return false
+			}
+		}
+		return true
 	}
 	return false
 }
