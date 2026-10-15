@@ -45,11 +45,6 @@ var (
 type Context struct {
 	Routes Routes
 
-	// parentCtx is the parent of this one, for using Context as a
-	// context.Context directly. This is an optimization that saves
-	// 1 allocation.
-	parentCtx context.Context
-
 	// Routing path/method override used during the route search.
 	// See Mux#routeHTTP method.
 	RoutePath   string
@@ -92,7 +87,6 @@ func (x *Context) Reset() {
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
 	x.methodsAllowed = x.methodsAllowed[:0]
-	x.parentCtx = nil
 }
 
 // Clone a routing context so that it may be used outside of the request/response
@@ -103,9 +97,6 @@ func (x *Context) Reset() {
 // request, racing with the copy.
 func (x *Context) Clone() *Context {
 	clone := *x
-
-	// Detach from the request's context, which is canceled once the request finishes.
-	clone.parentCtx = nil
 
 	clone.URLParams.Keys = slices.Clone(x.URLParams.Keys)
 	clone.URLParams.Values = slices.Clone(x.URLParams.Values)
