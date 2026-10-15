@@ -21,3 +21,17 @@ func TestCleanPath(t *testing.T) {
 		t.Errorf("clean path: unexpected response code: %v", w.Result().StatusCode)
 	}
 }
+
+func TestCleanPathConnectAuthorityForm(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(CleanPath)
+	r.Connect("/*", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodConnect, "example.com:443", nil)
+	r.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf("clean path CONNECT: unexpected response code: %v", w.Result().StatusCode)
+	}
+}
