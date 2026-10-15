@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"net"
 	"net/http"
 	"strings"
 )
@@ -8,17 +9,24 @@ import (
 // RouteHeaders is a neat little header-based router that allows you to direct
 // the flow of a request through a middleware stack based on a request header.
 //
-// For example, lets say you'd like to setup multiple routers depending on the
-// request Host header, you could then do something as so:
+// Note that the HTTP Host header is promoted to Request.Host by net/http and
+// removed from Request.Header. RouteHeaders handles "Host" specially by reading
+// Request.Host, but for larger host-routing setups the dedicated
+// github.com/go-chi/hostrouter package is often a better fit.
 //
-//	r := chi.NewRouter()
+// For example, let's say you'd like to set up multiple routers depending on the
+// request Host header:
+//
+//	root := chi.NewRouter()
 //	rSubdomain := chi.NewRouter()
-//	r.Use(middleware.RouteHeaders().
-//		Route("Host", "example.com", middleware.New(r)).
+//	hostRouter := chi.NewRouter()
+//	hostRouter.Use(middleware.RouteHeaders().
+//		Route("Host", "example.com", middleware.New(root)).
 //		Route("Host", "*.example.com", middleware.New(rSubdomain)).
 //		Handler)
-//	r.Get("/", h)
+//	root.Get("/", h)
 //	rSubdomain.Get("/", h2)
+//	http.ListenAndServe(":8080", hostRouter)
 //
 // Another example, imagine you want to setup multiple CORS handlers, where for
 // your origin servers you allow authorized requests, but for third-party public
@@ -84,15 +92,23 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 
 		// find first matching header route, and continue
 		for header, matchers := range hr {
-			headerValue := r.Header.Get(header)
+			headerValue := getHeaderValue(r, header)
 			if headerValue == "" {
 				continue
 			}
-			headerValue = strings.ToLower(headerValue)
-			for _, matcher := range matchers {
-				if matcher.IsMatch(headerValue) {
-					matcher.Middleware(next).ServeHTTP(w, r)
-					return
+
+			if matcher, ok := matchHeaderRoute(matchers, headerValue); ok {
+				matcher.Middleware(next).ServeHTTP(w, r)
+				return
+			}
+
+			if header == "host" {
+				host, _, err := net.SplitHostPort(headerValue)
+				if err == nil {
+					if matcher, ok := matchHeaderRoute(matchers, host); ok {
+						matcher.Middleware(next).ServeHTTP(w, r)
+						return
+					}
 				}
 			}
 		}
@@ -105,6 +121,23 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 		}
 		matcher[0].Middleware(next).ServeHTTP(w, r)
 	})
+}
+
+func getHeaderValue(r *http.Request, header string) string {
+	if header == "host" {
+		return r.Host
+	}
+	return r.Header.Get(header)
+}
+
+func matchHeaderRoute(matchers []HeaderRoute, value string) (HeaderRoute, bool) {
+	value = strings.ToLower(value)
+	for _, matcher := range matchers {
+		if matcher.IsMatch(value) {
+			return matcher, true
+		}
+	}
+	return HeaderRoute{}, false
 }
 
 type HeaderRoute struct {
