@@ -286,6 +286,7 @@ func TestTreeRegexp(t *testing.T) {
 	tr.InsertRoute(mGET, "/articles/{id:^[0-9]+}", hStub1)
 	tr.InsertRoute(mGET, "/articles/{id:^[1-9]+}-{aux}", hStub6)
 	tr.InsertRoute(mGET, "/articles/{slug}", hStub2)
+	tr.InsertRoute(mGET, "/test/{UUID:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}-{date}", hStub1)
 
 	// log.Println("~~~~~~~~~")
 	// log.Println("~~~~~~~~~")
@@ -308,6 +309,7 @@ func TestTreeRegexp(t *testing.T) {
 		{r: "/articles/1/run", h: hStub5, k: []string{"op"}, v: []string{"1"}},
 		{r: "/articles/1122", h: hStub1, k: []string{"id"}, v: []string{"1122"}},
 		{r: "/articles/1122-yes", h: hStub6, k: []string{"id", "aux"}, v: []string{"1122", "yes"}},
+		{r: "/test/f9772163-44e7-49b1-9c8c-36b8d023aa6b-2024-01-01", h: hStub1, k: []string{"UUID", "date"}, v: []string{"f9772163-44e7-49b1-9c8c-36b8d023aa6b", "2024-01-01"}},
 	}
 
 	for i, tt := range tests {
