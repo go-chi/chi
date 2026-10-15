@@ -36,7 +36,7 @@ func Recoverer(next http.Handler) http.Handler {
 					PrintPrettyStack(rvr)
 				}
 
-				if r.Header.Get("Connection") != "Upgrade" {
+				if !headerContainsToken(r.Header, "Connection", "upgrade") {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			}
@@ -46,6 +46,17 @@ func Recoverer(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(fn)
+}
+
+func headerContainsToken(h http.Header, key, token string) bool {
+	for _, v := range h.Values(key) {
+		for _, part := range strings.Split(v, ",") {
+			if strings.EqualFold(strings.TrimSpace(part), token) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // for ability to test the PrintPrettyStack function
