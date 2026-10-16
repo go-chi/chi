@@ -1691,6 +1691,44 @@ func TestMuxRegexp3(t *testing.T) {
 	}
 }
 
+// Regression test: https://github.com/go-chi/chi/issues/1188
+// A regexp placeholder is documented never to match "/". When a literal
+// suffix follows the placeholder, the segment-end delimiter chi uses is the
+// first byte of the suffix, not "/", so a permissive user regexp like
+// `[^.]+` could span path segments. Independent of what the user wrote, chi
+// must still refuse to let the placeholder value contain a slash.
+func TestMuxRegexpPlaceholderWithSuffixDoesNotMatchSlash(t *testing.T) {
+	r := NewRouter()
+	r.Get("/re/{name:[^.]+}.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "name=%q", URLParam(r, "name"))
+	})
+	r.Get("/plain/{name}.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "name=%q", URLParam(r, "name"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// Single-segment values still work.
+	if status, body := testRequest(t, ts, "GET", "/re/a.json", nil); status.StatusCode != 200 || body != `name="a"` {
+		t.Fatalf("single-segment regexp: status=%d body=%s", status.StatusCode, body)
+	}
+	if status, body := testRequest(t, ts, "GET", "/plain/a.json", nil); status.StatusCode != 200 || body != `name="a"` {
+		t.Fatalf("single-segment plain: status=%d body=%s", status.StatusCode, body)
+	}
+
+	// A slash inside the placeholder value must 404 for both the regexp and
+	// the plain placeholder. Previously the regexp form returned 200 with
+	// name="a/b".
+	if status, _ := testRequest(t, ts, "GET", "/re/a/b.json", nil); status.StatusCode != 404 {
+		t.Fatalf("regexp placeholder with suffix must not match a slash; got status=%d", status.StatusCode)
+	}
+	if status, _ := testRequest(t, ts, "GET", "/plain/a/b.json", nil); status.StatusCode != 404 {
+		t.Fatalf("plain placeholder with suffix must not match a slash; got status=%d", status.StatusCode)
+	}
+}
+
+
 func TestMuxSubrouterWildcardParam(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "param:%v *:%v", URLParam(r, "param"), URLParam(r, "*"))
