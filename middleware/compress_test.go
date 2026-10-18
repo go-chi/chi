@@ -92,6 +92,24 @@ func TestCompressor(t *testing.T) {
 			acceptedEncodings: []string{"nop, gzip, deflate"},
 			expectedEncoding:  "nop",
 		},
+		{
+			name:              "gzip rejected with q=0 returns no encoding",
+			path:              "/gethtml",
+			acceptedEncodings: []string{"gzip;q=0"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "bgzip does not match gzip",
+			path:              "/gethtml",
+			acceptedEncodings: []string{"bgzip"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "deflate used when gzip rejected with q=0",
+			path:              "/getcss",
+			acceptedEncodings: []string{"gzip;q=0, deflate"},
+			expectedEncoding:  "deflate",
+		},
 	}
 
 	for _, tc := range tests {
@@ -248,4 +266,240 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 	reader.Close()
 
 	return string(respBody)
+}
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{
+			name:     "exact match",
+			accepted: []string{"gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "exact match deflate",
+			accepted: []string{"deflate"},
+			encoding: "deflate",
+			want:     true,
+		},
+		{
+			name:     "exact match identity",
+			accepted: []string{"identity"},
+			encoding: "identity",
+			want:     true,
+		},
+		{
+			name:     "substring prefix false positive br does not match b",
+			accepted: []string{"br"},
+			encoding: "b",
+			want:     false,
+		},
+		{
+			name:     "substring prefix false positive bgzip does not match gzip",
+			accepted: []string{"bgzip"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "substring suffix false positive gzipper does not match gzip",
+			accepted: []string{"gzipper"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "substring match zip does not match gzip",
+			accepted: []string{"gzip"},
+			encoding: "zip",
+			want:     false,
+		},
+		{
+			name:     "q=0 rejected",
+			accepted: []string{"gzip;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0.0 rejected",
+			accepted: []string{"gzip;q=0.0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0.00 rejected",
+			accepted: []string{"gzip;q=0.00"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0.000 rejected",
+			accepted: []string{"gzip;q=0.000"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 with whitespace before semicolon",
+			accepted: []string{"gzip ; q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "q=0 with spaces around equal",
+			accepted: []string{"gzip; q = 0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "uppercase Q=0 rejected",
+			accepted: []string{"gzip;Q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "identity rejected with q=0",
+			accepted: []string{"identity;q=0"},
+			encoding: "identity",
+			want:     false,
+		},
+		{
+			name:     "identity accepted with positive q",
+			accepted: []string{"identity;q=0.5"},
+			encoding: "identity",
+			want:     true,
+		},
+		{
+			name:     "positive q=1 accepted",
+			accepted: []string{"gzip;q=1"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "positive q=1.0 accepted",
+			accepted: []string{"gzip;q=1.0"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "positive q=0.8 accepted",
+			accepted: []string{"gzip;q=0.8"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "positive q=0.5 accepted",
+			accepted: []string{"gzip;q=0.5"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "whitespace around token",
+			accepted: []string{" gzip "},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "multiple encoders in slice first match",
+			accepted: []string{"gzip", "deflate"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "multiple encoders in slice second match",
+			accepted: []string{"deflate", "gzip"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "multiple encoders with rejected first match second",
+			accepted: []string{"gzip;q=0", "deflate"},
+			encoding: "deflate",
+			want:     true,
+		},
+		{
+			name:     "multiple encoders with rejected first queried for first",
+			accepted: []string{"gzip;q=0", "deflate"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "multiple encoders comma-separated in single element match second",
+			accepted: []string{"gzip;q=0, deflate"},
+			encoding: "deflate",
+			want:     true,
+		},
+		{
+			name:     "multiple encoders comma-separated in single element reject first",
+			accepted: []string{"gzip;q=0, deflate"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "case insensitive header token",
+			accepted: []string{"GZIP"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "case insensitive requested encoding",
+			accepted: []string{"gzip"},
+			encoding: "GZIP",
+			want:     true,
+		},
+		{
+			name:     "case insensitive mixed with q-value",
+			accepted: []string{"GzIp;q=0.5"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "multiple parameters with q=0 rejected",
+			accepted: []string{"gzip;level=1;q=0"},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "multiple parameters with positive q accepted",
+			accepted: []string{"gzip;level=1;q=0.8"},
+			encoding: "gzip",
+			want:     true,
+		},
+		{
+			name:     "empty accepted string in slice",
+			accepted: []string{""},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "empty accepted slice",
+			accepted: []string{},
+			encoding: "gzip",
+			want:     false,
+		},
+		{
+			name:     "empty target encoding",
+			accepted: []string{"gzip"},
+			encoding: "",
+			want:     false,
+		},
+		{
+			name:     "whitespace only accepted string",
+			accepted: []string{"   "},
+			encoding: "gzip",
+			want:     false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := matchAcceptEncoding(tc.accepted, tc.encoding)
+			if got != tc.want {
+				t.Errorf("matchAcceptEncoding(%v, %q) = %v, want %v",
+					tc.accepted, tc.encoding, got, tc.want)
+			}
+		})
+	}
 }
