@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // BasicAuth implements a simple middleware handler for adding basic http auth to a route.
@@ -28,6 +29,8 @@ func BasicAuth(realm string, creds map[string]string) func(next http.Handler) ht
 }
 
 func basicAuthFailed(w http.ResponseWriter, realm string) {
+	realm = strings.ReplaceAll(realm, `\`, `\\`)
+	realm = strings.ReplaceAll(realm, `"`, `\"`)
 	w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
 	w.WriteHeader(http.StatusUnauthorized)
 }
