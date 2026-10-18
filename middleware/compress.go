@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"reflect"
 	"strings"
 	"sync"
 )
@@ -238,7 +239,10 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 	for _, name := range c.encodingPrecedence {
 		if matchAcceptEncoding(accepted, name) {
 			if pool, ok := c.pooledEncoders[name]; ok {
-				encoder := pool.Get().(ioResetterWriter)
+				encoder, ok := pool.Get().(ioResetterWriter)
+				if !ok || isNilWriter(encoder) {
+					continue
+				}
 				cleanup := func() {
 					pool.Put(encoder)
 				}
@@ -247,7 +251,9 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 
 			}
 			if fn, ok := c.encoders[name]; ok {
-				return fn(w, c.level), name, func() {}
+				if encoder := fn(w, c.level); !isNilWriter(encoder) {
+					return encoder, name, func() {}
+				}
 			}
 		}
 
@@ -255,6 +261,20 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 
 	// No encoder found to match the accepted encoding
 	return nil, "", func() {}
+}
+
+func isNilWriter(w io.Writer) bool {
+	if w == nil {
+		return true
+	}
+
+	v := reflect.ValueOf(w)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.Slice:
+		return v.IsNil()
+	default:
+		return false
+	}
 }
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
