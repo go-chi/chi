@@ -22,6 +22,12 @@ func (r *readerFromRecorder) ReadFrom(src io.Reader) (int64, error) {
 	return io.Copy(r.ResponseRecorder.Body, src)
 }
 
+type shortWriter struct{}
+
+func (shortWriter) Write(p []byte) (int, error) {
+	return len(p) - 1, nil
+}
+
 func TestWrapResponseWriterStatusWhenFlushed(t *testing.T) {
 	for _, writer := range []struct {
 		name string
@@ -131,6 +137,31 @@ func TestBasicWritesTeesWritesWithoutDiscard(t *testing.T) {
 	assertEqual(t, []byte("hello world"), original.Body.Bytes())
 	assertEqual(t, []byte("hello world"), buf.Bytes())
 	assertEqual(t, 11, wrap.BytesWritten())
+}
+
+func TestBasicWriterReportsShortTeeWrites(t *testing.T) {
+	t.Run("passthrough", func(t *testing.T) {
+		original := httptest.NewRecorder()
+		wrap := &basicWriter{ResponseWriter: original}
+		wrap.Tee(shortWriter{})
+
+		n, err := wrap.Write([]byte("body"))
+
+		assertEqual(t, 4, n)
+		assertEqual(t, io.ErrShortWrite, err)
+		assertEqual(t, "body", original.Body.String())
+	})
+
+	t.Run("discard", func(t *testing.T) {
+		wrap := &basicWriter{ResponseWriter: httptest.NewRecorder()}
+		wrap.Tee(shortWriter{})
+		wrap.Discard()
+
+		n, err := wrap.Write([]byte("body"))
+
+		assertEqual(t, 3, n)
+		assertEqual(t, io.ErrShortWrite, err)
+	})
 }
 
 func TestBasicWriterDiscardsWritesToOriginalResponseWriter(t *testing.T) {
