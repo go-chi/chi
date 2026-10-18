@@ -21,6 +21,9 @@ func CleanPath(next http.Handler) http.Handler {
 				routePath = r.URL.Path
 			}
 			rctx.RoutePath = path.Clean(routePath)
+			// Record whether the routing path is in escaped form, so
+			// captured parameters are decoded exactly once (#832).
+			rctx.RoutePathEscaped = r.URL.RawPath != ""
 		}
 
 		next.ServeHTTP(w, r)

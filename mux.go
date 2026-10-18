@@ -467,6 +467,10 @@ func (mx *Mux) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		if routePath == "" {
 			routePath = "/"
 		}
+		// Remember whether the routing path is in escaped form:
+		// captured parameters are decoded exactly once from an
+		// escaped path, and left as-is from a decoded one (#832).
+		rctx.RoutePathEscaped = r.URL.RawPath != ""
 	}
 
 	// Check if method is supported by chi
