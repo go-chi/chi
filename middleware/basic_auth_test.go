@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"mime"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -10,6 +12,32 @@ import (
 
 var testAuthCreds = map[string]string{
 	"testUser": "testPassword",
+}
+
+func TestBasicAuthRealm(t *testing.T) {
+	for _, realm := range []string{"localhost", "", `private "area"`, `team\\shared`, `team\"shared"`} {
+		t.Run(realm, func(t *testing.T) {
+			handler := BasicAuth(realm, testAuthCreds)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				t.Error("unauthenticated request reached the handler")
+			}))
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/secure", nil))
+			if response.Code != http.StatusUnauthorized {
+				t.Fatalf("status code = %d, want %d", response.Code, http.StatusUnauthorized)
+			}
+			challenge := response.Header().Get("WWW-Authenticate")
+			if !strings.HasPrefix(challenge, "Basic ") {
+				t.Fatalf("invalid challenge scheme: %q", challenge)
+			}
+			_, params, err := mime.ParseMediaType("Basic; " + strings.TrimPrefix(challenge, "Basic "))
+			if err != nil {
+				t.Fatalf("invalid challenge %q: %v", challenge, err)
+			}
+			if got := params["realm"]; got != realm {
+				t.Errorf("realm = %q, want %q", got, realm)
+			}
+		})
+	}
 }
 
 func TestBasicAuth(t *testing.T) {
