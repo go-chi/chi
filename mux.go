@@ -326,10 +326,11 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 		// shift the url path past the previous subrouter
 		rctx.RoutePath = mx.nextRoutePath(rctx)
 
-		// reset the wildcard URLParam which connects the subrouter
+		// drop the wildcard URLParam which connects the subrouter (See issue #827)
 		n := len(rctx.URLParams.Keys) - 1
 		if n >= 0 && rctx.URLParams.Keys[n] == "*" && len(rctx.URLParams.Values) > n {
-			rctx.URLParams.Values[n] = ""
+			rctx.URLParams.Keys = rctx.URLParams.Keys[:n]
+			rctx.URLParams.Values = rctx.URLParams.Values[:n]
 		}
 
 		handler.ServeHTTP(w, r)
