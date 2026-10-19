@@ -63,11 +63,15 @@ func init() {
 // request. A request ID is a string of the form "host.example.com/random-0001",
 // where "random" is a base62 random string that uniquely identifies this go
 // process, and where the last number is an atomically incremented request
-// counter.
+// counter. An existing request ID in the context takes precedence over the
+// request header, so repeated use of this middleware preserves the same ID.
 func RequestID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		requestID := r.Header.Get(RequestIDHeader)
+		requestID := GetReqID(ctx)
+		if requestID == "" {
+			requestID = r.Header.Get(RequestIDHeader)
+		}
 		if requestID == "" {
 			myid := reqid.Add(1)
 			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
