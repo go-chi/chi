@@ -51,7 +51,6 @@ func TestRouteHeaders(t *testing.T) {
 
 		req := httptest.NewRequest("GET", "/", nil)
 		req.Host = "example.com"
-		req.Header.Set("Host", "example.com")
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -77,7 +76,7 @@ func TestRouteHeaders(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Host", "api.example.com")
+		req.Host = "api.example.com"
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -108,7 +107,7 @@ func TestRouteHeaders(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Host", "other.com")
+		req.Host = "other.com"
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -173,7 +172,7 @@ func TestRouteHeaders(t *testing.T) {
 		}))
 
 		req := httptest.NewRequest("GET", "/", nil)
-		req.Header.Set("Host", "other.com")
+		req.Host = "other.com"
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -182,6 +181,35 @@ func TestRouteHeaders(t *testing.T) {
 			t.Error("expected next handler to be called when no match and no default")
 		}
 	})
+}
+
+func TestRouteHeadersHost(t *testing.T) {
+	for _, host := range []string{"example.com", "api.example.com", "other.com"} {
+		t.Run(host, func(t *testing.T) {
+			matched := false
+			handler := RouteHeaders().
+				RouteAny("hOsT", []string{"example.com", "*.example.com"}, func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						matched = true
+						next.ServeHTTP(w, r)
+					})
+				}).
+				Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}))
+
+			req := httptest.NewRequest(http.MethodGet, "http://"+host+"/", nil)
+			// Host is stored separately from Header on incoming server requests.
+			if req.Header.Get("Host") != "" {
+				t.Fatal("unexpected Host entry in request headers")
+			}
+			handler.ServeHTTP(httptest.NewRecorder(), req)
+
+			if want := host != "other.com"; matched != want {
+				t.Errorf("matched = %v, want %v", matched, want)
+			}
+		})
+	}
 }
 
 func TestPattern(t *testing.T) {

@@ -85,6 +85,9 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 		// find first matching header route, and continue
 		for header, matchers := range hr {
 			headerValue := r.Header.Get(header)
+			if header == "host" {
+				headerValue = r.Host
+			}
 			if headerValue == "" {
 				continue
 			}
