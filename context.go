@@ -20,6 +20,21 @@ func URLParamFromCtx(ctx context.Context, key string) string {
 	return ""
 }
 
+// URLParamOK returns the url parameter from a http.Request object, and
+// reports whether a parameter with the given key is present.
+func URLParamOK(r *http.Request, key string) (string, bool) {
+	return URLParamOKFromCtx(r.Context(), key)
+}
+
+// URLParamOKFromCtx returns the url parameter from a http.Request Context,
+// and reports whether a parameter with the given key is present.
+func URLParamOKFromCtx(ctx context.Context, key string) (string, bool) {
+	if rctx := RouteContext(ctx); rctx != nil {
+		return rctx.URLParamOK(key)
+	}
+	return "", false
+}
+
 // RouteContext returns chi's routing Context object from a
 // http.Request Context.
 func RouteContext(ctx context.Context) *Context {
@@ -120,14 +135,26 @@ func (x *Context) Clone() *Context {
 }
 
 // URLParam returns the corresponding URL parameter value from the request
-// routing context.
+// routing context, or "" if a parameter with the given key is not present.
 func (x *Context) URLParam(key string) string {
+	value, _ := x.URLParamOK(key)
+	return value
+}
+
+// URLParamOK returns the corresponding URL parameter value from the request
+// routing context, and reports whether a parameter with the given key is
+// present.
+//
+// Unlike URLParam, it can tell a missing key apart from a parameter whose
+// value is the empty string. For example, the "*" wildcard param is reset
+// to "" while routing into a mounted subrouter.
+func (x *Context) URLParamOK(key string) (value string, ok bool) {
 	for i, k := range slices.Backward(x.URLParams.Keys) {
 		if k == key {
-			return x.URLParams.Values[i]
+			return x.URLParams.Values[i], true
 		}
 	}
-	return ""
+	return "", false
 }
 
 // RoutePattern builds the routing pattern string for the particular
