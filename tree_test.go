@@ -416,6 +416,33 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	}
 }
 
+func TestTreeRegexpDoesNotMatchAcrossPathSegments(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	rctx := NewRouteContext()
+	tr := &node{}
+	tr.InsertRoute(mGET, "/re/{name:[^.]+}.json", hStub1)
+	tr.InsertRoute(mGET, "/bare/{name:[^.]+}", hStub1)
+	tr.InsertRoute(mGET, "/plain/{name}.json", hStub1)
+
+	tests := []struct {
+		expectedHandler http.Handler
+		url             string
+	}{
+		{url: "/re/a.json", expectedHandler: hStub1},
+		{url: "/re/a/b.json", expectedHandler: nil},
+		{url: "/bare/a/b", expectedHandler: nil},
+		{url: "/plain/a/b.json", expectedHandler: nil},
+	}
+
+	for _, tc := range tests {
+		_, _, handler := tr.FindRoute(rctx, mGET, tc.url)
+		if fmt.Sprintf("%v", tc.expectedHandler) != fmt.Sprintf("%v", handler) {
+			t.Errorf("url %v: expecting handler:%v , got:%v", tc.url, tc.expectedHandler, handler)
+		}
+	}
+}
+
 func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
