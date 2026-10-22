@@ -14,16 +14,32 @@ import (
 func StripSlashes(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		var path string
+		rawPath := false
 		rctx := chi.RouteContext(r.Context())
 		if rctx != nil && rctx.RoutePath != "" {
 			path = rctx.RoutePath
+		} else if r.URL.RawPath != "" {
+			// Prefer the raw (escaped) path, the same way CleanPath does:
+			// working from the decoded URL path would split a segment
+			// containing an escaped slash such as %2F into two segments,
+			// and the route would no longer match. See issue #798.
+			path = r.URL.RawPath
+			rawPath = true
 		} else {
 			path = r.URL.Path
 		}
 		if len(path) > 1 && path[len(path)-1] == '/' {
 			newPath := path[:len(path)-1]
 			if rctx == nil {
-				r.URL.Path = newPath
+				if rawPath {
+					// Keep Path and RawPath in sync, stripped of the
+					// same trailing slash: RawPath loses its literal
+					// '/', and the decoded Path ends with that same '/'.
+					r.URL.RawPath = newPath
+					r.URL.Path = r.URL.Path[:len(r.URL.Path)-1]
+				} else {
+					r.URL.Path = newPath
+				}
 			} else {
 				rctx.RoutePath = newPath
 			}
