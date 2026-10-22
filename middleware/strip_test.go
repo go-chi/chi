@@ -327,3 +327,38 @@ func TestRedirectSlashes_PreventBackslashRelativeOpenRedirect(t *testing.T) {
 		})
 	}
 }
+
+func TestStripSlashesWithEscapedSlash(t *testing.T) {
+	r := chi.NewRouter()
+
+	// This middleware must be mounted at the top level of the router, not at the end-handler
+	// because then it'll be too late and will end up in a 404
+	r.Use(StripSlashes)
+
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(404)
+		w.Write([]byte("nothing here"))
+	})
+
+	r.Get("/{name}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(chi.URLParam(r, "name")))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// An escaped slash is part of a single path segment and must not be
+	// treated as a path separator, with or without a trailing slash.
+	// Before the fix, "/abc%2Fefg/" returned 404 because StripSlashes
+	// rewrote the route path from the decoded URL path "/abc/efg/".
+	// See https://github.com/go-chi/chi/issues/798
+	if _, resp := testRequest(t, ts, "GET", "/abc%2Fefg", nil); resp != "abc%2Fefg" {
+		t.Fatalf("got: %q, want: %q", resp, "abc%2Fefg")
+	}
+	if _, resp := testRequest(t, ts, "GET", "/abc%2Fefg/", nil); resp != "abc%2Fefg" {
+		t.Fatalf("got: %q, want: %q", resp, "abc%2Fefg")
+	}
+	if _, resp := testRequest(t, ts, "GET", "/abcefg/", nil); resp != "abcefg" {
+		t.Fatalf("got: %q, want: %q", resp, "abcefg")
+	}
+}
