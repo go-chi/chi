@@ -155,6 +155,72 @@ func TestCompressorDefaultTextTypes(t *testing.T) {
 	}
 }
 
+func TestCompressorRegistrationNormalization(t *testing.T) {
+	t.Run("mixed-case and whitespace custom type", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Use(NewCompressor(5, " Text/HTML ").Handler)
+		r.Get("/html", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte("textstring"))
+		})
+		r.Get("/plain", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.Write([]byte("textstring"))
+		})
+
+		ts := httptest.NewServer(r)
+		defer ts.Close()
+
+		resp, body := testRequestWithAcceptedEncodings(t, ts, "GET", "/html", "gzip")
+		if body != "textstring" {
+			t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", body)
+		}
+		if got := resp.Header.Get("Content-Encoding"); got != "gzip" {
+			t.Errorf("expected encoding %q but got %q", "gzip", got)
+		}
+
+		resp, body = testRequestWithAcceptedEncodings(t, ts, "GET", "/plain", "gzip")
+		if body != "textstring" {
+			t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", body)
+		}
+		if got := resp.Header.Get("Content-Encoding"); got != "" {
+			t.Errorf("expected encoding %q but got %q", "", got)
+		}
+	})
+
+	t.Run("uppercase wildcard", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Use(NewCompressor(5, "TEXT/*").Handler)
+		r.Get("/html", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte("textstring"))
+		})
+		r.Get("/json", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte("textstring"))
+		})
+
+		ts := httptest.NewServer(r)
+		defer ts.Close()
+
+		resp, body := testRequestWithAcceptedEncodings(t, ts, "GET", "/html", "gzip")
+		if body != "textstring" {
+			t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", body)
+		}
+		if got := resp.Header.Get("Content-Encoding"); got != "gzip" {
+			t.Errorf("expected encoding %q but got %q", "gzip", got)
+		}
+
+		resp, body = testRequestWithAcceptedEncodings(t, ts, "GET", "/json", "gzip")
+		if body != "textstring" {
+			t.Errorf("response text doesn't match; expected:%q, got:%q", "textstring", body)
+		}
+		if got := resp.Header.Get("Content-Encoding"); got != "" {
+			t.Errorf("expected encoding %q but got %q", "", got)
+		}
+	})
+}
+
 func TestCompressorWildcards(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -178,6 +244,11 @@ func TestCompressorWildcards(t *testing.T) {
 			recover: "middleware/compress: Unsupported content-type wildcard pattern 'audio/*wav'. Only '<type>/*' supported",
 		},
 		{
+			name:    "invalid wildcard mixed case preserves caller input",
+			types:   []string{"Audio/*WAV"},
+			recover: "middleware/compress: Unsupported content-type wildcard pattern 'Audio/*WAV'. Only '<type>/*' supported",
+		},
+		{
 			name:    "invalid wildcard #2",
 			types:   []string{"application*/*"},
 			recover: "middleware/compress: Unsupported content-type wildcard pattern 'application*/*'. Only '<type>/*' supported",
@@ -198,10 +269,20 @@ func TestCompressorWildcards(t *testing.T) {
 			wcCount: 1,
 		},
 		{
+			name:    "uppercase wildcard",
+			types:   []string{"TEXT/*"},
+			wcCount: 1,
+		},
+		{
 			name:       "mixed",
 			types:      []string{"audio/wav", "text/*"},
 			typesCount: 1,
 			wcCount:    1,
+		},
+		{
+			name:       "mixed-case type with whitespace",
+			types:      []string{" Text/HTML "},
+			typesCount: 1,
 		},
 	}
 	for _, tt := range tests {

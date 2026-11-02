@@ -76,13 +76,14 @@ func NewCompressor(level int, types ...string) *Compressor {
 	allowedWildcards := make(map[string]struct{})
 	if len(types) > 0 {
 		for _, t := range types {
+			orig := t
 			t = strings.ToLower(strings.TrimSpace(t))
 			if strings.Contains(strings.TrimSuffix(t, "/*"), "*") {
-				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '<type>/*' supported", t))
+				panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '<type>/*' supported", orig))
 			}
 			if before, ok := strings.CutSuffix(t, "/*"); ok {
 				if before == "" {
-					panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '<type>/*' supported", t))
+					panic(fmt.Sprintf("middleware/compress: Unsupported content-type wildcard pattern '%s'. Only '<type>/*' supported", orig))
 				}
 				allowedWildcards[before] = struct{}{}
 			} else {
