@@ -106,6 +106,26 @@ func TestReplaceWildcardsConsecutive(t *testing.T) {
 	}
 }
 
+func TestReplaceWildcards(t *testing.T) {
+	for in, want := range map[string]string{
+		"":              "",
+		"/":             "/",
+		"/*":            "/*",
+		"/*/":           "/",
+		"//*//":         "///",
+		"/*/*/":         "/",
+		"/a/*/b/*/c":    "/a/b/c",
+		"/a/*/*/b/*/*":  "/a/b/*",
+		"/a*/*b/":       "/a*/*b/",
+		"/{id:[0-9]*}/": "/{id:[0-9]*}/",
+		"/{a:.*}/*/b":   "/{a:.*}/b",
+	} {
+		if got := replaceWildcards(in); got != want {
+			t.Errorf("replaceWildcards(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestContext_Clone(t *testing.T) {
 	orig := &Context{
 		parentCtx:      context.Background(),

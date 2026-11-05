@@ -161,10 +161,19 @@ func (x *Context) RoutePattern() string {
 // "/*/" with "/". It iteratively runs until no wildcards remain to
 // correctly handle consecutive wildcards.
 func replaceWildcards(p string) string {
-	for strings.Contains(p, "/*/") {
-		p = strings.ReplaceAll(p, "/*/", "/")
+	i := strings.Index(p, "/*/")
+	if i < 0 {
+		return p
 	}
-	return p
+	var b strings.Builder
+	b.Grow(len(p) - 2)
+	for ; i >= 0; i = strings.Index(p, "/*/") {
+		// Remove "/*". The next "/" stays, so "/*/*/" also becomes "/".
+		b.WriteString(p[:i])
+		p = p[i+2:]
+	}
+	b.WriteString(p)
+	return b.String()
 }
 
 // RouteParams is a structure to track URL routing parameters efficiently.
