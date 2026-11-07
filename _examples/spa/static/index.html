@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>chi SPA example</title>
+</head>
+<body>
+  <img src="/images/logo.svg" alt="logo" width="48" height="48">
+  <h1>chi SPA example</h1>
+  <p>Client side route: <code id="route"></code></p>
+  <p>API says: <code id="api">...</code></p>
+  <nav>
+    <a href="/">home</a> |
+    <a href="/about">about</a> |
+    <a href="/images/">images (no directory listing)</a>
+  </nav>
+  <script>
+    // index.html is served for every unknown path, so the route is read from
+    // the URL here, in the browser.
+    document.getElementById("route").textContent = location.pathname;
+    fetch("/api/hello")
+      .then(function (res) { return res.json(); })
+      .then(function (body) { document.getElementById("api").textContent = body.message; });
+  </script>
+</body>
+</html>
