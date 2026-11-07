@@ -1691,6 +1691,61 @@ func TestMuxRegexp3(t *testing.T) {
 	}
 }
 
+func TestMuxRegexpSuffixSlashDelimiter(t *testing.T) {
+	r := NewRouter()
+	r.Get("/re/{name:[^.]+}.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "re: %s", URLParam(r, "name"))
+	})
+	r.Get("/bare/{name:[^.]+}", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "bare: %s", URLParam(r, "name"))
+	})
+	r.Get("/plain/{name}.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "plain: %s", URLParam(r, "name"))
+	})
+	r.Get("/items/{id:[a-z]+}.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "item: %s", URLParam(r, "id"))
+	})
+	r.Get("/items/{category}/{id:[a-z]+}.json", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "categorized: %s/%s", URLParam(r, "category"), URLParam(r, "id"))
+	})
+	r.Get("/assets/{path:[a-z/]+}.css", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "asset: %s", URLParam(r, "path"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if res, body := testRequest(t, ts, "GET", "/re/a.json", nil); res.StatusCode != http.StatusOK || body != "re: a" {
+		t.Fatalf("expected status 200 with 're: a', got %d %q", res.StatusCode, body)
+	}
+	if res, body := testRequest(t, ts, "GET", "/re/a/b.json", nil); res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404 for regexp placeholder spanning slash, got %d %q", res.StatusCode, body)
+	}
+	if res, body := testRequest(t, ts, "GET", "/bare/a/b", nil); res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404 for bare parameter spanning slash, got %d %q", res.StatusCode, body)
+	}
+	if res, body := testRequest(t, ts, "GET", "/plain/a/b.json", nil); res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404 for plain placeholder spanning slash, got %d %q", res.StatusCode, body)
+	}
+
+	if res, body := testRequest(t, ts, "GET", "/items/foo.json", nil); res.StatusCode != http.StatusOK || body != "item: foo" {
+		t.Fatalf("expected status 200 with 'item: foo', got %d %q", res.StatusCode, body)
+	}
+	if res, body := testRequest(t, ts, "GET", "/items/tools/hammer.json", nil); res.StatusCode != http.StatusOK || body != "categorized: tools/hammer" {
+		t.Fatalf("expected status 200 with 'categorized: tools/hammer', got %d %q", res.StatusCode, body)
+	}
+	if res, body := testRequest(t, ts, "GET", "/items/sub/tools/hammer.json", nil); res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404 for multi-segment path exceeding routes, got %d %q", res.StatusCode, body)
+	}
+
+	if res, body := testRequest(t, ts, "GET", "/assets/theme/dark.css", nil); res.StatusCode != http.StatusOK || body != "asset: theme/dark" {
+		t.Fatalf("expected status 200 with 'asset: theme/dark', got %d %q", res.StatusCode, body)
+	}
+	if res, body := testRequest(t, ts, "GET", "/assets/theme/dark.js", nil); res.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected status 404 for wrong extension, got %d %q", res.StatusCode, body)
+	}
+}
+
 func TestMuxSubrouterWildcardParam(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "param:%v *:%v", URLParam(r, "param"), URLParam(r, "*"))
