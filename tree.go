@@ -458,6 +458,16 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					if !xn.rex.MatchString(xsearch[:p]) {
 						continue
 					}
+					// Regexp placeholders are additionally capped at the
+					// path segment: the public URL-patterns contract says
+					// `/` will never match inside a placeholder. Without
+					// this guard, a regexp like `[^.]+` followed by a
+					// literal suffix (e.g. `{name:[^.]+}.json`) can span
+					// path segments because the segment-end delimiter is
+					// the suffix's first byte, not `/`.
+					if strings.IndexByte(xsearch[:p], '/') != -1 {
+						continue
+					}
 				} else if strings.IndexByte(xsearch[:p], '/') != -1 {
 					// avoid a match across path segments
 					continue
