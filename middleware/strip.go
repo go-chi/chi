@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -49,17 +49,25 @@ func RedirectSlashes(next http.Handler) http.Handler {
 		}
 
 		if len(path) > 1 && path[len(path)-1] == '/' {
+			// Reject paths containing C0 control characters or DEL to prevent
+			// open redirect bypasses (e.g., "/%09/evil.com/").
+			if strings.IndexFunc(path, func(r rune) bool {
+				return r < 0x20 || r == 0x7f
+			}) != -1 {
+				http.Error(w, "Bad Request", http.StatusBadRequest)
+				return
+			}
+
 			// Normalize backslashes to forward slashes to prevent "/\evil.com" style redirects
 			// that some clients may interpret as protocol-relative.
 			path = strings.ReplaceAll(path, `\`, `/`)
 
 			// Collapse leading/trailing slashes and force a single leading slash.
-			path := "/" + strings.Trim(path, "/")
+			path = "/" + strings.Trim(path, "/")
 
-			if r.URL.RawQuery != "" {
-				path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
-			}
-			http.Redirect(w, r, path, 301)
+			// Emit a guaranteed same-origin reference via a parsed URL.
+			u := &url.URL{Path: path, RawQuery: r.URL.RawQuery}
+			http.Redirect(w, r, u.String(), 301)
 			return
 		}
 
