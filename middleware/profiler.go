@@ -6,6 +6,7 @@ import (
 	"expvar"
 	"net/http"
 	"net/http/pprof"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -24,10 +25,20 @@ func Profiler() http.Handler {
 	r.Use(NoCache)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, r.RequestURI+"/pprof/", http.StatusMovedPermanently)
+		url := *r.URL
+		url.Path = strings.TrimSuffix(url.Path, "/") + "/pprof/"
+		if url.RawPath != "" {
+			url.RawPath = strings.TrimSuffix(url.RawPath, "/") + "/pprof/"
+		}
+		http.Redirect(w, r, url.String(), http.StatusMovedPermanently)
 	})
 	r.HandleFunc("/pprof", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, r.RequestURI+"/", http.StatusMovedPermanently)
+		url := *r.URL
+		url.Path += "/"
+		if url.RawPath != "" {
+			url.RawPath += "/"
+		}
+		http.Redirect(w, r, url.String(), http.StatusMovedPermanently)
 	})
 
 	r.HandleFunc("/pprof/*", pprof.Index)
