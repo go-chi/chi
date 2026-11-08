@@ -51,7 +51,7 @@ func (hr HeaderRouter) Route(header, match string, middlewareHandler func(next h
 	if k == nil {
 		hr[header] = []HeaderRoute{}
 	}
-	hr[header] = append(hr[header], HeaderRoute{MatchOne: NewPattern(match), Middleware: middlewareHandler})
+	hr[header] = append(hr[header], HeaderRoute{MatchOne: NewPattern(strings.ToLower(match)), Middleware: middlewareHandler})
 	return hr
 }
 
@@ -63,7 +63,7 @@ func (hr HeaderRouter) RouteAny(header string, match []string, middlewareHandler
 	}
 	patterns := []Pattern{}
 	for _, m := range match {
-		patterns = append(patterns, NewPattern(m))
+		patterns = append(patterns, NewPattern(strings.ToLower(m)))
 	}
 	hr[header] = append(hr[header], HeaderRoute{MatchAny: patterns, Middleware: middlewareHandler})
 	return hr

@@ -182,6 +182,27 @@ func TestRouteHeaders(t *testing.T) {
 			t.Error("expected next handler to be called when no match and no default")
 		}
 	})
+
+	t.Run("MixedCaseHeaderPatternMatching", func(t *testing.T) {
+		matched := false
+		routes := RouteHeaders().Route("X-Tier", "Gold", func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				matched = true
+				next.ServeHTTP(w, r)
+			})
+		})
+
+		handler := routes.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Set("X-Tier", "Gold")
+		rec := httptest.NewRecorder()
+
+		handler.ServeHTTP(rec, req)
+
+		if !matched {
+			t.Error("expected RouteHeaders to match mixed-case pattern with mixed-case header value")
+		}
+	})
 }
 
 func TestPattern(t *testing.T) {
