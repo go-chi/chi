@@ -38,7 +38,12 @@ func main() {
 
 	// Trigger graceful shutdown
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Fatal(err)
+		// Forcefully close remaining connections if graceful shutdown fails.
+		if closeError := server.Close(); closeErr != nil {
+			log.Printf("failed to force-close server: %v", closeErr)
+		}
+
+		log.Fatalf("graceful shutdown failed: %v", err)
 	}
 }
 
