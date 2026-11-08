@@ -80,6 +80,59 @@ func TestSupressNotFoundMount(t *testing.T) {
 	}
 }
 
+// SupressNotFound must resolve the method and path the same way the router
+// resolves them when it dispatches, otherwise it rejects requests the router
+// would have served.
+func TestSupressNotFoundResolvesRequestLikeRouter(t *testing.T) {
+	t.Run("raw path", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Use(SupressNotFound(r))
+		r.Get("/files/{id}", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("id=" + chi.URLParam(r, "id")))
+		})
+
+		w := httptest.NewRecorder()
+		// URL.Path is /files/a/b, RawPath is /files/a%2Fb. The router dispatches
+		// on RawPath, so {id} is a%2Fb and the route matches.
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/files/a%2Fb", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+		if got := w.Body.String(); got != "id=a%2Fb" {
+			t.Errorf("body: got %q, want %q", got, "id=a%2Fb")
+		}
+	})
+
+	t.Run("method overridden upstream", func(t *testing.T) {
+		r := chi.NewRouter()
+		// GetHead rewrites HEAD to GET before SupressNotFound runs.
+		r.Use(GetHead)
+		r.Use(SupressNotFound(r))
+		r.Get("/x", func(w http.ResponseWriter, r *http.Request) {})
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodHead, "/x", nil))
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("status: got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("unknown path still suppressed", func(t *testing.T) {
+		r := chi.NewRouter()
+		r.Use(SupressNotFound(r))
+		r.Get("/files/{id}", func(w http.ResponseWriter, r *http.Request) {})
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/files/a/b/c", nil))
+
+		if w.Code != http.StatusNotFound {
+			t.Fatalf("status: got %d, want %d", w.Code, http.StatusNotFound)
+		}
+	})
+}
+
 func TestSupressNotFoundRoutePattern(t *testing.T) {
 	r := chi.NewRouter()
 	r.Use(SupressNotFound(r))
