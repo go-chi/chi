@@ -1691,6 +1691,22 @@ func TestMuxRegexp3(t *testing.T) {
 	}
 }
 
+func TestMuxRegexpSuffixSlash(t *testing.T) {
+	r := NewRouter()
+	r.Get("/re/{name:[^.]+}.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(URLParam(r, "name")))
+	})
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/re/a.json", nil); body != "a" {
+		t.Fatalf("expected 'a', got %q", body)
+	}
+	if resp, _ := testRequest(t, ts, "GET", "/re/a/b.json", nil); resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", resp.StatusCode)
+	}
+}
+
 func TestMuxSubrouterWildcardParam(t *testing.T) {
 	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "param:%v *:%v", URLParam(r, "param"), URLParam(r, "*"))
