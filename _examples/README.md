@@ -10,6 +10,7 @@ chi examples
 * [logging](https://github.com/go-chi/chi/blob/master/_examples/logging/main.go) - Easy structured logging for any backend
 * [rest](https://github.com/go-chi/chi/blob/master/_examples/rest/main.go) - REST APIs made easy, productive and maintainable
 * [router-walk](https://github.com/go-chi/chi/blob/master/_examples/router-walk/main.go) - Print to stdout a router's routes
+* [spa](https://github.com/go-chi/chi/blob/master/_examples/spa/main.go) - Serve an embedded Single Page Application next to a JSON API
 * [todos-resource](https://github.com/go-chi/chi/blob/master/_examples/todos-resource/main.go) - Struct routers/handlers, an example of another code layout style
 * [versions](https://github.com/go-chi/chi/blob/master/_examples/versions/main.go) - Demo of `chi/render` subpkg
 * [pathvalue](https://github.com/go-chi/chi/blob/master/_examples/pathvalue/main.go) - Demonstrates `PathValue` usage for retrieving URL parameters
