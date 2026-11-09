@@ -7,6 +7,7 @@ package chi
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 	"regexp"
 	"slices"
@@ -392,9 +393,27 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) (*node, e
 		return nil, nil, nil
 	}
 
-	// Record the routing params in the request lifecycle
+	// Record the routing params in the request lifecycle. When the
+	// routing path was in escaped form (see Context.RoutePathEscaped),
+	// values are captured escaped, so decode each one exactly once
+	// here: URLParam then always returns decoded values, regardless
+	// of whether RawPath was set (#832), and the decoded values are
+	// also what routeHTTP passes to Request.SetPathValue. When the
+	// routing path was already decoded, values are left as-is, so a
+	// doubly-encoded input such as "%2520" is never decoded twice.
+	// A value that fails to unescape is kept as-is, preserving the
+	// previous behavior for malformed input. routeParams itself is
+	// left untouched: it feeds nextRoutePath for sub-router matching,
+	// which must keep operating on the same form as the routing path.
 	rctx.URLParams.Keys = append(rctx.URLParams.Keys, rctx.routeParams.Keys...)
-	rctx.URLParams.Values = append(rctx.URLParams.Values, rctx.routeParams.Values...)
+	for _, value := range rctx.routeParams.Values {
+		if rctx.RoutePathEscaped {
+			if unescaped, err := url.PathUnescape(value); err == nil {
+				value = unescaped
+			}
+		}
+		rctx.URLParams.Values = append(rctx.URLParams.Values, value)
+	}
 
 	// Record the routing pattern in the request lifecycle
 	if rn.endpoints[method].pattern != "" {

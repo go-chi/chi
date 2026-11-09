@@ -48,11 +48,17 @@ func URLFormat(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		var format string
+		var fromURL bool
 		path := r.URL.Path
 
 		rctx := chi.RouteContext(r.Context())
 		if rctx != nil && rctx.RoutePath != "" {
 			path = rctx.RoutePath
+		} else {
+			// path came from URL.Path (decoded); remember so the
+			// flag below can record that it must not be decoded
+			// again.
+			fromURL = true
 		}
 
 		if strings.Index(path, ".") > 0 {
@@ -65,6 +71,12 @@ func URLFormat(next http.Handler) http.Handler {
 
 				if rctx != nil {
 					rctx.RoutePath = path[:idx]
+					if fromURL {
+						// RoutePath came from the decoded URL
+						// path, so captured parameters must not
+						// be decoded again (#832).
+						rctx.RoutePathEscaped = false
+					}
 				}
 			}
 		}

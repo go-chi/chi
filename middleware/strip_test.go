@@ -327,3 +327,23 @@ func TestRedirectSlashes_PreventBackslashRelativeOpenRedirect(t *testing.T) {
 		})
 	}
 }
+
+func TestStripSlashesURLParamDecoded(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(StripSlashes)
+	r.Get("/{key}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(chi.URLParam(r, "key")))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// StripSlashes derives the routing path from the decoded URL path,
+	// so the parameter must not be decoded again (#832).
+	if _, resp := testRequest(t, ts, "GET", "/It's%20great/", nil); resp != "It's great" {
+		t.Errorf("StripSlashes + encoded param: got %q, want %q", resp, "It's great")
+	}
+	if _, resp := testRequest(t, ts, "GET", "/my%2520data/", nil); resp != "my%20data" {
+		t.Errorf("StripSlashes + doubly-encoded param: got %q, want %q", resp, "my%20data")
+	}
+}

@@ -18,6 +18,10 @@ func GetHead(next http.Handler) http.Handler {
 				} else {
 					routePath = r.URL.Path
 				}
+				// Record whether the routing path is in escaped
+				// form, so captured parameters are decoded
+				// exactly once (#832).
+				rctx.RoutePathEscaped = r.URL.RawPath != ""
 			}
 
 			// Temporary routing context to look-ahead before routing the request
