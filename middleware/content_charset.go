@@ -12,8 +12,9 @@ import (
 // Requests without a body (ContentLength == 0) are always allowed.
 // Quoted charset values, such as charset="UTF-8", are accepted.
 func ContentCharset(charsets ...string) func(next http.Handler) http.Handler {
+	allowed := make([]string, len(charsets))
 	for i, c := range charsets {
-		charsets[i] = strings.ToLower(c)
+		allowed[i] = strings.TrimSpace(strings.ToLower(c))
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -23,7 +24,7 @@ func ContentCharset(charsets ...string) func(next http.Handler) http.Handler {
 				return
 			}
 
-			if !contentEncoding(r.Header.Get("Content-Type"), charsets...) {
+			if !contentEncoding(r.Header.Get("Content-Type"), allowed...) {
 				w.WriteHeader(http.StatusUnsupportedMediaType)
 				return
 			}

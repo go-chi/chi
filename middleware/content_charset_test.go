@@ -181,6 +181,10 @@ func TestContentCharsetMediaParameters(t *testing.T) {
 		{"unquoted control", `text/plain; charset=UTF-8`, []string{"UTF-8"}, http.StatusAccepted},
 		{"missing header control", "", []string{"UTF-8", ""}, http.StatusAccepted},
 		{"no allowed charset", `text/plain; charset="utf-8"`, nil, http.StatusUnsupportedMediaType},
+		{"whitespace in allowed charset", "text/plain; charset=utf-8", []string{" UTF-8 "}, http.StatusAccepted},
+		{"whitespace in allowed charset with quoted value", `text/plain; charset="UTF-8"`, []string{" UTF-8 "}, http.StatusAccepted},
+		{"whitespace-only allowed entry permits missing charset", "text/plain", []string{"UTF-8", " "}, http.StatusAccepted},
+		{"whitespace-only allowed entry does not permit mismatching charset", "text/plain; charset=latin-1", []string{"UTF-8", " "}, http.StatusUnsupportedMediaType},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -214,5 +218,14 @@ func TestContentCharsetMediaParameters(t *testing.T) {
 				t.Errorf("handler called = %t, want %t", called, want)
 			}
 		})
+	}
+}
+
+func TestContentCharsetImmutability(t *testing.T) {
+	t.Parallel()
+	input := []string{"UTF-8", "ISO-8859-1"}
+	_ = ContentCharset(input...)
+	if input[0] != "UTF-8" || input[1] != "ISO-8859-1" {
+		t.Errorf("ContentCharset mutated input slice: got %v, want [UTF-8 ISO-8859-1]", input)
 	}
 }
