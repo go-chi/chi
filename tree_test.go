@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"slices"
 	"testing"
+	"time"
 )
 
 func TestTree(t *testing.T) {
@@ -709,5 +711,48 @@ func TestWalkMiddlewaresAcrossGroupAndRoute(t *testing.T) {
 		if gotMws := got[route]; !slices.Equal(gotMws, wantMws) {
 			t.Fatalf("%s: expected middlewares %v, got %v", route, wantMws, gotMws)
 		}
+	}
+}
+
+// A recovered panic on duplicate param keys must leave the mux usable:
+// ServeHTTP returns 404 instead of hanging, and a later valid route still matches.
+func TestInsertDuplicateParamKeysLeavesTreeUsable(t *testing.T) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	r := NewRouter()
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Fatal("expected panic on duplicate param key")
+			}
+		}()
+		// 25× "{}" + "0": leftover tree hung findRoute before the fix.
+		r.Get("/{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}0", h)
+	}()
+
+	done := make(chan int, 1)
+	go func() {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/{", nil)
+		r.ServeHTTP(rr, req)
+		done <- rr.Code
+	}()
+	select {
+	case code := <-done:
+		if code != http.StatusNotFound {
+			t.Fatalf("status=%d, want 404", code)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("ServeHTTP hung after recovered duplicate-param panic")
+	}
+
+	r.Get("/ok", h)
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/ok", nil)
+	r.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("valid route after failed insert: status=%d, want 200", rr.Code)
 	}
 }
