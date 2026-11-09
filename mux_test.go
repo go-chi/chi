@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -1510,6 +1511,119 @@ func TestMountingSimilarPattern(t *testing.T) {
 
 	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
 		t.Fatal(body)
+	}
+}
+
+// TestMountURLParams ensures that mounting a sub-router (directly or via
+// Route, which mounts internally) does not leak the parent's internal
+// wildcard entry ("*") into the exported URLParams of the request context.
+// A wildcard legitimately defined by the sub-router itself must be kept
+// with its value. See https://github.com/go-chi/chi/issues/827.
+func TestMountURLParams(t *testing.T) {
+	dumpParams := func(w http.ResponseWriter, r *http.Request) {
+		urlParams := RouteContext(r.Context()).URLParams
+		if len(urlParams.Keys) != len(urlParams.Values) {
+			t.Errorf("URLParams keys/values out of sync: %d keys, %d values",
+				len(urlParams.Keys), len(urlParams.Values))
+		}
+		var pairs []string
+		for i, key := range urlParams.Keys {
+			pairs = append(pairs, fmt.Sprintf("%s=%s", key, urlParams.Values[i]))
+		}
+		w.Write([]byte(strings.Join(pairs, ",")))
+	}
+
+	tests := []struct {
+		name string
+		mux  func() *Mux
+		path string
+		want string
+	}{
+		{
+			name: "simple mount",
+			mux: func() *Mux {
+				r := NewRouter()
+				r.Get("/{id}", dumpParams)
+				base := NewRouter()
+				base.Mount("/base", r)
+				return base
+			},
+			path: "/base/123",
+			want: "id=123",
+		},
+		{
+			name: "nested mounts",
+			mux: func() *Mux {
+				inner := NewRouter()
+				inner.Get("/{id}", dumpParams)
+				mid := NewRouter()
+				mid.Mount("/b", inner)
+				base := NewRouter()
+				base.Mount("/a", mid)
+				return base
+			},
+			path: "/a/b/123",
+			want: "id=123",
+		},
+		{
+			name: "route with params",
+			mux: func() *Mux {
+				base := NewRouter()
+				base.Route("/users/{uid}", func(r Router) {
+					r.Get("/{id}", dumpParams)
+				})
+				return base
+			},
+			path: "/users/42/123",
+			want: "uid=42,id=123",
+		},
+		{
+			name: "mount under route",
+			mux: func() *Mux {
+				sr := NewRouter()
+				sr.Get("/{id}", dumpParams)
+				base := NewRouter()
+				base.Route("/users/{uid}", func(r Router) {
+					r.Mount("/", sr)
+				})
+				return base
+			},
+			path: "/users/42/123",
+			want: "uid=42,id=123",
+		},
+		{
+			name: "subrouter wildcard",
+			mux: func() *Mux {
+				r := NewRouter()
+				r.Get("/files/*", dumpParams)
+				base := NewRouter()
+				base.Mount("/static", r)
+				return base
+			},
+			path: "/static/files/css/site.css",
+			want: "*=css/site.css",
+		},
+		{
+			name: "no mount",
+			mux: func() *Mux {
+				base := NewRouter()
+				base.Get("/{id}", dumpParams)
+				return base
+			},
+			path: "/123",
+			want: "id=123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ts := httptest.NewServer(tt.mux())
+			defer ts.Close()
+
+			if _, body := testRequest(t, ts, "GET", tt.path, nil); body != tt.want {
+				t.Fatalf("expected %q, got: %q", tt.want, body)
+			}
+		})
 	}
 }
 
