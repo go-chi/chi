@@ -80,3 +80,85 @@ func TestContentType(t *testing.T) {
 		})
 	}
 }
+
+func TestSetHeader(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		headers    [][2]string
+		wantHeader map[string]string
+	}{
+		{
+			name: "single response header",
+			headers: [][2]string{
+				{"X-Custom-Header", "my-value"},
+			},
+			wantHeader: map[string]string{
+				"X-Custom-Header": "my-value",
+			},
+		},
+		{
+			name: "multiple chained headers",
+			headers: [][2]string{
+				{"X-Service-Name", "api-gateway"},
+				{"X-Environment", "production"},
+			},
+			wantHeader: map[string]string{
+				"X-Service-Name": "api-gateway",
+				"X-Environment":  "production",
+			},
+		},
+		{
+			name: "override existing header value",
+			headers: [][2]string{
+				{"X-Version", "v1"},
+				{"X-Version", "v2"},
+			},
+			wantHeader: map[string]string{
+				"X-Version": "v2",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := chi.NewRouter()
+			for _, h := range tt.headers {
+				r.Use(SetHeader(h[0], h[1]))
+			}
+
+			handlerExecuted := false
+			r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+				handlerExecuted = true
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte("ok"))
+			})
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/test", nil)
+			r.ServeHTTP(rec, req)
+
+			if !handlerExecuted {
+				t.Errorf("expected inner handler to be executed")
+			}
+
+			if rec.Code != http.StatusOK {
+				t.Errorf("status code = %d, want %d", rec.Code, http.StatusOK)
+			}
+
+			if rec.Body.String() != "ok" {
+				t.Errorf("body = %q, want %q", rec.Body.String(), "ok")
+			}
+
+			for k, want := range tt.wantHeader {
+				if got := rec.Header().Get(k); got != want {
+					t.Errorf("header %q = %q, want %q", k, got, want)
+				}
+			}
+		})
+	}
+}
