@@ -2,6 +2,7 @@ package chi
 
 import (
 	"context"
+	"strings"
 	"testing"
 )
 
@@ -95,15 +96,46 @@ func TestRoutePattern(t *testing.T) {
 	}
 }
 
-// TestReplaceWildcardsConsecutive ensures multiple consecutive wildcards are
-// collapsed into a single slash.
-func TestReplaceWildcardsConsecutive(t *testing.T) {
-	if p := replaceWildcards("/foo/*/*/*/bar"); p != "/foo/bar" {
-		t.Fatalf("unexpected wildcard replacement: %s", p)
+func TestReplaceWildcards(t *testing.T) {
+	for in, want := range map[string]string{
+		"":                 "",
+		"/":                "/",
+		"/*":               "/*",
+		"/*/":              "/",
+		"//*//":            "///",
+		"/*/*/":            "/",
+		"/a/*/b/*/c":       "/a/b/c",
+		"/a/*/*/b/*/*":     "/a/b/*",
+		"/a*/*b/":          "/a*/*b/",
+		"/{id:[0-9]*}/":    "/{id:[0-9]*}/",
+		"/{a:.*}/*/b":      "/{a:.*}/b",
+		"/foo/*/*/*/bar":   "/foo/bar",
+		"/foo/*/*/*/bar/*": "/foo/bar/*",
+	} {
+		if got := replaceWildcards(in); got != want {
+			t.Errorf("replaceWildcards(%q) = %q, want %q", in, got, want)
+		}
 	}
-	if p := replaceWildcards("/foo/*/*/*/bar/*"); p != "/foo/bar/*" {
-		t.Fatalf("unexpected trailing wildcard behavior: %s", p)
+}
+
+// replaceWildcardsLoop is the old replaceWildcards. FuzzReplaceWildcards
+// uses it as a reference.
+func replaceWildcardsLoop(p string) string {
+	for strings.Contains(p, "/*/") {
+		p = strings.ReplaceAll(p, "/*/", "/")
 	}
+	return p
+}
+
+func FuzzReplaceWildcards(f *testing.F) {
+	for _, s := range []string{"", "/*/", "/*/*/", "//*//", "/a/*/*/b/*/*", "/{a:.*}/*/b"} {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, p string) {
+		if got, want := replaceWildcards(p), replaceWildcardsLoop(p); got != want {
+			t.Fatalf("replaceWildcards(%q) = %q, want %q", p, got, want)
+		}
+	})
 }
 
 func TestContext_Clone(t *testing.T) {
