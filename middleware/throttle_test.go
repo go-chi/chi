@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,74 @@ import (
 )
 
 var testContent = []byte("Hello world!")
+
+func TestThrottleAlreadyCanceled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		deadline   bool
+		statusCode int
+	}{
+		{name: "canceled", statusCode: http.StatusTooManyRequests},
+		{name: "deadline", deadline: true, statusCode: http.StatusTooManyRequests},
+		{name: "custom-status", statusCode: http.StatusServiceUnavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var ctx context.Context
+			var cancel context.CancelFunc
+			if tc.deadline {
+				ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+			} else {
+				ctx, cancel = context.WithCancel(context.Background())
+			}
+			cancel()
+
+			calls, retries := 0, 0
+			handler := ThrottleWithOpts(ThrottleOpts{
+				Limit:          1,
+				BacklogLimit:   1,
+				BacklogTimeout: time.Second,
+				StatusCode:     tc.statusCode,
+				RetryAfterFn: func(ctxDone bool) time.Duration {
+					retries++
+					if !ctxDone {
+						t.Error("expected cancellation retry path")
+					}
+					return 2 * time.Second
+				},
+			})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				w.WriteHeader(http.StatusNoContent)
+			}))
+
+			// Both cancellation and an admission token are ready. A select alone
+			// can choose the token, so exercise admission repeatedly.
+			for range 100 {
+				rec := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx)
+				handler.ServeHTTP(rec, req)
+				if rec.Code != tc.statusCode {
+					t.Errorf("status = %d, want %d", rec.Code, tc.statusCode)
+				}
+				if got := strings.TrimSpace(rec.Body.String()); got != errContextCanceled {
+					t.Errorf("body = %q, want %q", got, errContextCanceled)
+				}
+				if got := rec.Header().Get("Retry-After"); got != "2" {
+					t.Errorf("Retry-After = %q, want 2", got)
+				}
+			}
+			if calls != 0 || retries != 100 {
+				t.Errorf("handler calls = %d, retries = %d, want 0, 100", calls, retries)
+			}
+
+			// Rejected requests must leave capacity available for a live request.
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+			if calls != 1 || rec.Code != http.StatusNoContent || retries != 100 {
+				t.Errorf("live request: calls = %d, status = %d, retries = %d", calls, rec.Code, retries)
+			}
+		})
+	}
+}
 
 func TestThrottleBacklog(t *testing.T) {
 	r := chi.NewRouter()

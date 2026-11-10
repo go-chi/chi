@@ -77,6 +77,13 @@ func ThrottleWithOpts(opts ThrottleOpts) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
+			// A select can choose an available token even when Done is ready.
+			// Reject requests that were canceled before admission first.
+			if ctx.Err() != nil {
+				t.setRetryAfterHeaderIfNeeded(w, true)
+				http.Error(w, errContextCanceled, t.statusCode)
+				return
+			}
 
 			select {
 
