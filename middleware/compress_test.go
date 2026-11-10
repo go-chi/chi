@@ -13,6 +13,33 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{name: "exact token", accepted: []string{"gzip"}, encoding: "gzip", want: true},
+		{name: "quality parameter", accepted: []string{"gzip;q=0.5"}, encoding: "gzip", want: true},
+		{name: "zero quality", accepted: []string{"gzip;q=0"}, encoding: "gzip"},
+		{name: "zero decimal quality", accepted: []string{"gzip; q=0.000"}, encoding: "gzip"},
+		{name: "substring prefix", accepted: []string{"bgzip"}, encoding: "gzip"},
+		{name: "substring suffix", accepted: []string{"br"}, encoding: "b"},
+		{name: "trimmed token", accepted: []string{" gzip ; q=1 "}, encoding: "gzip", want: true},
+		{name: "case insensitive token", accepted: []string{"GZIP"}, encoding: "gzip", want: true},
+		{name: "invalid quality", accepted: []string{"gzip;q=invalid"}, encoding: "gzip"},
+		{name: "quality above one", accepted: []string{"gzip;q=1.1"}, encoding: "gzip"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := matchAcceptEncoding(tt.accepted, tt.encoding); got != tt.want {
+				t.Fatalf("matchAcceptEncoding(%q, %q) = %t, want %t", tt.accepted, tt.encoding, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCompressor(t *testing.T) {
 	r := chi.NewRouter()
 
