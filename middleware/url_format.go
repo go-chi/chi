@@ -55,17 +55,15 @@ func URLFormat(next http.Handler) http.Handler {
 			path = rctx.RoutePath
 		}
 
-		if strings.Index(path, ".") > 0 {
-			base := strings.LastIndex(path, "/")
-			idx := strings.LastIndex(path[base:], ".")
+		base := strings.LastIndex(path, "/") + 1
+		idx := strings.LastIndex(path[base:], ".")
 
-			if idx > 0 {
-				idx += base
-				format = path[idx+1:]
+		if idx > 0 {
+			idx += base
+			format = path[idx+1:]
 
-				if rctx != nil {
-					rctx.RoutePath = path[:idx]
-				}
+			if rctx != nil {
+				rctx.RoutePath = path[:idx]
 			}
 		}
 
