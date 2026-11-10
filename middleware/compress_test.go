@@ -110,7 +110,7 @@ func TestCompressor(t *testing.T) {
 }
 
 func TestCompressorDefaultTextTypes(t *testing.T) {
-	for _, contentType := range []string{"text/markdown", "text/csv", "text/vtt"} {
+	for _, contentType := range []string{"text/markdown", "text/csv", "text/vtt", "application/xml", "text/xml"} {
 		t.Run(contentType, func(t *testing.T) {
 			r := chi.NewRouter()
 			r.Use(Compress(5))
