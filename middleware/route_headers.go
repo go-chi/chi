@@ -8,6 +8,11 @@ import (
 // RouteHeaders is a neat little header-based router that allows you to direct
 // the flow of a request through a middleware stack based on a request header.
 //
+// The special header name "Host" is matched against the request's Host
+// (net/http populates r.Host for inbound requests and does not place the Host
+// header in r.Header), so a Route("Host", "example.com", mw) entry is applied
+// as documented. All other header names are matched against r.Header.
+//
 // For example, lets say you'd like to setup multiple routers depending on the
 // request Host header, you could then do something as so:
 //
@@ -84,7 +89,14 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 
 		// find first matching header route, and continue
 		for header, matchers := range hr {
-			headerValue := r.Header.Get(header)
+			var headerValue string
+			if header == "host" {
+				// net/http promotes the inbound Host header to r.Host and
+				// omits it from r.Header, so it must be read from r.Host.
+				headerValue = r.Host
+			} else {
+				headerValue = r.Header.Get(header)
+			}
 			if headerValue == "" {
 				continue
 			}
