@@ -416,6 +416,99 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	}
 }
 
+func TestTreeRegexMatchWholeParamWithAlternation(t *testing.T) {
+	hStub := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	tr := &node{}
+	tr.InsertRoute(mGET, "/alt/{x:a|b}", hStub)
+	tr.InsertRoute(mGET, "/data.{format:json|xml}", hStub)
+	tr.InsertRoute(mGET, "/anchored/{x:^a|b$}", hStub)
+	tr.InsertRoute(mGET, "/dollar/{x:a\\$}", hStub)
+
+	tests := []struct {
+		url   string
+		match bool
+	}{
+		{url: "/alt/a", match: true},
+		{url: "/alt/b", match: true},
+		{url: "/alt/ab", match: false},
+		{url: "/alt/cb", match: false},
+		{url: "/data.json", match: true},
+		{url: "/data.xml", match: true},
+		{url: "/data.jsonx", match: false},
+		{url: "/data.xjson", match: false},
+		{url: "/anchored/a", match: true},
+		{url: "/anchored/b", match: true},
+		{url: "/anchored/ab", match: false},
+		{url: "/dollar/a$", match: true},
+		{url: "/dollar/a$x", match: false},
+	}
+
+	for _, tc := range tests {
+		_, _, handler := tr.FindRoute(NewRouteContext(), mGET, tc.url)
+		if got := handler != nil; got != tc.match {
+			t.Errorf("url %v: expecting match:%v, got:%v", tc.url, tc.match, got)
+		}
+	}
+}
+
+func TestAnchorRegexp(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{in: "[0-9]+", want: "^(?:[0-9]+)$"},
+		{in: "^[0-9]+", want: "^(?:[0-9]+)$"},
+		{in: "[0-9]+$", want: "^(?:[0-9]+)$"},
+		{in: "^[0-9]+$", want: "^(?:[0-9]+)$"},
+		{in: "a|b", want: "^(?:a|b)$"},
+		{in: "^a|b$", want: "^(?:a|b)$"},
+		{in: `a\$`, want: `^(?:a\$)$`},     // escaped: a literal '$'
+		{in: `a\\$`, want: `^(?:a\\)$`},    // escaped backslash, then the anchor
+		{in: `a\\\$`, want: `^(?:a\\\$)$`}, // escaped backslash, then a literal '$'
+		{in: "^", want: "^(?:)$"},
+		{in: "$", want: "^(?:)$"},
+	}
+	for _, tc := range tests {
+		if got := anchorRegexp(tc.in); got != tc.want {
+			t.Errorf("anchorRegexp(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestTreeRegexEquivalentAnchorsShareANode(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	// Spelling the anchors out or not is the same regexp: both routes must
+	// land on one node, as they did before the whole-value wrapping. Lookups
+	// alone cannot tell, since FindRoute falls through to a sibling node.
+	tr := &node{}
+	tr.InsertRoute(mGET, "/n/{id:[0-9]+}", hStub1)
+	tr.InsertRoute(mPOST, "/n/{id:^[0-9]+$}", hStub2)
+
+	var countRegexpNodes func(n *node) int
+	countRegexpNodes = func(n *node) int {
+		count := 0
+		for _, children := range n.children {
+			for _, child := range children {
+				if child.typ == ntRegexp {
+					count++
+				}
+				count += countRegexpNodes(child)
+			}
+		}
+		return count
+	}
+	if got := countRegexpNodes(tr); got != 1 {
+		t.Errorf("expecting 1 regexp node, got %d", got)
+	}
+
+	for m, want := range map[methodTyp]http.Handler{mGET: hStub1, mPOST: hStub2} {
+		_, _, handler := tr.FindRoute(NewRouteContext(), m, "/n/42")
+		if fmt.Sprintf("%v", want) != fmt.Sprintf("%v", handler) {
+			t.Errorf("method %v: expecting handler:%v, got:%v", m, want, handler)
+		}
+	}
+}
+
 func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
