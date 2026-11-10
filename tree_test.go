@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"slices"
 	"testing"
+	"time"
 )
 
 func TestTree(t *testing.T) {
@@ -709,5 +711,47 @@ func TestWalkMiddlewaresAcrossGroupAndRoute(t *testing.T) {
 		if gotMws := got[route]; !slices.Equal(gotMws, wantMws) {
 			t.Fatalf("%s: expected middlewares %v, got %v", route, wantMws, gotMws)
 		}
+	}
+}
+
+// TestInsertRoutePanicLeavesTreeClean guards against a regression where a
+// malformed route pattern panics partway through insertion and leaves a
+// partially-built node chain in the tree. Such a poisoned chain made
+// subsequent route lookups backtrack exponentially (algorithmic DoS): a
+// 2-byte request like "/{" could take ~17s on some malformed patterns.
+func TestInsertRoutePanicLeavesTreeClean(t *testing.T) {
+	// Malformed pattern: duplicate empty param keys. InsertRoute must panic
+	// before mutating the tree (validated up front in InsertRoute).
+	malformed := "/{" + "}{}{}{}{}{}{}{}{}{}{\r\r\r\r\r\r\r}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}{}" + "}"
+	mux := NewRouter()
+
+	mux.Get("/ok", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Fatalf("expected InsertRoute to panic on malformed pattern %q", malformed)
+			}
+		}()
+		mux.Get(malformed, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+	}()
+
+	start := time.Now()
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/{", nil)
+	mux.ServeHTTP(rr, req)
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("routing %q after a panicking insertion is pathologically slow: %v", "/{", elapsed)
+	}
+
+	rr2 := httptest.NewRecorder()
+	req2 := httptest.NewRequest(http.MethodGet, "http://localhost/ok", nil)
+	mux.ServeHTTP(rr2, req2)
+	if rr2.Code != http.StatusOK {
+		t.Fatalf("valid route no longer matches after panicking insertion: got code %d", rr2.Code)
 	}
 }
