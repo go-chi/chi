@@ -906,8 +906,7 @@ func walk(r Routes, walkFn WalkFunc, parentRoute string, parentMw ...func(http.H
 				continue
 			}
 
-			fullRoute := parentRoute + route.Pattern
-			fullRoute = strings.ReplaceAll(fullRoute, "/*/", "/")
+			fullRoute := replaceWildcards(parentRoute + route.Pattern)
 
 			if chain, ok := handler.(*ChainHandler); ok {
 				if err := walkFn(method, fullRoute, chain.Endpoint, append(mws, chain.Middlewares...)...); err != nil {

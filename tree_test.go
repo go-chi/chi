@@ -605,6 +605,73 @@ func TestWalkRouteWithHandlerAndSubrouter(t *testing.T) {
 	}
 }
 
+func TestWalkConsecutiveSubrouterWildcards(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {}
+
+	tests := []struct {
+		name     string
+		setup    func() Router
+		expected []string
+	}{
+		{
+			name: "Route(/) inside a mounted router",
+			setup: func() Router {
+				resources := NewRouter()
+				resources.Route("/", func(r Router) {
+					r.Get("/{resource_id}", handler)
+				})
+				r := NewRouter()
+				r.Route("/v1", func(r Router) {
+					r.Mount("/resources", resources)
+				})
+				return r
+			},
+			expected: []string{"GET /v1/resources/{resource_id}"},
+		},
+		{
+			name: "Mount(/) inside Mount(/)",
+			setup: func() Router {
+				sub2 := NewRouter()
+				sub2.Get("/x", handler)
+				sub1 := NewRouter()
+				sub1.Mount("/", sub2)
+				r := NewRouter()
+				r.Mount("/", sub1)
+				return r
+			},
+			expected: []string{"GET /x"},
+		},
+		{
+			name: "trailing catch-all is kept",
+			setup: func() Router {
+				r := NewRouter()
+				r.Route("/a", func(r Router) {
+					r.Route("/", func(r Router) {
+						r.Get("/files/*", handler)
+					})
+				})
+				return r
+			},
+			expected: []string{"GET /a/files/*"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var routes []string
+			if err := Walk(tt.setup(), func(method, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+				routes = append(routes, method+" "+route)
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(routes, tt.expected) {
+				t.Fatalf("expected Walk to report %v, got %v", tt.expected, routes)
+			}
+		})
+	}
+}
+
 // https://github.com/go-chi/chi/issues/830
 //
 // Routes() must not leak the synthetic stub handler Mount() installs on
