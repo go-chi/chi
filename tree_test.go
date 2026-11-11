@@ -416,6 +416,29 @@ func TestTreeRegexMatchWholeParam(t *testing.T) {
 	}
 }
 
+func TestTreeRegexpEmptyParam(t *testing.T) {
+	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	// Neither [0-9]+ nor .+ can match an empty segment, so neither route
+	// matches - and it makes no difference which of them was added last.
+	for _, numericFirst := range []bool{false, true} {
+		rctx := NewRouteContext()
+		tr := &node{}
+		if numericFirst {
+			tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
+			tr.InsertRoute(mGET, "/{x:.+}/foo", hStub1)
+		} else {
+			tr.InsertRoute(mGET, "/{x:.+}/foo", hStub1)
+			tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
+		}
+
+		_, _, handler := tr.FindRoute(rctx, mGET, "//foo")
+		if handler != nil {
+			t.Errorf("numericFirst=%v: url //foo: expecting no handler, got:%v", numericFirst, handler)
+		}
+	}
+}
+
 func TestTreeFindPattern(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 	hStub2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
