@@ -1642,11 +1642,68 @@ func TestMuxRegexp2(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	if _, body := testRequest(t, ts, "GET", "/foo-.json", nil); body != "" {
+	// [a-z]{2,3} needs two or three letters, so an empty suffix does not
+	// match the route.
+	if _, body := testRequest(t, ts, "GET", "/foo-.json", nil); body != "404 page not found\n" {
 		t.Fatal(body)
 	}
 	if _, body := testRequest(t, ts, "GET", "/foo-abc.json", nil); body != "abc" {
 		t.Fatal(body)
+	}
+}
+
+func TestMuxRegexpEmptySegment(t *testing.T) {
+	// A regexp that cannot match an empty string does not match an empty
+	// segment - and which route is registered next to it does not change
+	// that.
+	for _, numericFirst := range []bool{false, true} {
+		r := NewRouter()
+		numeric := func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("numeric:" + URLParam(r, "a")))
+		}
+		param := func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("param:" + URLParam(r, "a")))
+		}
+		if numericFirst {
+			r.Get("/mix/{a:[0-9]+}/end", numeric)
+			r.Get("/mix/{a}/end", param)
+		} else {
+			r.Get("/mix/{a}/end", param)
+			r.Get("/mix/{a:[0-9]+}/end", numeric)
+		}
+
+		ts := httptest.NewServer(r)
+
+		// [0-9]+ needs at least one digit, so the empty segment does not
+		// match it. The plain param route matches it, with an empty value.
+		if _, body := testRequest(t, ts, "GET", "/mix//end", nil); body != "param:" {
+			t.Fatalf("numericFirst=%v: %s", numericFirst, body)
+		}
+		if _, body := testRequest(t, ts, "GET", "/mix/1/end", nil); body != "numeric:1" {
+			t.Fatalf("numericFirst=%v: %s", numericFirst, body)
+		}
+		ts.Close()
+	}
+}
+
+func TestMuxRegexpEmptySegmentWithoutParam(t *testing.T) {
+	// With no plain param route to fall back on, an empty segment is not
+	// routed at all.
+	r := NewRouter()
+	r.Get("/{x:[a-z]+}/foo", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("dot-plus"))
+	})
+	r.Get("/{y:[0-9]+}/bar", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("digits"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	for _, path := range []string{"//foo", "//bar"} {
+		if _, body := testRequest(t, ts, "GET", path, nil); body != "404 page not found\n" {
+			t.Fatalf("%s: %s", path, body)
+		}
 	}
 }
 

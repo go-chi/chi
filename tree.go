@@ -440,6 +440,13 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 			}
 
 			// serially loop through each node grouped by the tail delimiter
+			//
+			// The node the loop ends on may have been skipped: its tail is
+			// not in the path, or its regexp does not match the value. Falling
+			// through with it would match the rest of the path against a node
+			// that never matched, so keep the last node that did and leave xn
+			// nil when there was none.
+			var accepted *node
 			for _, xn = range nds {
 				// label for param nodes is the delimiter byte
 				p := strings.IndexByte(xsearch, xn.tail)
@@ -450,8 +457,6 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					} else {
 						continue
 					}
-				} else if ntyp == ntRegexp && p == 0 {
-					continue
 				}
 
 				if ntyp == ntRegexp && xn.rex != nil {
@@ -462,6 +467,8 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 					// avoid a match across path segments
 					continue
 				}
+
+				accepted = xn
 
 				prevlen := len(rctx.routeParams.Values)
 				rctx.routeParams.Values = append(rctx.routeParams.Values, xsearch[:p])
@@ -500,6 +507,11 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
 				xsearch = search
 			}
+
+			if accepted == nil {
+				continue
+			}
+			xn = accepted
 
 			rctx.routeParams.Values = append(rctx.routeParams.Values, "")
 
