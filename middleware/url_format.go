@@ -48,11 +48,15 @@ func URLFormat(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		var format string
+		// Match routeHTTP: use RawPath when set so encoded slashes in the
+		// last segment stay encoded while the format suffix is stripped.
 		path := r.URL.Path
-
 		rctx := chi.RouteContext(r.Context())
-		if rctx != nil && rctx.RoutePath != "" {
+		switch {
+		case rctx != nil && rctx.RoutePath != "":
 			path = rctx.RoutePath
+		case r.URL.RawPath != "":
+			path = r.URL.RawPath
 		}
 
 		if strings.Index(path, ".") > 0 {
