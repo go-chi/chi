@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 )
 
@@ -83,7 +84,17 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 		}
 
 		// find first matching header route, and continue
-		for header, matchers := range hr {
+		// Sort header keys to ensure deterministic iteration order.
+		// Go maps iterate in random order, which can cause non-deterministic
+		// routing when multiple header routes could match the same request.
+		headers := make([]string, 0, len(hr))
+		for header := range hr {
+			headers = append(headers, header)
+		}
+		sort.Strings(headers)
+
+		for _, header := range headers {
+			matchers := hr[header]
 			headerValue := r.Header.Get(header)
 			if headerValue == "" {
 				continue
