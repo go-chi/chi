@@ -1,6 +1,15 @@
 package chi
 
-import "net/http"
+import (
+	"net/http"
+	"reflect"
+	"sync"
+)
+
+// pointerMiddlewareHandlers records pointer-typed http.Handler values returned
+// by middleware factories. A singleton that stores next on itself is reused
+// across Group() chains and silently misroutes (see #995); panic instead.
+var pointerMiddlewareHandlers sync.Map
 
 // Chain returns a Middlewares type from a slice of middleware handlers.
 func Chain(middlewares ...func(http.Handler) http.Handler) Middlewares {
@@ -41,9 +50,22 @@ func chain(middlewares []func(http.Handler) http.Handler, endpoint http.Handler)
 
 	// Wrap the end handler with the middleware chain
 	h := middlewares[len(middlewares)-1](endpoint)
+	rememberMiddlewareHandler(h)
 	for i := len(middlewares) - 2; i >= 0; i-- {
 		h = middlewares[i](h)
+		rememberMiddlewareHandler(h)
 	}
 
 	return h
+}
+
+func rememberMiddlewareHandler(h http.Handler) {
+	v := reflect.ValueOf(h)
+	if v.Kind() != reflect.Ptr || v.IsNil() {
+		return
+	}
+	id := v.Pointer()
+	if _, loaded := pointerMiddlewareHandlers.LoadOrStore(id, struct{}{}); loaded {
+		panic("chi: middleware returned the same http.Handler instance more than once; return a new handler each call (do not store next on a singleton)")
+	}
 }
