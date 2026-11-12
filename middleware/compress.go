@@ -355,6 +355,10 @@ type compressFlusher interface {
 }
 
 func (cw *compressResponseWriter) Flush() {
+	if !cw.wroteHeader {
+		cw.WriteHeader(http.StatusOK)
+	}
+
 	if f, ok := cw.writer().(http.Flusher); ok {
 		f.Flush()
 	}
