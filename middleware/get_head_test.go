@@ -64,3 +64,36 @@ func TestGetHead(t *testing.T) {
 		t.Fatalf("expecting X-User header '-' but got '%s'", req.Header.Get("X-User"))
 	}
 }
+
+func TestGetHeadAllowHeader(t *testing.T) {
+	r := chi.NewRouter()
+	r.Use(GetHead)
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hi"))
+	})
+	r.Post("/only-post", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("posted"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	resp, _ := testRequest(t, ts, "POST", "/hi", nil)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("status=%d want 405", resp.StatusCode)
+	}
+	if !allowHasMethod(resp.Header, http.MethodGet) || !allowHasMethod(resp.Header, http.MethodHead) {
+		t.Fatalf("Allow=%v want GET and HEAD", resp.Header.Values("Allow"))
+	}
+
+	resp, _ = testRequest(t, ts, "PUT", "/only-post", nil)
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Fatalf("status=%d want 405", resp.StatusCode)
+	}
+	if !allowHasMethod(resp.Header, http.MethodPost) {
+		t.Fatalf("Allow=%v want POST", resp.Header.Values("Allow"))
+	}
+	if allowHasMethod(resp.Header, http.MethodHead) {
+		t.Fatalf("Allow=%v should not include HEAD without GET", resp.Header.Values("Allow"))
+	}
+}
