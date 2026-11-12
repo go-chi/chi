@@ -92,6 +92,24 @@ func TestCompressor(t *testing.T) {
 			acceptedEncodings: []string{"nop, gzip, deflate"},
 			expectedEncoding:  "nop",
 		},
+		{
+			name:              "gzip q=0 is not acceptable",
+			path:              "/gethtml",
+			acceptedEncodings: []string{"gzip;q=0"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "bgzip does not match gzip",
+			path:              "/gethtml",
+			acceptedEncodings: []string{"bgzip"},
+			expectedEncoding:  "",
+		},
+		{
+			name:              "deflate used when gzip q=0",
+			path:              "/getcss",
+			acceptedEncodings: []string{"gzip;q=0, deflate"},
+			expectedEncoding:  "deflate",
+		},
 	}
 
 	for _, tc := range tests {
@@ -198,6 +216,34 @@ func TestCompressorWildcards(t *testing.T) {
 			}
 			if len(compressor.allowedWildcards) != tt.wcCount {
 				t.Errorf("expected %d allowedWildcards, got %d", tt.wcCount, len(compressor.allowedWildcards))
+			}
+		})
+	}
+}
+
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{[]string{"gzip"}, "gzip", true},
+		{[]string{" gzip "}, "gzip", true},
+		{[]string{"gzip;q=1"}, "gzip", true},
+		{[]string{"gzip;q=0.8"}, "gzip", true},
+		{[]string{"gzip;q=0"}, "gzip", false},
+		{[]string{"gzip;q=0.0"}, "gzip", false},
+		{[]string{"gzip; q=0"}, "gzip", false},
+		{[]string{"br"}, "b", false},
+		{[]string{"bgzip"}, "gzip", false},
+		{[]string{"gzipper"}, "gzip", false},
+		{[]string{"deflate", "gzip;q=0"}, "gzip", false},
+		{[]string{"GZIP"}, "gzip", true},
+	}
+	for _, tt := range tests {
+		t.Run(strings.Join(tt.accepted, ",")+"/"+tt.encoding, func(t *testing.T) {
+			if got := matchAcceptEncoding(tt.accepted, tt.encoding); got != tt.want {
+				t.Errorf("matchAcceptEncoding(%q, %q) = %v, want %v", tt.accepted, tt.encoding, got, tt.want)
 			}
 		})
 	}
