@@ -34,6 +34,10 @@ const (
 var mALL = mCONNECT | mDELETE | mGET | mHEAD |
 	mOPTIONS | mPATCH | mPOST | mPUT | mQUERY | mTRACE
 
+// mANY is the key of the endpoint a route shares between all the methods it
+// serves. It is no method's bit, so unlike mALL it never changes.
+const mANY methodTyp = 0
+
 // methodQuery is the HTTP QUERY method (RFC 10008), a safe, idempotent
 // method that conveys a request body. It is defined here until net/http
 // provides an equivalent constant, at which point this is a 1-1 swap.
@@ -134,6 +138,44 @@ type endpoint struct {
 
 	// parameter keys recorded on handler nodes
 	paramKeys []string
+
+	// methods is set only on the endpoint shared under mANY: the methods it
+	// serves, which are those registered when it was set
+	methods methodTyp
+}
+
+// get returns the endpoint for method, or else the shared one if it serves
+// method.
+func (s endpoints) get(method methodTyp) *endpoint {
+	if e, ok := s[method]; ok {
+		return e
+	}
+	if e := s[mANY]; e != nil && e.methods&method != 0 {
+		return e
+	}
+	return nil
+}
+
+// allowMethods records every method s serves as allowed in rctx.
+func (s endpoints) allowMethods(rctx *Context) {
+	allow := func(mt methodTyp) {
+		if !slices.Contains(rctx.methodsAllowed, mt) {
+			rctx.methodsAllowed = append(rctx.methodsAllowed, mt)
+		}
+	}
+	for mt, e := range s {
+		switch mt {
+		case mSTUB:
+		case mANY:
+			for _, m := range methodMap {
+				if e.methods&m != 0 {
+					allow(m)
+				}
+			}
+		default:
+			allow(mt)
+		}
+	}
 }
 
 func (s endpoints) Value(method methodTyp) *endpoint {
@@ -362,16 +404,18 @@ func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern strin
 		n.endpoints.Value(mSTUB).handler = handler
 	}
 	if method&mALL == mALL {
-		h := n.endpoints.Value(mALL)
+		// A single endpoint serves every method; get falls back to it. Like a
+		// registration for each method, it replaces their earlier handlers.
+		for m := range n.endpoints {
+			if m != mSTUB && m != mANY {
+				delete(n.endpoints, m)
+			}
+		}
+		h := n.endpoints.Value(mANY)
 		h.handler = handler
 		h.pattern = pattern
 		h.paramKeys = paramKeys
-		for _, m := range methodMap {
-			h := n.endpoints.Value(m)
-			h.handler = handler
-			h.pattern = pattern
-			h.paramKeys = paramKeys
-		}
+		h.methods = mALL
 	} else {
 		h := n.endpoints.Value(method)
 		h.handler = handler
@@ -397,12 +441,13 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) (*node, e
 	rctx.URLParams.Values = append(rctx.URLParams.Values, rctx.routeParams.Values...)
 
 	// Record the routing pattern in the request lifecycle
-	if rn.endpoints[method].pattern != "" {
-		rctx.routePattern = rn.endpoints[method].pattern
+	e := rn.endpoints.get(method)
+	if e.pattern != "" {
+		rctx.routePattern = e.pattern
 		rctx.RoutePatterns = append(rctx.RoutePatterns, rctx.routePattern)
 	}
 
-	return rn, rn.endpoints, rn.endpoints[method].handler
+	return rn, rn.endpoints, e.handler
 }
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
@@ -469,20 +514,13 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 
 				if len(xsearch) == 0 {
 					if xn.isLeaf() {
-						h := xn.endpoints[method]
+						h := xn.endpoints.get(method)
 						if h != nil && h.handler != nil {
 							rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 							return xn
 						}
 
-						for endpoints := range xn.endpoints {
-							if endpoints == mALL || endpoints == mSTUB {
-								continue
-							}
-							if !slices.Contains(rctx.methodsAllowed, endpoints) {
-								rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
-							}
-						}
+						xn.endpoints.allowMethods(rctx)
 
 						// flag that the routing context found a route, but not a corresponding
 						// supported method
@@ -517,20 +555,13 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 		// did we find it yet?
 		if len(xsearch) == 0 {
 			if xn.isLeaf() {
-				h := xn.endpoints[method]
+				h := xn.endpoints.get(method)
 				if h != nil && h.handler != nil {
 					rctx.routeParams.Keys = append(rctx.routeParams.Keys, h.paramKeys...)
 					return xn
 				}
 
-				for endpoints := range xn.endpoints {
-					if endpoints == mALL || endpoints == mSTUB {
-						continue
-					}
-					if !slices.Contains(rctx.methodsAllowed, endpoints) {
-						rctx.methodsAllowed = append(rctx.methodsAllowed, endpoints)
-					}
-				}
+				xn.endpoints.allowMethods(rctx)
 
 				// flag that the routing context found a route, but not a corresponding
 				// supported method
@@ -640,12 +671,12 @@ func (n *node) routes() []Route {
 			stubHandler = eps[mSTUB].handler
 		}
 
-		// Group methodHandlers by unique patterns
+		// Group methodHandlers by unique patterns, each method under the
+		// endpoint that serves it.
 		pats := make(map[string]endpoints)
-
-		for mt, h := range eps {
-			if h.pattern == "" {
-				continue
+		group := func(mt methodTyp, h *endpoint) {
+			if h == nil || h.pattern == "" {
+				return
 			}
 			p, ok := pats[h.pattern]
 			if !ok {
@@ -654,25 +685,28 @@ func (n *node) routes() []Route {
 			}
 			p[mt] = h
 		}
+		for _, mt := range methodMap {
+			group(mt, eps.get(mt))
+		}
+		group(mANY, eps[mANY])
 
 		for p, mh := range pats {
 			hs := make(map[string]http.Handler)
 
 			// Walk() reads Handlers["*"] for With() middleware when recursing
 			// into a subroute, so keep it there even if it's also the stub.
-			if mh[mALL] != nil && mh[mALL].handler != nil {
-				if subroutes != nil || !equalHandlers(mh[mALL].handler, stubHandler) {
-					hs["*"] = mh[mALL].handler
+			if mh[mANY] != nil && mh[mANY].handler != nil {
+				if subroutes != nil || !equalHandlers(mh[mANY].handler, stubHandler) {
+					hs["*"] = mh[mANY].handler
 				}
 			}
 
-			for mt, h := range mh {
-				if h.handler == nil || equalHandlers(h.handler, stubHandler) {
+			for m, mt := range methodMap {
+				h := mh[mt]
+				if h == nil || h.handler == nil || equalHandlers(h.handler, stubHandler) {
 					continue
 				}
-				if m, ok := reverseMethodMap[mt]; ok {
-					hs[m] = h.handler
-				}
+				hs[m] = h.handler
 			}
 
 			// Keep subroute nodes so Walk() can recurse; a stub-only leaf has nothing to report.

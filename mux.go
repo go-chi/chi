@@ -390,7 +390,7 @@ func (mx *Mux) Find(rctx *Context, method, path string) string {
 
 	if node != nil {
 		if node.subroutes == nil {
-			e := node.endpoints[m]
+			e := node.endpoints.get(m)
 			return e.pattern
 		}
 
