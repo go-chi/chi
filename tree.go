@@ -434,8 +434,9 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 			xsearch = xsearch[len(xn.prefix):]
 
 		case ntParam, ntRegexp:
-			// short-circuit and return no matching route for empty param values
-			if xsearch == "" {
+			// Plain params cannot match an empty value; let regular expressions
+			// decide whether an empty value is valid.
+			if xsearch == "" && ntyp == ntParam {
 				continue
 			}
 
@@ -499,6 +500,11 @@ func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
 				// not found on this branch, reset vars
 				rctx.routeParams.Values = rctx.routeParams.Values[:prevlen]
 				xsearch = search
+			}
+
+			// A rejected empty regexp must not fall through to generic handling.
+			if xsearch == "" {
+				continue
 			}
 
 			rctx.routeParams.Values = append(rctx.routeParams.Values, "")

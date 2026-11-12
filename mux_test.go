@@ -1650,6 +1650,22 @@ func TestMuxRegexp2(t *testing.T) {
 	}
 }
 
+func TestMuxRegexpOptionalSuffix(t *testing.T) {
+	r := NewRouter()
+	r.Get("/v1/resource/done{:(^$|.json)}", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("matched"))
+	})
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/v1/resource/done", nil); body != "matched" {
+		t.Fatal(body)
+	}
+	if _, body := testRequest(t, ts, "GET", "/v1/resource/done.json", nil); body != "matched" {
+		t.Fatal(body)
+	}
+}
+
 func TestMuxRegexp3(t *testing.T) {
 	r := NewRouter()
 	r.Get("/one/{firstId:[a-z0-9-]+}/{secondId:[a-z]+}/first", func(w http.ResponseWriter, r *http.Request) {
