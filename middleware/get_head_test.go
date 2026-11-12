@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -62,5 +63,9 @@ func TestGetHead(t *testing.T) {
 	}
 	if req, body := testRequest(t, ts, "HEAD", "/users/1", nil); body != "" || req.Header.Get("X-User") != "-" {
 		t.Fatalf("expecting X-User header '-' but got '%s'", req.Header.Get("X-User"))
+	}
+
+	if req, body := testRequestNoRedirect(t, ts, "POST", "/articles/1", nil); body != "" || strings.Join(req.Header["Allow"], ", ") != "GET, HEAD" {
+		t.Fatalf("expecting Allow header 'GET, HEAD' but got '%s'", req.Header.Get("Allow"))
 	}
 }
