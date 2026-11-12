@@ -249,3 +249,32 @@ func decodeResponseBody(t *testing.T, resp *http.Response) string {
 
 	return string(respBody)
 }
+
+func TestCompressorEarlyHints(t *testing.T) {
+	for _, explicitStatus := range []bool{false, true} {
+		t.Run(fmt.Sprintf("explicit-status-%t", explicitStatus), func(t *testing.T) {
+			handler := Compress(5)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Link", "</style.css>; rel=preload; as=style")
+				w.WriteHeader(http.StatusEarlyHints)
+				w.Header().Set("Content-Type", "text/plain")
+				if explicitStatus {
+					w.WriteHeader(http.StatusOK)
+				}
+				w.Write([]byte("compressed after early hints"))
+			}))
+			server := httptest.NewServer(handler)
+			defer server.Close()
+
+			resp, body := testRequestWithAcceptedEncodings(t, server, "GET", "/", "gzip")
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("status = %d, want 200", resp.StatusCode)
+			}
+			if got := resp.Header.Get("Content-Encoding"); got != "gzip" {
+				t.Errorf("Content-Encoding = %q, want gzip", got)
+			}
+			if body != "compressed after early hints" {
+				t.Errorf("unexpected decoded body: %q", body)
+			}
+		})
+	}
+}
