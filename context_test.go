@@ -153,3 +153,38 @@ func TestContext_Clone(t *testing.T) {
 		t.Fatalf("clone parentCtx should be detached, got %v", clone.parentCtx)
 	}
 }
+
+func TestContext_URLParamOK(t *testing.T) {
+	x := &Context{
+		URLParams: RouteParams{
+			Keys:   []string{"foo", "empty", "foo"},
+			Values: []string{"bar", "", "baz"},
+		},
+	}
+
+	tests := []struct {
+		key       string
+		wantValue string
+		wantOK    bool
+	}{
+		{key: "foo", wantValue: "baz", wantOK: true}, // last added value wins
+		{key: "empty", wantValue: "", wantOK: true},  // present, but empty
+		{key: "missing", wantValue: "", wantOK: false},
+	}
+
+	for _, tt := range tests {
+		value, ok := x.URLParamOK(tt.key)
+		if value != tt.wantValue || ok != tt.wantOK {
+			t.Fatalf("URLParamOK(%q) = %q, %t; want %q, %t", tt.key, value, ok, tt.wantValue, tt.wantOK)
+		}
+		if v := x.URLParam(tt.key); v != tt.wantValue {
+			t.Fatalf("URLParam(%q) = %q; want %q", tt.key, v, tt.wantValue)
+		}
+	}
+}
+
+func TestURLParamOKFromCtxNoRouteContext(t *testing.T) {
+	if value, ok := URLParamOKFromCtx(context.Background(), "foo"); value != "" || ok {
+		t.Fatalf("URLParamOKFromCtx without a route context = %q, %t; want \"\", false", value, ok)
+	}
+}

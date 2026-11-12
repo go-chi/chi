@@ -1723,6 +1723,34 @@ func TestMuxSubrouterWildcardParam(t *testing.T) {
 	}
 }
 
+// TestMuxURLParamOKSubrouterWildcard ensures URLParamOK distinguishes a key
+// that is not present from a param whose value is the empty string, which
+// occurs for the "*" wildcard while routing into a mounted subrouter.
+func TestMuxURLParamOKSubrouterWildcard(t *testing.T) {
+	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		val, ok := URLParamOK(r, "*")
+		fmt.Fprintf(w, "*:%q/%t", val, ok)
+	})
+
+	r := NewRouter()
+	r.Get("/bare/{param}", h)
+	r.Route("/case0", func(r Router) {
+		r.Get("/{param}", h)
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	// "*" was never set for a non-mounted route.
+	if _, body := testRequest(t, ts, "GET", "/bare/hi", nil); body != `*:""/false` {
+		t.Fatal(body)
+	}
+	// The mount reset the "*" wildcard to "", yet the param is still present.
+	if _, body := testRequest(t, ts, "GET", "/case0/hi", nil); body != `*:""/true` {
+		t.Fatal(body)
+	}
+}
+
 func TestMuxContextIsThreadSafe(t *testing.T) {
 	router := NewRouter()
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
