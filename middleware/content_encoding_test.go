@@ -50,8 +50,18 @@ func TestContentEncodingMiddleware(t *testing.T) {
 			expectedStatus: 200,
 		},
 		{
+			name:           "Support for deflate and gzip encoding",
+			encodings:      []string{"deflate, gzip"},
+			expectedStatus: 200,
+		},
+		{
 			name:           "No support for deflate and br encoding",
 			encodings:      []string{"deflate", "br"},
+			expectedStatus: 415,
+		},
+		{
+			name:           "No support for deflate and br encoding",
+			encodings:      []string{"deflate, br"},
 			expectedStatus: 415,
 		},
 	}
