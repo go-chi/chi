@@ -29,11 +29,69 @@ func GetHead(next http.Handler) http.Handler {
 			if !rctx.Routes.Match(tctx, "HEAD", routePath) {
 				rctx.RouteMethod = "GET"
 				rctx.RoutePath = routePath
-				next.ServeHTTP(w, r)
+				next.ServeHTTP(newGetHeadAllowWriter(w), r)
 				return
 			}
 		}
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(newGetHeadAllowWriter(w), r)
 	})
+}
+
+// getHeadAllowWriter ensures that when GetHead is enabled, 405 Allow headers
+// that advertise GET also advertise HEAD, since GetHead makes HEAD available
+// via the GET handler.
+type getHeadAllowWriter struct {
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func newGetHeadAllowWriter(w http.ResponseWriter) http.ResponseWriter {
+	return &getHeadAllowWriter{ResponseWriter: w}
+}
+
+func (w *getHeadAllowWriter) WriteHeader(statusCode int) {
+	if !w.wroteHeader {
+		w.ensureHeadAllowed()
+		w.wroteHeader = true
+	}
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
+func (w *getHeadAllowWriter) Write(b []byte) (int, error) {
+	if !w.wroteHeader {
+		w.ensureHeadAllowed()
+		w.wroteHeader = true
+	}
+	return w.ResponseWriter.Write(b)
+}
+
+func (w *getHeadAllowWriter) Flush() {
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+func (w *getHeadAllowWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+func (w *getHeadAllowWriter) ensureHeadAllowed() {
+	allows := w.Header().Values("Allow")
+	if len(allows) == 0 {
+		return
+	}
+
+	hasGET, hasHEAD := false, false
+	for _, method := range allows {
+		switch method {
+		case http.MethodGet:
+			hasGET = true
+		case http.MethodHead:
+			hasHEAD = true
+		}
+	}
+	if hasGET && !hasHEAD {
+		w.Header().Add("Allow", http.MethodHead)
+	}
 }
