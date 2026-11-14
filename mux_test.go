@@ -2159,3 +2159,47 @@ func BenchmarkMux(b *testing.B) {
 		})
 	}
 }
+
+func TestMuxParamValueContainingTailDelimiter(t *testing.T) {
+	tests := []struct {
+		name    string
+		pattern string
+		path    string
+		params  map[string]string
+	}{
+		{"plain param, value without delimiter", "/{name}.json", "/test.json", map[string]string{"name": "test"}},
+		{"plain param, value containing delimiter", "/{name}.json", "/1.0.json", map[string]string{"name": "1.0"}},
+		{"plain param, value containing delimiter twice", "/{name}.json", "/v1.2.3.json", map[string]string{"name": "v1.2.3"}},
+		{"regexp param, value without delimiter", "/{param:.+}.json", "/param.json", map[string]string{"param": "param"}},
+		{"regexp param, value containing dots", "/{param:.+}.json", "/param.with.dots.json", map[string]string{"param": "param.with.dots"}},
+		{"two params keep first-delimiter split", "/articles/files/{file}.{ext}", "/articles/files/photos.tar.gz", map[string]string{"file": "photos", "ext": "tar.gz"}},
+		{"two params, simple value", "/articles/files/{file}.{ext}", "/articles/files/report.pdf", map[string]string{"file": "report", "ext": "pdf"}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := NewRouter()
+			r.Get(tc.pattern, func(w http.ResponseWriter, req *http.Request) {
+				for k, want := range tc.params {
+					if got := URLParam(req, k); got != want {
+						t.Errorf("URLParam(%q) = %q, want %q", k, got, want)
+					}
+				}
+				w.WriteHeader(http.StatusOK)
+			})
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tc.path, nil))
+			if rec.Code != http.StatusOK {
+				t.Errorf("GET %s: status = %d, want 200", tc.path, rec.Code)
+			}
+		})
+	}
+
+	// A path whose suffix never matches must still 404.
+	r := NewRouter()
+	r.Get("/{name}.json", func(w http.ResponseWriter, req *http.Request) { w.WriteHeader(http.StatusOK) })
+	rec := httptest.NewRecorder()
+	r.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/1.0.xml", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("GET /1.0.xml: status = %d, want 404", rec.Code)
+	}
+}
