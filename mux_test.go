@@ -550,6 +550,67 @@ func TestMuxMethodNotAllowedAfterMount(t *testing.T) {
 	}
 }
 
+func TestMuxInlineMethodNotAllowed(t *testing.T) {
+	// middleware with request context, used to distinguish which middleware called handler
+	setValue := func(key string) func(http.Handler) http.Handler {
+		return func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				r = r.WithContext(context.WithValue(r.Context(), ctxKey{key}, key))
+				next.ServeHTTP(w, r)
+			})
+		}
+	}
+
+	r := NewRouter()
+	r.Use(setValue("mw"))
+	r.Get("/hi", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bye"))
+	})
+	r.With(setValue("inline")).MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		mw := r.Context().Value(ctxKey{"mw"})
+		caller := r.Context().Value(ctxKey{"inline"})
+		w.WriteHeader(405)
+		w.Write([]byte(fmt.Sprintf("root 405 %v %v", mw, caller)))
+	})
+
+	sr1 := NewRouter()
+	sr1.Get("/sub", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub"))
+	})
+	sr1.Group(func(sr1 Router) {
+		sr1.Use(setValue("mw2"))
+		sr1.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+			mw2 := r.Context().Value(ctxKey{"mw2"})
+			w.WriteHeader(405)
+			w.Write([]byte(fmt.Sprintf("sub 405 %v", mw2)))
+		})
+	})
+
+	sr2 := NewRouter()
+	sr2.Get("/sub", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub2"))
+	})
+
+	r.Mount("/admin1", sr1)
+	r.Mount("/admin2", sr2)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "GET", "/hi", nil); body != "bye" {
+		t.Fatalf("got '%s'", body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/hi", nil); body != "root 405 mw inline" {
+		t.Fatalf("got '%s'", body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/admin1/sub", nil); body != "sub 405 mw2" {
+		t.Fatalf("got '%s'", body)
+	}
+	if _, body := testRequest(t, ts, "PUT", "/admin2/sub", nil); body != "root 405 mw inline" {
+		t.Fatalf("got '%s'", body)
+	}
+}
+
 func TestMuxComplicatedNotFound(t *testing.T) {
 	decorateRouter := func(r *Mux) {
 		// Root router with groups
