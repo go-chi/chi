@@ -498,6 +498,58 @@ func TestMuxNestedMethodNotAllowed(t *testing.T) {
 	}
 }
 
+func TestMuxMethodNotAllowedAfterMount(t *testing.T) {
+	r := NewRouter()
+	r.Get("/root", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("root"))
+	})
+
+	sr1 := NewRouter()
+	sr1.Get("/sub1", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub1"))
+	})
+	sr1.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(405)
+		w.Write([]byte("sub1 405"))
+	})
+
+	sr2 := NewRouter()
+	sr2.Get("/sub2", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("sub2"))
+	})
+	sr2.Route("/nested", func(r Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("nested"))
+		})
+	})
+
+	r.Mount("/prefix1", sr1)
+	r.Mount("/prefix2", sr2)
+
+	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(405)
+		w.Write([]byte("root 405"))
+	})
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	if _, body := testRequest(t, ts, "DELETE", "/root", nil); body != "root 405" {
+		t.Fatalf("got '%s'", body)
+	}
+
+	if _, body := testRequest(t, ts, "DELETE", "/prefix1/sub1", nil); body != "sub1 405" {
+		t.Fatalf("got '%s'", body)
+	}
+
+	if _, body := testRequest(t, ts, "DELETE", "/prefix2/sub2", nil); body != "root 405" {
+		t.Fatalf("got '%s'", body)
+	}
+	if _, body := testRequest(t, ts, "DELETE", "/prefix2/nested", nil); body != "root 405" {
+		t.Fatalf("got '%s'", body)
+	}
+}
+
 func TestMuxComplicatedNotFound(t *testing.T) {
 	decorateRouter := func(r *Mux) {
 		// Root router with groups
