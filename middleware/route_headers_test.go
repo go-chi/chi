@@ -210,3 +210,34 @@ func TestPattern(t *testing.T) {
 		})
 	}
 }
+
+func TestRouteHeadersDeterministicPrecedence(t *testing.T) {
+	const runs = 200
+
+	var first string
+
+	for i := 0; i < runs; i++ {
+		picked := ""
+
+		hr := RouteHeaders().
+			Route("X-Region", "example.com", func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { picked = "x-region" })
+			}).
+			Route("Origin", "https://example.com", func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { picked = "origin" })
+			})
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.Header.Set("X-Region", "example.com")
+		req.Header.Set("Origin", "https://example.com")
+		hr.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})).ServeHTTP(httptest.NewRecorder(), req)
+
+		if i == 0 {
+			first = picked
+			continue
+		}
+		if picked != first {
+			t.Fatalf("handler selection is not deterministic: run %d picked %q, first run picked %q", i, picked, first)
+		}
+	}
+}
