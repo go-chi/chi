@@ -49,6 +49,9 @@ func URLFormat(next http.Handler) http.Handler {
 
 		var format string
 		path := r.URL.Path
+		if r.URL.RawPath != "" {
+			path = r.URL.RawPath
+		}
 
 		rctx := chi.RouteContext(r.Context())
 		if rctx != nil && rctx.RoutePath != "" {
