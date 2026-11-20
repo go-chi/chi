@@ -75,15 +75,26 @@ func (hr HeaderRouter) RouteDefault(handler func(next http.Handler) http.Handler
 }
 
 func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
+	routes := make(map[string][]headerRouteHandler, len(hr))
+	for header, matchers := range hr {
+		for _, matcher := range matchers {
+			var handler http.Handler
+			if matcher.Middleware != nil {
+				handler = matcher.Middleware(next)
+			}
+			routes[header] = append(routes[header], headerRouteHandler{matcher, handler})
+		}
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if len(hr) == 0 {
+		if len(routes) == 0 {
 			// skip if no routes set
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// find first matching header route, and continue
-		for header, matchers := range hr {
+		for header, matchers := range routes {
 			headerValue := r.Header.Get(header)
 			if headerValue == "" {
 				continue
@@ -91,20 +102,25 @@ func (hr HeaderRouter) Handler(next http.Handler) http.Handler {
 			headerValue = strings.ToLower(headerValue)
 			for _, matcher := range matchers {
 				if matcher.IsMatch(headerValue) {
-					matcher.Middleware(next).ServeHTTP(w, r)
+					matcher.handler.ServeHTTP(w, r)
 					return
 				}
 			}
 		}
 
 		// if no match, check for "*" default route
-		matcher, ok := hr["*"]
-		if !ok || matcher[0].Middleware == nil {
+		matcher, ok := routes["*"]
+		if !ok || matcher[0].handler == nil {
 			next.ServeHTTP(w, r)
 			return
 		}
-		matcher[0].Middleware(next).ServeHTTP(w, r)
+		matcher[0].handler.ServeHTTP(w, r)
 	})
+}
+
+type headerRouteHandler struct {
+	HeaderRoute
+	handler http.Handler
 }
 
 type HeaderRoute struct {
