@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -49,6 +50,9 @@ func URLFormat(next http.Handler) http.Handler {
 
 		var format string
 		path := r.URL.Path
+		if r.URL.RawPath != "" {
+			path = r.URL.RawPath
+		}
 
 		rctx := chi.RouteContext(r.Context())
 		if rctx != nil && rctx.RoutePath != "" {
@@ -62,6 +66,9 @@ func URLFormat(next http.Handler) http.Handler {
 			if idx > 0 {
 				idx += base
 				format = path[idx+1:]
+				if unescaped, err := url.PathUnescape(format); err == nil {
+					format = unescaped
+				}
 
 				if rctx != nil {
 					rctx.RoutePath = path[:idx]
