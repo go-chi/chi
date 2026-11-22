@@ -109,4 +109,10 @@ func TestURLFormatEncodedSlash(t *testing.T) {
 	if _, resp := testRequest(t, ts, "GET", "/items/a%2Fb/details.json", nil); resp != "a%2Fb:details:json" {
 		t.Fatalf("expected 'a%%2Fb:details:json', got %q", resp)
 	}
+	if _, resp := testRequest(t, ts, "GET", "/items/1.j%73on", nil); resp != "1:json" {
+		t.Fatalf("expected '1:json', got %q", resp)
+	}
+	if _, resp := testRequest(t, ts, "GET", "/items/a%2Fb.j%73on", nil); resp != "a%2Fb:json" {
+		t.Fatalf("expected 'a%%2Fb:json', got %q", resp)
+	}
 }
