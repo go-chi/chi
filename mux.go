@@ -308,8 +308,11 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 
 	// Provide runtime safety for ensuring a router isn't mounted onto itself,
 	// which includes an inline mux derived from it via With()/Group() since
-	// that shares the same underlying tree. See issue #843.
-	if ok && subr.tree == mx.tree {
+	// that shares the same underlying tree, and a router that reaches this
+	// router's tree through a chain of mounts (a mounts b, b mounts a):
+	// either wiring loops routing back into the same tree on every request.
+	// See issue #843.
+	if ok && mountsTree(subr, mx.tree) {
 		panic(fmt.Sprintf("chi: attempting to Mount() a router onto itself on '%s'", pattern))
 	}
 
@@ -351,6 +354,33 @@ func (mx *Mux) Mount(pattern string, handler http.Handler) {
 	if subroutes != nil {
 		n.subroutes = subroutes
 	}
+}
+
+// mountsTree reports whether root, or any router mounted beneath root,
+// routes through the given tree. The traversal follows the subroutes of
+// every mounted *Mux, tracking trees already visited so that routers
+// mounted in more than one place, and inline muxes sharing a tree, are
+// walked only once and the walk always terminates.
+func mountsTree(root *Mux, tree *node) bool {
+	seen := map[*node]bool{}
+	stack := []*Mux{root}
+	for len(stack) > 0 {
+		m := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if m.tree == tree {
+			return true
+		}
+		if seen[m.tree] {
+			continue
+		}
+		seen[m.tree] = true
+		for _, r := range m.Routes() {
+			if sub, ok := r.SubRoutes.(*Mux); ok {
+				stack = append(stack, sub)
+			}
+		}
+	}
+	return false
 }
 
 // Routes returns a slice of routing information from the tree,
