@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -259,11 +260,54 @@ func (c *Compressor) selectEncoder(h http.Header, w io.Writer) (io.Writer, strin
 
 func matchAcceptEncoding(accepted []string, encoding string) bool {
 	for _, v := range accepted {
-		if strings.Contains(v, encoding) {
+		name, params, _ := strings.Cut(v, ";")
+		if !strings.EqualFold(strings.TrimSpace(name), encoding) {
+			continue
+		}
+
+		quality := 1.0
+		qualitySeen := false
+		for _, param := range strings.Split(params, ";") {
+			key, value, hasValue := strings.Cut(strings.TrimSpace(param), "=")
+			if !strings.EqualFold(strings.TrimSpace(key), "q") {
+				continue
+			}
+			if qualitySeen || !hasValue {
+				quality = 0 // Invalid or duplicate quality parameter.
+				break
+			}
+			parsed, ok := parseAcceptEncodingQuality(strings.TrimSpace(value))
+			if !ok {
+				quality = 0
+				break
+			}
+			quality = parsed
+			qualitySeen = true
+		}
+		if quality > 0 {
 			return true
 		}
 	}
 	return false
+}
+
+func parseAcceptEncodingQuality(value string) (float64, bool) {
+	integer, fraction, hasFraction := strings.Cut(value, ".")
+	if integer != "0" && integer != "1" {
+		return 0, false
+	}
+	if hasFraction {
+		if len(fraction) > 3 {
+			return 0, false
+		}
+		for _, digit := range fraction {
+			if digit < '0' || digit > '9' || (integer == "1" && digit != '0') {
+				return 0, false
+			}
+		}
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	return parsed, err == nil
 }
 
 // An EncoderFunc is a function that wraps the provided io.Writer with a

@@ -109,6 +109,32 @@ func TestCompressor(t *testing.T) {
 	}
 }
 
+func TestMatchAcceptEncoding(t *testing.T) {
+	tests := []struct {
+		name     string
+		accepted []string
+		encoding string
+		want     bool
+	}{
+		{name: "exact match", accepted: []string{"gzip"}, encoding: "gzip", want: true},
+		{name: "case insensitive with whitespace", accepted: []string{" GZIP ; Q=0.5 "}, encoding: "gzip", want: true},
+		{name: "zero quality", accepted: []string{"gzip;q=0"}, encoding: "gzip"},
+		{name: "zero quality with decimals", accepted: []string{"gzip; q=0.000"}, encoding: "gzip"},
+		{name: "positive quality", accepted: []string{"gzip;q=0.001"}, encoding: "gzip", want: true},
+		{name: "encoding is not a substring", accepted: []string{"br"}, encoding: "b"},
+		{name: "encoding suffix is not a match", accepted: []string{"bgzip"}, encoding: "gzip"},
+		{name: "invalid quality", accepted: []string{"gzip;q=invalid"}, encoding: "gzip"},
+		{name: "quality above one", accepted: []string{"gzip;q=1.1"}, encoding: "gzip"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := matchAcceptEncoding(tt.accepted, tt.encoding); got != tt.want {
+				t.Errorf("matchAcceptEncoding(%q, %q) = %t, want %t", tt.accepted, tt.encoding, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCompressorDefaultTextTypes(t *testing.T) {
 	for _, contentType := range []string{"text/markdown", "text/csv", "text/vtt"} {
 		t.Run(contentType, func(t *testing.T) {
