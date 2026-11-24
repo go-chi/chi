@@ -83,12 +83,17 @@ func (x *Context) Reset() {
 	x.Routes = nil
 	x.RoutePath = ""
 	x.RouteMethod = ""
+	clear(x.RoutePatterns)
 	x.RoutePatterns = x.RoutePatterns[:0]
+	clear(x.URLParams.Keys)
 	x.URLParams.Keys = x.URLParams.Keys[:0]
+	clear(x.URLParams.Values)
 	x.URLParams.Values = x.URLParams.Values[:0]
 
 	x.routePattern = ""
+	clear(x.routeParams.Keys)
 	x.routeParams.Keys = x.routeParams.Keys[:0]
+	clear(x.routeParams.Values)
 	x.routeParams.Values = x.routeParams.Values[:0]
 	x.methodNotAllowed = false
 	x.methodsAllowed = x.methodsAllowed[:0]

@@ -153,3 +153,45 @@ func TestContext_Clone(t *testing.T) {
 		t.Fatalf("clone parentCtx should be detached, got %v", clone.parentCtx)
 	}
 }
+
+func TestContextResetClearsSliceBackingArrays(t *testing.T) {
+	ctx := &Context{
+		RoutePatterns: []string{"/v1", "/users/{id}"},
+		URLParams: RouteParams{
+			Keys:   []string{"id"},
+			Values: []string{"12345"},
+		},
+		routeParams: RouteParams{
+			Keys:   []string{"slug"},
+			Values: []string{"secret-token"},
+		},
+	}
+
+	ctx.Reset()
+
+	for i, v := range ctx.RoutePatterns[:cap(ctx.RoutePatterns)] {
+		if v != "" {
+			t.Fatalf("RoutePatterns backing array element %d should be empty, got %q", i, v)
+		}
+	}
+	for i, v := range ctx.URLParams.Keys[:cap(ctx.URLParams.Keys)] {
+		if v != "" {
+			t.Fatalf("URLParams.Keys backing array element %d should be empty, got %q", i, v)
+		}
+	}
+	for i, v := range ctx.URLParams.Values[:cap(ctx.URLParams.Values)] {
+		if v != "" {
+			t.Fatalf("URLParams.Values backing array element %d should be empty, got %q", i, v)
+		}
+	}
+	for i, v := range ctx.routeParams.Keys[:cap(ctx.routeParams.Keys)] {
+		if v != "" {
+			t.Fatalf("routeParams.Keys backing array element %d should be empty, got %q", i, v)
+		}
+	}
+	for i, v := range ctx.routeParams.Values[:cap(ctx.routeParams.Values)] {
+		if v != "" {
+			t.Fatalf("routeParams.Values backing array element %d should be empty, got %q", i, v)
+		}
+	}
+}
